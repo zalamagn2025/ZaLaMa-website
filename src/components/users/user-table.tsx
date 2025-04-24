@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { IconEdit, IconTrash, IconEye, IconDotsVertical } from "@tabler/icons-react"
+import { IconEdit, IconTrash, IconEye} from "@tabler/icons-react"
 
 // Données fictives pour la démonstration
 const users = [
