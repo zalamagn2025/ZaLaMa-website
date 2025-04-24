@@ -35,117 +35,89 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Admin ZaLaMa",
+    email: "admin@zalama.com",
+    avatar: "/avatars/admin.jpg",
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "#",
+      title: "Tableau de bord",
+      url: "/dashboard/entreprise",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "Utilisateurs",
+      url: "/dashboard/entreprise/utilisateurs",
+      icon: IconUsers,
     },
     {
-      title: "Analytics",
-      url: "#",
+      title: "Finances",
+      url: "/dashboard/entreprise/finances",
       icon: IconChartBar,
     },
     {
-      title: "Projects",
-      url: "#",
+      title: "Services",
+      url: "/dashboard/entreprise/services",
       icon: IconFolder,
     },
     {
-      title: "Team",
-      url: "#",
+      title: "Partenaires",
+      url: "/dashboard/entreprise/partenaires",
       icon: IconUsers,
     },
-  ],
-  navClouds: [
     {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Alertes & Risques",
+      url: "/dashboard/entreprise/alertes",
+      icon: IconReport,
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Objectifs & Performances",
+      url: "/dashboard/entreprise/performance",
+      icon: IconListDetails,
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Graphiques & Visualisations",
+      url: "/dashboard/entreprise/visualisations",
+      icon: IconChartBar,
     },
   ],
   navSecondary: [
     {
-      title: "Settings",
-      url: "#",
+      title: "Paramètres",
+      url: "/dashboard/entreprise/settings",
       icon: IconSettings,
     },
     {
-      title: "Get Help",
+      title: "Aide",
       url: "#",
       icon: IconHelp,
     },
     {
-      title: "Search",
+      title: "Recherche",
       url: "#",
       icon: IconSearch,
+    },
+    {
+      title: "Déconnexion",
+      url: "/logout",
+      icon: IconInnerShadowTop,
     },
   ],
   documents: [
     {
-      name: "Data Library",
+      name: "Rapports mensuels",
+      url: "#",
+      icon: IconFileDescription,
+    },
+    {
+      name: "Données utilisateurs",
       url: "#",
       icon: IconDatabase,
     },
     {
-      name: "Reports",
+      name: "Analyses prédictives",
       url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
+      icon: IconFileAi,
     },
   ],
 }
@@ -160,9 +132,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <a href="/dashboard/entreprise">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">ZaLaMa Admin</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
