@@ -17,6 +17,9 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconBell,
+  IconMoon,
+  IconSun,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -35,146 +38,169 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Admin ZaLaMa",
+    role: "Administrateur",
+    email: "admin@zalama.com",
+    avatar: "/avatars/admin.jpg",
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "#",
+      title: "Tableau de bord",
+      url: "/dashboard/entreprise",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "Utilisateurs",
+      url: "/dashboard/entreprise/utilisateurs",
+      icon: IconUsers,
     },
     {
-      title: "Analytics",
-      url: "#",
+      title: "Finances",
+      url: "/dashboard/entreprise/finances",
       icon: IconChartBar,
     },
     {
-      title: "Projects",
-      url: "#",
+      title: "Services",
+      url: "/dashboard/entreprise/services",
       icon: IconFolder,
     },
     {
-      title: "Team",
-      url: "#",
+      title: "Partenaires",
+      url: "/dashboard/entreprise/partenaires",
       icon: IconUsers,
     },
-  ],
-  navClouds: [
     {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Alertes & Risques",
+      url: "/dashboard/entreprise/alertes",
+      icon: IconReport,
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Objectifs & Performances",
+      url: "/dashboard/entreprise/performance",
+      icon: IconListDetails,
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Graphiques & Visualisations",
+      url: "/dashboard/entreprise/visualisations",
+      icon: IconChartBar,
     },
   ],
   navSecondary: [
     {
-      title: "Settings",
-      url: "#",
+      title: "Notifications",
+      url: "/dashboard/entreprise/notifications",
+      icon: IconBell,
+      badge: 3,
+    },
+    {
+      title: "Paramètres",
+      url: "/dashboard/entreprise/settings",
       icon: IconSettings,
     },
     {
-      title: "Get Help",
+      title: "Aide",
       url: "#",
       icon: IconHelp,
     },
     {
-      title: "Search",
+      title: "Recherche",
       url: "#",
       icon: IconSearch,
+    },
+    {
+      title: "Déconnexion",
+      url: "/logout",
+      icon: IconInnerShadowTop,
     },
   ],
   documents: [
     {
-      name: "Data Library",
+      name: "Rapports mensuels",
+      url: "#",
+      icon: IconFileDescription,
+    },
+    {
+      name: "Données utilisateurs",
       url: "#",
       icon: IconDatabase,
     },
     {
-      name: "Reports",
+      name: "Analyses prédictives",
       url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
+      icon: IconFileAi,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [darkMode, setDarkMode] = React.useState(false);
+  
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex justify-between items-center w-full">
             <SidebarMenuButton
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <a href="/dashboard/entreprise" className="flex items-center">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold ml-2">ZaLaMa Admin</span>
               </a>
             </SidebarMenuButton>
+            
+            <button 
+              onClick={toggleTheme}
+              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 ml-auto"
+            >
+              {darkMode ? <IconSun className="size-5" /> : <IconMoon className="size-5" />}
+            </button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary 
+          items={data.navSecondary.map(item => {
+            if (item.title === "Notifications" && item.badge) {
+              return {
+                ...item,
+                icon: () => (
+                  <div className="relative">
+                    <IconBell className="size-5" />
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs text-white bg-red-500 rounded-full">
+                      {item.badge}
+                    </span>
+                  </div>
+                )
+              };
+            }
+            return item;
+          })} 
+          className="mt-auto" 
+        />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser 
+          user={data.user}
+          renderName={(name) => (
+            <div className="flex flex-col">
+              <span>{name}</span>
+              <span className="text-xs text-gray-500">{data.user.role}</span>
+            </div>
+          )}
+        />
       </SidebarFooter>
     </Sidebar>
   )
