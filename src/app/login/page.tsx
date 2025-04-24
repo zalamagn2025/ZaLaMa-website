@@ -4,7 +4,7 @@ import LoginForm from "@/components/auth/LoginForm";
 export default function Login() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {/* <Header /> */}
       <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-sm">
           <div className="text-center">
