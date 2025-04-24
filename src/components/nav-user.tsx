@@ -29,15 +29,17 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavUser({
-  user,
-}: {
+interface NavUserProps {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+    name: string;
+    email: string;
+    avatar: string;
+    role?: string;
+  };
+  renderName?: (name: string) => React.ReactNode;
+}
+
+export function NavUser({ user, renderName }: NavUserProps) {
   const { isMobile } = useSidebar()
 
   return (
@@ -54,7 +56,7 @@ export function NavUser({
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                {renderName ? renderName(user.name) : <span className="truncate font-medium">{user.name}</span>}
                 <span className="text-muted-foreground truncate text-xs">
                   {user.email}
                 </span>
@@ -75,7 +77,7 @@ export function NavUser({
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  {renderName ? renderName(user.name) : <span className="truncate font-medium">{user.name}</span>}
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}
                   </span>
