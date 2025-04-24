@@ -2,9 +2,13 @@
 
 import { useState } from "react"
 import { IconCreditCard, IconReceipt, IconCoin, IconArrowRight } from "@tabler/icons-react"
+import { SalaryAdvanceForm } from "./salary-advance-form"
 
 export function FinancialServices() {
   const [activeService, setActiveService] = useState<string | null>(null)
+
+  // Données fictives pour la démonstration
+  const userPhone = "+224 625 21 21 15"
 
   const services = [
     {
@@ -12,7 +16,7 @@ export function FinancialServices() {
       title: "Avance sur salaire",
       description: "Obtenez une avance sur votre prochain salaire, remboursable automatiquement.",
       icon: <IconCreditCard className="h-8 w-8 text-indigo-500" />,
-      maxAmount: "1,500,000 GNF",
+      maxAmount: "750,000 GNF",
       eligibility: "Disponible"
     },
     {
@@ -63,8 +67,14 @@ export function FinancialServices() {
       </div>
 
       {activeService && (
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-          <ServiceForm serviceId={activeService} onClose={() => setActiveService(null)} />
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-gray-900 dark:bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+          <div className="relative mx-auto p-6 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
+            {activeService === "advance" ? (
+              <SalaryAdvanceForm onClose={() => setActiveService(null)} userPhone={userPhone} />
+            ) : (
+              <ServiceForm serviceId={activeService} onClose={() => setActiveService(null)} />
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -90,15 +100,11 @@ function ServiceForm({ serviceId, onClose }: ServiceFormProps) {
     setTimeout(() => {
       setLoading(false)
       onClose()
-      // Afficher une notification de succès
-      alert("Votre demande a été soumise avec succès!")
     }, 1500)
   }
 
   const getServiceTitle = () => {
     switch (serviceId) {
-      case "advance":
-        return "Demande d'avance sur salaire"
       case "loan":
         return "Demande de prêt personnel"
       case "p2p":

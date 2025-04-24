@@ -1,4 +1,4 @@
-import { IconEdit, IconBell } from "@tabler/icons-react"
+import { IconBell, IconEdit } from "@tabler/icons-react"
 
 export function ProfileHeader() {
   // Données fictives pour la démonstration
@@ -15,14 +15,14 @@ export function ProfileHeader() {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-      <div className="h-32 bg-gradient-to-r from-[#0524DD] to-[#FF671E]">
+      <div className="h-32 bg-gradient-to-r from-indigo-500 to-purple-600">
         
       </div>
       <div className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between -mt-16">
         <div className="flex flex-col md:flex-row md:items-center">
           <div className="flex-shrink-0">
             <div className="h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-3xl font-bold text-indigo-800 dark:text-indigo-300">
-           
+              {user.name.split(' ').map(n => n[0]).join('')}
             </div>
           </div>
           <div className="mt-4 md:mt-0 md:ml-6">

@@ -33,7 +33,7 @@ export default function LoginForm() {
       
       // Simulation d'une connexion réussie
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/profile");
       }, 1500);
     } catch (err) {
       setError("Échec de la connexion. Veuillez vérifier vos identifiants.");
