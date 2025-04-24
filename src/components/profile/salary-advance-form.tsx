@@ -40,7 +40,7 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
         </div>
         <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Demande envoyée avec succès</h3>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Votre demande d'avance sur salaire a été soumise et est en cours de traitement.
+          Votre demande d&rsquo;avance sur salaire a été soumise et est en cours de traitement.
         </p>
       </div>
     )
@@ -51,7 +51,7 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
           <IconCreditCard className="h-6 w-6 text-indigo-500 mr-2" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Demande d'avance sur salaire</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Demande d&rsquo;avance sur salaire</h3>
         </div>
         <button 
           onClick={onClose}
@@ -77,7 +77,7 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
               required
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Vous pouvez demander jusqu'à 750,000 GNF (30% de votre salaire)
+              Vous pouvez demander jusqu&rsquo;à 750,000 GNF (30% de votre salaire)
             </p>
           </div>
 
@@ -130,7 +130,7 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
               required
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Numéro qui recevra l'argent via Mobile Money
+              Numéro qui recevra l&rsquo;argent via Mobile Money
             </p>
           </div>
 
@@ -162,7 +162,7 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
               required
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-              J'accepte les conditions générales et je comprends que cette avance sera déduite de mon prochain salaire
+              J&rsquo;accepte les conditions générales et je comprends que cette avance sera déduite de mon prochain salaire
             </label>
           </div>
         </div>

@@ -12,7 +12,7 @@ export default function Login() {
               Connexion à votre compte
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Entrez vos identifiants fournis par l'administrateur
+              Entrez vos identifiants fournis par l&rsquo;administrateur
             </p>
           </div>
           <LoginForm />

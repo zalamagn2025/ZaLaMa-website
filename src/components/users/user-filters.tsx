@@ -60,10 +60,10 @@ export function UserFilters() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date d'inscription</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date d&rsquo;inscription</label>
               <select className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 <option value="">Toutes les dates</option>
-                <option value="today">Aujourd'hui</option>
+                <option value="today">Aujourd&rsquo;hui</option>
                 <option value="week">Cette semaine</option>
                 <option value="month">Ce mois</option>
                 <option value="year">Cette année</option>

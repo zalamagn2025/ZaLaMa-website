@@ -142,7 +142,8 @@ export default function LoginForm() {
       </div>
       
       <div className="mt-4 text-center text-sm text-gray-600">
-        <p>Vous n'avez pas de compte? Contactez votre administrateur pour obtenir vos identifiants.</p>
+
+        <p>Vous n&rsquo;avez pas de compte? Contactez votre administrateur pour obtenir vos identifiants.</p>
       </div>
     </form>
   );

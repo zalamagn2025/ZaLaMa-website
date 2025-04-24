@@ -26,7 +26,7 @@ export default function NotFound() {
             Page introuvable
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+            Désolé, la page que vous recherchez n&rsquo;existe pas ou a été déplacée.
           </p>
         </div>
         
@@ -51,7 +51,7 @@ export default function NotFound() {
         
         <div className="mt-12 border-t border-gray-200 dark:border-gray-800 pt-6">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Besoin d'aide? Contactez notre support au{" "}
+            Besoin d&rsquo;aide? Contactez notre support au{" "}
             <a href="tel:+33123456789" className="font-medium text-primary hover:text-primary/80">
               01 23 45 67 89
             </a>

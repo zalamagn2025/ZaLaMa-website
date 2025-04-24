@@ -30,7 +30,7 @@ export function FinancialServices() {
     {
       id: "p2p",
       title: "Prêt entre particuliers",
-      description: "Empruntez auprès d'autres utilisateurs ou prêtez votre argent.",
+      description: "Empruntez auprès d&rsquo;autres utilisateurs ou prêtez votre argent.",
       icon: <IconCoin className="h-8 w-8 text-yellow-500" />,
       maxAmount: "3,000,000 GNF",
       eligibility: "Disponible"
@@ -184,7 +184,7 @@ function ServiceForm({ serviceId, onClose }: ServiceFormProps) {
               required
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-              J'accepte les conditions générales et je comprends les modalités de remboursement
+              J&rsquo;accepte les conditions générales et je comprends les modalités de remboursement
             </label>
           </div>
         </div>
