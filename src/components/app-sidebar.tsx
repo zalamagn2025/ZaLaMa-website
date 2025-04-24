@@ -17,6 +17,9 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconBell,
+  IconMoon,
+  IconSun,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -123,11 +126,22 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [darkMode, setDarkMode] = React.useState(false);
+  
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex justify-between items-center w-full">
             <SidebarMenuButton
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
@@ -137,16 +151,49 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <span className="text-base font-semibold">ZaLaMa Admin</span>
               </a>
             </SidebarMenuButton>
+            
+            <button 
+              onClick={toggleTheme}
+              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 ml-auto"
+            >
+              {darkMode ? <IconSun className="size-5" /> : <IconMoon className="size-5" />}
+            </button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary 
+          items={data.navSecondary.map(item => {
+            if (item.title === "Notifications") {
+              return {
+                ...item,
+                icon: () => (
+                  <div className="relative">
+                    <IconBell className="size-5" />
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs text-white bg-red-500 rounded-full">
+                    Badge
+                    </span>
+                  </div>
+                )
+              };
+            }
+            return item;
+          })} 
+          className="mt-auto" 
+        />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser 
+          user={data.user}
+          renderName={(name) => (
+            <div className="flex flex-col">
+              <span>{name}</span>
+              <span className="text-xs text-gray-500">Admin</span>
+            </div>
+          )}
+        />
       </SidebarFooter>
     </Sidebar>
   )
