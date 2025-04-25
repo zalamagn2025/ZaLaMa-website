@@ -122,7 +122,38 @@ function FinancialAdviceForm({ onClose }: { onClose: () => void }) {
   ])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(false)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // Historique des conversations
+  const [conversations, setConversations] = useState<Array<{
+    id: string,
+    title: string,
+    date: Date,
+    preview: string
+  }>>([
+    {
+      id: "conv1",
+      title: "Budget mensuel",
+      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 jours avant
+      preview: "Comment établir un budget mensuel efficace ?"
+    },
+    {
+      id: "conv2",
+      title: "Épargne",
+      date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 jours avant
+      preview: "Quelles sont les meilleures options d'épargne en Guinée ?"
+    },
+    {
+      id: "conv3",
+      title: "Investissement immobilier",
+      date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 jours avant
+      preview: "Comment investir dans l'immobilier à Conakry ?"
+    }
+  ])
+  
+  // Conversation active (pour la simulation)
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
 
   // Options de conseil prédéfinies
   const suggestedQuestions = [
@@ -196,11 +227,115 @@ function FinancialAdviceForm({ onClose }: { onClose: () => void }) {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
+  
+  const formatDate = (date: Date) => {
+    const now = new Date()
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) {
+      return "Aujourd'hui"
+    } else if (diffDays === 1) {
+      return "Hier"
+    } else if (diffDays < 7) {
+      return `Il y a ${diffDays} jours`
+    } else {
+      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+    }
+  }
+  
+  const loadConversation = (conversationId: string) => {
+    // Simuler le chargement d'une conversation précédente
+    setActiveConversationId(conversationId)
+    
+    // Réinitialiser les messages avec une conversation simulée
+    if (conversationId === "conv1") {
+      setMessages([
+        {
+          text: "Bonjour ! Je suis votre conseiller financier virtuel. Comment puis-je vous aider aujourd'hui ?",
+          sender: 'bot',
+          timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 - 5 * 60 * 1000)
+        },
+        {
+          text: "Comment établir un budget mensuel efficace ?",
+          sender: 'user',
+          timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 - 4 * 60 * 1000)
+        },
+        {
+          text: "Pour établir un budget efficace, commencez par lister tous vos revenus et dépenses mensuels. Classez vos dépenses par catégories (logement, alimentation, transport, etc.) et identifiez les domaines où vous pourriez réduire vos dépenses. Essayez de suivre la règle 50/30/20 : 50% pour les besoins essentiels, 30% pour les désirs, et 20% pour l'épargne.",
+          sender: 'bot',
+          timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 - 3 * 60 * 1000)
+        }
+      ])
+    } else if (conversationId === "conv2") {
+      setMessages([
+        {
+          text: "Bonjour ! Je suis votre conseiller financier virtuel. Comment puis-je vous aider aujourd'hui ?",
+          sender: 'bot',
+          timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000 - 10 * 60 * 1000)
+        },
+        {
+          text: "Quelles sont les meilleures options d'épargne en Guinée ?",
+          sender: 'user',
+          timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000 - 9 * 60 * 1000)
+        },
+        {
+          text: "En Guinée, vous avez plusieurs options d'épargne intéressantes. Les comptes d'épargne bancaires classiques offrent une sécurité mais des taux d'intérêt généralement bas. Les dépôts à terme peuvent offrir des taux plus élevés si vous acceptez de bloquer votre argent pendant une période déterminée. Les tontines sont également populaires pour l'épargne collective. Pour une épargne à long terme, envisagez les investissements immobiliers qui peuvent générer des revenus locatifs.",
+          sender: 'bot',
+          timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000 - 8 * 60 * 1000)
+        }
+      ])
+    } else if (conversationId === "conv3") {
+      setMessages([
+        {
+          text: "Bonjour ! Je suis votre conseiller financier virtuel. Comment puis-je vous aider aujourd'hui ?",
+          sender: 'bot',
+          timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000 - 15 * 60 * 1000)
+        },
+        {
+          text: "Comment investir dans l'immobilier à Conakry ?",
+          sender: 'user',
+          timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000 - 14 * 60 * 1000)
+        },
+        {
+          text: "Pour investir dans l'immobilier à Conakry, commencez par rechercher les quartiers en développement qui offrent un bon potentiel de plus-value. Assurez-vous de vérifier soigneusement les titres de propriété et les documents légaux. Considérez les propriétés à rénover qui peuvent offrir une meilleure rentabilité. Pour le financement, explorez les options de prêts immobiliers auprès des banques locales ou envisagez des partenariats avec d'autres investisseurs.",
+          sender: 'bot',
+          timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000 - 13 * 60 * 1000)
+        }
+      ])
+    }
+    
+    // Fermer le drawer après avoir sélectionné une conversation
+    setIsHistoryOpen(false)
+  }
+  
+  const startNewConversation = () => {
+    setActiveConversationId(null)
+    setMessages([
+      {
+        text: "Bonjour ! Je suis votre conseiller financier virtuel. Comment puis-je vous aider aujourd'hui ?",
+        sender: 'bot',
+        timestamp: new Date()
+      }
+    ])
+    setIsHistoryOpen(false)
+  }
 
   return (
-    <div className="flex flex-col h-[500px]">
+    <div className="flex flex-col h-[500px] relative">
+      {/* Header avec titre et boutons */}
       <div className="flex justify-between items-center mb-4 border-b pb-2">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Conseiller financier virtuel</h3>
+        <div className="flex items-center">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Conseiller financier virtuel</h3>
+          <button 
+            onClick={() => setIsHistoryOpen(true)}
+            className="ml-3 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+            title="Historique des conversations"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+          </button>
+        </div>
         <button 
           onClick={onClose}
           className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -209,6 +344,7 @@ function FinancialAdviceForm({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
+      {/* Zone de messages */}
       <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
         {messages.map((message, index) => (
           <div 
@@ -247,6 +383,7 @@ function FinancialAdviceForm({ onClose }: { onClose: () => void }) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Questions suggérées */}
       <div className="mb-2">
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Questions suggérées :</p>
         <div className="flex flex-wrap gap-2">
@@ -262,6 +399,7 @@ function FinancialAdviceForm({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
+      {/* Zone de saisie */}
       <form onSubmit={handleSendMessage} className="flex items-center">
         <input
           type="text"
@@ -280,6 +418,65 @@ function FinancialAdviceForm({ onClose }: { onClose: () => void }) {
           </svg>
         </button>
       </form>
+      
+      {/* Drawer d'historique des conversations */}
+      {isHistoryOpen && (
+        <div className="absolute inset-0 bg-white dark:bg-gray-800 z-10 flex flex-col">
+          <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Historique des conversations</h3>
+            <button 
+              onClick={() => setIsHistoryOpen(false)}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            >
+              &times;
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4">
+            <button
+              onClick={startNewConversation}
+              className="w-full flex items-center justify-between p-3 mb-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Nouvelle conversation</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Démarrer un nouveau chat</p>
+                </div>
+              </div>
+            </button>
+            
+            {conversations.map((conversation) => (
+              <button
+                key={conversation.id}
+                onClick={() => loadConversation(conversation.id)}
+                className={`w-full flex items-center justify-between p-3 mb-2 rounded-lg border ${
+                  activeConversationId === conversation.id
+                    ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3 text-left">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{conversation.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">{conversation.preview}</p>
+                  </div>
+                </div>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(conversation.date)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
