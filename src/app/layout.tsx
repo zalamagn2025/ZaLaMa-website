@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { twMerge } from "tailwind-merge";
 import "./globals.css";
+import { AuthProvider } from "../contexts/AuthContext";
 
 const dmSans = DM_Sans({ subsets: ['latin']});
 
@@ -17,11 +18,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="relative">
+    <html lang="fr" className="relative">
       <body
         className={twMerge(dmSans.className, "antialiased bg-[#EAEEFE]")}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

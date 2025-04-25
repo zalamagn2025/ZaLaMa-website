@@ -1,17 +1,48 @@
+"use client"
+
 import { IconBell, IconEdit } from "@tabler/icons-react"
+import { useAuth } from "../../contexts/AuthContext"
+import { useState, useEffect } from "react"
 
 export function ProfileHeader() {
-  // Données fictives pour la démonstration
-  const user = {
-    name: "Mory koulibaly ",
-    phone: "+224 625 21 21 15",
-    email: "mory.koulibaly@example.com",
-    role: "Employé",
-    entreprise:"ZALAMA",
-    department: "Direction générale",
-    joinDate: "12 Mars 2023",
-    avatar: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/profile-photo.jpg-R1e1uXntiyEHv8U1TpMMPbJ2lWRbQ6.jpeg"
-  }
+  const { currentUser, userData } = useAuth()
+  const [user, setUser] = useState({
+    name: "Chargement...",
+    phone: "",
+    email: "",
+    role: "",
+    entreprise: "",
+    department: "",
+    joinDate: "",
+    avatar: ""
+  })
+
+  useEffect(() => {
+    if (currentUser && userData) {
+      setUser({
+        name: userData.name || currentUser.displayName || "Utilisateur",
+        phone: userData.phone || "+224 625 21 21 15",
+        email: userData.email || currentUser.email || "",
+        role: userData.role || "Employé",
+        entreprise: userData.entreprise || "ZALAMA",
+        department: userData.department || "Direction générale",
+        joinDate: userData.joinDate || "12 Mars 2023",
+        avatar: userData.avatar || currentUser.photoURL || ""
+      })
+    } else {
+      // Données fictives pour la démonstration si non connecté
+      setUser({
+        name: "Mory koulibaly",
+        phone: "+224 625 21 21 15",
+        email: "mory.koulibaly@example.com",
+        role: "Employé",
+        entreprise: "ZALAMA",
+        department: "Direction générale",
+        joinDate: "12 Mars 2023",
+        avatar: ""
+      })
+    }
+  }, [currentUser, userData])
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
@@ -21,9 +52,17 @@ export function ProfileHeader() {
       <div className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between -mt-16">
         <div className="flex flex-col md:flex-row md:items-center">
           <div className="flex-shrink-0">
-            <div className="h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-3xl font-bold text-indigo-800 dark:text-indigo-300">
-              {user.name.split(' ').map(n => n[0]).join('')}
-            </div>
+            {user.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user.name} 
+                className="h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 object-cover"
+              />
+            ) : (
+              <div className="h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-3xl font-bold text-indigo-800 dark:text-indigo-300">
+                {user.name.split(' ').map(n => n[0]).join('')}
+              </div>
+            )}
           </div>
           <div className="mt-4 md:mt-0 md:ml-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user.name}</h1>
