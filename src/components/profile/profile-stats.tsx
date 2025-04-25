@@ -4,17 +4,24 @@ export function ProfileStats() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard 
-        title="Solde disponible" 
+        title="Salaire net" 
         value="2,500,000 GNF" 
         icon={<IconCoin className="h-6 w-6 text-yellow-500" />}
-        change="+15.3%"
+        change="1 mois"
         trend="up"
       />
       <StatCard 
         title="Acompte disponible" 
         value="750,000 GNF" 
         icon={<IconCreditCard className="h-6 w-6 text-blue-500" />}
-        change="30% du salaire"
+        change="10 jours"
+        trend="neutral"
+      />
+          <StatCard 
+        title="Avance actif" 
+        value="5,000,000 GNF" 
+        icon={<IconArrowUpRight className="h-6 w-6 text-indigo-500" />}
+        change="1 avance"
         trend="neutral"
       />
       <StatCard 
@@ -24,13 +31,7 @@ export function ProfileStats() {
         change="1 prêt"
         trend="neutral"
       />
-      <StatCard 
-        title="Limite de crédit" 
-        value="5,000,000 GNF" 
-        icon={<IconArrowUpRight className="h-6 w-6 text-indigo-500" />}
-        change="50% utilisé"
-        trend="neutral"
-      />
+  
     </div>
   )
 }
