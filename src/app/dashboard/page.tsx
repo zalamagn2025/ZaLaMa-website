@@ -90,15 +90,20 @@ export default function DashboardPage() {
       {/* Activité des partenaires */}
       <div className="dashboard-card card-partners card bg-[var(--zalama-bg-dark)] text-[var(--zalama-text-light)] rounded-lg">
         <h2 className="text-xl font-semibold mb-4 text-[var(--zalama-blue)]">Activité des partenaires</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex flex-col">
             <div className="text-3xl font-bold text-[var(--zalama-gray)]">12</div>
-            <div className="text-sm text-[var(--zalama-gray)]/70">Nouveaux partenaires ce mois-ci</div>
+            <div className="text-sm text-[var(--zalama-gray)]/70">Total partenaires</div>
           </div>
           
           <div className="flex flex-col">
             <div className="text-3xl font-bold text-[var(--zalama-gray)]">45</div>
-            <div className="text-sm text-[var(--zalama-gray)]/70">Partenaires actifs</div>
+            <div className="text-sm text-[var(--zalama-gray)]/70">Total Employés</div>
+          </div>
+
+          <div className="flex flex-col">
+            <div className="text-3xl font-bold text-[var(--zalama-gray)]">25</div>
+            <div className="text-sm text-[var(--zalama-gray)]/70">Nouveaux Partenaires</div>
           </div>
         </div>
         
@@ -136,14 +141,14 @@ export default function DashboardPage() {
             </div>
             {/* Revenus générés */}
             <div className="p-6 bg-[var(--zalama-bg-dark)] text-[var(--zalama-text-light)] rounded-lg">
-              <h3 className="text-sm font-medium mb-3 text-[var(--zalama-gray)]">Revenus générés</h3>
+              <h3 className="text-sm font-medium mb-3 text-[var(--zalama-gray)]">Montant Debloqué par l&apos;entreprise : Acme Inc.</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col">
-                  <div className="text-xl font-bold text-[var(--zalama-gray)]">€125k</div>
+                  <div className="text-xl font-bold text-[var(--zalama-gray)]">25,000,000 GNF</div>
                   <div className="text-sm text-[var(--zalama-gray)]/70">Total</div>
                 </div>
                 <div className="flex flex-col">
-                  <div className="text-xl font-bold text-[var(--zalama-gray)]">€45k</div>
+                  <div className="text-xl font-bold text-[var(--zalama-gray)]">15,000,000 GNF</div>
                   <div className="text-sm text-[var(--zalama-gray)]/70">Ce mois-ci</div>
                 </div>
                 
@@ -164,7 +169,7 @@ export default function DashboardPage() {
           <div className="flex items-center w-full sm:w-auto mb-4 sm:mb-0">
             <div className="flex flex-col px-4">
               <div className="text-2xl md:text-3xl font-bold text-[var(--zalama-gray)]">1240</div>
-              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Demandes d&apos;avance</div>
+              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Avance</div>
             </div>
             <div className="h-16 w-px bg-[var(--zalama-border)] hidden md:block"></div>
           </div>
@@ -172,7 +177,7 @@ export default function DashboardPage() {
           <div className="flex items-center w-full sm:w-auto mb-4 sm:mb-0">
             <div className="flex flex-col px-4">
               <div className="text-2xl md:text-3xl font-bold text-[var(--zalama-gray)]">620</div>
-              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">P2P</div>
+              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Pret P2P</div>
             </div>
             <div className="h-16 w-px bg-[var(--zalama-border)] hidden md:block"></div>
           </div>
@@ -180,7 +185,7 @@ export default function DashboardPage() {
           <div className="flex items-center w-full sm:w-auto mb-4 sm:mb-0">
             <div className="flex flex-col px-4">
               <div className="text-2xl md:text-3xl font-bold text-[var(--zalama-gray)]">510</div>
-              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Paiement</div>
+              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Conseil Financier</div>
             </div>
             <div className="h-16 w-px bg-[var(--zalama-border)] hidden md:block"></div>
           </div>
@@ -193,19 +198,15 @@ export default function DashboardPage() {
             <div className="h-16 w-px bg-[var(--zalama-border)] hidden md:block"></div>
           </div>
           
-          <div className="flex flex-col px-4 w-full sm:w-auto">
-            <div className="text-2xl md:text-3xl font-bold text-[var(--zalama-gray)]">180</div>
-            <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Autres</div>
-          </div>
+          
         </div>
         
         <div className="mt-6">
-          <h3 className="text-base md:text-lg font-semibold mb-3 text-[var(--zalama-blue)]">Temps moyen de traitement</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-[var(--zalama-green)] rounded-full"></div>
               <div>
-                <div className="text-xl md:text-2xl font-bold text-[var(--zalama-gray)]">75%</div>
+                <div className="text-xl md:text-2xl font-bold text-[var(--zalama-gray)]">20</div>
                 <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Approuvés</div>
               </div>
             </div>
@@ -213,7 +214,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-[var(--zalama-red)] rounded-full"></div>
               <div>
-                <div className="text-xl md:text-2xl font-bold text-[var(--zalama-gray)]">15%</div>
+                <div className="text-xl md:text-2xl font-bold text-[var(--zalama-gray)]">40</div>
                 <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Rejetés</div>
               </div>
             </div>
@@ -221,7 +222,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-[var(--zalama-yellow)] rounded-full"></div>
               <div>
-                <div className="text-xl md:text-2xl font-bold text-[var(--zalama-gray)]">10%</div>
+                <div className="text-xl md:text-2xl font-bold text-[var(--zalama-gray)]">30</div>
                 <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">En Cours</div>
               </div>
             </div>

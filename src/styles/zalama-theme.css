@@ -39,9 +39,9 @@
   
   /* Positions verticales spécifiques */
   --second-row-top: 250px;
-  --third-row-top: calc(100% + 21.5% - 8px);
-  --fourth-row-top: calc(100% + 25.5% - 8px);
-  --fifth-row-top: calc(100% + 105% - 8px);
+  --third-row-top: calc(100% + 25.5% - 8px);
+  --fourth-row-top: calc(100% + 19% - 8px);
+  --fifth-row-top: calc(100% + 99% - 8px);
 }
 
 body {
