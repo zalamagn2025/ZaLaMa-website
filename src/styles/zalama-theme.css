@@ -38,10 +38,10 @@
   --height-large: 400px;
   
   /* Positions verticales spécifiques */
-  --second-row-top: 235px;
+  --second-row-top: 250px;
   --third-row-top: calc(100% + 21.5% - 8px);
-  --fourth-row-top: calc(100% + 15% - 8px);
-  --fifth-row-top: calc(100% + 185% - 8px);
+  --fourth-row-top: calc(100% + 25.5% - 8px);
+  --fifth-row-top: calc(100% + 105% - 8px);
 }
 
 body {
@@ -82,7 +82,7 @@ body {
 }
 
 .card-services {
-  top: calc(95% - var(--dashboard-padding));
+  top: calc(78.5% - var(--dashboard-padding));
   left: var(--base-left);
   width: var(--left-column-width);
   height: var(--height-medium);
