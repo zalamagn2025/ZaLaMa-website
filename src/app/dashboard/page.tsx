@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+
 import { Activity, AlertTriangle, Shield, TrendingUp, FileText, Star } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -13,11 +14,11 @@ export default function DashboardPage() {
           <div className="flex flex-col space-y-4 md:space-y-6 md:w-1/2">
             <div className="flex flex-col">
               <div className="text-2xl md:text-3xl font-bold text-[var(--zalama-gray)]">25,840</div>
-              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Nombre d&apos;utilisateurs inscrits</div>
+              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Utilisateurs inscrits</div>
             </div>
             <div className="flex flex-col">
               <div className="text-2xl md:text-3xl font-bold text-[var(--zalama-gray)]">5,200</div>
-              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Répartition utilisateurs côté mois ci</div>
+              <div className="text-xs md:text-sm text-[var(--zalama-gray)]/70">Utilisateurs actifs</div>
             </div>
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
               <div className="flex flex-col">
@@ -35,18 +36,24 @@ export default function DashboardPage() {
               </div>
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full" style={{ background: 'conic-gradient(var(--zalama-blue) 40%, var(--zalama-blue-accent) 0)' }}></div>
             </div>
+            <div className="ml-4 space-y-2 mt-4 flex flex-col justify-start items-start content-end">
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-[var(--zalama-blue)] rounded-full mr-2"></div>
+                <span>Étudiants</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-[var(--zalama-blue-accent)] rounded-full mr-2"></div>
+                <span>Salariés</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-[var(--zalama-blue-accent)] rounded-full mr-2"></div>
+                <span>Pensionnes</span>
+              </div>
+            </div>
           </div>
+          
         </div>
-        <div className="ml-4 space-y-2 mt-4 flex flex-col justify-end items-end content-end">
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-[var(--zalama-blue)] rounded-full mr-2"></div>
-            <span>Étudiants</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-[var(--zalama-blue-accent)] rounded-full mr-2"></div>
-            <span>Salariés et pensionnés</span>
-          </div>
-        </div>
+        
         
       </div>
       

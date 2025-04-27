@@ -38,10 +38,17 @@
   --height-large: 400px;
   
   /* Positions verticales spécifiques */
-  --second-row-top: 250px;
-  --third-row-top: calc(100% + 25.5% - 8px);
-  --fourth-row-top: calc(100% + 19% - 8px);
-  --fifth-row-top: calc(100% + 99% - 8px);
+  --second-row-top: 245px;
+  /* --third-row-top: calc(90% - 8px); */
+  --fourth-row-top: calc(100% + 15% - 8px);
+  --fifth-row-top: calc(100% + 30% - 8px);
+  
+  --header-height: 72px;
+  --top-services: calc(var(--base-top) + var(--height-small) + var(--header-height) - 8px );
+  --top-users: calc(var(--top-services) + 242px);
+  --top-alerts: calc(var(--second-row-top) + var(--height-medium) + var(--header-height) + 40px);
+  --top-vizualitions: calc(var(--top-alerts) + var(--height-large) + 24px);
+  
 }
 
 body {
@@ -55,6 +62,8 @@ body {
   width: 100%;
   min-height: 100vh;
   padding: var(--dashboard-padding);
+  scrollbar-width: none;
+
 }
 
 /* Style de base pour toutes les cartes */
@@ -64,6 +73,7 @@ body {
   padding: var(--card-padding);
   box-sizing: border-box;
   overflow: hidden;
+  
 }
 
 /* Positions spécifiques pour chaque carte */
@@ -82,7 +92,7 @@ body {
 }
 
 .card-services {
-  top: calc(78.5% - var(--dashboard-padding));
+  top: var(--top-services);
   left: var(--base-left);
   width: var(--left-column-width);
   height: var(--height-medium);
@@ -96,14 +106,14 @@ body {
 }
 
 .card-users {
-  top: var(--fourth-row-top);
+  top: var(--top-users);
   left: var(--base-left);
   width: var(--left-column-width);
   height: var(--height-small);
 }
 
 .card-alerts {
-  top: var(--third-row-top);
+  top: var(--top-alerts);
   right: var(--base-right);
   width: var(--right-column-width);
   height: var(--height-large);
@@ -116,7 +126,7 @@ body {
 }
 
 .card-visualizations {
-  top: var(--fifth-row-top);
+  top: var(--top-vizualitions);
   right: var(--base-right);
   width: var(--full-width);
   /*width: var(--right-column-width);*/

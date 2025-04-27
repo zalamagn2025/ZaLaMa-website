@@ -1,4 +1,4 @@
-import StatCard from '@/components/Dashboard/StatCard';
+import StatCard from '@/components/dashboard/StatCard';
 import { Users, BarChart2, PieChart, AlertCircle } from 'lucide-react';
 
 const stats = [
