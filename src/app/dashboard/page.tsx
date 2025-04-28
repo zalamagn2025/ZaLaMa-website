@@ -1,7 +1,5 @@
 "use client";
 import React from 'react';
-
-
 import StatistiquesGenerales from '@/components/dashboard/StatistiquesGenerales';
 import PerformanceFinanciere from '@/components/dashboard/PerformanceFinanciere';
 import ActiviteParPartenaires from '@/components/dashboard/ActiviteParPartenaires';

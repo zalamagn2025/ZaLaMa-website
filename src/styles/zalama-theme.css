@@ -48,6 +48,7 @@
   --top-users: calc(var(--top-services) + 242px);
   --top-alerts: calc(var(--second-row-top) + var(--height-medium) + var(--header-height) + 40px);
   --top-vizualitions: calc(var(--top-alerts) + var(--height-large) + 24px);
+  --top-objectives: calc(var(--top-users) + var(--height-large) + var(--header-height) + 16px);
   
 }
 
@@ -129,7 +130,13 @@ body {
   top: var(--top-vizualitions);
   right: var(--base-right);
   width: var(--full-width);
-  /*width: var(--right-column-width);*/
+  width: var(--right-column-width);
+  height: var(--height-large);
+}
+.card-objectives{
+  top: var(--top-objectives);
+  left: var(--base-left);
+  width: var(--left-column-width);
   height: var(--height-large);
 }
 
