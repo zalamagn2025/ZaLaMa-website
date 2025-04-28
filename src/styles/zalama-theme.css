@@ -44,11 +44,12 @@
   --fifth-row-top: calc(100% + 30% - 8px);
   
   --header-height: 72px;
+  --top-partners: calc(var(--height-small) - 32px);
   --top-services: calc(var(--base-top) + var(--height-small) + var(--header-height) - 8px );
   --top-users: calc(var(--top-services) + 242px);
-  --top-alerts: calc(var(--second-row-top) + var(--height-medium) + var(--header-height) + 40px);
+  --top-alerts: calc(var(--second-row-top) + var(--height-medium) + var(--header-height) + 32px);
   --top-vizualitions: calc(var(--top-alerts) + var(--height-large) + 24px);
-  --top-objectives: calc(var(--top-users) + var(--height-large) + var(--header-height) + 16px);
+  --top-objectives: calc(var(--top-users) + var(--height-large) + var(--header-height));
   
 }
 
@@ -100,7 +101,7 @@ body {
 }
 
 .card-partners {
-  top: var(--second-row-top);
+  top: var(--top-partners);
   right: var(--base-right);
   width: var(--right-column-width);
   height: var(--height-medium);
