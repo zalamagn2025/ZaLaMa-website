@@ -135,3 +135,7 @@
     @apply text-black bg-transparent;
   }
 }
+
+html, body{
+  background-color: #eaeefe;
+}
