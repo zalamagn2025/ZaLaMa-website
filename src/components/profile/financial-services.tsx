@@ -126,7 +126,7 @@ function FinancialAdviceForm({ onClose }: { onClose: () => void }) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
   // Historique des conversations
-  const [conversations, setConversations] = useState<Array<{
+  const [conversations] = useState<Array<{
     id: string,
     title: string,
     date: Date,
