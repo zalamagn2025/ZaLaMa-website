@@ -3,6 +3,7 @@
 import { IconBell, IconEdit } from "@tabler/icons-react"
 import { useAuth } from "../../contexts/AuthContext"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 
 export function ProfileHeader() {
   const { currentUser, userData } = useAuth()
@@ -53,7 +54,9 @@ export function ProfileHeader() {
         <div className="flex flex-col md:flex-row md:items-center">
           <div className="flex-shrink-0">
             {user.avatar ? (
-              <img 
+              <Image
+                width={40}
+                height={40}
                 src={user.avatar} 
                 alt={user.name} 
                 className="h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 object-cover"
@@ -103,4 +106,4 @@ export function ProfileHeader() {
       </div>
     </div>
   )
-} 
+}

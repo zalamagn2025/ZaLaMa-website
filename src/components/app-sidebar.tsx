@@ -145,6 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
+
               <a href="/dashboard/entreprise">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="text-base font-semibold">ZaLaMa Admin</span>
@@ -165,6 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavDocuments items={data.documents} />
         <NavSecondary 
           items={data.navSecondary.map(item => {
+
             if (item.title === "Notifications") {
               return {
                 ...item,
@@ -189,7 +191,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           renderName={(name) => (
             <div className="flex flex-col">
               <span>{name}</span>
-              <span className="text-xs text-gray-500">Admin</span>
+<span className="text-xs text-gray-500">Admin</span>
+
             </div>
           )}
         />
