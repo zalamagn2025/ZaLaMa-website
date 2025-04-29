@@ -2,13 +2,12 @@
 
 import * as React from "react"
 import {
-  IconCamera,
   IconChartBar,
   IconDashboard,
   IconDatabase,
   IconFileAi,
   IconFileDescription,
-  IconFileWord,
+
   IconFolder,
   IconHelp,
   IconInnerShadowTop,
@@ -39,7 +38,6 @@ import {
 const data = {
   user: {
     name: "Admin ZaLaMa",
-    role: "Administrateur",
     email: "admin@zalama.com",
     avatar: "/avatars/admin.jpg",
   },
@@ -86,12 +84,6 @@ const data = {
     },
   ],
   navSecondary: [
-    {
-      title: "Notifications",
-      url: "/dashboard/entreprise/notifications",
-      icon: IconBell,
-      badge: 3,
-    },
     {
       title: "Paramètres",
       url: "/dashboard/entreprise/settings",
@@ -153,9 +145,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/dashboard/entreprise" className="flex items-center">
+
+              <a href="/dashboard/entreprise">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold ml-2">ZaLaMa Admin</span>
+                <span className="text-base font-semibold">ZaLaMa Admin</span>
               </a>
             </SidebarMenuButton>
             
@@ -173,14 +166,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavDocuments items={data.documents} />
         <NavSecondary 
           items={data.navSecondary.map(item => {
-            if (item.title === "Notifications" && item.badge) {
+
+            if (item.title === "Notifications") {
               return {
                 ...item,
                 icon: () => (
                   <div className="relative">
                     <IconBell className="size-5" />
                     <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-xs text-white bg-red-500 rounded-full">
-                      {item.badge}
+                    Badge
                     </span>
                   </div>
                 )
@@ -197,7 +191,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           renderName={(name) => (
             <div className="flex flex-col">
               <span>{name}</span>
-              <span className="text-xs text-gray-500">{data.user.role}</span>
+<span className="text-xs text-gray-500">Admin</span>
+
             </div>
           )}
         />

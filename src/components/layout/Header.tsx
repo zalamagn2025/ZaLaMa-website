@@ -1,6 +1,8 @@
 import { MenuIcon } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import React from 'react'
+
 export const Header = () => {
   return (
     <header className='py-5 px-5 sticky top-0 backdrop-blur-sm z-20'>
@@ -13,7 +15,9 @@ export const Header = () => {
                     <a href="">A propos</a>
                     <a href="">Partenariat</a>
                     <a href="">Contact</a>
-                    <button className='btn btn-primary'>Se connecter</button>
+                    <Link href="/login">
+                        <button className='btn btn-primary'>Se connecter</button>
+                    </Link>
                 </nav>
             </div>
     </header>
