@@ -1,54 +1,109 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts';
+import { PieChart, Pie, Sector, ResponsiveContainer } from 'recharts';
+import { PieSectorDataItem } from 'recharts/types/polar/Pie';
+
+interface ActiveShapeProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  startAngle: number;
+  endAngle: number;
+  fill: string;
+  payload: {
+    name: string;
+  value: number;
+  };
+  percent: number;
+  value: number;
+}
+
+const renderActiveShape = (props: PieSectorDataItem) => {
+  const {
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    fill,
+    payload,
+    percent,
+    value
+  } = props as ActiveShapeProps;
+
+  const RADIAN = Math.PI / 180;
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + (outerRadius + 10) * cos;
+  const sy = cy + (outerRadius + 10) * sin;
+  const mx = cx + (outerRadius + 30) * cos;
+  const my = cy + (outerRadius + 30) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
+  return (
+    <g>
+      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill}>
+        {payload.name}
+      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+                    />
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 10}
+        fill={fill}
+                />
+      <path
+        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
+        stroke={fill}
+        fill="none"
+      />
+      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+      <text
+        x={ex + (cos >= 0 ? 1 : -1) * 12}
+        y={ey}
+        textAnchor={textAnchor}
+        fill="#999"
+      >{`${value} utilisateurs`}</text>
+      <text
+        x={ex + (cos >= 0 ? 1 : -1) * 12}
+        y={ey}
+        dy={18}
+        textAnchor={textAnchor}
+        fill="#999"
+              >
+        {`(${(percent * 100).toFixed(2)}%)`}
+      </text>
+    </g>
+  );
+};
 
 export default function StatistiquesGenerales() {
-  const [activeIndex, setActiveIndex] = React.useState(0);
+  const [activeIndex, setActiveIndex] = React.useState<number>(0);
 
-  // Données pour le graphique en camembert
   const userTypeData = [
     { name: 'Étudiants', value: 45 },
     { name: 'Salariés', value: 40 },
     { name: 'Pensionnés', value: 15 },
   ];
 
-  // Couleurs plus vives pour chaque segment
   const COLORS = ['#3b82f6', '#10b981', '#6366f1'];
 
-  // Fonction pour le rendu des secteurs actifs
-  const renderActiveShape = (props : any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-
-    return (
-      <g>
-        <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="var(--zalama-text-light)" fontSize="16" fontWeight="bold">
-          {payload.name}
-        </text>
-        <text x={cx} y={cy} dy={10} textAnchor="middle" fill="var(--zalama-text-light)" fontSize="14">
-          {`${value}%`}
-        </text>
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 6}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-        />
-        <Sector
-          cx={cx}
-          cy={cy}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          innerRadius={outerRadius + 8}
-          outerRadius={outerRadius + 10}
-          fill={fill}
-        />
-      </g>
-    );
-  };
-
-  const onPieEnter = (_ : any, index : any) => {
+  const onPieEnter = (_: unknown, index: number) => {
     setActiveIndex(index);
   };
 
@@ -56,7 +111,6 @@ export default function StatistiquesGenerales() {
     <div className="dashboard-card card-stats card bg-[var(--zalama-bg-dark)] text-[var(--zalama-text-light)] rounded-lg">
       <h2 className="text-xl font-semibold mb-4 text-[var(--zalama-blue)]">Statistiques générales</h2>
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Statistiques à gauche */}
         <div className="flex flex-col space-y-4 md:space-y-6 md:w-1/2">
           <div className="flex flex-col">
             <div className="text-2xl md:text-3xl font-bold text-[var(--zalama-gray)]">25,840</div>
@@ -73,43 +127,21 @@ export default function StatistiquesGenerales() {
             </div>
           </div>
         </div>
-        
-        {/* Graphique à droite - Recharts PieChart amélioré */}
         <div className="flex flex-col items-center mt-6 md:mt-0 md:w-1/2">
           <div className="h-50 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart width={400} height={400}>
                 <Pie
                   activeIndex={activeIndex}
                   activeShape={renderActiveShape}
                   data={userTypeData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
+                  innerRadius={60}
                   outerRadius={80}
-                  paddingAngle={3}
+                  fill="#8884d8"
                   dataKey="value"
                   onMouseEnter={onPieEnter}
-                  stroke="var(--zalama-bg-dark)"
-                  strokeWidth={2}
-                >
-                  {userTypeData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={COLORS[index % COLORS.length]} 
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => [`${value}%`, 'Proportion']}
-                  contentStyle={{ 
-                    backgroundColor: 'var(--zalama-bg-darker)', 
-                    borderColor: 'var(--zalama-border)', 
-                    color: 'var(--zalama-text-light)',
-                    borderRadius: '6px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                  }}
-                  itemStyle={{ color: 'var(--zalama-text-light)' }}
                 />
               </PieChart>
             </ResponsiveContainer>
