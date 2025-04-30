@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowRightIcon } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import React from 'react'
 
@@ -8,7 +8,7 @@ export const CallToAction = () => {
         <div className='container px-6 py-10 mx-auto lg:px-20'>
             <div className='section-heading relative'>
                 <div className='flex flex-col items-center'>
-                    <h2 className='section-title'>Rejoignez l'expérience Zalama</h2>
+                    <h2 className='section-title'>Rejoignez l&apos;expérience Zalama</h2>
                     <div className="mt-2">
                         <span className="inline-block w-40 h-1 bg-[#10059F] rounded-full"></span>
                         <span className="inline-block w-3 h-1 ml-1 bg-[#10059F] rounded-full"></span>
