@@ -32,7 +32,7 @@ export const Hero = () => {
     {/* Images */}
     <div className='mt-20 md:mt-0 md:h-[648px] flex-1 relative flex justify-center items-center md:block'>
         <motion.img
-            src={"/images/cog.png"}
+            src={"/images/zalamaHeroImg.png"}
             width={400}
             height={0}
             alt="zalama logo"
@@ -48,7 +48,7 @@ export const Hero = () => {
             }}
         />
         <motion.img
-            src={"/images/cylinder.png"}
+            src={"/images/zalamaHeroImg2.png"}
             width={220}
             height={220}
             alt="cylinder"
@@ -58,7 +58,7 @@ export const Hero = () => {
             }}
         />
         <motion.img
-            src={"/images/noodle.png"}
+            src={"/images/zalamaHeroImg1.png"}
             width={220}
             height={220}
             alt="noodle"
