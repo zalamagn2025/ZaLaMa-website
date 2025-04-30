@@ -63,7 +63,7 @@ export const HomeFeature = () => {
                         Expertise reconnue
                     </h1>
                     <p className="text-gray-500 dark:text-gray-300">
-                        Zalama s'appuie sur une équipe passionnée et expérimentée pour vous offrir des solutions à la hauteur de vos attentes.
+                        Zalama s&apos;appuie sur une équipe passionnée et expérimentée pour vous offrir des solutions à la hauteur de vos attentes.
                     </p>
                 </div>
             </div>

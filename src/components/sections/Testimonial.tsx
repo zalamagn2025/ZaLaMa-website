@@ -74,7 +74,7 @@ const TestimonialsColumn = (props: {
         )}
     >
         {props.testimonials.map(({text, imageSrc, name, username}) => (
-            <div className='card'>
+            <div key={username} className='card'>
                 <div>{text}</div>
                 <div className='flex items-center gap-2 mt-5'>
                     <Image
@@ -103,7 +103,7 @@ export const Testimonial = () => {
                     <div className='tag'>Avis</div>
                 </div>
                 <div className='flex flex-col justify-center items-center'>
-                    <h2 className="section-title">Qu'est ce que nos utilisateurs disent ?</h2>
+                    <h2 className="section-title">Qu&apos;est ce que nos utilisateurs disent ?</h2>
                     <div className="mt-2">
                         <span className="inline-block w-40 h-1 bg-[#10059F] rounded-full"></span>
                         <span className="inline-block w-3 h-1 ml-1 bg-[#10059F] rounded-full"></span>
