@@ -20,7 +20,7 @@ export const HomeFeature = () => {
             <div className="grid w-full grid-cols-1 gap-8 lg:w-1/2 xl:gap-16 md:grid-cols-2">
                 
                 <div className="space-y-3 my-4">
-                    <span className="inline-block p-3 text-[#10059F] bg-blue-100 rounded-xl dark:text-white dark:bg-blue-500">
+                    <span className="inline-block p-3 text-[#FF671E] bg-[#FF671E]/10 rounded-xl dark:text-white dark:bg-blue-500">
                         <ShieldCheck />
                     </span>
                     <h1 className="text-xl font-bold text-gray-700 capitalize dark:text-white">
@@ -32,7 +32,7 @@ export const HomeFeature = () => {
                 </div>
 
                 <div className="space-y-3 my-4">
-                    <span className="inline-block p-3 text-[#10059F] bg-blue-100 rounded-xl dark:text-white dark:bg-blue-500">
+                    <span className="inline-block p-3 text-[#FF671E] bg-[#FF671E]/10 rounded-xl dark:text-white dark:bg-blue-500">
                         <ThumbsUp />
                     </span>
                     <h1 className="text-xl font-semibold text-gray-700 capitalize dark:text-white">
@@ -44,7 +44,7 @@ export const HomeFeature = () => {
                 </div>
 
                 <div className="space-y-3 my-4">
-                    <span className="inline-block p-3 text-[#10059F] bg-blue-100 rounded-xl dark:text-white dark:bg-blue-500">
+                    <span className="inline-block p-3 text-[#FF671E] bg-[#FF671E]/10 rounded-xl dark:text-white dark:bg-blue-500">
                         <Sparkles />
                     </span>
                     <h1 className="text-xl font-bold text-gray-700 capitalize dark:text-white">
@@ -56,7 +56,7 @@ export const HomeFeature = () => {
                 </div>
 
                 <div className="space-y-3">
-                    <span className="inline-block p-3 text-[#10059F] bg-blue-100 rounded-xl dark:text-white dark:bg-blue-500">
+                    <span className="inline-block p-3 text-[#FF671E] bg-[#FF671E]/10 rounded-xl dark:text-white dark:bg-blue-500">
                         <Award />
                     </span>
                     <h1 className="text-xl font-bold text-gray-700 capitalize dark:text-white">
