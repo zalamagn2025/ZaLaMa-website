@@ -155,3 +155,7 @@
   -webkit-mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
   mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
 }
+
+html, body{
+  background-color: #eaeefe;
+}
