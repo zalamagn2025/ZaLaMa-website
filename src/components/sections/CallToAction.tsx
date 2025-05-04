@@ -4,8 +4,8 @@ import React from 'react'
 
 export const CallToAction = () => {
   return (
-    <section className='bg-gradient-to-b form-white to-[#D2DCFF] py-24 overflow-x-clip'>
-        <div className='container px-6 py-10 mx-auto lg:px-20'>
+    <section className=''>
+        <div className='container px-6 mt-36 mx-auto lg:px-28'>
             <div className='section-heading relative'>
                 <div className='flex flex-col items-center'>
                     <h2 className='section-title'>Rejoignez l&apos;expérience Zalama</h2>
@@ -35,10 +35,10 @@ export const CallToAction = () => {
             </div>
             <div className='flex gap-2 mt-10 justify-center'>
                 <button className='btn btn-primary'>Commencez maintenant !</button>
-                <button className='btn btn-text gap-1'>
+                {/* <button className='btn btn-text gap-1'>
                     <span>En savoir plus</span>
                     <ArrowRight size={20}/>
-                </button>
+                </button> */}
             </div>
         </div>
         

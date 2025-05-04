@@ -109,7 +109,7 @@ export const Testimonial = () => {
                         <span className="inline-block w-3 h-1 ml-1 bg-[#10059F] rounded-full"></span>
                         <span className="inline-block w-1 h-1 ml-1 bg-[#10059F] rounded-full"></span>
                     </div>
-                    </div>
+                </div>
                 <p className='section-description mt-5'>
                     Lorem ipsum dolor sit amet consectetur adipisicing elit. 
                     Culpa aspernatur tempore adipisci libero ipsa vitae dolor 

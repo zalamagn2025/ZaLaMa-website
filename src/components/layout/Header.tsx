@@ -8,11 +8,11 @@ export const Header = () => {
     <header className='py-5 px-5 sticky top-0 backdrop-blur-sm z-20'>
             <div className='flex items-center justify-between'>
                 <Image src={"/images/zalama-logo.svg"} width={130} height={0} alt={'Logo de ZaLaMa'}/>
-                <MenuIcon className='md:hidden' size={32}/>
-                <nav className='hidden md:flex gap-6 text-black/60 items-center'>
+                <MenuIcon className='lg:hidden' size={32}/>
+                <nav className='hidden lg:flex gap-6 text-black/60 items-center'>
                     <a href="">Acceuil</a>
-                    <a href="">Services</a>
                     <a href="">A propos</a>
+                    <a href="">Nos Services</a>
                     <a href="">Partenariat</a>
                     <a href="">Contact</a>
                     <Link href="/login">

@@ -17,16 +17,16 @@ export const Hero = () => {
     {/* Texte */}
     <div className='flex-1'>
         <div className='text-sm inline-flex border border-[#222]/10 px-3 py-1 rounded-lg tracking-tight'>
-            La version 1.0 est là
+            La version 1.0 est là !
         </div>
         <h1 className='text-6xl md:text-7xl font-bold tracking-tighter bg-gradient-to-b from-black to-[#001E80] text-transparent bg-clip-text mt-6'>
-            Atteint ta stabilité fiancière
+            Votre salaire, quand vous en avez besoin !
         </h1>
         <p className='text-xl text-[#010D3E] tracking-tight mt-6'>
             Avec Zalama, accède à tes avances sur salaire en un clic, 
             suis tes dépenses, et construis ton avenir financier dès aujourd&apos;hui.
         </p>
-        <button className='btn btn-primary mt-[30px]'>Commencer maintenant !</button>
+        <button className='btn btn-primary mt-[30px]'>Demander une avance</button>
     </div>
 
     {/* Images */}

@@ -5,7 +5,7 @@ import React from 'react'
 export const HomeFeature = () => {
   return (
 <section className="dark:bg-gray-900">
-    <div className="container px-6 py-10 mx-auto lg:px-20">
+    <div className="container px-6 py-16 mx-auto lg:px-28">
         <div className='section-heading flex flex-col items-center'>
             <h2 className="section-title">
                 La qualité Zalama, une promesse tenue
