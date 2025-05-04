@@ -41,7 +41,7 @@ export default function FAQ() {
             <span className="inline-block w-1 h-1 ml-1 bg-[#10059F] rounded-full"></span>
           </div>
           <p className="mt-4 text-center text-gray-600 max-w-2xl">
-            Trouvez rapidement des réponses à vos questions sur nos services d'avance sur salaire
+            Trouvez rapidement des réponses à vos questions sur nos services d&apos;avance sur salaire
           </p>
         </div>
 

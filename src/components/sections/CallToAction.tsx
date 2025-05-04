@@ -1,11 +1,11 @@
-import { ArrowRight } from 'lucide-react'
+//import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import React from 'react'
 
 export const CallToAction = () => {
   return (
     <section className=''>
-        <div className='container px-6 mt-36 mx-auto lg:px-28'>
+        <div className='container px-6 mt-36 mx-auto lg:px-2'>
             <div className='section-heading relative'>
                 <div className='flex flex-col items-center'>
                     <h2 className='section-title'>Rejoignez l&apos;expérience Zalama</h2>
