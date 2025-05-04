@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const Contact = () => {
+export default function Contact(){
   return (
 <section className="relative min-h-screen bg-gradient-to-b form-white to-[#D2DCFF] py-5">
     <div className="container flex flex-col min-h-screen px-6 md:px-10 py-12 mx-auto">

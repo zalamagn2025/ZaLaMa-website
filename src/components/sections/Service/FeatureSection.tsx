@@ -1,0 +1,122 @@
+// components/FeaturesSection.jsx
+'use client'
+import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Wallet,
+  PiggyBank,
+  Users,
+  Brain,
+  Megaphone,
+  ChevronRight
+} from 'lucide-react';
+
+const services = [
+  {
+    title: "Paiement de salaire & pension",
+    description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
+    icon: Wallet,
+    badge: "Service Principal"
+  },
+  {
+    title: "Avance sur salaire",
+    description: [
+      "Permet aux salariés et pensionnés un accès rapide à une partie de leurs salaires avant la date de paie officielle pour les imprévus et urgences financières.",
+      "Permet aux étudiants la possibilité de recevoir leurs primes trimestrielles sous forme de versements mensuels pour les dépenses essentielles comme le logement, la nourriture, le transport, la documentation et la santé."
+    ],
+    icon: PiggyBank,
+    badge: "Service Principal"
+  },
+  {
+    title: "Prêt P2P (Peer-to-Peer)",
+    description: "Faciliter l'octroi de prêts entre particuliers en toute sécurité grâce à un système fiable et structuré.",
+    icon: Users,
+    badge: "Service Principal"
+  },
+  {
+    title: "Conseil financier personnalisé",
+    description: "IA sur-mesure intégrer pour accompagner les utilisateurs dans la gestion de leurs dépenses, leurs comptabilités et la planification de leurs avenir financière.",
+    icon: Brain,
+    badge: "Service Principal"
+  },
+  {
+    title: "Marketing",
+    description: "Un espace publicitaire intégrée permettant aux entreprises locales et internationales de promouvoir leurs produits et services auprès de notre communauté d'utilisateurs.",
+    icon: Megaphone,
+    badge: "Service Complémentaire"
+  }
+];
+
+export default function FeatureSection() {
+  return (
+    <section className="py-16 bg-gradient-to-b form-white to-[#D2DCFF] overflow-x-clip">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col justify-center items-center mb-12">
+          <h2 className="section-title text-center">Nos Services</h2>
+          <div className="mt-2 flex justify-center items-center">
+            <span className="inline-block w-40 h-1 bg-[#10059F] rounded-full"></span>
+            <span className="inline-block w-3 h-1 ml-1 bg-[#10059F] rounded-full"></span>
+            <span className="inline-block w-1 h-1 ml-1 bg-[#10059F] rounded-full"></span>
+          </div>
+          <p className="mt-4 text-center text-gray-600 max-w-2xl">
+            Des solutions financières innovantes pour tous vos besoins
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {services.map((service, index) => {
+            const IconComponent = service.icon;
+            
+            return (
+            <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-[#10059F]/10 rounded-lg flex items-center justify-center">
+                      <IconComponent 
+                        className="w-6 h-6 text-[#10059F]" 
+                        strokeWidth={1.5}
+                    />
+                  </div>
+                    <Badge 
+                    variant={service.badge === "Service Principal" ? "default" : "secondary"}
+                    className="ml-2"
+                  >
+                    {service.badge}
+                  </Badge>
+                </div>
+
+                <h3 className="text-xl font-semibold mb-3 text-gray-900">
+                  {service.title}
+                </h3>
+
+                {Array.isArray(service.description) ? (
+                  <ul className="list-disc list-inside space-y-2 text-gray-600">
+                    {service.description.map((item, idx) => (
+                      <li key={idx} className="text-sm">{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    {service.description}
+                  </p>
+                )}
+
+                <div className="mt-4">
+                    <a 
+                    href={`/services/${service.title.toLowerCase().replace(/ /g, '-')}`}
+                    className="text-[#10059F] hover:text-[#0d0480] text-sm font-medium flex items-center"
+                  >
+                    En savoir plus
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </a>
+                  </div>
+                </CardContent>
+            </Card>
+            );
+          })}
+      </div>
+      </div>
+    </section>
+  );
+}

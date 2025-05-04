@@ -1,15 +1,17 @@
-import { Footer } from '@/components/layout/Footer'
-import { Header } from '@/components/layout/Header'
-import { Contact } from '@/components/sections/Contact/Contact'
-import React from 'react'
+import React from 'react';
+import Contact from '@/components/sections/Contact/Contact';
 
-export default function 
-() {
+// Named function component with display name
+function ContactPage() {
   return (
-    <div>
-        <Header/>
-        <Contact/>
-        <Footer/>     
-    </div>
-  )
+    <main className="min-h-screen">
+      <Contact />
+    </main>
+  );
 }
+
+// Set display name
+ContactPage.displayName = 'ContactPage';
+
+// Export the named component
+export default ContactPage;

@@ -40,7 +40,7 @@ export default function HomeStepper() {
                 <p className='section-description mt-5'>
                     Accédez facilement à une avance sur salaire grâce à notre 
                     processus simplifié. En seulement quatre étapes claires, vous 
-                    pouvez soumettre votre demande, obtenir l’approbation nécessaire 
+                    pouvez soumettre votre demande, obtenir l&apos;approbation nécessaire 
                     et recevoir votre avance directement sur votre compte.   
                 </p> 
             </div>
