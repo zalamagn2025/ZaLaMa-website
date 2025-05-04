@@ -1,18 +1,17 @@
-// components/FeaturesSection.jsx
-'use client'
+"use client";
 import React from 'react';
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Wallet,
-  PiggyBank,
-  Users,
-  Brain,
-  Megaphone,
-  ChevronRight
-} from 'lucide-react';
+import { LucideIcon, Wallet, PiggyBank, Users, Brain, Megaphone } from 'lucide-react';
 
-const services = [
+interface Service {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  badge: string;
+}
+const services: Service[] = [
   {
     title: "Paiement de salaire & pension",
     description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
@@ -21,10 +20,7 @@ const services = [
   },
   {
     title: "Avance sur salaire",
-    description: [
-      "Permet aux salariés et pensionnés un accès rapide à une partie de leurs salaires avant la date de paie officielle pour les imprévus et urgences financières.",
-      "Permet aux étudiants la possibilité de recevoir leurs primes trimestrielles sous forme de versements mensuels pour les dépenses essentielles comme le logement, la nourriture, le transport, la documentation et la santé."
-    ],
+    description: "Permet aux salariés et pensionnés un accès rapide à une partie de leurs salaires avant la date de paie officielle pour les imprévus et urgences financières.",
     icon: PiggyBank,
     badge: "Service Principal"
   },
@@ -49,9 +45,37 @@ const services = [
 ];
 
 export default function FeatureSection() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
     <section className="py-16 bg-gradient-to-b form-white to-[#D2DCFF] overflow-x-clip">
-      <div className="container mx-auto px-4">
+      <motion.div
+        className="container mx-auto px-4"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={containerVariants}
+      >
         <div className="flex flex-col justify-center items-center mb-12">
           <h2 className="section-title text-center">Nos Services</h2>
           <div className="mt-2 flex justify-center items-center">
@@ -66,19 +90,23 @@ export default function FeatureSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => {
-            const IconComponent = service.icon;
-            
+            const Icon = service.icon;
             return (
-            <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <motion.div
+                key={index}
+              variants={cardVariants}
+              whileHover={{ scale: 1.02 }}
+            >
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-[#10059F]/10 rounded-lg flex items-center justify-center">
-                      <IconComponent 
-                        className="w-6 h-6 text-[#10059F]" 
+                        <Icon 
+                          className="w-6 h-6 text-[#10059F]" 
                         strokeWidth={1.5}
                     />
                   </div>
-                    <Badge 
+                      <Badge 
                     variant={service.badge === "Service Principal" ? "default" : "secondary"}
                     className="ml-2"
                   >
@@ -90,33 +118,37 @@ export default function FeatureSection() {
                   {service.title}
                 </h3>
 
-                {Array.isArray(service.description) ? (
-                  <ul className="list-disc list-inside space-y-2 text-gray-600">
-                    {service.description.map((item, idx) => (
-                      <li key={idx} className="text-sm">{item}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-600">
-                    {service.description}
-                  </p>
-                )}
-
+                    <p className="text-sm text-gray-600">
+                      {service.description}
+                    </p>
                 <div className="mt-4">
-                    <a 
+                      <a 
                     href={`/services/${service.title.toLowerCase().replace(/ /g, '-')}`}
                     className="text-[#10059F] hover:text-[#0d0480] text-sm font-medium flex items-center"
                   >
                     En savoir plus
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </a>
-                  </div>
-                </CardContent>
-            </Card>
-            );
+                        <svg 
+                          className="w-4 h-4 ml-1" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M9 5l7 7-7 7" 
+                          />
+                        </svg>
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+        </motion.div>
+  );
           })}
-      </div>
-      </div>
+        </div>
+      </motion.div>
     </section>
   );
 }

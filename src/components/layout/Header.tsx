@@ -10,11 +10,11 @@ export const Header = () => {
                 <Image src={"/images/zalama-logo.svg"} width={130} height={0} alt={'Logo de ZaLaMa'}/>
                 <MenuIcon className='lg:hidden' size={32}/>
                 <nav className='hidden lg:flex gap-6 text-black/60 items-center'>
-                    <a href="">Acceuil</a>
-                    <a href="">A propos</a>
-                    <a href="">Nos Services</a>
-                    <a href="">Partenariat</a>
-                    <a href="">Contact</a>
+                    <Link href="/">Acceuil</Link>
+                    <Link href="/about">A propos</Link>
+                    <Link href="/services">Nos Services</Link>
+                    <Link href="/partnership">Partenariat</Link>
+                    <Link href="/contact">Contact</Link>
                     <Link href="/login">
                         <button className='btn btn-primary'>Se connecter</button>
                     </Link>
