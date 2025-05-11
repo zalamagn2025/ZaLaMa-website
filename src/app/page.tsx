@@ -5,7 +5,6 @@ import HomeStepper from "@/components/sections/Home/HomeStepper";
 import FAQ from "@/components/sections/Home/FAQ";
 import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/sections/Home/Hero";
-import Loading from "@/components/ui/loading";
 
 export default function Home() {
   return (
