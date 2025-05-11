@@ -3,13 +3,13 @@ import { DM_Sans } from "next/font/google";
 import { twMerge } from "tailwind-merge";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
+import SEOProvider from "../components/SEO/SEOProvider";
 
-const dmSans = DM_Sans({ subsets: ['latin']});
-
+const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ZaLaMa GN",
-  description: "Site vitrine de ZaLaMa",
+  title: "ZaLaMa SAS",
+  description: "La fintech des avances sur salaire",
 };
 
 export default function RootLayout({
@@ -22,9 +22,8 @@ export default function RootLayout({
       <body
         className={twMerge(dmSans.className, "antialiased bg-[#EAEEFE]")}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <SEOProvider />
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
