@@ -7,7 +7,7 @@ import { Header } from '@/components/layout/Header';
 function ContactPage() {
   return (
     <main className="min-h-screen">
-       <Header /> 
+      <Header /> 
       <Contact />
       <Footer />
     </main>
@@ -15,7 +15,7 @@ function ContactPage() {
 }
 
 // Set display name
-ContactPage.displayName = 'ContactPage';
+// ContactPage.displayName = 'ContactPage';
 
 // Export the named component
 export default ContactPage;
