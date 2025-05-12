@@ -13,7 +13,12 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+<<<<<<< HEAD
     "@radix-ui/react-accordion": "^1.2.10",
+=======
+    "@lottiefiles/dotlottie-react": "^0.13.5",
+    "@radix-ui/react-accordion": "^1.2.8",
+>>>>>>> 6446184c0c316d6b443a012579fa6990a9708c2c
     "@radix-ui/react-avatar": "^1.1.7",
     "@radix-ui/react-checkbox": "^1.2.3",
     "@radix-ui/react-dialog": "^1.1.11",
@@ -34,6 +39,7 @@
     "lucide-react": "^0.503.0",
     "motion": "^12.8.0",
     "next": "15.3.1",
+    "next-seo": "^6.6.0",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

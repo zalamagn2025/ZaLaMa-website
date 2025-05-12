@@ -4,13 +4,45 @@ import { twMerge } from "tailwind-merge";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 
-const dmSans = DM_Sans({ subsets: ['latin']});
-
+const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ZaLaMa GN",
-  description: "Site vitrine de ZaLaMa",
+  title: "ZaLaMa SAS",
+  description: "La fintech des avances sur salaire.",
+  openGraph: {
+    title: "ZaLaMa SAS",
+    description: "La fintech des avances sur salaire.",
+    url: "https://www.zalamagn.com",
+    siteName: "ZaLaMa",
+    images: [
+      {
+        url: "/images/zalamaOGimg.png",
+        width: 1200,
+        height: 630,
+        alt: "Logo ZaLaMa",
+      },
+    ],
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ZaLaMa SAS",
+    description: "La fintech des avances sur salaire.",
+    images: ["/images/zalamaOGimg.png"],
+    creator: "@zalama",
+  },
+  robots: {
+    index: true,        // Autorise l’indexation de la page
+    follow: true,       // Autorise les bots à suivre les liens sur la page
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large", // Montre les images en grand dans Google Images
+    },
+  }
 };
+
 
 export default function RootLayout({
   children,
@@ -22,9 +54,7 @@ export default function RootLayout({
       <body
         className={twMerge(dmSans.className, "antialiased bg-[#EAEEFE]")}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
