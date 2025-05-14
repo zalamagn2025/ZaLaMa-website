@@ -1,7 +1,5 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
 interface ServiceCardProps {
   title: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { HandCoins, PieChart, ShieldCheck, Zap, Clock, Users, Building2, Smartphone as SmartphoneIcon } from 'lucide-react';
+import { HandCoins, PieChart, ShieldCheck, Zap, BarChart3, LineChart, Megaphone, Wallet, Smartphone } from 'lucide-react';
 import { ServiceCard } from './ServiceCard';
 
 export function ServicesSection() {
@@ -21,7 +21,7 @@ export function ServicesSection() {
     {
       title: "Prêt P2P (Peer-to-Peer)",
       description: "Faciliter l'octroi de prêts entre particuliers en toute sécurité grâce à un système fiable et structuré.",
-      icon: <PieChart className="w-6 h-6" />,
+      icon: <BarChart3 className="w-6 h-6" />,
       features: [
         "Montant de 5.000.000 à 25.000.000 GNF",
         "Durée de 6 à 24 mois",
@@ -34,7 +34,7 @@ export function ServicesSection() {
     {
       title: "Conseil financier personnalisé",
       description: "IA sur-mesure intégrer pour accompagner les utilisateurs dans la gestion de leurs dépenses, leurs comptabilités et la planification de leurs avenir financière.",
-      icon: <ShieldCheck className="w-6 h-6" />,
+      icon: <LineChart className="w-6 h-6" />,
       features: [
         "Gestion des dépenses",
         "Livre de comptabilité",
@@ -47,7 +47,7 @@ export function ServicesSection() {
     {
       title: "Marketing",
       description: "Un espace publicitaire intégrée permettant aux entreprises locales et internationales de promouvoir leurs produits et services auprès de notre communauté d'utilisateurs.",
-      icon: <Zap className="w-6 h-6" />,
+      icon: <Megaphone className="w-6 h-6" />,
       features: [
         "Versements automatiques",
         "Réductions d'impôts",
@@ -60,7 +60,7 @@ export function ServicesSection() {
     {
       title: "Payement de salaire & pension",
       description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
-      icon: <Zap className="w-6 h-6" />,
+      icon: <Wallet className="w-6 h-6" />,
       features: [
         "Versements automatiques",
         "Réductions d'impôts",
