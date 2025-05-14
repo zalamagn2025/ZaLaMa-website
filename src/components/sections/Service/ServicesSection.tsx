@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { HandCoins, PieChart, ShieldCheck, Zap, BarChart3, LineChart, Megaphone, Wallet, Smartphone } from 'lucide-react';
+import { HandCoins, BarChart3, LineChart, Megaphone, Wallet } from 'lucide-react';
 import { ServiceCard } from './ServiceCard';
 
 export function ServicesSection() {
