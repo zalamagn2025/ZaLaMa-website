@@ -8,19 +8,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -31,8 +18,8 @@
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground, #FFFFFF);
+  --color-primary: var(--primary, #FF671E);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -44,115 +31,156 @@
 }
 
 :root {
-  --radius: 0.3rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.623 0.214 259.815);
-  --primary-foreground: oklch(0.97 0.014 254.604);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.623 0.214 259.815);
-  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  /* Variables communes aux deux thèmes */
+  --zalama-orange: #FF671E;       /* Couleur principale - orange */
+  --zalama-orange-light: #FF8C5A;  /* Orange clair pour les hovers */
+  --zalama-orange-dark: #E55C1A;   /* Orange foncé pour les états actifs */
+  --zalama-blue: #3b82f6;         /* Accent secondaire - bleu vif */
+  --zalama-blue-light: #60a5fa;    /* Bleu clair pour les hovers */
+  --zalama-success: #10b981;      /* Succès */
+  --zalama-warning: #f59e0b;      /* Avertissement */
+  --zalama-danger: #ef4444;       /* Danger */
+  --zalama-green: #10b981;        /* Vert */
+  --zalama-red: #ef4444;          /* Rouge */
 }
 
-.dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.546 0.245 262.881);
-  --primary-foreground: oklch(0.379 0.146 265.522);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.546 0.245 262.881);
-  --sidebar-primary-foreground: oklch(0.379 0.146 265.522);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+/* Thème sombre (par défaut) */
+[data-theme="dark"], :root {
+  /* Couleurs principales bleu ZaLaMa (très sombre, presque noir) */
+  --zalama-bg-dark: #0a1525;      /* Fond principal - bleu très sombre */
+  --zalama-bg-darker: #061020;    /* Sidebar - encore plus sombre */
+  --zalama-bg-light: #0e1e36;     /* Cards, hover - un peu plus clair */
+  --zalama-bg-lighter: #1a2c4e;   /* Hover plus clair */
+  --zalama-header-blue: #0c1d3b;  /* Header - bleu profond avec une touche de richesse */
+  --zalama-card: #0c1a2e;         /* Fond cards - bleu très sombre */
+  --zalama-card-hover: #112240;   /* Fond cards au survol */
+  --zalama-border: #1e3a70;       /* Bordures */
+  --zalama-border-light: #2d4b8c; /* Bordures plus claires */
+  --zalama-text: #e5e7ef;         /* Texte principal */
+  --zalama-text-secondary: #a0aec0; /* Texte secondaire */
+  --zalama-text-muted: #6b7c9e;   /* Texte en retrait */
+  --zalama-shadow: rgba(0, 0, 0, 0.3); /* Ombres */
+  --zalama-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
 }
 
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* Thème clair */
+[data-theme="light"] {
+  --zalama-bg-dark: #f5f7fa;      /* Fond principal - gris très clair */
+  --zalama-bg-darker: #e2e8f0;    /* Sidebar - gris clair */
+  --zalama-bg-light: #edf2f7;     /* Cards, hover - gris très clair */
+  --zalama-bg-lighter: #f8fafc;   /* Hover plus clair */
+  --zalama-header-blue: #f1f5f9;  /* Header - bleu très clair */
+  --zalama-card: #ffffff;         /* Fond cards - blanc */
+  --zalama-card-hover: #f8fafc;   /* Fond cards au survol */
+  --zalama-border: #cbd5e1;       /* Bordures */
+  --zalama-border-light: #e2e8f0; /* Bordures plus claires */
+  --zalama-text: #1e293b;         /* Texte principal */
+  --zalama-text-secondary: #64748b; /* Texte secondaire */
+  --zalama-text-muted: #94a3b8;   /* Texte en retrait */
+  --zalama-shadow: rgba(0, 0, 0, 0.1); /* Ombres */
+  --zalama-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
-@layer components{
-  .btn{
-    @apply px-4 py-2 rounded-lg font-medium inline-flex items-center justify-center tracking-tight;
-  }
-
-  .btn-primary{
-    @apply bg-[#FF671E] text-white;
-  }
-
-  .btn-text{
-    @apply text-black bg-transparent;
-  }
-  .section-title {
-    @apply text-center text-3xl md:text-[54px] md:leading-[68px] font-bold tracking-tight bg-gradient-to-b from-black to-[#001E80] text-transparent bg-clip-text 
-  }
-  .section-description{
-    @apply text-center text-[22px] leading-[30px] tracking-tight text-[#010D3E];
-  }
-  .section-heading{
-    @apply max-w-[580px] mx-auto;
-  }
-  .tag {
-    @apply text-sm inline-flex border border-[#222]/10 px-3 py-1 rounded-lg tracking-tight;
-  }
-  .card {
-    @apply p-10 border border-[#222222]/10 rounded-3xl shadow-[0_7px_14px_#EAEAEA] max-w-xs w-full;
-  }
+body {
+  background: var(--zalama-bg-dark);
+  color: var(--zalama-text);
+  line-height: 1.6;
 }
 
-.element {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
+/* Styles de base pour les cartes */
+.card {
+  background: var(--zalama-card);
+  border: 1px solid var(--zalama-border);
+  border-radius: 0.5rem;
+  box-shadow: var(--zalama-card-shadow);
+  transition: all 0.2s ease;
+  overflow: hidden;
 }
 
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  border-color: var(--zalama-border-light);
+}
+
+/* Styles de texte */
+.text-primary {
+  color: var(--zalama-text);
+}
+
+.text-secondary {
+  color: var(--zalama-text-secondary);
+}
+
+.text-muted {
+  color: var(--zalama-text-muted);
+}
+
+/* Corps de section */
+.section-body {
+  padding: 1.5rem;
+  background: var(--zalama-card);
+  color: var(--zalama-text);
+  border-radius: 0.5rem;
+  border: 1px solid var(--zalama-border);
+  margin-bottom: 1.5rem;
+}
+
+/* Styles pour les cartes dans le composant FonctionnementZalama */
+.fonctionnement-card {
+  background: var(--zalama-card);
+  border: 1px solid var(--zalama-border);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+/* Styles pour les onglets (tabs) */
+.tabs-container [data-state="active"] {
+  background-color: var(--zalama-border);
+  color: white;
+}
+
+.tabs-trigger[data-state="active"] {
+  background-color: var(--zalama-border);
+  color: white;
+  border-color: var(--zalama-border-light);
+}
+
+.tabs-trigger[data-state="inactive"] {
+  background-color: var(--zalama-bg-light);
+  color: var(--zalama-text-secondary);
+  border-color: var(--zalama-border);
+}
+
+.tabs-trigger:hover {
+  background-color: var(--zalama-bg-lighter);
+  color: var(--zalama-text);
+  border-color: var(--zalama-border-light);
+}
+
+.tabs-trigger {
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs-trigger[data-state="active"] {
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.fonctionnement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-color: var(--zalama-border-light);
+}
+
+/* Amélioration de la lisibilité sur mobile */
+@media (max-width: 768px) {
+  .fonctionnement-card {
+    margin-bottom: 1.25rem;
+  }
+  
+  .section-body {
+    padding: 1rem;
+  }
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import Contact from '@/components/sections/Contact/Contact';
-import { Footer } from '@/components/layout/Footer';
+import { FooterSection } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 
 // Named function component with display name
@@ -9,7 +9,7 @@ function ContactPage() {
     <main className="min-h-screen">
       <Header /> 
       <Contact />
-      <Footer />
+      <FooterSection />
     </main>
   );
 }
