@@ -50,9 +50,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="relative">
+    <html lang="fr" className="relative" suppressHydrationWarning={true}>
       <body
-        className={twMerge(dmSans.className, "antialiased bg-[#EAEEFE]")}
+        className={twMerge(dmSans.className, "antialiased")}
       >
         <AuthProvider>{children}</AuthProvider>
       </body>

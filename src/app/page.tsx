@@ -1,21 +1,21 @@
-
-import { CallToAction } from "@/components/sections/Home/CallToAction";
-import { Footer } from "@/components/layout/Footer";
-import HomeStepper from "@/components/sections/Home/HomeStepper";
-import FAQ from "@/components/sections/Home/FAQ";
-import { Header } from "@/components/layout/Header";
-import { Hero } from "@/components/sections/Home/Hero";
+import { HeroSection } from "@/components/sections/Home/Hero";
+import FonctionnementZalama from "@/components/sections/Home/FonctionnementZalama.client";
+import { Connect } from "@/components/sections/Home/CTA";
+import { FAQSection } from "@/components/sections/Home/FAQS";
+import { BackgroundEffects } from "@/components/ui/background-effects";
+import { FooterSection } from "@/components/layout/Footer";
 
 export default function Home() {
   return (
-    <div>
-      <Header/>
-      <Hero/>
-      <HomeStepper/>
-      <CallToAction/>
-      <FAQ/>
-      <Footer/>
+    <div className="flex flex-col min-h-screen relative">
+      <BackgroundEffects />
+      <main className="flex-1">
+        <HeroSection />
+        <FonctionnementZalama />
+        <FAQSection />
+        <Connect />
+      </main>
+      <FooterSection />
     </div>
-    
   );
 }

@@ -1,4 +1,4 @@
-import { Footer } from '@/components/layout/Footer'
+import { FooterSection } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { TracingBeamDemo } from '@/components/sections/About/TracingBeam'
 import TeamSection from '@/components/sections/Team/TeamSection'
@@ -10,7 +10,7 @@ export default function AboutPage() {
         <Header/>
         <TracingBeamDemo/>
         <TeamSection/>
-        <Footer/>
+        <FooterSection />
     </div>
   )
 }
