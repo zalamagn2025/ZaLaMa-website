@@ -8,7 +8,7 @@ export function ServicesSection() {
   const services = [
     {
       title: "Avances sur salaire",
-      description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
+      description: "Permet aux salariés et pensionnés un accès rapide à une partie de leurs salaires avant la date de paie officielle pour les imprévus et urgences financières.",
       icon: <HandCoins className="w-6 h-6" />,
       features: [
         "Montant disponible jusqu'à 25% de votre salaire",
