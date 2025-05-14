@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import { twMerge } from "tailwind-merge";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
+import { ThemeProvider } from "@/components/providers";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -52,9 +53,14 @@ export default function RootLayout({
   return (
     <html lang="fr" className="relative" suppressHydrationWarning={true}>
       <body
-        className={twMerge(dmSans.className, "antialiased")}
+        className={twMerge(
+          dmSans.className, 
+          "antialiased bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100"
+        )}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
