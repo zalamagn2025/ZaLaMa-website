@@ -75,21 +75,30 @@ const FonctionnementZalama = () => {
     {
       id: 1,
       title: "Adhésion de l'entreprise",
-      description: "L'employeur signe un contrat de partenariat avec ZaLaMa. Alternativement, un salarié peut recommander le service à son employeur.",
+      description: [
+        "L'employeur signe un contrat de partenariat avec ZaLaMa",
+        "Un salarié peut également recommander le service à son employeur",
+      ],
       image: "/images/etape1.svg",
       reverse: false,
     },
     {
       id: 2,
       title: "Mise en place de la plateforme",
-      description: "ZaLaMa fournit une application mobile ou web aux salariés. Chaque salarié reçoit un lien d'accès pour activer son compte.",
+      description: [
+        "ZaLaMa fournit une application mobile ou web aux salariés",
+        "Chaque salarié reçoit un lien d'accès pour activer son compte.",
+      ],
       image: "/images/etape2.svg",
       reverse: true,
     },
     {
       id: 3,
       title: "Activation du compte salarié",
-      description: "Le salarié télécharge l'application ou se connecte au site web. Il modifie son mot de passe et accède à son compte. Il peut consulter le montant de salaire disponible en temps réel.",
+      description: [
+        "Le salarié télécharge l'application ou se connecte au site web",
+        "Il modifie son mot de passe et accède à son compte",
+      ],
       image: "/images/etape3.svg",
       reverse: false,
     },
@@ -104,9 +113,9 @@ const FonctionnementZalama = () => {
           value: "salarie",
           label: "Service Salarié",
           content: [
-            "Demande d'avance ou de prêt via un formulaire.",
+            "Avances : Déduction automatique du salaire mensuel + frais minimes",
             "Accès gratuit à un assistant virtuel pour des gestions et conseils financiers personnalisés.",
-            "Déblocage des fonds : Instantané ou sous 24h sur le compte choisi par le salarié."
+            "Déblocage des fonds rapide et sécurisé."
           ]
         },
         {
@@ -122,7 +131,11 @@ const FonctionnementZalama = () => {
     {
       id: 5,
       title: "Remboursement automatique",
-      description: "Avances : Déduction automatique du salaire mensuel + frais minimes. Prêts : Remboursement échelonné selon un pourcentage choisi par le salarié. Conseils financiers : Service 100% gratuit pour les salariés.",
+      description: [
+        "Avances : Déduction automatique du salaire mensuel + frais minimes",
+        "Prêts : Remboursement échelonné selon un pourcentage choisi par le salarié",
+        "Conseils financiers : Service 100% gratuit"
+      ],
       image: "/images/etape5.svg",
       reverse: false,
     },
@@ -153,7 +166,7 @@ const FonctionnementZalama = () => {
             className="text-base sm:text-lg text-zalama-text-secondary max-w-[700px] mx-auto"
             variants={slideUp}
           >
-            Découvrez comment notre plateforme simplifie la gestion financière pour les entreprises et leurs employés
+            Découvrez comment ZaLaMa simplifie la vie financière des entreprises et leurs employés
           </motion.p>
         </motion.div>
 
@@ -211,9 +224,21 @@ const FonctionnementZalama = () => {
                     ))}
                   </Tabs>
                 ) : (
-                  <p className="text-secondary">
-                    {etape.description}
-                  </p>
+                  <ul className="mt-4 space-y-2">
+                    {Array.isArray(etape.description) ? (
+                      etape.description.map((item, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="flex-shrink-0 w-1.5 h-1.5 bg-primary rounded-full mt-2.5 mr-2"></span>
+                          <span className="text-muted-foreground">{item}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="flex items-start">
+                        <span className="flex-shrink-0 w-1.5 h-1.5 bg-primary rounded-full mt-2.5 mr-2"></span>
+                        <span className="text-muted-foreground">{etape.description}</span>
+                      </li>
+                    )}
+                  </ul>
                 )}
                 
                 {etape.id === 4 && (
