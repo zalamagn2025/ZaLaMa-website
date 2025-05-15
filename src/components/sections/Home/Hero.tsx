@@ -18,24 +18,24 @@ export function HeroSection() {
             <main className="overflow-x-hidden">
                 <section>
                     <Herodemo
-                        title="Le bien-être financier de vos employés, un leviers de performance !"
+                        title="Le bien-être financier de vos employés est un leviers de performance"
                         subtitle={
                           <ul className="space-y-1.5 text-sm sm:text-base text-left">
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Réduisez le stress et les soucis financiers de vos employés</span>
+                              <span>Réduisez leur stress et soucis financier</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Réduisez les inégalités d&apos;accès au financement en soutenant leurs projets</span>
+                              <span>Réduisez leur inégalités d&apos;accès au financement</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Améliorez leur bien-être financier et la gestion de leurs dépenses</span>
+                              <span>Améliorez leur gestion budgetaire</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Réduisez les risques de surendettement</span>
+                              <span>Réduisez leur risques de surendettement</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>

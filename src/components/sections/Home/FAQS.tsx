@@ -4,28 +4,52 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-const FAQS = [
-  {
-    question: "Comment fonctionne le crédit salaire ?",
-    answer: "Le crédit salaire vous permet d'obtenir une avance sur votre salaire de manière simple et rapide. Vous pouvez demander jusqu'à 70% de votre salaire net, qui sera remboursé automatiquement sur votre prochaine paie avec des frais minimes.",
-  },
-  {
-    question: "Quels sont les documents nécessaires pour une demande ?",
-    answer: "Pour une demande de crédit salaire, vous aurez besoin de votre pièce d'identité, de votre dernier bulletin de paie et d'un RIB. Pour les entreprises, une copie du K-bis de moins de 3 mois est également requise.",
-  },
-  {
-    question: "Quel est le délai de traitement ?",
-    answer: "Le traitement de votre demande est rapide. Une fois tous les documents fournis, vous recevrez une réponse sous 24 à 48 heures. Le virement est effectué sous 24 heures après approbation.",
-  },
-  {
-    question: "Y a-t-il des frais cachés ?",
-    answer: "Non, la transparence est notre priorité. Tous les frais sont clairement indiqués lors de votre demande. Les seuls frais appliqués sont les frais de dossier et les intérêts, calculés de manière transparente.",
-  },
-  {
-    question: "Puis-je rembourser par anticipation ?",
-    answer: "Oui, vous pouvez rembourser votre crédit par anticipation à tout moment sans frais supplémentaires. Cela vous permet de réduire le coût total de votre crédit.",
-  },
-];
+const FAQS = {
+  salarie: [
+    {
+      question: "Qui peut utiliser ZaLaMa ?",
+      answer: "Les étudiants, les salariés et les pensionnaires affiliés à une entreprise ou minsitère partenaire.",
+    },
+    {
+      question: "Quel est le montant maximum que je peux demander ?",
+      answer: "Avance sur salaire : Jusqu'à 25% de votre revenu mensuel.\nPrêt P2P : 25 000 000 GNF",
+    },
+    {
+      question: "En combien de temps puis-je recevoir l'argent ?",
+      answer: "Avance sur salaire : En moins de 30 minutes après validation de votre demande.\nPrêt P2P : en 7 jours après validation de votre demande",
+    },
+    {
+      question: "Est-ce que je peux faire plusieurs demandes par mois ?",
+      answer: "Oui, tant que le montant total ne dépasse pas votre limite autorisée.",
+    },
+    {
+      question: "Puis-je utiliser ZaLaMa sans passer par mon entreprise ?",
+      answer: "Non. ZaLaMa fonctionne avec les entreprises partenaires qui valident l'éligibilité des salariés et pensionnaires.",
+    },
+  ],
+  employeur: [
+    {
+      question: "Quels sont les avantages pour une entreprise d'adhérer à ZaLaMa ?",
+      answer: "Motivation accrue des employés, réduction du stress financier, fidélisation du personnel.",
+    },
+    {
+      question: "Comment l'entreprise est-elle impliquée dans le processus ?",
+      answer: "Elle valide l'identité, le statut du salarié, et autorise l'accès aux services.",
+    },
+    {
+      question: "Que coûte l'adhésion au service ZaLaMa ?",
+      answer: "1 000 000 GNF pour une adhésion unique.",
+    },
+    {
+      question: "Est-ce que ZaLaMa interfère avec la gestion de la paie ?",
+      answer: "Non. ZaLaMa complète la paie sans la modifier. L'entreprise garde le contrôle total.",
+    },
+    {
+      question: "Est-ce que ZaLaMa peut être intégré à notre logiciel RH ?",
+      answer: "Oui. Une intégration simple est possible pour faciliter le suivi des demandes.",
+    },
+  ]
+};
 
 const fadeInUp = {
   hidden: { 
@@ -71,16 +95,23 @@ interface FAQItemProps {
   isOpen: boolean;
   onClick: () => void;
   index: number;
+  type: 'salarie' | 'employeur';
 }
 
-const FAQItem = ({ item, isOpen, onClick, index }: FAQItemProps) => (
+const FAQItem = ({ item, isOpen, onClick, index, type }: FAQItemProps) => (
   <motion.div
     variants={fadeInUp}
     initial="hidden"
     whileInView="visible"
     viewport={{ once: true, margin: "-20px" }}
     whileHover={!isOpen ? "hover" : "visible"}
-    className="overflow-hidden rounded-xl bg-zalama-card border border-zalama-border/50 hover:border-zalama-border/70 transition-all duration-300"
+    className={`group relative overflow-hidden rounded-xl bg-zalama-card border border-zalama-border/50 hover:border-zalama-border/70 transition-all duration-300 cursor-pointer ${
+      isOpen ? 'shadow-lg' : 'hover:shadow-md'
+    } ${
+      type === 'salarie' 
+        ? 'hover:border-primary/50' 
+        : 'hover:border-blue-600/50'
+    }`}
   >
     <motion.button
       className="flex w-full items-center justify-between p-5 text-left"
@@ -161,22 +192,27 @@ const FAQItem = ({ item, isOpen, onClick, index }: FAQItemProps) => (
                 transition: { duration: 0.2 }
               }}
             />
-            <motion.p 
-              className="leading-relaxed"
-              initial={{ y: -5, opacity: 0 }}
-              animate={{ 
-                y: 0, 
-                opacity: 1,
-                transition: { delay: 0.2, duration: 0.3 }
+            <motion.div
+              className={`mt-4 text-zalama-text-secondary space-y-2 ${
+                isOpen ? 'block' : 'hidden'
+              }`}
+              variants={{
+                hidden: { opacity: 0, height: 0 },
+                visible: {
+                  opacity: 1,
+                  height: 'auto',
+                  transition: { duration: 0.3, ease: 'easeOut' },
+                },
               }}
-              exit={{ 
-                y: -5, 
-                opacity: 0,
-                transition: { duration: 0.2 }
-              }}
+              initial="hidden"
+              animate={isOpen ? 'visible' : 'hidden'}
             >
-              {item.answer}
-            </motion.p>
+              {item.answer.split('\n').map((paragraph, i) => (
+                <p key={i} className={i > 0 ? 'mt-2' : ''}>
+                  {paragraph}
+                </p>
+              ))}
+            </motion.div>
           </motion.div>
         </motion.div>
       )}
@@ -186,6 +222,7 @@ const FAQItem = ({ item, isOpen, onClick, index }: FAQItemProps) => (
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [activeTab, setActiveTab] = useState<'salarie' | 'employeur'>('salarie');
 
   const toggleItem = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -209,8 +246,32 @@ export function FAQSection() {
               Questions Fréquentes
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600 dark:text-slate-400">
-              Trouvez les réponses aux questions les plus courantes sur nos services
+              Consultez nos réponses aux questions les plus fréquemment posées par les utilisateurs et les entreprises partenaires
             </p>
+
+            {/* Onglets */}
+            <div className="mt-8 inline-flex p-1 bg-zalama-bg-darker rounded-lg">
+              {(['salarie', 'employeur'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setOpenIndex(0);
+                  }}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === tab
+                      ? `${
+                          tab === 'salarie' 
+                            ? 'bg-primary text-white' 
+                            : 'bg-blue-600 text-white'
+                        } shadow-sm`
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab === 'salarie' ? 'Utilisateurs' : 'Employeurs'}
+                </button>
+              ))}
+            </div>
           </motion.div>
 
           <motion.div
@@ -220,13 +281,14 @@ export function FAQSection() {
             viewport={{ once: true, margin: "-50px" }}
             className="grid gap-4 sm:gap-5"
           >
-            {FAQS.map((item, index) => (
+            {FAQS[activeTab].map((item, index) => (
               <FAQItem
                 key={index}
                 item={item}
                 isOpen={openIndex === index}
                 onClick={() => toggleItem(index)}
                 index={index}
+                type={activeTab}
               />
             ))}
           </motion.div>
