@@ -4,11 +4,13 @@ import { Connect } from "@/components/sections/Home/CTA";
 import { FAQSection } from "@/components/sections/Home/FAQS";
 import { BackgroundEffects } from "@/components/ui/background-effects";
 import { FooterSection } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen relative">
       <BackgroundEffects />
+      <Header />
       <main className="flex-1">
         <HeroSection />
         <FonctionnementZalama />
