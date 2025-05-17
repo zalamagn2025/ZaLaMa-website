@@ -321,29 +321,25 @@ export const Herodemo = ({
           >
             <motion.div
               className="relative w-full max-w-xl mx-auto lg:ml-auto"
-              whileHover={{
-                boxShadow: '0 20px 40px -10px rgba(255, 103, 30, 0.3)',
-                y: -5
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
             >
               <div className="relative z-10">
                 <motion.img
                   src={imageSrc}
                   alt="Hero Visual"
                   className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] md:max-h-[70vh] object-contain"
-                  whileHover={{ 
-                    scale: 1.02,
-                    transition: { 
-                      type: 'spring', 
-                      stiffness: 300,
-                      damping: 10 
-                    } 
+                  animate={{
+                      translateY: [-30, 30],
+                  }}
+                  transition={{
+                      repeat: Infinity,
+                      repeatType: 'mirror',
+                      duration: 3,
+                      ease: "easeInOut"
                   }}
                 />
               </div>
               {/* Effet de lueur */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#FF671E]/20 to-transparent rounded-full filter blur-3xl -z-10 opacity-70" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0063F3]/20 to-transparent rounded-full filter blur-3xl -z-10 opacity-70" />
             </motion.div>
           </motion.div>
         </div>

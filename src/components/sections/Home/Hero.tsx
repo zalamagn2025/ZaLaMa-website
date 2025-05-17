@@ -14,7 +14,6 @@ export function HeroSection() {
   };
     return (
         <>
-            <Header />
             <main className="overflow-x-hidden">
                 <section>
                     <Herodemo
@@ -47,7 +46,7 @@ export function HeroSection() {
                         primaryButtonAction={handlePrimaryButtonClick}
                         secondaryButtonText="Nous contacter"
                         secondaryButtonAction={handleSecondaryButtonClick}
-                        imageSrc="https://i.ibb.co.com/gbG9BjTV/1-removebg-preview.png" // Example image
+                        imageSrc="/images/zalamaHeroImg1.png" // Example image
                         waveColor1="rgba(255, 103, 30, 0.30)"
                         waveColor2="rgba(255, 103, 30, 0.50)"
                         waveAmplitude={30}
