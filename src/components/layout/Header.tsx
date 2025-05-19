@@ -18,6 +18,18 @@ export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+
+  // Empêche le scroll du body quand le menu mobile est ouvert
+  // useEffect(() => {
+  //   if (isMobileMenuOpen) {
+  //     document.body.classList.add('overflow-hidden');
+  //   } else {
+  //     document.body.classList.remove('overflow-hidden');
+  //   }
+  //   return () => {
+  //     document.body.classList.remove('overflow-hidden');
+  //   };
+  // }, [isMobileMenuOpen]);
   
   // Fermer le menu mobile quand on change de page
   useEffect(() => {
@@ -35,14 +47,14 @@ export const Header = () => {
 
   return (
     <motion.header 
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-transparent backdrop-blur-md py-3' : 'bg-transparent py-5'
+      className={`sticky top-0 z-50 transition-all duration-300 bg-transparent ${
+        isScrolled ? 'bg-gray-900/80 backdrop-blur-md py-3' : 'bg-gray-900/80 py-3'
       }`}
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
     >
-      <div className='container mx-auto px-6'>
+      <div className='container mx-auto px-3 sm:px-6'>
         <div className='flex items-center justify-between'>
           <motion.div 
             whileHover={{ scale: 1.03 }}
@@ -51,16 +63,18 @@ export const Header = () => {
             <Link href="/">
               <Image 
                 src={"/images/zalama-logo.svg"} 
-                width={130} 
-                height={40} 
+                width={96} 
+                height={32} 
                 alt={'Logo de ZaLaMa'}
                 priority
+                className="w-24 h-8 sm:w-[130px] sm:h-10"
               />
             </Link>
           </motion.div>
           
           <button 
-            className='lg:hidden text-white focus:outline-none z-50'
+            className='lg:hidden text-white focus:outline-none z-50 rounded-full p-2 hover:bg-white/10 active:bg-white/20 transition-all duration-200'
+            style={{ minWidth: 44, minHeight: 44 }}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label='Menu'
           >
@@ -144,11 +158,12 @@ export const Header = () => {
               
               {/* Menu mobile */}
               <motion.div
-                initial={{ y: '100%', opacity: 0 }}
+                initial={{ y: 80, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '100%', opacity: 0 }}
-                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                className='fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 rounded-t-3xl z-50 p-6 pt-8 pb-12 lg:hidden'
+                exit={{ y: 80, opacity: 0 }}
+                transition={{ type: 'spring', damping: 24, stiffness: 180 }}
+                className='fixed bottom-0 left-0 right-0 bg-gray-900/95 border-t-2 border-primary rounded-t-3xl z-[99] p-4 pt-8 pb-12 shadow-2xl lg:hidden max-h-[88vh] overflow-y-auto'
+                style={{ top: 'unset', bottom: 0 }}
               >
                 <div className='flex flex-col space-y-6'>
                   {navLinks.map((link) => {

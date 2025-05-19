@@ -144,10 +144,10 @@ const FonctionnementZalama = () => {
   return (
     <section 
       ref={ref}
-      className="w-full py-12 sm:py-16 md:py-20 lg:py-28 bg-zalama-bg-darker overflow-hidden"
+      className="w-full py-12 sm:py-16 md:py-20 lg:py-28 bg-zalama-bg-darker overflow-hidden flex justify-center"
     >
       <motion.div 
-        className="container px-4 sm:px-6"
+        className="container flex flex-col items-center justify-center px-4 sm:px-6 mx-auto"
         initial="hidden"
         animate={controls}
         variants={container}
@@ -331,9 +331,20 @@ const FonctionnementZalama = () => {
                     ))}
                   </Tabs>
                 ) : (
-                  <p className="text-sm sm:text-base text-secondary leading-relaxed">
-                    {etape.description}
-                  </p>
+                  Array.isArray(etape.description) ? (
+                    <ul className="pl-2 space-y-1.5 text-sm text-secondary">
+                      {etape.description.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 leading-relaxed">
+                          <span className="mt-2 flex-shrink-0 w-2 h-2 rounded-full bg-primary inline-block"></span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm sm:text-base text-secondary leading-relaxed">
+                      {etape.description}
+                    </p>
+                  )
                 )}
                 
                 {etape.id === 4 && (
