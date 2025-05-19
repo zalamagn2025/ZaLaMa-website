@@ -49,10 +49,11 @@ export function ServicesSection() {
       description: "Un espace publicitaire intégrée permettant aux entreprises locales et internationales de promouvoir leurs produits et services auprès de notre communauté d'utilisateurs.",
       icon: <Megaphone className="w-6 h-6" />,
       features: [
-        "Versements automatiques",
-        "Réductions d'impôts",
-        "Rendements attractifs",
-        "Disponible pour tous les salariés"
+        "ciblage intelligente",
+        "interfaces de gestion et statistiques à temps réel",
+       "visibilité location forte",
+        "soutien technologique et accompagnement"
+
       ],
       // ctaText: "Découvrir l'épargne",
       // ctaLink: "/contact"
@@ -62,10 +63,10 @@ export function ServicesSection() {
       description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
       icon: <Wallet className="w-6 h-6" />,
       features: [
-        "Versements automatiques",
-        "Réductions d'impôts",
-        "Rendements attractifs",
-        "Disponible pour tous les salariés"
+        "paiement 100% digitalisé",
+        "Tableau de bord RH",
+        "Relevé automatique et exportable ",
+        "Accès à une carte santé pour employés"
       ],
       // ctaText: "Découvrir l'épargne",
       // ctaLink: "/contact"
