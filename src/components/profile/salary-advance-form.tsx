@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { IconCreditCard, IconX, IconCheck } from "@tabler/icons-react"
+import { IconCreditCard, IconX, IconCheck, IconInfoCircle } from "@tabler/icons-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface SalaryAdvanceFormProps {
   onClose: () => void
@@ -20,180 +21,278 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
     e.preventDefault()
     setLoading(true)
     
-    // Simuler une soumission
+    // Simulate submission
     setTimeout(() => {
       setLoading(false)
       setSuccess(true)
       
-      // Fermer après 2 secondes en cas de succès
+      // Close after 2 seconds on success
       setTimeout(() => {
         onClose()
       }, 2000)
     }, 1500)
   }
 
-  if (success) {
-    return (
-      <div className="text-center py-8">
-        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900">
-          <IconCheck className="h-6 w-6 text-green-600 dark:text-green-300" />
-        </div>
-        <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Demande envoyée avec succès</h3>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Votre demande d&rsquo;avance sur salaire a été soumise et est en cours de traitement.
-        </p>
-      </div>
-    )
-  }
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center">
-          <IconCreditCard className="h-6 w-6 text-indigo-500 mr-2" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Demande d&rsquo;avance sur salaire</h3>
-        </div>
-        <button 
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <IconX className="h-5 w-5" />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-5">
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Montant demandé (GNF) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Ex: 500000"
-              required
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Vous pouvez demander jusqu&rsquo;à 750,000 GNF (30% de votre salaire)
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Motif de la demande <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Expliquez brièvement pourquoi vous avez besoin de cette avance"
-              required
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="receive-phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Numéro de réception <span className="text-red-500">*</span>
-              </label>
-              <div className="flex items-center">
-                <input
-                  id="use-default"
-                  type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded"
-                  checked={useDefaultPhone}
-                  onChange={() => {
-                    setUseDefaultPhone(!useDefaultPhone)
-                    if (!useDefaultPhone) {
-                      setReceivePhone(userPhone)
-                    }
-                  }}
-                />
-                <label htmlFor="use-default" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                  Utiliser mon numéro
-                </label>
-              </div>
-            </div>
-            <input
-              type="tel"
-              id="receive-phone"
-              value={receivePhone}
-              onChange={(e) => setReceivePhone(e.target.value)}
-              disabled={useDefaultPhone}
-              className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${useDefaultPhone ? 'opacity-60' : ''}`}
-              placeholder="Ex: +224 625 21 21 15"
-              required
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Numéro qui recevra l&rsquo;argent via Mobile Money
-            </p>
-          </div>
-
-          <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Informations importantes</h3>
-                <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-200">
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Le montant sera déduit de votre prochain salaire</li>
-                    <li>Des frais de service de 2% seront appliqués</li>
-                    <li>Le traitement prend généralement 24 heures ouvrables</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center mt-2">
-            <input
-              id="terms"
-              type="checkbox"
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded"
-              required
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-              J&rsquo;accepte les conditions générales et je comprends que cette avance sera déduite de mon prochain salaire
-            </label>
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 disabled:opacity-70"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Traitement en cours...
-              </>
+    <div className="flex items-start justify-center min-h-screen pt-16"> {/* Changé de pt-10 à pt-16 */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.3 }}
+        className="relative w-full max-w-lg bg-[#010D3E] rounded-2xl shadow-2xl shadow-blue-500/10"
+      >
+        <div className="max-h-[80vh] overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100">
+          <AnimatePresence mode="wait">
+            {success ? (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+                className="text-center p-8"
+              >
+                <motion.div
+                  initial={{ scale: 0, rotate: 180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, type: "spring", stiffness: 300, damping: 20 }}
+                  className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] shadow-[0_0_15px_rgba(255,103,30,0.5)]"
+                >
+                  <IconCheck className="h-8 w-8 text-white" />
+                </motion.div>
+                <motion.h3 
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.3 }}
+                  className="mt-6 text-xl font-semibold text-white"
+                >
+                  Demande envoyée avec succès
+                </motion.h3>
+                <motion.p 
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.3 }}
+                  className="mt-2 text-sm text-gray-300"
+                >
+                  Votre demande d&apos;avance sur salaire a été soumise et est en cours de traitement.
+                </motion.p>
+              </motion.div>
             ) : (
-              "Soumettre la demande"
+              <motion.div
+                key="form"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center space-x-3">
+                    <motion.div
+                      whileHover={{ rotate: 360, scale: 1.2 }}
+                      transition={{ duration: 0.5 }}
+                      className="p-2 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53] shadow-lg"
+                    >
+                      <IconCreditCard className="h-6 w-6 text-white" />
+                    </motion.div>
+                    <h3 className="text-2xl font-bold text-white">
+                      Avance sur salaire
+                    </h3>
+                  </div>
+                  <motion.button 
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={onClose}
+                    className="p-1.5 rounded-full hover:bg-[#0A1A5A] transition-colors"
+                  >
+                    <IconX className="h-5 w-5 text-gray-300" />
+                  </motion.button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                    className="space-y-1"
+                  >
+                    <label htmlFor="amount" className="text-sm font-medium text-gray-300">
+                      Montant demandé (GNF)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="amount"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
+                        placeholder="Ex: 500000"
+                        required
+                      />
+                      <span className="absolute right-3 top-3 text-xs text-gray-400">
+                        GNF
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Maximum: 750,000 GNF (30% de votre salaire)
+                    </p>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.15, duration: 0.3 }}
+                    className="space-y-1"
+                  >
+                    <label htmlFor="reason" className="text-sm font-medium text-gray-300">
+                      Motif de la demande
+                    </label>
+                    <textarea
+                      id="reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      rows={3}
+                      className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
+                      placeholder="Expliquez pourquoi vous avez besoin de cette avance..."
+                      required
+                    />
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2, duration: 0.3 }}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="receive-phone" className="text-sm font-medium text-gray-300">
+                        Numéro de réception
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <label htmlFor="use-default" className="text-xs text-gray-400">
+                          Utiliser mon numéro
+                        </label>
+                        <div className="relative inline-flex items-center">
+                          <input
+                            id="use-default"
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={useDefaultPhone}
+                            onChange={() => {
+                              setUseDefaultPhone(!useDefaultPhone)
+                              if (!useDefaultPhone) {
+                                setReceivePhone(userPhone)
+                              }
+                            }}
+                          />
+                          <div className="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#FF671E] peer-checked:to-[#FF8E53]"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="tel"
+                      id="receive-phone"
+                      value={receivePhone}
+                      onChange={(e) => setReceivePhone(e.target.value)}
+                      disabled={useDefaultPhone}
+                      className={`block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white ${useDefaultPhone ? 'opacity-60' : ''}`}
+                      placeholder="Ex: +224 625 21 21 15"
+                      required
+                    />
+                    <p className="text-xs text-gray-400">
+                      L&apos;argent sera envoyé via Mobile Money
+                    </p>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.25, duration: 0.3 }}
+                    className="p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <IconInfoCircle className="h-5 w-5 text-[#FF8E53] mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h3 className="text-sm font-medium text-[#FF8E53]">Informations importantes</h3>
+                        <ul className="mt-2 space-y-1.5 text-xs text-gray-300">
+                          <li className="flex items-start">
+                            <span className="mr-2">•</span>
+                            <span>Le montant sera déduit de votre prochain salaire</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="mr-2">•</span>
+                            <span>Frais de service: 2% du montant</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="mr-2">•</span>
+                            <span>Traitement sous 24 heures ouvrables</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.3 }}
+                    className="flex items-start space-x-3"
+                  >
+                    <input
+                      id="terms"
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-gray-600 text-[#FF671E] focus:ring-[#FF671E] focus:ring-offset-0"
+                      required
+                    />
+                    <label htmlFor="terms" className="text-xs text-gray-400">
+                      J&apos;accepte que cette avance soit déduite de mon prochain salaire et je comprends les conditions générales.
+                    </label>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35, duration: 0.3 }}
+                    className="flex justify-end space-x-3 pt-4"
+                  >
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={onClose}
+                      className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-[#0A1A5A] hover:bg-[#142B7F] transition-colors duration-200"
+                    >
+                      Annuler
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="submit"
+                      disabled={loading}
+                      className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 disabled:opacity-70 transition-all duration-200 relative overflow-hidden"
+                    >
+                      {loading ? (
+                        <>
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          </span>
+                          <span className="opacity-0">Soumettre</span>
+                        </>
+                      ) : (
+                        "Soumettre la demande"
+                      )}
+                    </motion.button>
+                  </motion.div>
+                </form>
+              </motion.div>
             )}
-          </button>
+          </AnimatePresence>
         </div>
-      </form>
+        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#010D3E] to-transparent pointer-events-none" />
+      </motion.div>
     </div>
   )
-} 
+}
