@@ -1,16 +1,20 @@
-import { FooterSection } from '@/components/layout/Footer'
-import { Header } from '@/components/layout/Header'
-import { TracingBeamDemo } from '@/components/sections/About/TracingBeam'
-import TeamSection from '@/components/sections/Team/TeamSection'
-import React from 'react'
+import { FooterSection } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/Header';
+import { AboutHeroCarousel } from '@/components/sections/About/AboutHeroCarousel';
+import TeamSection from '@/components/sections/Team/TeamSection';
+import { BackgroundEffects } from '@/components/ui/background-effects';
+import React from 'react';
 
 export default function AboutPage() {
   return (
-    <div>
-        <Header/>
-        <TracingBeamDemo/>
-        <TeamSection/>
-        <FooterSection />
+    <div className="min-h-screen ">
+      <BackgroundEffects />
+      <Header />
+      <main className="pt-20 pb-16">
+        <AboutHeroCarousel />
+        <TeamSection />
+      </main>
+      <FooterSection />
     </div>
-  )
+  );
 }
