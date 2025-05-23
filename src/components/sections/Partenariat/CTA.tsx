@@ -22,11 +22,11 @@ export function CTA() {
         </div>
         <TypewriterEffectSmooth words={words} />
         <p className="text-base md:text-lg text-[var(--zalama-gray)] mb-6 max-w-xl mx-auto">
-          Offrez à vos collaborateurs des solutions financières innovantes et responsables. Notre équipe vous accompagne à chaque étape du partenariat.
+          Offrez à vos employés la solution financière innovante et responsable ZaLaMa. Notre équipe vous accompagne à chaque étape du partenariat.
         </p>
         <Link href="#formulaire">
           <Button size="lg" className="text-base font-semibold px-8 py-4">
-            Devenir partenaire
+            Formulaire de partenariat
           </Button>
         </Link>
       </div>

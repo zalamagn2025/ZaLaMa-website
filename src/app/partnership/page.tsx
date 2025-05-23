@@ -17,9 +17,9 @@ export default function PartenariatPage() {
           <HeroDemo />
         </section>
         {/* Avantages Partenariat */}
-        <section id="avantages" className="py-10 md:py-16">
+        {/* <section id="avantages" className="py-10 md:py-16">
           <FeaturesSection />
-        </section>
+        </section> */}
         {/* Processus d'adhésion */}
         <section className="py-10 md:py-16 ">
           <AdhesionProcess />

@@ -105,18 +105,21 @@ export function AboutHeroCarousel() {
 
 const dummyContent = [
   {
-    title: "Présentation de ZALAMA",
+    title: "Présentation de ZaLaMa",
     description: (
       <>
         <p>
-          ZaLaMa est une FinTech guinéenne visionnaire qui redéfinit l’accès aux services financiers avec un impact social fort. Nous proposons des avances sur salaire, des prêts P2P, des paiements pour les non-bancarisés et des conseils financiers personnalisés via une intelligence artificielle adaptée aux réalités locales.
+          ZaLaMa est une FinTech guinéenne innovante à fort impact social. Elle propose aux salariés,
+          pensionnés et étudiants les services d&apos;avance sur salaire, de prêt P2P, de paiement de salaire et
+          de conseil financier via une intelligence artificielle locale et sur mesure. 
         </p>
         <p>
-          Notre plateforme simplifie la gestion financière pour les salariés, pensionnés et étudiants, en répondant aux besoins de trésorerie immédiate tout en promouvant une gestion responsable.
+          ZaLaMa répond aux besoins de trésorerie immédiate, facilite le paiement des non-bancarisés et
+          l'accès aux crédits spéciaux, tout en favorisant une meilleure gestion des finances personnelles.
         </p>
       </>
     ),
-    badge: "Introduction",
+    badge: "",
     image: "/images/zalamaHeroImg1.png",
   },
   {
@@ -124,29 +127,19 @@ const dummyContent = [
     description: (
       <>
         <p>
-          ZaLaMa s’engage à promouvoir l’inclusion financière et l’autonomie économique en Guinée. Nos services, simples, rapides et sécurisés, sont conçus pour répondre aux besoins des étudiants, salariés et pensionnés, tout en luttant contre le surendettement.
+          ZaLaMa vise à renforcer l'inclusion financière et l'autonomie économique en Guinée, en
+          offrant aux étudiants, salariés et pensionnaires un accès simple, rapide et sécurisé à des
+          services financiers adaptés à leurs besoins
         </p>
         <p>
-          Grâce à des outils d’éducation financière, nous aidons nos utilisateurs à gérer leurs revenus et à construire un avenir financier stable et digne.
+          ZaLaMa lutte contre le surendettement, encourage
+          la gestion responsable des revenus et soutient l&apos;éducation financière. Notre mission est de
+          permettre à chacun de mieux vivre le quotidien et de construire un avenir financier plus stable
+          et digne
         </p>
       </>
     ),
-    badge: "Mission",
-    image: "/images/zalamaHeroImg1.png",
-  },
-  {
-    title: "Notre vision d’avenir",
-    description: (
-      <>
-        <p>
-          ZaLaMa ambitionne de devenir le leader de l’inclusion financière en Afrique de l’Ouest. Nous visons à transformer la manière dont les individus accèdent et gèrent leurs finances, en rendant les services financiers accessibles, transparents et adaptés à tous.
-        </p>
-        <p>
-          En combinant technologie de pointe et engagement social, nous bâtissons un écosystème où chaque Guinéen peut réaliser ses objectifs financiers avec confiance.
-        </p>
-      </>
-    ),
-    badge: "Vision",
+    badge: "",
     image: "/images/zalamaHeroImg1.png",
   },
 ];

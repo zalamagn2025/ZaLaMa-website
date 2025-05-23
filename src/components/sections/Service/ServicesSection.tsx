@@ -32,13 +32,14 @@ export function ServicesSection() {
       // ctaLink: "/contact"
     },
     {
-      title: "Conseil financier personnalisé",
+      title: "Gestion & Conseil financier",
       description: "IA sur-mesure intégrer pour accompagner les utilisateurs dans la gestion de leurs dépenses, leurs comptabilités et la planification de leurs avenir financière.",
       icon: <LineChart className="w-6 h-6" />,
       features: [
         "Gestion des dépenses",
         "Livre de comptabilité",
         "Stimulateur financier",
+        "Chat avec l'IA",
         "Alertes intelligentes"
       ],
       // ctaText: "Prendre rendez-vous",

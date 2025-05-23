@@ -138,7 +138,7 @@ export default function Contact() {
                     <div className="ml-4">
                       <h4 className="text-lg font-medium text-foreground">Adresse</h4>
                       <p className="mt-1 text-muted-foreground">
-                        Quartier Lansébounyi, Rue KA 038, Immeuble Souleymane 2ème étage, Conakry, Guinée
+                        Carrefour Constantin - Immeuble DING CITY, 3ème étage - C/Matam - Conakry - Guinée
                       </p>
                     </div>
                   </div>
@@ -149,8 +149,8 @@ export default function Contact() {
                     </div>
                     <div className="ml-4">
                       <h4 className="text-lg font-medium text-foreground">Email</h4>
-                      <p className="mt-1 text-muted-foreground">contact@zalamagn.com</p>
-                      <p className="text-muted-foreground">support@zalamagn.com</p>
+                      <p className="mt-1 text-muted-foreground">contact@zalamasas.com</p>
+                      <p className="text-muted-foreground">support@zalamasas.com</p>
                     </div>
                   </div>
 
@@ -160,8 +160,8 @@ export default function Contact() {
                     </div>
                     <div className="ml-4">
                       <h4 className="text-lg font-medium text-foreground">Téléphone</h4>
-                      <p className="mt-1 text-muted-foreground">+224 623 00 00 00</p>
-                      <p className="text-muted-foreground">+224 664 00 00 00</p>
+                      <p className="mt-1 text-muted-foreground">+224 625 60 78 78</p>
+                      {/* <p className="text-muted-foreground">+224 664 00 00 00</p> */}
                     </div>
                   </div>
 

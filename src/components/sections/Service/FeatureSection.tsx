@@ -14,7 +14,7 @@ interface Service {
 const services: Service[] = [
   {
     title: "Paiement de salaire & pension",
-    description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
+    description: "Permet aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
     icon: Wallet,
     badge: "Service Principal"
   },
@@ -26,7 +26,7 @@ const services: Service[] = [
   },
   {
     title: "Prêt P2P (Peer-to-Peer)",
-    description: "Faciliter l'octroi de prêts entre particuliers en toute sécurité grâce à un système fiable et structuré.",
+    description: "Facilite l'octroi de prêt entre particuliers en toute sécurité grâce à un système fiable et structuré.",
     icon: Users,
     badge: "Service Principal"
   },
