@@ -19,7 +19,7 @@ const steps = [
     title: "Étape 1 : Prise de contact",
     content: (
       <ul className="list-disc list-inside">
-        <li>L'entreprise manifeste son intérêt via le site web, un appel ou une rencontre physique.</li>
+        <li>L&apos;entreprise manifeste son intérêt via le site web, un appel ou une rencontre physique.</li>
         <li>ZaLaMa présente la solution, ses avantages et son impact social.</li>
       </ul>
     ),
@@ -31,9 +31,9 @@ const steps = [
     content: (
       <ul className="list-disc list-inside">
         <li>RCCM (Registre de Commerce)</li>
-        <li>NIF (Numéro d'identification fiscale)</li>
+        <li>NIF (Numéro d&apos;identification fiscale)</li>
         <li>Attestation de non-redevance (si disponible)</li>
-        <li>Lettre d'engagement à coopérer</li>
+        <li>Lettre d&apos;engagement à coopérer</li>
         <li>Preuve de capacité à rembourser</li>
       </ul>
     ),
@@ -42,7 +42,7 @@ const steps = [
     color: "warning",
     icon: <ShieldCheck className="w-6 h-6 text-warning" />,
     title: "Étape 3 : Analyse et validation",
-    content: <p>ZaLaMa analyse la viabilité de l'entreprise. En cas de validation, un contrat est proposé.</p>,
+    content: <p>ZaLaMa analyse la viabilité de l&apos;entreprise. En cas de validation, un contrat est proposé.</p>,
   },
   {
     color: "destructive",
@@ -73,7 +73,7 @@ const steps = [
     title: "Étape 6 : Activation des services",
     content: (
       <ul className="list-disc list-inside">
-        <li>Demandes via l'app ZaLaMa</li>
+        <li>Demandes via l&apos;app ZaLaMa</li>
         <li>Gestion via le tableau de bord</li>
       </ul>
     ),
@@ -98,7 +98,7 @@ const AdhesionProcess = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="mb-14 mx-auto max-w-3xl text-center space-y-4">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent inline-block">
-            Processus d'adhésion
+            Processus d&apos;adhésion
           </h2>
           <p className="text-base sm:text-lg text-zalama-text-secondary max-w-[700px] mx-auto">
             Découvrez comment devenir partenaire de ZaLaMa
