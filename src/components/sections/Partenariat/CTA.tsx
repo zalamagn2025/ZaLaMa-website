@@ -24,7 +24,7 @@ export function CTA() {
         <p className="text-base md:text-lg text-[var(--zalama-gray)] mb-6 max-w-xl mx-auto">
           Offrez à vos collaborateurs des solutions financières innovantes et responsables. Notre équipe vous accompagne à chaque étape du partenariat.
         </p>
-        <Link href="#formulaire">
+        <Link href="/partnership/formulaire">
           <Button size="lg" className="text-base font-semibold px-8 py-4">
             Devenir partenaire
           </Button>
