@@ -24,11 +24,11 @@ export default function FeaturesSection() {
   return (
     <section className="py-4 md:py-5">
       <div className="mx-auto w-full max-w-5xl space-y-8 px-4">
-        <AnimatedContainer className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-wide text-balance md:text-4xl lg:text-5xl xl:font-extrabold">
+        <AnimatedContainer className="mb-14 mx-auto max-w-3xl text-center space-y-4">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent inline-block">
             Pourquoi devenir partenaire&nbsp;?
           </h2>
-          <p className="text-muted-foreground mt-4 text-sm tracking-wide text-balance md:text-base">
+          <p className="text-base sm:text-lg text-zalama-text-secondary max-w-[700px] mx-auto">
             Découvrez les avantages exclusifs réservés à nos partenaires et rejoignez une aventure humaine et innovante.
           </p>
         </AnimatedContainer>
