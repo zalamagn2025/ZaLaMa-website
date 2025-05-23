@@ -115,7 +115,7 @@ const dummyContent = [
         </p>
         <p>
           ZaLaMa répond aux besoins de trésorerie immédiate, facilite le paiement des non-bancarisés et
-          l'accès aux crédits spéciaux, tout en favorisant une meilleure gestion des finances personnelles.
+          l&apos;accès aux crédits spéciaux, tout en favorisant une meilleure gestion des finances personnelles.
         </p>
       </>
     ),
@@ -127,7 +127,7 @@ const dummyContent = [
     description: (
       <>
         <p>
-          ZaLaMa vise à renforcer l'inclusion financière et l'autonomie économique en Guinée, en
+          ZaLaMa vise à renforcer l&apos;inclusion financière et l&apos;autonomie économique en Guinée, en
           offrant aux étudiants, salariés et pensionnaires un accès simple, rapide et sécurisé à des
           services financiers adaptés à leurs besoins
         </p>

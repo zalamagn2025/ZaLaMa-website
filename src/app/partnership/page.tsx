@@ -2,7 +2,6 @@ import { BackgroundEffects } from '@/components/ui/background-effects';
 import { FooterSection } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { HeroDemo } from '@/components/sections/Partenariat/HeroSection';
-import FeaturesSection from '@/components/sections/Partenariat/FeaturesSection';
 import AdhesionProcess from '@/components/sections/Partenariat/AdhesionProcess';
 import { CTA } from '@/components/sections/Partenariat/CTA';
 
