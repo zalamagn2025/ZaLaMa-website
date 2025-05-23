@@ -48,7 +48,16 @@ export default function LoginForm() {
   };
 
   return (
-    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+    <>
+      <button
+        type="button"
+        onClick={() => router.push("/")}
+        className="mb-4 flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm"
+      >
+        <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        Retour
+      </button>
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       {error && (
         <div className="bg-red-50 p-4 rounded-md">
           <div className="text-sm text-red-700">{error}</div>
@@ -146,5 +155,6 @@ export default function LoginForm() {
         <p>Vous n&rsquo;avez pas de compte? Contactez votre administrateur pour obtenir vos identifiants.</p>
       </div>
     </form>
+    </>
   );
 } 
