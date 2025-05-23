@@ -1,145 +1,168 @@
-import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Linkedin, Twitter, Mail } from 'lucide-react';
-import Image from 'next/image';
+"use client";
+import Image from "next/image";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, Phone, Linkedin, Mail } from "lucide-react";
 
-interface TeamMember {
-  name: string;
-  role: string;
-  image: string;
-  bio: string;
-  social: {
-    linkedin?: string;
-    twitter?: string;
-    email?: string;
-  };
-}
-
-const teamMembers: TeamMember[] = [
+const teamMembers = [
   {
-    name: "John Doe",
-    role: "CEO & Founder",
-    image: "/images/teamimg.png",
-    bio: "Plus de 15 ans d'expérience dans la technologie financière et l'innovation digitale.",
-    social: {
-      linkedin: "https://linkedin.com/in/johndoe",
-      twitter: "https://twitter.com/johndoe",
-      email: "john@zalama.com"
-    }
+    name: "Mamadouba Youla",
+    role: "Fondateur & CEO",
+    description:
+      "Mamadouba dirige la vision stratégique de ZaLaMa, avec une expertise en inclusion financière et en technologies financières pour transformer la Guinée.",
+    image: "/images/shawn.jpeg",
+    phone: "+224 612 34 75 79",
+    linkedin: "https://linkedin.com/in/mamadouba-youla",
+    email: "mamadouba@zalama.com",
   },
   {
-    name: "Jane Smith",
-    role: "CTO",
-    image: "/images/teamimg.png",
-    bio: "Experte en développement de solutions FinTech et en architecture de systèmes sécurisés.",
-    social: {
-      linkedin: "https://linkedin.com/in/janesmith",
-      email: "jane@zalama.com"
-    }
+    name: "Aissata Camara",
+    role: "Directrice Technologie",
+    description:
+      "Aissata supervise le développement de notre IA locale, garantissant des solutions financières sécurisées et adaptées aux besoins des utilisateurs.",
+    image: "/images/télécharger (1).jpg",
+    phone: "+224 623 45 67 89",
+    linkedin: "https://linkedin.com/in/aissata-camara",
+    email: "aissata@zalama.com",
   },
   {
-    name: "Marc Johnson",
-    role: "Directeur Commercial",
-    image: "/images/teamimg.png",
-    bio: "Spécialiste en développement commercial et partenariats stratégiques.",
-    social: {
-      linkedin: "https://linkedin.com/in/marcjohnson",
-      twitter: "https://twitter.com/marcjohnson",
-      email: "marc@zalama.com"
-    }
+    name: "Ibrahima Diallo",
+    role: "Responsable Produit",
+    description:
+      "Ibrahima conçoit des interfaces intuitives, rendant les services de ZaLaMa accessibles et agréables pour tous, avec un focus sur l’expérience utilisateur.",
+    image: "/images/télécharger (2).jpg",
+    phone: "+224 634 56 78 90",
+    linkedin: "https://linkedin.com/in/ibrahima-diallo",
+    email: "ibrahima@zalama.com",
   },
-  {
-    name: "Sarah Brown",
-    role: "Responsable Marketing",
-    image: "/team/sarah-brown.jpg",
-    bio: "Passionnée par le marketing digital et l'expérience utilisateur.",
-    social: {
-      linkedin: "https://linkedin.com/in/sarahbrown",
-      twitter: "https://twitter.com/sarahbrown",
-      email: "sarah@zalama.com"
-    }
-  }
 ];
 
 export default function TeamSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const next = () => {
+    setCurrentIndex((prev) => (prev + 1) % teamMembers.length);
+  };
+
+  const prev = () => {
+    setCurrentIndex((prev) => (prev - 1 + teamMembers.length) % teamMembers.length);
+  };
+
+  const currentMember = teamMembers[currentIndex];
+
   return (
-    <section className="py-16 bg-gradient-to-b form-white to-[#D2DCFF] overflow-x-clip">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col justify-center items-center mb-12">
-          <h2 className="section-title text-center">Notre Équipe</h2>
-          <div className="mt-2 flex justify-center items-center">
-            <span className="inline-block w-40 h-1 bg-[#10059F] rounded-full"></span>
-            <span className="inline-block w-3 h-1 ml-1 bg-[#10059F] rounded-full"></span>
-            <span className="inline-block w-1 h-1 ml-1 bg-[#10059F] rounded-full"></span>
-          </div>
-          <p className="mt-4 text-center text-gray-600 max-w-2xl">
-            Une équipe passionnée et expérimentée, dédiée à révolutionner les services financiers
-          </p>
+    <section className="relative w-full py-16">
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        .zalama-font {
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+      `}</style>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.h2
+          className="zalama-font text-3xl sm:text-4xl font-extrabold text-white text-center mb-12 tracking-tight"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          Notre Équipe
+        </motion.h2>
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12">
+          {/* Image Block */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              className="relative bg-[#111827]/80 border border-[#3B82F6]/30 rounded-xl overflow-hidden w-80 h-96"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Image
+                src={currentMember.image}
+                alt={currentMember.name}
+                width={320}
+                height={384}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/70 to-transparent" />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Info Block */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              className="bg-[#111827]/80 border border-[#3B82F6]/30 p-6 rounded-xl max-w-md"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h3 className="zalama-font text-xl sm:text-2xl font-semibold text-white">
+                {currentMember.name}
+              </h3>
+              <p className="zalama-font text-[#3B82F6] text-lg mt-1">
+                {currentMember.role}
+              </p>
+              <p className="zalama-font text-gray-300 mt-3 text-base">
+                {currentMember.description}
+              </p>
+              <motion.div
+                className="mt-4 flex flex-col gap-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <span className="flex items-center gap-2 text-gray-300">
+                  <Phone className="h-5 w-5 text-[#3B82F6]" />
+                  {currentMember.phone}
+                </span>
+                <div className="flex gap-4">
+                  <motion.a
+                    href={currentMember.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#3B82F6]"
+                    whileHover={{ scale: 1.2, color: "#60A5FA" }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Linkedin className="h-5 w-5" />
+                  </motion.a>
+                  <motion.a
+                    href={`mailto:${currentMember.email}`}
+                    className="text-[#3B82F6]"
+                    whileHover={{ scale: 1.2, color: "#60A5FA" }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Mail className="h-5 w-5" />
+                  </motion.a>
+                </div>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {teamMembers.map((member, index) => (
-            <Card 
-              key={index} 
-              className="overflow-hidden hover:shadow-lg transition-all duration-300 group"
-            >
-              <CardContent className="p-0">
-                <div className="relative overflow-hidden">
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    width={200}
-                    height={200}
-                    className="w-full h-64 object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                    {member.name}
-                  </h3>
-                  <p className="text-[#10059F] font-medium mb-2">
-                    {member.role}
-                  </p>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {member.bio}
-                  </p>
-                  
-                  <div className="flex space-x-4">
-                    {member.social.linkedin && (
-                      <a
-                        href={member.social.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-[#10059F] transition-colors duration-200"
-                      >
-                        <Linkedin className="w-5 h-5" />
-                      </a>
-                    )}
-                    {member.social.twitter && (
-                      <a
-                        href={member.social.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-[#10059F] transition-colors duration-200"
-                      >
-                        <Twitter className="w-5 h-5" />
-                      </a>
-                    )}
-                    {member.social.email && (
-                      <a
-                        href={`mailto:${member.social.email}`}
-                        className="text-gray-600 hover:text-[#10059F] transition-colors duration-200"
-                      >
-                        <Mail className="w-5 h-5" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Navigation Arrows */}
+        <div className="flex justify-center gap-6 mt-10">
+          <motion.button
+            onClick={prev}
+            className="p-4 rounded-full bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white shadow-lg hover:shadow-2xl"
+            whileHover={{ scale: 1.15, rotate: -5 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronLeft size={28} />
+          </motion.button>
+          <motion.button
+            onClick={next}
+            className="p-4 rounded-full bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white shadow-lg hover:shadow-2xl"
+            whileHover={{ scale: 1.15, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronRight size={28} />
+          </motion.button>
         </div>
       </div>
     </section>
