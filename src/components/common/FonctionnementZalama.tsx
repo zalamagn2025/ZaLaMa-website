@@ -113,9 +113,8 @@ const FonctionnementZalama = () => {
           value: "salarie",
           label: "Service Salarié",
           content: [
-            "Avances : Déduction automatique du salaire mensuel + frais minimes",
-            "Accès gratuit à un assistant virtuel pour des gestions et conseils financiers personnalisés.",
-            "Déblocage des fonds rapide et sécurisé."
+            "Le salarié effectue une demande en remplissant un formulaire correspondant au service souhaité.",
+            "Les fonds sont débloqués après validation de la demande, de manière rapide et sécurisés"
           ]
         },
         {

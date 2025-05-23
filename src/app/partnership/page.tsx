@@ -2,7 +2,6 @@ import { BackgroundEffects } from '@/components/ui/background-effects';
 import { FooterSection } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { HeroDemo } from '@/components/sections/Partenariat/HeroSection';
-import FeaturesSection from '@/components/sections/Partenariat/FeaturesSection';
 import AdhesionProcess from '@/components/sections/Partenariat/AdhesionProcess';
 import { CTA } from '@/components/sections/Partenariat/CTA';
 
@@ -17,9 +16,9 @@ export default function PartenariatPage() {
           <HeroDemo />
         </section>
         {/* Avantages Partenariat */}
-        <section id="avantages" className="py-10 md:py-16">
+        {/* <section id="avantages" className="py-10 md:py-16">
           <FeaturesSection />
-        </section>
+        </section> */}
         {/* Processus d'adhésion */}
         <section className="py-10 md:py-16 ">
           <AdhesionProcess />

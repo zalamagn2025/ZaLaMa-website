@@ -34,7 +34,7 @@ const steps = [
         <li>NIF (Numéro d&apos;identification fiscale)</li>
         <li>Attestation de non-redevance (si disponible)</li>
         <li>Lettre d&apos;engagement à coopérer</li>
-        <li>Preuve de capacité à rembourser</li>
+        <li>Information sur les employés (Nombre, masse salariale, nombre de contrat CDI & CDD)</li>
       </ul>
     ),
   },
@@ -47,11 +47,11 @@ const steps = [
   {
     color: "destructive",
     icon: <Signature className="w-6 h-6 text-destructive" />,
-    title: "Étape 4 : Signature du contrat et paiement",
+    title: "Étape 4 : Partenariat",
     content: (
       <ul className="list-disc list-inside">
-        <li>Signature du partenariat</li>
-        <li>Paiement des frais : 1 000 000 GNF</li>
+        <li>Signature du contrat</li>
+        <li>Paiement des frais d&apos;adhésion : 1 000 000 GNF</li>
       </ul>
     ),
   },
@@ -73,7 +73,7 @@ const steps = [
     title: "Étape 6 : Activation des services",
     content: (
       <ul className="list-disc list-inside">
-        <li>Demandes via l&apos;app ZaLaMa</li>
+        <li>Demandes via l&apos;application ou site web ZaLaMa</li>
         <li>Gestion via le tableau de bord</li>
       </ul>
     ),
