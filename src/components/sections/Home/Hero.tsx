@@ -21,11 +21,11 @@ export function HeroSection() {
                           <ul className="space-y-1.5 text-sm sm:text-base text-left">
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Réduisez leur stress et soucis financier</span>
+                              <span>Réduisez leur stress et leur souci financier</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Réduisez leur inégalités d&apos;accès au financement</span>
+                              <span>Réduisez leur inégalité d&apos;accès au financement</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
@@ -33,7 +33,7 @@ export function HeroSection() {
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Réduisez leur risques de surendettement</span>
+                              <span>Réduisez leur risque de surendettement</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
