@@ -9,7 +9,7 @@ function HeroDemo() {
       actions={[
         {
           label: "Devenir partenaire",
-          href: "/partenariat#formulaire",
+          href: "/partnership/formulaire",
           variant: "default"
         },
         {
