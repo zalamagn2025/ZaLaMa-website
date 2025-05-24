@@ -31,7 +31,7 @@ export function ServiceCard({
       <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary/10 text-primary">
         {icon}
       </div>
-      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{title}</h3>
+      <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
       <p className="text-gray-300 mb-4 flex-grow">{description}</p>
       
       <ul className="space-y-2 mb-6">
