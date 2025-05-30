@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
 
     // Envoi de l'email
     const { data, error } = await resend.emails.send({
-      from: 'contact@zalamasas.com', // Remplacez par votre domaine vérifié
-      to: ['contact@zalamasas.com'], // Email de destination
+      from: 'contact@zalamagn.com',
+      to: ['contact@zalamagn.com'], // Email de destination
       subject: `Nouveau message de contact: ${subject}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
