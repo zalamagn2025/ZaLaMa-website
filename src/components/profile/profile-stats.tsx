@@ -73,8 +73,8 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
         const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}`)
         if (response.ok) {
           const data = await response.json()
-          console.log("data", data.data)
-          setAdvanceRequests(data.data || [])
+          console.log("data", data.demandes)
+          setAdvanceRequests(data.demandes || [])
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des demandes:', error)
