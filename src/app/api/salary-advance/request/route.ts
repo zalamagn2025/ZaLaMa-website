@@ -8,17 +8,41 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { employeId, montant, raison } = body;
+    
+    // Débogage : afficher les données reçues
+    console.log('📦 Données reçues:', body);
+    
+    const { 
+      employeId, 
+      montantDemande, 
+      motif, 
+      numeroReception, 
+      fraisService, 
+      montantTotal,
+      salaireDisponible,
+      avanceDisponible,
+      statut,
+      entrepriseId 
+    } = body;
+
+    // Débogage détaillé
+    console.log('employeId:', employeId);
+    console.log('montantDemande:', montantDemande);
+    console.log('motif:', motif);
 
     // Validation des données
-    if (!employeId || !montant || !raison) {
+    if (!employeId || !montantDemande || !motif) {
       return NextResponse.json(
-        { success: false, message: 'Tous les champs sont requis' },
+        { 
+          success: false, 
+          message: 'Tous les champs sont requis',
+          debug: { employeId: !!employeId, montantDemande: !!montantDemande, motif: !!motif }
+        },
         { status: 400 }
       );
     }
 
-    if (parseFloat(montant) <= 0) {
+    if (parseFloat(montantDemande) <= 0) {
       return NextResponse.json(
         { success: false, message: 'Le montant doit être supérieur à 0' },
         { status: 400 }
@@ -57,7 +81,7 @@ export async function POST(request: NextRequest) {
     const pendingRequestQuery = query(
       collection(db, 'salary_advance_requests'),
       where('employeId', '==', employeId),
-      where('statut', '==', 'en_attente')
+      where('statut', '==', 'EN_ATTENTE')
     );
     
     const pendingRequestSnapshot = await getDocs(pendingRequestQuery);
@@ -72,12 +96,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sauvegarde dans Firestore
+    // Sauvegarde dans Firestore avec tous les champs du frontend
     const requestData = {
       employeId,
-      montant: parseFloat(montant),
-      raison,
-      statut: 'en_attente',
+      montantDemande: parseFloat(montantDemande),
+      motif: motif.trim(),
+      numeroReception,
+      fraisService,
+      montantTotal,
+      salaireDisponible,
+      avanceDisponible,
+      statut: statut || 'EN_ATTENTE',
+      entrepriseId,
       dateCreation: serverTimestamp(),
       dateModification: serverTimestamp()
     };
@@ -100,15 +130,15 @@ export async function POST(request: NextRequest) {
       // Email à l'admin
       const adminEmailResult = await resend.emails.send({
         from: 'contact@zalamagn.com',
-        to: [process.env.ADMIN_EMAIL || 'contact@zalamagn.com'],
+        to: ['contact@zalamagn.com'],
         subject: `Nouvelle demande d'avance - ${userData.nom}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Nouvelle demande d'avance</h2>
             <p><strong>Employé:</strong> ${userData.nom}</p>
             <p><strong>Email:</strong> ${userData.email}</p>
-            <p><strong>Montant:</strong> ${montant.toLocaleString()} GNF</p>
-            <p><strong>Raison:</strong> ${raison}</p>
+            <p><strong>Montant:</strong> ${montantDemande.toLocaleString()} GNF</p>
+            <p><strong>Motif:</strong> ${motif}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleString('fr-FR')}</p>
             <p><strong>ID de la demande:</strong> ${docRef.id}</p>
             <br>
@@ -129,8 +159,8 @@ export async function POST(request: NextRequest) {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Demande d'avance reçue</h2>
             <p>Bonjour ${userData.nom},</p>
-            <p>Votre demande d'avance de <strong>${montant.toLocaleString()} GNF</strong> a été reçue avec succès.</p>
-            <p><strong>Motif:</strong> ${raison}</p>
+            <p>Votre demande d'avance de <strong>${montantDemande.toLocaleString()} GNF</strong> a été reçue avec succès.</p>
+            <p><strong>Motif:</strong> ${motif}</p>
             <p>Elle sera examinée dans les plus brefs délais par notre équipe RH.</p>
             <p>Vous recevrez une notification dès qu'une décision sera prise.</p>
             <p>Numéro de référence: ${docRef.id}</p>
