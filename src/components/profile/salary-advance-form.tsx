@@ -3,35 +3,113 @@
 import { useState } from "react"
 import { IconCreditCard, IconX, IconCheck, IconInfoCircle } from "@tabler/icons-react"
 import { motion, AnimatePresence } from "framer-motion"
-
+import { UserWithEmployeData } from "@/types/employe"
 interface SalaryAdvanceFormProps {
   onClose: () => void
-  userPhone: string
+ 
 }
 
-export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps) {
+export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { user: UserWithEmployeData }) {
   const [amount, setAmount] = useState("")
   const [reason, setReason] = useState("")
-  const [receivePhone, setReceivePhone] = useState(userPhone)
+  const [receivePhone, setReceivePhone] = useState(user.telephone)
   const [useDefaultPhone, setUseDefaultPhone] = useState(true)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fonction pour calculer l'avance disponible (25% du salaire net)
+  const calculateAvailableAdvance = (salaireNet: number): number => {
+    const maxAdvancePercentage = 0.25 // 25% du salaire
+    return Math.floor(salaireNet * maxAdvancePercentage)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
-    // Simulate submission
-    setTimeout(() => {
-      setLoading(false)
+    setError("")
+
+    try {
+      // Validation des données
+      const requestedAmount = parseFloat(amount.replace(/,/g, ''))
+      const availableAdvance = calculateAvailableAdvance(user.salaireNet || 0)
+
+      // Vérifications
+      if (isNaN(requestedAmount) || requestedAmount <= 0) {
+        throw new Error("Veuillez entrer un montant valide")
+      }
+
+      if (requestedAmount > availableAdvance) {
+        throw new Error(`Le montant demandé dépasse votre avance disponible (${availableAdvance.toLocaleString()} GNF)`)
+      }
+
+      if (!reason.trim()) {
+        throw new Error("Veuillez indiquer le motif de votre demande")
+      }
+
+      if (!receivePhone?.trim()) {
+        throw new Error("Veuillez indiquer un numéro de téléphone")
+      }
+
+      // Validation du numéro de téléphone (format guinéen)
+      const phoneRegex = /^(\+224|224)?[6-7][0-9]{8}$/
+      const cleanPhone = receivePhone.replace(/\s+/g, '').replace(/[-()]/g, '')
+      if (!phoneRegex.test(cleanPhone)) {
+        throw new Error("Format de numéro de téléphone invalide")
+      }
+
+      // Calcul des frais de service (2%)
+      const serviceFee = Math.floor(requestedAmount * 0.02)
+      const totalDeduction = requestedAmount + serviceFee
+
+      // Données de la demande
+      const advanceRequest = {
+        employeId: user.employeId,
+        montantDemande: requestedAmount,
+        motif: reason.trim(),
+        numeroReception: cleanPhone,
+        fraisService: serviceFee,
+        montantTotal: totalDeduction,
+        salaireDisponible: user.salaireNet,
+        avanceDisponible: availableAdvance,
+        dateCreation: new Date().toISOString(),
+        statut: 'EN_ATTENTE',
+        entrepriseId: user.partenaireId
+      }
+
+      // Appel API pour soumettre la demande
+      const response = await fetch('/api/salary-advance/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(advanceRequest),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Erreur lors de la soumission de la demande')
+      }
+
+      const result = await response.json()
+      console.log("result", result)
+      
       setSuccess(true)
       
-      // Close after 2 seconds on success
+      // Fermer le modal après 3 secondes
       setTimeout(() => {
         onClose()
-      }, 2000)
-    }, 1500)
+      }, 3000)
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  // Calculer l'avance disponible pour l'affichage
+  const availableAdvance = user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0
 
   return (
     <div className="flex items-start justify-center min-h-screen pt-16"> {/* Changé de pt-10 à pt-16 */}
@@ -124,9 +202,14 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
                         type="text"
                         id="amount"
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={(e) => {
+                          // Permettre seulement les nombres et virgules
+                          const value = e.target.value.replace(/[^0-9,]/g, '')
+                          setAmount(value)
+                          setError("") // Réinitialiser l'erreur lors de la saisie
+                        }}
                         className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
-                        placeholder="Ex: 500000"
+                        placeholder="Ex: 500,000"
                         required
                       />
                       <span className="absolute right-3 top-3 text-xs text-gray-400">
@@ -134,8 +217,17 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
                       </span>
                     </div>
                     <p className="text-xs text-gray-400">
-                      Maximum: 750,000 GNF (30% de votre salaire)
+                      Disponible: {availableAdvance.toLocaleString()} GNF
                     </p>
+                    {error && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-red-400"
+                      >
+                        {error}
+                      </motion.p>
+                    )}
                   </motion.div>
 
                   <motion.div 
@@ -181,7 +273,7 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
                             onChange={() => {
                               setUseDefaultPhone(!useDefaultPhone)
                               if (!useDefaultPhone) {
-                                setReceivePhone(userPhone)
+                                setReceivePhone(user.telephone)
                               }
                             }}
                           />
@@ -215,6 +307,10 @@ export function SalaryAdvanceForm({ onClose, userPhone }: SalaryAdvanceFormProps
                       <div>
                         <h3 className="text-sm font-medium text-[#FF8E53]">Informations importantes</h3>
                         <ul className="mt-2 space-y-1.5 text-xs text-gray-300">
+                          <li className="flex items-start">
+                            <span className="mr-2">•</span>
+                            <span>Avance maximale: 25% de votre salaire net</span>
+                          </li>
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
                             <span>Le montant sera déduit de votre prochain salaire</span>

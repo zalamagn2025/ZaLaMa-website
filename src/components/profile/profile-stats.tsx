@@ -3,12 +3,120 @@
 import { IconCreditCard, IconReceipt, IconArrowUpRight, IconTrendingUp, IconSparkles } from "@tabler/icons-react"
 import { motion, useAnimation } from "framer-motion"
 import { useEffect, useState } from "react"
+import { UserWithEmployeData } from "@/types/employe"
 
-export function ProfileStats() {
+// Fonction pour calculer l'avance disponible
+function calculateAvailableAdvance(salaireNet: number): number {
+  const today = new Date()
+  const currentMonth = today.getMonth()
+  const currentYear = today.getFullYear()
+  
+  // Calculer le nombre de jours ouvrables écoulés ce mois
+  const workingDaysElapsed = getWorkingDaysElapsed(currentYear, currentMonth, today.getDate())
+  
+  // Calculer le total de jours ouvrables du mois
+  const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
+  
+  // Calculer le pourcentage d'avance disponible (maximum 25% du salaire)
+  // const maxAdvancePercentage = 0.25
+  const workingDaysPercentage = workingDaysElapsed / totalWorkingDays
+  // const availablePercentage = Math.min(workingDaysPercentage * maxAdvancePercentage, maxAdvancePercentage)
+  
+  return Math.floor(salaireNet * workingDaysPercentage)
+}
+
+// Fonction pour calculer les jours ouvrables écoulés
+function getWorkingDaysElapsed(year: number, month: number, currentDay: number): number {
+  let workingDays = 0
+  
+  for (let day = 1; day <= currentDay; day++) {
+    const date = new Date(year, month, day)
+    const dayOfWeek = date.getDay()
+    
+    // Exclure samedi (6) et dimanche (0)
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      workingDays++
+    }
+  }
+  
+  return workingDays
+}
+
+// Fonction pour calculer le total de jours ouvrables dans le mois
+function getTotalWorkingDaysInMonth(year: number, month: number): number {
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  let totalWorkingDays = 0
+  
+  for (let day = 1; day <= lastDay; day++) {
+    const date = new Date(year, month, day)
+    const dayOfWeek = date.getDay()
+    
+    // Exclure samedi (6) et dimanche (0)
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      totalWorkingDays++
+    }
+  }
+  
+  return totalWorkingDays
+}
+
+export function ProfileStats({ user }: { user: UserWithEmployeData }) {
+  const [advanceRequests, setAdvanceRequests] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Récupérer les demandes d'avance
+  useEffect(() => {
+    const fetchAdvanceRequests = async () => {
+      if (!user.employeId) return
+      
+      try {
+        const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}`)
+        if (response.ok) {
+          const data = await response.json()
+          console.log("data", data.data)
+          setAdvanceRequests(data.data || [])
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des demandes:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAdvanceRequests()
+  }, [user.employeId])
+
+  console.log("user", user)
+  console.log("user.salaireNet", user.salaireNet)
+  //get total working days in month
+  const totalWorkingDays = getTotalWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth())
+  console.log("totalWorkingDays", totalWorkingDays)
+
+  //get working days elapsed
+  const workingDaysElapsed = getWorkingDaysElapsed(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
+  console.log("Nombre de jours ouvrables écoulés", workingDaysElapsed)
+  
+  // Calculer l'avance disponible dynamiquement
+  const availableAdvance = user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0
+
+  //get remaining salary
+  const remainingSalary = user.salaireNet ? user.salaireNet - availableAdvance : 0
+  console.log("Salaire restant", remainingSalary)
+
+  // Trouver la demande d'avance active (approuvée)
+  
+  const activeAdvance = advanceRequests.find(request => request.statut === 'APPROUVEE')
+  const advanceValue = activeAdvance ? activeAdvance.montantDemande : 0
+  const advanceStatus = activeAdvance ? `1 avance en cours` : 'Aucune avance active'
+
+  console.log("activeAdvance", activeAdvance)
+  console.log("advanceValue", advanceValue)
+  console.log("advanceStatus", advanceStatus)
+
   const stats = [
     {
       title: "Salaire net",
-      value: "2,500,000",
+      value: user.salaireNet?.toLocaleString() || "0",
       remaining: "1,750,000",
       currency: "GNF",
       icon: null,
@@ -20,11 +128,11 @@ export function ProfileStats() {
     },
     {
       title: "Acompte disponible",
-      value: "750,000",
+      value: availableAdvance.toLocaleString(),
       remaining: "",
       currency: "GNF",
       icon: <IconCreditCard className="h-6 w-6" />,
-      change: "10j",
+      change: "Basé sur les jours ouvrables",
       trend: "neutral" as const,
       color: "from-[#010D3E] to-[#1A3A8F]",
       pulse: false,
@@ -32,14 +140,14 @@ export function ProfileStats() {
     },
     {
       title: "Avance actif",
-      value: "5,000,000",
+      value:activeAdvance ? activeAdvance.montantDemande : 0,
       remaining: "",
       currency: "GNF",
       icon: <IconArrowUpRight className="h-6 w-6" />,
-      change: "1 avance en cours",
+      change: loading ? "Chargement..." : advanceStatus,
       trend: "neutral" as const,
       color: "from-[#FF671E] to-[#FF8E53]",
-      pulse: true,
+      pulse: activeAdvance ? true : false,
       showRemaining: false
     },
     {
