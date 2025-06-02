@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBell, IconEdit, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash, IconBuilding } from "@tabler/icons-react";
+import { IconBell, IconEdit, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
