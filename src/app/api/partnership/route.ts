@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
     console.log('📧 Envoi de l\'email admin...');
     // Email à l'admin
     const adminEmailResult = await resend.emails.send({
-      from: 'noreply@zalamasas.com',
-      to: [process.env.ADMIN_EMAIL || 'admin@zalamasas.com'],
+      from: 'contact@zalamagn.com',
+      to: [process.env.ADMIN_EMAIL || 'contact@zalamagn.com'],
       subject: `Nouvelle demande de partenariat - ${companyName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     console.log('📧 Envoi de l\'email utilisateur...');
     // Email de confirmation à l'utilisateur
     const userEmailResult = await resend.emails.send({
-      from: 'noreply@zalamasas.com',
+      from: 'contact@zalamagn.com',
       to: [email],
       subject: 'Confirmation de votre demande de partenariat - Zalama SAS',
       html: `

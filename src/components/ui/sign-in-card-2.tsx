@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Lock, Eye, EyeClosed, ArrowRight, PhoneCall } from 'lucide-react';
+import { Lock, Eye, EyeClosed, ArrowRight, Mail, CheckCircle, AlertCircle, User } from 'lucide-react';
 
 import { cn } from "@/lib/utils"
 import Image from 'next/image';
@@ -32,7 +32,8 @@ export function Component() {
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-
+  const [loginStatus, setLoginStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // For 3D card effect - increased rotation range for more pronounced 3D effect
   const mouseX = useMotionValue(0);
@@ -51,7 +52,69 @@ export function Component() {
     mouseY.set(0);
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setLoginStatus('idle');
+    setErrorMessage('');
 
+    try {
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setLoginStatus('success');
+        
+        // Stocker l'email si "Se souvenir de moi" est coché
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
+
+        // Redirection après succès
+        setTimeout(() => {
+          router.push('/profile');
+        }, 1500);
+      } else {
+        setLoginStatus('error');
+        setErrorMessage(data.error || 'Erreur de connexion');
+      }
+    } catch (error) {
+      console.error('Erreur de connexion:', error);
+      setLoginStatus('error');
+      setErrorMessage('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Charger l'email mémorisé au montage du composant
+  React.useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Fonction pour obtenir l'icône appropriée
+  const getIdentifierIcon = () => {
+    if (email) return Mail;
+    return User;
+  };
+
+  const IdentifierIcon = getIdentifierIcon();
 
   return (
     <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
@@ -361,7 +424,7 @@ export function Component() {
                     transition={{ delay: 0.2 }}
                     className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80"
                   >
-                    Connexion à votre compte
+                    Connexion Employé
                   </motion.h1>
                   
                   <motion.p
@@ -370,12 +433,39 @@ export function Component() {
                     transition={{ delay: 0.3 }}
                     className="text-white/60 text-xs"
                   >
-                    Entrez vos identifiants reçu en message pour vous connecter
+                    Accédez à votre espace personnel
                   </motion.p>
                 </div>
 
+                {/* Messages de statut */}
+                <AnimatePresence>
+                  {loginStatus === 'success' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-4 p-3 bg-green-900/20 border border-green-700 rounded-lg flex items-center"
+                    >
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                      <p className="text-green-200 text-sm">Connexion réussie ! Redirection...</p>
+                    </motion.div>
+                  )}
+
+                  {loginStatus === 'error' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded-lg flex items-center"
+                    >
+                      <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
+                      <p className="text-red-200 text-sm">{errorMessage}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Login form */}
-                <form onSubmit={(e) => { e.preventDefault(); setIsLoading(true); setTimeout(() => setIsLoading(false), 2000); }} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <motion.div className="space-y-3">
                     {/* Email input */}
                     <motion.div 
@@ -387,21 +477,21 @@ export function Component() {
                       <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300" />
                       
                       <div className="relative flex items-center overflow-hidden rounded-lg">
-                        <PhoneCall className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                        <IdentifierIcon className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                           focusedInput === "email" ? 'text-white' : 'text-white/40'
                         }`} />
                         
                         <Input
-                          type="number"
-                          placeholder="Numéro de téléphone"
+                          type="email"
+                          placeholder="Email professionnel"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           onFocus={() => setFocusedInput("email")}
                           onBlur={() => setFocusedInput(null)}
-                          className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
+                          required
+                          className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
                         />
                         
-                        {/* Input highlight effect */}
                         {focusedInput === "email" && (
                           <motion.div 
                             layoutId="input-highlight"
@@ -436,10 +526,10 @@ export function Component() {
                           onChange={(e) => setPassword(e.target.value)}
                           onFocus={() => setFocusedInput("password")}
                           onBlur={() => setFocusedInput(null)}
+                          required
                           className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
                         />
                         
-                        {/* Toggle password visibility */}
                         <div 
                           onClick={() => setShowPassword(!showPassword)} 
                           className="absolute right-3 cursor-pointer"
@@ -451,7 +541,6 @@ export function Component() {
                           )}
                         </div>
                         
-                        {/* Input highlight effect */}
                         {focusedInput === "password" && (
                           <motion.div 
                             layoutId="input-highlight"
@@ -466,42 +555,26 @@ export function Component() {
                     </motion.div>
                   </motion.div>
 
-                  {/* Remember me & Forgot password */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center space-x-2">
-                      <div className="relative">
-                        <input
-                          id="remember-me"
-                          name="remember-me"
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={() => setRememberMe(!rememberMe)}
-                          className="appearance-none h-4 w-4 rounded border border-white/20 bg-white/5 checked:bg-white checked:border-white focus:outline-none focus:ring-1 focus:ring-white/30 transition-all duration-200"
-                        />
-                        {rememberMe && (
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="absolute inset-0 flex items-center justify-center text-black pointer-events-none"
-                          >
-                            {/* <!-- SVG_CHECKMARK --> */}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          </motion.div>
-                        )}
-                      </div>
-                      <label htmlFor="remember-me" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200">
+                  {/* Remember me and forgot password */}
+                  <div className="flex items-center justify-between text-sm mt-3">
+                    <label className="flex items-center space-x-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="rounded border-white/20 bg-white/5 text-[#FF671E] focus:ring-[#FF671E] focus:ring-offset-0"
+                      />
+                      <span className="text-white/60 group-hover:text-white/80 transition-colors duration-300">
                         Se souvenir de moi
-                      </label>
-                    </div>
+                      </span>
+                    </label>
                     
-                    <div className="text-xs relative group/link">
-                      <Link href="/forgot-password" className="text-white/60 hover:text-white transition-colors duration-200">
-                        Mot de passe oublié ?
-                        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 -z-10 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300" />
-                      </Link>
-                    </div>
+                    <Link 
+                      href="/auth/forgot-password" 
+                      className="text-white/60 hover:text-white transition-colors duration-300"
+                    >
+                      Mot de passe oublié ?
+                    </Link>
                   </div>
 
                   {/* Sign in button */}
@@ -509,32 +582,12 @@ export function Component() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || loginStatus === 'success'}
                     className="w-full relative group/button mt-5"
                   >
-                    <Link href="/profile">
-                    {/* Button glow effect - reduced intensity */}
                     <div className="absolute inset-0 bg-white/10 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
                     
                     <div className="relative overflow-hidden bg-[#FF671E] text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center">
-                      {/* Button background animation */}
-                      <motion.div 
-                        className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 -z-10"
-                        animate={{ 
-                          x: ['-100%', '100%'],
-                        }}
-                        transition={{ 
-                          duration: 1.5, 
-                          ease: "easeInOut", 
-                          repeat: Infinity,
-                          repeatDelay: 1
-                        }}
-                        style={{ 
-                          opacity: isLoading ? 1 : 0,
-                          transition: 'opacity 0.3s ease'
-                        }}
-                      />
-                      
                       <AnimatePresence mode="wait">
                         {isLoading ? (
                           <motion.div
@@ -545,6 +598,17 @@ export function Component() {
                             className="flex items-center justify-center"
                           >
                             <div className="w-4 h-4 border-2 border-black/70 border-t-transparent rounded-full animate-spin" />
+                          </motion.div>
+                        ) : loginStatus === 'success' ? (
+                          <motion.div
+                            key="success"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center justify-center gap-1"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">Connecté !</span>
                           </motion.div>
                         ) : (
                           <motion.span
@@ -560,7 +624,6 @@ export function Component() {
                         )}
                       </AnimatePresence>
                     </div>
-                    </Link>
                   </motion.button>
 
                   {/* Minimal Divider */}

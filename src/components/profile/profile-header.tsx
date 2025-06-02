@@ -1,23 +1,15 @@
 "use client";
 
-import { IconBell, IconEdit, IconMail, IconPhone, IconBuilding, IconUser, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash } from "@tabler/icons-react";
+import { IconBell, IconEdit, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash, IconBuilding } from "@tabler/icons-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProfileSettings } from "./profile-settings";
 import { AdCarousel } from "./AdCarousel";
-
-interface UserData {
-  name: string;
-  phone: string;
-  email: string;
-  role: string;
-  entreprise: string;
-  department: string;
-  joinDate: string;
-  avatar: string;
-}
+import { UserWithEmployeData } from "@/types/employe";
+import { Partenaire } from "@/types/partenaire";
+import { User, Mail, Phone, MapPin, Briefcase, Building } from "lucide-react";
 
 interface Notification {
   id: number;
@@ -25,18 +17,13 @@ interface Notification {
   timestamp: string;
 }
 
-export function ProfileHeader() {
+interface ProfileHeaderProps {
+  user: UserWithEmployeData;
+  entreprise: Partenaire;
+}
+
+export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
   const { currentUser, userData } = useAuth();
-  const [user, setUser] = useState<UserData>({
-    name: "Mamadouba Youla",
-    phone: "+224 612 34 75 79",
-    email: "mamadoubayoula240@gmail.com",
-    role: "Account Manager",
-    entreprise: "ZALAMA",
-    department: "Direction financière",
-    joinDate: "12 Mars 2023",
-    avatar: "",
-  });
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -51,17 +38,11 @@ export function ProfileHeader() {
 
   // Sync user data with AuthContext
   useEffect(() => {
+
+    
     if (currentUser && userData) {
-      setUser({
-        name: userData.name || currentUser.displayName || "Mamadouba Youla",
-        phone: userData.phone || "+224 612 34 75 79",
-        email: userData.email || currentUser.email || "mamadoubayoula240@gmail.com",
-        role: userData.role || "Account Manager",
-        entreprise: userData.entreprise || "ZALAMA",
-        department: userData.department || "Direction financière",
-        joinDate: userData.joinDate || "12 Mars 2023",
-        avatar: userData.avatar || currentUser.photoURL || "",
-      });
+      // Update user data with data from AuthContext
+      // This is a placeholder and should be replaced with actual logic to update user data
     }
   }, [currentUser, userData]);
 
@@ -190,10 +171,10 @@ export function ProfileHeader() {
 
   // Edit Profile Form Component
   function EditProfileForm({ onClose }: { onClose: () => void }) {
-    const [formData, setFormData] = useState<UserData>({ ...user });
+    const [formData, setFormData] = useState<UserWithEmployeData>({ ...user });
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [avatarPreview, setAvatarPreview] = useState<string>(user.avatar || "");
-    const [errors, setErrors] = useState<Partial<Record<keyof UserData, string>>>({});
+    const [avatarPreview, setAvatarPreview] = useState<string>(user.photoURL || "");
+    const [errors, setErrors] = useState<Partial<Record<keyof UserWithEmployeData, string>>>({});
 
     // Cleanup avatarPreview URL when component unmounts or new image is uploaded
     useEffect(() => {
@@ -213,11 +194,11 @@ export function ProfileHeader() {
       const file = e.target.files?.[0];
       if (file) {
         if (!["image/png", "image/jpeg"].includes(file.type)) {
-          setErrors((prev) => ({ ...prev, avatar: "Seuls PNG et JPG sont acceptés" }));
+          setErrors((prev) => ({ ...prev, photoURL: "Seuls PNG et JPG sont acceptés" }));
           return;
         }
         if (file.size > 2 * 1024 * 1024) {
-          setErrors((prev) => ({ ...prev, avatar: "L'image doit être < 2MB" }));
+          setErrors((prev) => ({ ...prev, photoURL: "L'image doit être < 2MB" }));
           return;
         }
         // Revoke previous URL if exists
@@ -227,20 +208,19 @@ export function ProfileHeader() {
         setAvatarFile(file);
         const url = URL.createObjectURL(file);
         setAvatarPreview(url);
-        setErrors((prev) => ({ ...prev, avatar: undefined }));
+        setErrors((prev) => ({ ...prev, photoURL: undefined }));
       }
     };
 
     const validateForm = () => {
-      const newErrors: Partial<Record<keyof UserData, string>> = {};
-      if (!formData.name.trim()) newErrors.name = "Le nom est requis";
-      if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = "Email invalide";
-      if (!formData.phone.match(/^\+?\d{1,3}(?:\s?\d{1,4}){2,4}$/))
-        newErrors.phone = "Numéro invalide (ex: +224 612 34 75 79 ou +224612347579)";
-      if (!formData.role.trim()) newErrors.role = "Le rôle est requis";
-      if (!formData.entreprise.trim()) newErrors.entreprise = "L'entreprise est requise";
-      if (!formData.department.trim()) newErrors.department = "Le département est requis";
-      if (!formData.joinDate.match(/^\d{2} \w+ \d{4}$/)) newErrors.joinDate = "Date invalide (ex: 12 Mars 2023)";
+      const newErrors: Partial<Record<keyof UserWithEmployeData, string>> = {};
+      if (!formData.nomComplet?.trim()) newErrors.nomComplet = "Le nom est requis";
+      if (!formData.email?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = "Email invalide";
+      if (!formData.telephone?.match(/^\+?\d{1,3}(?:\s?\d{1,4}){2,4}$/))
+        newErrors.telephone = "Numéro invalide (ex: +224 612 34 75 79 ou +224612347579)";
+      if (!formData.poste?.trim()) newErrors.poste = "Le poste est requis";
+      if (!formData.adresse?.trim()) newErrors.adresse = "L'adresse est requise";
+      if (!formData.dateEmbauche?.match(/^\d{2} \w+ \d{4}$/)) newErrors.dateEmbauche = "Date invalide (ex: 12 Mars 2023)";
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     };
@@ -248,9 +228,9 @@ export function ProfileHeader() {
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (validateForm()) {
-        setUser({
+        setFormData({
           ...formData,
-          avatar: avatarFile ? avatarPreview : formData.avatar,
+          photoURL: avatarFile ? avatarPreview : formData.photoURL,
         });
         onClose();
       }
@@ -296,7 +276,7 @@ export function ProfileHeader() {
                     />
                   ) : (
                     <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-xl font-bold text-[#FFFFFF] border-2 border-[#FF671E]/30">
-                      {formData.name.split(" ").map((n) => n[0]).join("")}
+                      {user.nomComplet?.split(" ").map((n) => n[0]).join("") || 'U'}
                     </div>
                   )}
                 </motion.div>
@@ -309,29 +289,28 @@ export function ProfileHeader() {
                   <input type="file" accept="image/png,image/jpeg" onChange={handleAvatarChange} className="hidden" />
                 </motion.label>
               </div>
-              {errors.avatar && <p className="text-red-400 text-xs mt-2 bg-red-500/10 p-2 rounded">{errors.avatar}</p>}
+              {errors.photoURL && <p className="text-red-400 text-xs mt-2 bg-red-500/10 p-2 rounded">{errors.photoURL}</p>}
             </div>
             {[
-              { name: "name", label: "Nom", type: "text" },
+              { name: "nomComplet", label: "Nom", type: "text" },
               { name: "email", label: "Email", type: "email" },
-              { name: "phone", label: "Téléphone", type: "tel" },
-              { name: "role", label: "Rôle", type: "text" },
-              { name: "entreprise", label: "Entreprise", type: "text" },
-              { name: "department", label: "Département", type: "text" },
-              { name: "joinDate", label: "Date d'adhésion", type: "text" },
+              { name: "telephone", label: "Téléphone", type: "tel" },
+              { name: "poste", label: "Poste", type: "text" },
+              { name: "adresse", label: "Adresse", type: "text" },
+              { name: "dateEmbauche", label: "Date d'adhésion", type: "text" },
             ].map((field) => (
               <div key={field.name}>
                 <label className="block text-sm font-medium text-gray-200 mb-2">{field.label}</label>
                 <motion.input
                   type={field.type}
                   name={field.name}
-                  value={formData[field.name as keyof UserData]}
+                  value={formData[field.name as keyof UserWithEmployeData] || ''}
                   onChange={handleInputChange}
                   whileFocus={{ scale: 1.02 }}
                   className="w-full px-4 py-2 bg-white/5 border border-[#FF671E]/30 rounded-lg text-[#FFFFFF] focus:outline-none focus:ring-2 focus:ring-[#FF671E] transition-all"
                 />
-                {errors[field.name as keyof UserData] && (
-                  <p className="text-red-400 text-xs mt-2 bg-red-500/10 p-2 rounded">{errors[field.name as keyof UserData]}</p>
+                {errors[field.name as keyof UserWithEmployeData] && (
+                  <p className="text-red-400 text-xs mt-2 bg-red-500/10 p-2 rounded">{errors[field.name as keyof UserWithEmployeData]}</p>
                 )}
               </div>
             ))}
@@ -375,7 +354,7 @@ export function ProfileHeader() {
               <div className="bg-white rounded-lg p-2 shadow-sm">
                 <Image src="/images/zalama-logo.svg" width={100} height={0} alt="Logo de ZaLaMa" className="h-auto w-24" priority />
               </div>
-              <h2 className="text-[#FFFFFF] font-medium text-lg hidden sm:block">Profil Utilisateur</h2>
+              <h2 className="text-[#FFFFFF] font-medium text-lg hidden sm:block">{entreprise?.nom }</h2>
             </div>
 
             {/* Bouton Paramètres amélioré */}
@@ -394,8 +373,20 @@ export function ProfileHeader() {
           {/* Texte publicitaire centré */}
           <div className="flex-1 flex items-center justify-center p-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#FFFFFF]/90 mb-2"></h2>
-              <p className="text-[#FFFFFF]/80 text-lg md:text-xl max-w-lg mx-auto"></p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#FFFFFF]/90 mb-2">
+                {user.nom || user.nomComplet || `${user.prenom} ${user.nom}` || user.displayName || 'Utilisateur'}
+              </h2>
+              <p className="text-[#FFFFFF]/80 text-lg md:text-xl max-w-lg mx-auto">
+                {user.poste && (
+                  <div className="flex items-center gap-2 text-white/70">
+                    <Briefcase className="w-4 h-4" />
+                    <span>{user.poste}</span>
+                    {user.role && user.role !== user.poste && (
+                      <span className="text-[#FF671E]">({user.role})</span>
+                    )}
+                  </div>
+                )}
+              </p>
             </motion.div>
           </div>
         </div>
@@ -432,23 +423,22 @@ export function ProfileHeader() {
             <motion.div className="relative group mt-4" whileHover={{ scale: 1.03 }}>
               <div className="absolute -inset-1 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
 
-              {user.avatar ? (
+              {user.photoURL ? (
                 <Image
-                  key={user.avatar}
+                  key={user.photoURL}
                   width={96}
                   height={96}
-                  src={user.avatar}
-                  alt={`Avatar de ${user.name}`}
+                  src={user.photoURL}
+                  alt={`Avatar de ${user.nomComplet || `${user.prenom} ${user.nom}`}`}
                   className="h-24 w-24 rounded-full border-4 border-white object-cover relative z-10 shadow-lg"
                   priority
-                  onError={() => setUser((prev) => ({ ...prev, avatar: "" }))}
                 />
               ) : (
                 <div
-                  key={user.name}
+                  key={user.nomComplet || `${user.prenom} ${user.nom}`}
                   className="h-24 w-24 rounded-full border-4 border-white bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-3xl font-bold text-[#FFFFFF] relative z-10 shadow-lg"
                 >
-                  {user.name.split(" ").map((n) => n[0]).join("")}
+                  <User className="w-10 h-10 text-white" />
                 </div>
               )}
             </motion.div>
@@ -456,8 +446,8 @@ export function ProfileHeader() {
             {/* Informations utilisateur */}
             <div className="space-y-2">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 key={user.name} className="text-2xl font-bold text-[#FFFFFF]">
-                  {user.name}
+                <h1 className="text-2xl font-bold text-[#FFFFFF]">
+                  {user.nom || user.nomComplet || `${user.prenom} ${user.nom}` || user.displayName || 'Utilisateur'}
                 </h1>
                 <div className="flex items-center gap-2">
                   <motion.div
@@ -480,28 +470,38 @@ export function ProfileHeader() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div className="flex items-center text-gray-300">
-                  <IconBuilding size={16} className="mr-2 text-[#FF671E]" />
-                  <span key={user.entreprise}>{user.entreprise}</span>
+                  <Briefcase className="mr-2 text-[#FF671E]" />
+                  <span>{user.poste}</span>
+                </div>
+                {entreprise && (
+                  <div className="flex items-center text-gray-300">
+                    <Building className="mr-2 text-[#FF671E]" />
+                    <span>{entreprise.nom}</span>
+                  </div>
+                )}
+                <div className="flex items-center text-gray-300">
+                  <Phone className="mr-2 text-[#FF671E]" />
+                  <span>{user.telephone}</span>
                 </div>
                 <div className="flex items-center text-gray-300">
-                  <IconUser size={16} className="mr-2 text-[#FF671E]" />
-                  <span key={user.department}>{user.department}</span>
+                  <MapPin className="mr-2 text-[#FF671E]" />
+                  <span>{user.adresse}</span>
                 </div>
                 <div className="flex items-center text-gray-300">
-                  <IconCalendar size={16} className="mr-2 text-[#FF671E]" />
-                  <span key={user.joinDate}>Depuis {user.joinDate}</span>
+                  <IconCalendar className="mr-2 text-[#FF671E]" />
+                  <span>Embauché le {new Date(user.dateEmbauche || '' ).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2 pt-1">
                 <motion.a
-                  key={user.phone}
-                  href={`tel:${user.phone}`}
+                  key={user.telephone}
+                  href={`tel:${user.telephone}`}
                   whileHover={{ y: -2 }}
                   className="flex items-center px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm"
                 >
-                  <IconPhone size={16} className="mr-1.5 text-[#FF671E]" />
-                  <span>{user.phone}</span>
+                  <Phone className="mr-1.5 text-[#FF671E]" />
+                  <span>{user.telephone}</span>
                 </motion.a>
                 <motion.a
                   key={user.email}
@@ -509,7 +509,7 @@ export function ProfileHeader() {
                   whileHover={{ y: -2 }}
                   className="flex items-center px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm"
                 >
-                  <IconMail size={16} className="mr-1.5 text-[#FF671E]" />
+                  <Mail className="mr-1.5 text-[#FF671E]" />
                   <span>{user.email}</span>
                 </motion.a>
               </div>

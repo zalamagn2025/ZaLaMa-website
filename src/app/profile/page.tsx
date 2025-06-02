@@ -8,13 +8,85 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect, useRef } from "react"
 import { AI } from "@/components/profile/AI"
+import { useRouter } from "next/navigation"
+import { UserWithEmployeData } from "@/types/employe"
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("services")
   const [isChatbotOpen, setIsChatbotOpen] = useState(false)
   const tabsRef = useRef<HTMLDivElement>(null)
   const [activeTabRect, setActiveTabRect] = useState<{ left: number; width: number } | null>(null)
+  
+  // États pour l'authentification et les données utilisateur
+  const [user, setUser] = useState<UserWithEmployeData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [entreprise, setEntreprise] = useState<any>(null)
+
+  // Vérifier l'authentification et récupérer les données utilisateur
+  useEffect(() => {
+    const checkAuthAndFetchUser = async () => {
+      try {
+        console.log('🔍 Vérification de l\'authentification...')
+        
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log('✅ Utilisateur authentifié:', data.user.email)
+          console.log('🔍 partenaireId:', data.user.partenaireId)
+          setUser(data.user)
+          setIsAuthenticated(true)
+          
+          // Récupérer les informations de l'entreprise
+          if (data.user.partenaireId) {
+            await fetchEntrepriseInfo(data.user.partenaireId)
+          } else {
+            console.log('❌ Aucun partenaireId trouvé pour cet utilisateur')
+          }
+        } else {
+          console.log('❌ Utilisateur non authentifié')
+          setIsAuthenticated(false)
+          router.push('/login')
+          return
+        }
+      } catch (error) {
+        console.error('💥 Erreur lors de la vérification de l\'authentification:', error)
+        setIsAuthenticated(false)
+        router.push('/login')
+        return
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    const fetchEntrepriseInfo = async (partenaireId: string) => {
+      try {
+        console.log('🏢 Récupération des informations de l\'entreprise...')
+        const response = await fetch(`/api/partenaires/${partenaireId}`, {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (response.ok) {
+          const entrepriseData = await response.json()
+          console.log('✅ Informations entreprise récupérées:', entrepriseData.nom)
+          setEntreprise(entrepriseData)
+        } else {
+          console.error('❌ Erreur lors de la récupération de l\'entreprise')
+        }
+      } catch (error) {
+        console.error('💥 Erreur lors de la récupération de l\'entreprise:', error)
+      }
+    }
+
+    checkAuthAndFetchUser()
+  }, [router])
 
   useEffect(() => {
     setIsMounted(true)
@@ -34,6 +106,27 @@ export default function ProfilePage() {
     }
   }, [activeTab, isMounted])
 
+  // Affichage du loader pendant la vérification
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 flex-col min-h-screen items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <div className="w-8 h-8 border-2 border-[#FF671E] border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/60">Vérification de l&apos;authentification...</p>
+        </motion.div>
+      </div>
+    )
+  }
+
+  // Si pas authentifié, ne rien afficher (redirection en cours)
+  if (!isAuthenticated || !user) {
+    return null
+  }
+
   return (
     <div className="flex flex-1 flex-col min-h-screen">
       <motion.div
@@ -45,7 +138,7 @@ export default function ProfilePage() {
         <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div>
-              <ProfileHeader />
+              <ProfileHeader user={user} entreprise={entreprise} />
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -53,7 +146,7 @@ export default function ProfilePage() {
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="mt-6"
               >
-                <ProfileStats />
+                <ProfileStats user={user} entreprise={entreprise} />
               </motion.div>
               
               <motion.div
@@ -139,10 +232,10 @@ export default function ProfilePage() {
                       transition={{ duration: 0.2 }}
                     >
                       <TabsContent value="services" className="mt-2">
-                        <FinancialServices />
+                        <FinancialServices user={user} entreprise={entreprise} />
                       </TabsContent>
                       <TabsContent value="history" className="mt-2">
-                        <TransactionHistory />
+                        <TransactionHistory user={user} entreprise={entreprise} />
                       </TabsContent>
                     </motion.div>
                   </AnimatePresence>
@@ -176,7 +269,7 @@ export default function ProfilePage() {
             <div className="mb-4">
               <h2 className="text-white text-lg font-semibold">AI Chatbot</h2>
             </div>
-            <AI onClose={() => setIsChatbotOpen(false)} />
+            <AI onClose={() => setIsChatbotOpen(false)} user={user} entreprise={entreprise} />
           </motion.div>
         )}
       </AnimatePresence>
