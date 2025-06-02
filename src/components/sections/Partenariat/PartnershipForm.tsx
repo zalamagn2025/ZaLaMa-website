@@ -1,41 +1,71 @@
+
 'use client';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 export const PartnershipForm = () => {
   const [formData, setFormData] = useState({
     companyName: '',
-    legalStatus: '',
-    rccm: '',
-    nif: '',
     legalRepresentative: '',
     position: '',
     headquartersAddress: '',
     phone: '',
     email: '',
-    employeesCount: '',
-    payroll: '',
-    cdiCount: '',
-    cddCount: '',
-    agreement: false
+    employeesCount: ''
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Formulaire soumis:', formData);
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/partnership', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setFormData({
+          companyName: '',
+          legalRepresentative: '',
+          position: '',
+          headquartersAddress: '',
+          phone: '',
+          email: '',
+          employeesCount: ''
+        });
+      } else {
+        setSubmitStatus('error');
+        setErrorMessage(data.error || 'Une erreur est survenue');
+      }
+    } catch (error) {
+      console.error('Erreur Resend:', error);
+      setSubmitStatus('error');
+      setErrorMessage('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -43,222 +73,105 @@ export const PartnershipForm = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-xl mx-auto p-8 rounded-3xl shadow-2xl backdrop-blur-lg bg-blue-900/10 border border-blue-700/80"
+      className="max-w-2xl mx-auto p-6 rounded-3xl shadow-2xl backdrop-blur-lg bg-blue-900/10 border border-blue-700"
     >
-      {/* Bouton de retour avec animation */}
-      <motion.div 
-        whileHover={{ x: -3 }}
-        transition={{ type: 'spring', stiffness: 300 }}
-        className="mb-8"
-      >
-        <Link href="http://localhost:3001/partnership" passHref>
-          <Button variant="ghost" className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors">
-            <ArrowLeft className="h-5 w-5" />
-            <span className="text-sm font-medium">Retour aux partenariats</span>
-          </Button>
-        </Link>
-      </motion.div>
-
-      {/* Titre stylisé avec animations */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className="text-center mb-10"
-      >
-        <motion.h2 
-          className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-blue-400 mb-3"
-          whileHover={{ scale: 1.02 }}
-          transition={{ type: 'spring', stiffness: 400 }}
-        >
-          Devenez Partenaire
-        </motion.h2>
-        <motion.p 
-          className="text-blue-300/90 text-sm max-w-md mx-auto leading-relaxed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          Remplissez ce formulaire pour initier un partenariat stratégique avec notre organisation
-        </motion.p>
-        <motion.div 
-          className="w-24 h-1 bg-gradient-to-r from-orange-400 to-orange-600 mx-auto rounded-full mt-5"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: 0.3, duration: 0.8, type: 'spring' }}
-        />
-      </motion.div>
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200 mb-3">
+          Formulaire de Partenariat
+        </h2>
+        <div className="w-24 h-1 bg-gradient-to-r from-orange-400 to-orange-600 mx-auto rounded-full"></div>
+      </div>
       
-      <form onSubmit={handleSubmit} className="space-y-7">
-        {/* Nom de l'entreprise */}
+      {/* Messages de statut */}
+      {submitStatus === 'success' && (
         <motion.div 
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          whileHover={{ 
-            scale: 1.01,
-            transition: { type: 'spring', stiffness: 300 }
-          }}
+          className="mb-6 p-4 bg-green-900/20 border border-green-700 rounded-lg flex items-center"
         >
-          <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-            Nom de l&apos;entreprise
-          </label>
-          <Input
-            name="companyName"
-            value={formData.companyName}
-            onChange={handleChange}
-            required
-            className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
-          />
+          <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
+          <div>
+            <p className="text-green-200 font-medium">Demande envoyée avec succès !</p>
+            <p className="text-green-300 text-sm">Vous recevrez une confirmation par email et nous vous recontacterons sous 48-72h.</p>
+          </div>
         </motion.div>
+      )}
 
-        {/* Tous les autres champs avec la même structure animée */}
-        {/* Raison sociale */}
+      {submitStatus === 'error' && (
         <motion.div 
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-          whileHover={{ 
-            scale: 1.01,
-            transition: { type: 'spring', stiffness: 300 }
-          }}
+          className="mb-6 p-4 bg-red-900/20 border border-red-700 rounded-lg flex items-center"
         >
-          <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-            Raison sociale
-          </label>
-          <Input
-            name="legalStatus"
-            value={formData.legalStatus}
-            onChange={handleChange}
-            required
-            className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
-          />
+          <AlertCircle className="w-5 h-5 text-red-400 mr-3" />
+          <p className="text-red-200">{errorMessage}</p>
         </motion.div>
-
-        {/* RCCM et NIF */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            whileHover={{ 
-              scale: 1.01,
-              transition: { type: 'spring', stiffness: 300 }
-            }}
-          >
-            <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-              RCCM
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Raison sociale */}
+          <motion.div whileHover={{ scale: 1.02 }}>
+            <label className="block text-sm font-semibold text-blue-100 mb-2 tracking-wide">
+              RAISON SOCIALE
             </label>
             <Input
-              name="rccm"
-              value={formData.rccm}
+              name="companyName"
+              value={formData.companyName}
               onChange={handleChange}
               required
-              className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
+              className="bg-blue-950/50 border-blue-700 text-white placeholder-blue-400 h-10 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent px-3"
             />
           </motion.div>
           
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 }}
-            whileHover={{ 
-              scale: 1.01,
-              transition: { type: 'spring', stiffness: 300 }
-            }}
-          >
-            <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-              NIF
+          {/* Représentant légal */}
+          <motion.div whileHover={{ scale: 1.02 }}>
+            <label className="block text-sm font-semibold text-blue-100 mb-2 tracking-wide">
+              REPRÉSENTANT LÉGAL
             </label>
             <Input
-              name="nif"
-              value={formData.nif}
+              name="legalRepresentative"
+              value={formData.legalRepresentative}
               onChange={handleChange}
               required
-              className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
+              className="bg-blue-950/50 border-blue-700 text-white placeholder-blue-400 h-10 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent px-3"
             />
           </motion.div>
         </div>
 
-        {/* Représentant légal */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          whileHover={{ 
-            scale: 1.01,
-            transition: { type: 'spring', stiffness: 300 }
-          }}
-        >
-          <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-            Représentant légal
-          </label>
-          <Input
-            name="legalRepresentative"
-            value={formData.legalRepresentative}
-            onChange={handleChange}
-            required
-            className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
-          />
-        </motion.div>
-
         {/* Fonction */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65 }}
-          whileHover={{ 
-            scale: 1.01,
-            transition: { type: 'spring', stiffness: 300 }
-          }}
-        >
-          <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-            Fonction
+        <motion.div whileHover={{ scale: 1.02 }}>
+          <label className="block text-sm font-semibold text-blue-100 mb-2 tracking-wide">
+            FONCTION
           </label>
           <Input
             name="position"
             value={formData.position}
             onChange={handleChange}
             required
-            className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
+            className="bg-blue-950/50 border-blue-700 text-white placeholder-blue-400 h-10 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent px-3"
           />
         </motion.div>
 
         {/* Adresse */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          whileHover={{ 
-            scale: 1.01,
-            transition: { type: 'spring', stiffness: 300 }
-          }}
-        >
-          <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-            Adresse du siège
+        <motion.div whileHover={{ scale: 1.02 }}>
+          <label className="block text-sm font-semibold text-blue-100 mb-2 tracking-wide">
+            ADRESSE DU SIÈGE
           </label>
           <Input
             name="headquartersAddress"
             value={formData.headquartersAddress}
             onChange={handleChange}
             required
-            className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
+            className="bg-blue-950/50 border-blue-700 text-white placeholder-blue-400 h-10 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent px-3"
           />
         </motion.div>
 
-        {/* Téléphone et Email */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.75 }}
-            whileHover={{ 
-              scale: 1.01,
-              transition: { type: 'spring', stiffness: 300 }
-            }}
-          >
-            <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-              Téléphone
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Téléphone */}
+          <motion.div whileHover={{ scale: 1.02 }}>
+            <label className="block text-sm font-semibold text-blue-100 mb-2 tracking-wide">
+              TÉLÉPHONE
             </label>
             <Input
               name="phone"
@@ -266,21 +179,14 @@ export const PartnershipForm = () => {
               value={formData.phone}
               onChange={handleChange}
               required
-              className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
+              className="bg-blue-950/50 border-blue-700 text-white placeholder-blue-400 h-10 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent px-3"
             />
           </motion.div>
           
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            whileHover={{ 
-              scale: 1.01,
-              transition: { type: 'spring', stiffness: 300 }
-            }}
-          >
-            <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-              Email professionnel
+          {/* Email */}
+          <motion.div whileHover={{ scale: 1.02 }}>
+            <label className="block text-sm font-semibold text-blue-100 mb-2 tracking-wide">
+              EMAIL PROFESSIONNEL
             </label>
             <Input
               name="email"
@@ -288,154 +194,49 @@ export const PartnershipForm = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
+              className="bg-blue-950/50 border-blue-700 text-white placeholder-blue-400 h-10 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent px-3"
             />
           </motion.div>
         </div>
 
-        {/* Informations sur les employés */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.85 }}
-            whileHover={{ 
-              scale: 1.01,
-              transition: { type: 'spring', stiffness: 300 }
-            }}
-          >
-            <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-              Nombre d&apos;employés
-            </label>
-            <Input
-              name="employeesCount"
-              type="number"
-              value={formData.employeesCount}
-              onChange={handleChange}
-              required
-              className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
-            />
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-            whileHover={{ 
-              scale: 1.01,
-              transition: { type: 'spring', stiffness: 300 }
-            }}
-          >
-            <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-              Masse salariale
-            </label>
-            <Input
-              name="payroll"
-              type="text"
-              value={formData.payroll}
-              onChange={handleChange}
-              required
-              className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
-            />
-          </motion.div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.95 }}
-              whileHover={{ 
-                scale: 1.01,
-                transition: { type: 'spring', stiffness: 300 }
-              }}
-            >
-              <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-                CDI
-              </label>
-              <Input
-                name="cdiCount"
-                type="number"
-                value={formData.cdiCount}
-                onChange={handleChange}
-                required
-                className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
-              />
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
-              whileHover={{ 
-                scale: 1.01,
-                transition: { type: 'spring', stiffness: 300 }
-              }}
-            >
-              <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
-                CDD
-              </label>
-              <Input
-                name="cddCount"
-                type="number"
-                value={formData.cddCount}
-                onChange={handleChange}
-                required
-                className="bg-blue-950/30 border-blue-700/70 text-white placeholder-blue-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all"
-              />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Lettre d'engagement */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.05 }}
-          whileHover={{ 
-            scale: 1.01,
-            transition: { type: 'spring', stiffness: 300 }
-          }}
-          className="pt-6"
-        >
-          <div className="flex items-start bg-blue-950/20 p-4 rounded-xl border border-blue-700/50">
-            <div className="flex items-center h-5 mt-1">
-              <input
-                id="agreement"
-                name="agreement"
-                type="checkbox"
-                checked={formData.agreement}
-                onChange={handleChange}
-                required
-                className="focus:ring-orange-500 h-5 w-5 text-orange-500 border-blue-700 rounded"
-              />
-            </div>
-            <div className="ml-3">
-              <label htmlFor="agreement" className="font-medium text-blue-100/90 text-sm leading-snug">
-                Je m&apos;engage à coopérer pleinement dans le cadre de ce partenariat et à fournir toutes les informations nécessaires à la réussite de notre collaboration.
-              </label>
-            </div>
-          </div>
+        {/* Nombre employés */}
+        <motion.div whileHover={{ scale: 1.02 }}>
+          <label className="block text-sm font-semibold text-blue-100 mb-2 tracking-wide">
+            NOMBRE D&apos;EMPLOYÉS
+          </label>
+          <Input
+            name="employeesCount"
+            type="number"
+            value={formData.employeesCount}
+            onChange={handleChange}
+            required
+            className="bg-blue-950/50 border-blue-700 text-white placeholder-blue-400 h-10 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent px-3"
+          />
         </motion.div>
 
-        {/* Bouton de soumission */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.1 }}
-          whileHover={{ 
-            scale: 1.02,
-            transition: { type: 'spring', stiffness: 300 }
-          }}
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="pt-6"
+          className="pt-4"
         >
           <Button
             type="submit"
-            className="w-full h-14 rounded-xl text-base font-bold bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300 px-6"
+            disabled={isSubmitting}
+            className="w-full h-12 rounded-xl text-base font-bold bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-lg shadow-orange-500/20 transition-all duration-300 transform hover:shadow-orange-500/30 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="drop-shadow-sm">Soumettre la demande</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-3" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ENVOI EN COURS...
+              </>
+            ) : (
+              <>
+                SOUMETTRE LA DEMANDE
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </>
+            )}
           </Button>
         </motion.div>
       </form>

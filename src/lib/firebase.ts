@@ -17,15 +17,13 @@ import { getStorage } from 'firebase/storage';
 };
  */
 const firebaseConfig = {
-  apiKey: "AIzaSyC7ti7IaRRfdMjW9i_Bd6f5N4GR0JHaCzY",
-  authDomain: "authentication-app-8eccd.firebaseapp.com",
-  projectId: "authentication-app-8eccd",
-  storageBucket: "authentication-app-8eccd.firebasestorage.app",
-  messagingSenderId: "1012814558943",
-  appId: "1:1012814558943:web:04a37e53e6852ccf471b6a",
-  measurementId: "G-R2MS2CS7TF"
+  apiKey: "AIzaSyBSnHZeHH0DMRxe8_ldsS9Mh1gwNp0fa-k",
+  authDomain: "zalamagn-1f057.firebaseapp.com",
+  projectId: "zalamagn-1f057",
+  storageBucket: "zalamagn-1f057.firebasestorage.app",
+  messagingSenderId: "753763623478",
+  appId: "1:753763623478:web:a11f093c649593b2d02e97"
 };
-
 // Initialiser Firebase seulement s'il n'est pas déjà initialisé
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 
