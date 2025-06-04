@@ -146,7 +146,7 @@ export default function ProfilePage() {
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="mt-6"
               >
-                <ProfileStats user={user} entreprise={entreprise} />
+                <ProfileStats user={user}  />
               </motion.div>
               
               <motion.div
@@ -232,7 +232,7 @@ export default function ProfilePage() {
                       transition={{ duration: 0.2 }}
                     >
                       <TabsContent value="services" className="mt-2">
-                        <FinancialServices user={user} entreprise={entreprise} />
+                        <FinancialServices user={user}  />
                       </TabsContent>
                       <TabsContent value="history" className="mt-2">
                         <TransactionHistory user={user} entreprise={entreprise} />

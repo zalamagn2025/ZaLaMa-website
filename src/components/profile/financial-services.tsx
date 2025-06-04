@@ -5,11 +5,12 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { SalaryAdvanceForm } from "./salary-advance-form"
 import { AI } from "@/components/profile/AI"
+import { UserWithEmployeData } from "@/types/employe"
 
-export function FinancialServices() {
+export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [activeService, setActiveService] = useState<string | null>(null)
   const [isChatbotOpen, setIsChatbotOpen] = useState(false)
-  const userPhone = "+224 625 21 21 15"
+ 
 
   const services = [
     {
@@ -154,7 +155,7 @@ export function FinancialServices() {
               className="relative w-full max-w-lg bg-[#010D3E] rounded-2xl p-6 shadow-xl border border-gray-100/10"
             >
               {activeService === "advance" ? (
-                <SalaryAdvanceForm onClose={() => setActiveService(null)} userPhone={userPhone} />
+                <SalaryAdvanceForm onClose={() => setActiveService(null)}  user={user}  />
               ) : (
                 <ServiceForm serviceId={activeService} onClose={() => setActiveService(null)} />
               )}
