@@ -1,35 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { Partenaire } from '@/types/partenaire';
+import { doc, getDoc } from 'firebase/firestore';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } } // Correct typing for dynamic route params
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<Partenaire | { error: string }>> {
   try {
-    console.log('🔍 Récupération du partenaire ID:', context.params.id);
+    const { id } = await context.params;
+    console.log('🔍 Récupération du partenaire ID:', id);
 
-    // Temporarily disable auth verification
-    // const token = request.cookies.get('token')?.value
-    // if (!token) {
-    //   console.log('❌ Token manquant');
-    //   return NextResponse.json(
-    //     { error: 'Non authentifié' },
-    //     { status: 401 }
-    //   );
-    // }
+    // Validation de l'ID
+    if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
+      console.log('❌ ID invalide');
+      return NextResponse.json({ error: 'ID invalide' }, { status: 400 });
+    }
 
-    // Fetch the partenaire document
-    const partenaireRef = doc(db, 'partenaires', context.params.id);
+    // Récupérer le document partenaire
+    const partenaireRef = doc(db, 'partenaires', id);
     const partenaireSnap = await getDoc(partenaireRef);
 
     if (!partenaireSnap.exists()) {
       console.log('❌ Partenaire non trouvé');
-      return NextResponse.json(
-        { error: 'Partenaire non trouvé' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Partenaire non trouvé' }, { status: 404 });
     }
 
     const partenaireData: Partenaire = {
@@ -42,8 +36,16 @@ export async function GET(
   } catch (error) {
     console.error('💥 Erreur lors de la récupération du partenaire:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      {
+        error:
+          error instanceof Error
+            ? `Erreur serveur: ${error.message}`
+            : 'Erreur serveur inconnue',
+      },
       { status: 500 }
     );
   }
 }
+
+// Optionnel : Activer la mise en cache pour réduire les lectures Firestore
+export const revalidate = 3600; // Revalider toutes les heures

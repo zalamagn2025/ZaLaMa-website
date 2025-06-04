@@ -304,7 +304,7 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
                 <motion.input
                   type={field.type}
                   name={field.name}
-                  value={formData[field.name as keyof UserWithEmployeData] || ''}
+                  // value={formData[field.name as keyof UserWithEmployeData] || ''}
                   onChange={handleInputChange}
                   whileFocus={{ scale: 1.02 }}
                   className="w-full px-4 py-2 bg-white/5 border border-[#FF671E]/30 rounded-lg text-[#FFFFFF] focus:outline-none focus:ring-2 focus:ring-[#FF671E] transition-all"
