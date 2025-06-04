@@ -23,7 +23,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserWithEmployeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  // const [entreprise, setEntreprise] = useState<unknown>(null)
+  const [entreprise, setEntreprise] = useState<unknown>(null)
 
   // Vérifier l'authentification et récupérer les données utilisateur
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function ProfilePage() {
         if (response.ok) {
           const entrepriseData = await response.json()
           console.log('✅ Informations entreprise récupérées:', entrepriseData.nom)
-          // setEntreprise(entrepriseData)
+          setEntreprise(entrepriseData)
         } else {
           console.error('❌ Erreur lors de la récupération de l\'entreprise')
         }
@@ -138,7 +138,7 @@ export default function ProfilePage() {
         <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div>
-              {/* <ProfileHeader user={user} entreprise={entreprise} /> */}
+              <ProfileHeader user={user} entreprise={entreprise} />
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
