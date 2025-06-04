@@ -2,7 +2,7 @@ export interface Partenaire {
   id: string
   actif: boolean
   adresse: string
-  dateCreation: any // Firestore Timestamp
+  dateCreation: unknown // Firestore Timestamp
   datePartenariat: string
   description: string
   email: string
@@ -30,5 +30,5 @@ export interface Partenaire {
   siteWeb: string
   telephone: string
   type: string
-  updatedAt: any // Firestore Timestamp
+  updatedAt: unknown // Firestore Timestamp
 } 
