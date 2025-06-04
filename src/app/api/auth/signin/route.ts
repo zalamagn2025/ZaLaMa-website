@@ -145,13 +145,13 @@ export async function POST(request: NextRequest) {
     return response;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('💥 Erreur lors de la connexion:', error);
     
     // Gestion des erreurs Firebase Auth spécifiques
     let errorMessage = 'Erreur interne du serveur';
     
-    if (error.code) {
+    if (error instanceof Error && 'code' in error) {
       switch (error.code) {
         case 'auth/user-not-found':
           errorMessage = 'Aucun compte trouvé avec cet email';
