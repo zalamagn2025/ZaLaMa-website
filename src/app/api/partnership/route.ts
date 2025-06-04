@@ -1,7 +1,9 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Resend } from 'resend';
 import { db } from '@/lib/firebase';
+import { getAdminEmailTemplate, getUserEmailTemplate } from './emailTemplates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,8 +21,17 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Début de la requête partnership');
     
-    const body: PartnershipData = await request.json();
-    console.log('📝 Données reçues:', body);
+    let body: PartnershipData;
+    try {
+      body = await request.json();
+      console.log('📝 Données reçues:', body);
+    } catch (e) {
+      console.log('❌ Erreur de parsing JSON:', e);
+      return NextResponse.json(
+        { error: 'Données JSON invalides' },
+        { status: 400 }
+      );
+    }
     
     const {
       companyName,
@@ -56,7 +67,10 @@ export async function POST(request: NextRequest) {
     // Vérification de la configuration Firebase
     if (!db) {
       console.error('❌ Firebase non configuré');
-      throw new Error('Firebase non configuré');
+      return NextResponse.json(
+        { error: 'Configuration Firebase manquante' },
+        { status: 500 }
+      );
     }
 
     // Sauvegarde dans Firestore
@@ -74,55 +88,77 @@ export async function POST(request: NextRequest) {
       updatedAt: serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, 'demandepartner'), partnershipData);
-    console.log('✅ Document créé avec ID:', docRef.id);
+    let docRef;
+    try {
+      docRef = await addDoc(collection(db, 'demandepartner'), partnershipData);
+      console.log('✅ Document créé avec ID:', docRef.id);
+    } catch (e) {
+      console.error('❌ Erreur Firestore:', e);
+      return NextResponse.json(
+        { error: 'Erreur lors de la sauvegarde des données' },
+        { status: 500 }
+      );
+    }
 
     // Vérification de la configuration Resend
     if (!process.env.RESEND_API_KEY) {
       console.error('❌ RESEND_API_KEY manquante');
-      throw new Error('Configuration Resend manquante');
+      return NextResponse.json(
+        { error: 'Configuration Resend manquante' },
+        { status: 500 }
+      );
     }
 
     console.log('📧 Envoi de l\'email admin...');
     // Email à l'admin
-    const adminEmailResult = await resend.emails.send({
-      from: 'contact@zalamagn.com',
-      to: [process.env.ADMIN_EMAIL || 'contact@zalamagn.com'],
-      subject: `Nouvelle demande de partenariat - ${companyName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Nouvelle demande de partenariat</h2>
-          <p><strong>Entreprise:</strong> ${companyName}</p>
-          <p><strong>Contact:</strong> ${legalRepresentative} (${position})</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Téléphone:</strong> ${phone}</p>
-          <p><strong>Adresse:</strong> ${headquartersAddress}</p>
-          <p><strong>Employés:</strong> ${employeesCount}</p>
-          <p><strong>ID:</strong> ${docRef.id}</p>
-        </div>
-      `,
-    });
-
-    console.log('✅ Email admin envoyé:', adminEmailResult.data?.id);
+    let adminEmailResult;
+    try {
+      adminEmailResult = await resend.emails.send({
+        from: 'contact@zalamagn.com',
+        to: [process.env.ADMIN_EMAIL || 'contact@zalamagn.com'],
+        subject: `Nouvelle demande de partenariat - ${companyName}`,
+        html: getAdminEmailTemplate({
+          companyName,
+          legalRepresentative,
+          position,
+          headquartersAddress,
+          phone,
+          email,
+          employeesCount,
+          docId: docRef.id
+        })
+      });
+      console.log('✅ Email admin envoyé:', adminEmailResult.data?.id);
+    } catch (e) {
+      console.error('❌ Erreur envoi email admin:', e);
+      return NextResponse.json(
+        { error: 'Erreur lors de l\'envoi de l\'email admin' },
+        { status: 500 }
+      );
+    }
 
     console.log('📧 Envoi de l\'email utilisateur...');
     // Email de confirmation à l'utilisateur
-    const userEmailResult = await resend.emails.send({
-      from: 'contact@zalamagn.com',
-      to: [email],
-      subject: 'Confirmation de votre demande de partenariat - Zalama SAS',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Confirmation de demande</h2>
-          <p>Bonjour ${legalRepresentative},</p>
-          <p>Nous avons bien reçu votre demande de partenariat pour <strong>${companyName}</strong>.</p>
-          <p>Nous vous recontacterons sous 48-72h.</p>
-          <p>Numéro de référence: ${docRef.id}</p>
-        </div>
-      `,
-    });
-
-    console.log('✅ Email utilisateur envoyé:', userEmailResult.data?.id);
+    let userEmailResult;
+    try {
+      userEmailResult = await resend.emails.send({
+        from: 'contact@zalamagn.com',
+        to: [email],
+        subject: 'Confirmation de votre demande de partenariat - Zalama SAS',
+        html: getUserEmailTemplate({
+          legalRepresentative,
+          companyName,
+          docId: docRef.id
+        })
+      });
+      console.log('✅ Email utilisateur envoyé:', userEmailResult.data?.id);
+    } catch (e) {
+      console.error('❌ Erreur envoi email utilisateur:', e);
+      return NextResponse.json(
+        { error: 'Erreur lors de l\'envoi de l\'email utilisateur' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       { 
@@ -148,4 +184,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
