@@ -1,6 +1,6 @@
 "use client"
 
-// import { ProfileHeader } from "@/components/profile/profile-header"
+import { ProfileHeader } from "@/components/profile/profile-header"
 import { FinancialServices } from "@/components/profile/financial-services"
 // import { TransactionHistory } from "@/components/profile/transaction-history"
 import { ProfileStats } from "@/components/profile/profile-stats"
