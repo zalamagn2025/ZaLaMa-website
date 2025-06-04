@@ -229,7 +229,7 @@ export async function GET(request: NextRequest) {
     let demandes = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    })) as Array<{ id: string; dateCreation: string; [key: string]: any }>;
+    })) as Array<{ id: string; dateCreation: string; [key: string]: string }>;
 
     // Trier par date côté client pour éviter l'index composite
     demandes = demandes.sort((a, b) => 
