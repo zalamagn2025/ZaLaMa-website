@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion, useInView, useAnimation } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, Smartphone, UserCheck, CreditCard, BarChart } from "lucide-react";
+import { Building, Smartphone, UserCheck, CreditCard, BarChart, Mail } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/button";
 
@@ -40,14 +40,6 @@ const FonctionnementZalama = () => {
       }
     }
   };
-
-  // const fadeIn = {
-  //   hidden: { opacity: 0 },
-  //   visible: { 
-  //     opacity: 1,
-  //     transition: { duration: 0.6, ease: 'easeOut' }
-  //   }
-  // };
 
   const slideUp = {
     hidden: { y: 30, opacity: 0 },
@@ -138,6 +130,17 @@ const FonctionnementZalama = () => {
       image: "/images/etape5.svg",
       reverse: false,
     },
+    {
+      id: 6,
+      title: "Suivi et fidélisation",
+      description: [
+        "Communication et relance régulière avec les utilisateurs",
+        "Offres exclusives et personnalisées selon le profil",
+        "Programme de fidélité avec avantages progressifs"
+      ],
+      image: "/images/etape6.svg", // Vous devrez ajouter cette image dans votre dossier public/images
+      reverse: true,
+    }
   ];
 
   return (
@@ -192,6 +195,7 @@ const FonctionnementZalama = () => {
                     {etape.id === 3 && <UserCheck className="h-5 w-5" />}
                     {etape.id === 4 && <CreditCard className="h-5 w-5" />}
                     {etape.id === 5 && <BarChart className="h-5 w-5" />}
+                    {etape.id === 6 && <Mail className="h-5 w-5" />}
                   </div>
                   <span className="text-sm font-medium text-primary">Étape {etape.id}</span>
                 </div>
@@ -298,6 +302,7 @@ const FonctionnementZalama = () => {
                     {etape.id === 3 && <UserCheck className="h-5 w-5" />}
                     {etape.id === 4 && <CreditCard className="h-5 w-5" />}
                     {etape.id === 5 && <BarChart className="h-5 w-5" />}
+                    {etape.id === 6 && <Mail className="h-5 w-5" />}
                   </div>
                   <span className="text-sm font-medium text-primary">Étape {etape.id}</span>
                 </div>
