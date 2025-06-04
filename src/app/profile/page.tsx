@@ -23,7 +23,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserWithEmployeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [entreprise, setEntreprise] = useState<Unknown>(null)
+  const [entreprise, setEntreprise] = useState<unknown>(null)
 
   // Vérifier l'authentification et récupérer les données utilisateur
   useEffect(() => {
