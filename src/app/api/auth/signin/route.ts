@@ -144,7 +144,6 @@ export async function POST(request: NextRequest) {
 
     return response;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: unknown) {
     console.error('💥 Erreur lors de la connexion:', error);
     

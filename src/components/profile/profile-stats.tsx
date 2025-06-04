@@ -1,9 +1,16 @@
 "use client"
 
-import { IconCreditCard, IconReceipt, IconArrowUpRight, IconTrendingUp, IconSparkles } from "@tabler/icons-react"
+import { UserWithEmployeData } from "@/types/employe"
+import { IconArrowUpRight, IconCreditCard, IconReceipt, IconSparkles, IconTrendingUp } from "@tabler/icons-react"
 import { motion, useAnimation } from "framer-motion"
 import { useEffect, useState } from "react"
-import { UserWithEmployeData } from "@/types/employe"
+
+// Type pour les demandes d'avance
+interface AdvanceRequest {
+  statut: string
+  montantDemande: number
+  [key: string]: unknown
+}
 
 // Fonction pour calculer l'avance disponible
 function calculateAvailableAdvance(salaireNet: number): number {
@@ -61,7 +68,7 @@ function getTotalWorkingDaysInMonth(year: number, month: number): number {
 }
 
 export function ProfileStats({ user }: { user: UserWithEmployeData }) {
-  const [advanceRequests, setAdvanceRequests] = useState<any[]>([])
+  const [advanceRequests, setAdvanceRequests] = useState<AdvanceRequest[]>([])
   const [loading, setLoading] = useState(true)
 
   // Récupérer les demandes d'avance
@@ -140,7 +147,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     },
     {
       title: "Avance actif",
-      value:activeAdvance ? activeAdvance.montantDemande : 0,
+      value: activeAdvance ? activeAdvance.montantDemande.toLocaleString() : "0",
       remaining: "",
       currency: "GNF",
       icon: <IconArrowUpRight className="h-6 w-6" />,
