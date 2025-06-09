@@ -70,22 +70,55 @@ export async function POST(request: NextRequest) {
     const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
     const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
 
-    const monthlyApprovedQuery = query(
+    // Récupérer toutes les demandes approuvées pour cet employé
+    const allApprovedQuery = query(
       collection(db, 'salary_advance_requests'),
       where('employeId', '==', employeId),
-      where('statut', '==', 'approuve'),
-      where('dateTraitement', '>=', startOfMonth),
-      where('dateTraitement', '<=', endOfMonth)
+      where('statut', '==', 'approuve')
     );
     
-    const monthlyApprovedSnapshot = await getDocs(monthlyApprovedQuery);
+    const allApprovedSnapshot = await getDocs(allApprovedQuery);
     
-    // Calculer le total des avances approuvées ce mois-ci
+    console.log(`🔍 Trouvé ${allApprovedSnapshot.docs.length} demandes approuvées pour employeId: ${employeId}`);
+    
+    // Filtrer manuellement les demandes du mois en cours et calculer le total
     let totalAvancesApprouvees = 0;
-    monthlyApprovedSnapshot.docs.forEach(doc => {
+    const demandesMonthly: Array<{id: string, montant: number, date: Date}> = [];
+    
+    allApprovedSnapshot.docs.forEach(doc => {
       const data = doc.data();
-      totalAvancesApprouvees += data.montantDemande || 0;
+      console.log('📋 Demande approuvée:', {
+        id: doc.id,
+        montant: data.montantDemande,
+        dateTraitement: data.dateTraitement,
+        dateCreation: data.dateCreation,
+        statut: data.statut
+      });
+      
+      // Utiliser dateTraitement si disponible, sinon dateCreation, sinon considérer comme ce mois-ci
+      let dateToCheck = null;
+      if (data.dateTraitement) {
+        dateToCheck = data.dateTraitement.toDate ? data.dateTraitement.toDate() : new Date(data.dateTraitement);
+      } else if (data.dateCreation) {
+        dateToCheck = data.dateCreation.toDate ? data.dateCreation.toDate() : new Date(data.dateCreation);
+      } else {
+        // Si aucune date, considérer comme ce mois-ci par sécurité
+        dateToCheck = new Date();
+      }
+      
+      // Vérifier si la date est dans le mois en cours
+      if (dateToCheck >= startOfMonth && dateToCheck <= endOfMonth) {
+        totalAvancesApprouvees += data.montantDemande || 0;
+        demandesMonthly.push({
+          id: doc.id,
+          montant: data.montantDemande,
+          date: dateToCheck
+        });
+      }
     });
+    
+    console.log(`💰 Total avances approuvées ce mois (${currentMonth.getMonth() + 1}/${currentMonth.getFullYear()}):`, totalAvancesApprouvees);
+    console.log('📅 Demandes du mois en cours:', demandesMonthly);
 
     // Vérifier si la nouvelle demande + total existant dépasse 25%
     const nouvelleDemande = parseFloat(montantDemande);
@@ -329,20 +362,26 @@ export async function GET(request: NextRequest) {
       const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
 
-      const monthlyApprovedQuery = query(
-        collection(db, 'salary_advance_requests'),
-        where('employeId', '==', employeId),
-        where('statut', '==', 'approuve'),
-        where('dateTraitement', '>=', startOfMonth),
-        where('dateTraitement', '<=', endOfMonth)
-      );
-      
-      const monthlyApprovedSnapshot = await getDocs(monthlyApprovedQuery);
-      
+      // Filtrer manuellement les demandes approuvées du mois en cours depuis allApprovedSnapshot
       let totalAvancesApprouveesMonthly = 0;
-      monthlyApprovedSnapshot.docs.forEach(doc => {
+      allApprovedSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        totalAvancesApprouveesMonthly += data.montantDemande || 0;
+        
+        // Utiliser dateTraitement si disponible, sinon dateCreation
+        let dateToCheck = null;
+        if (data.dateTraitement) {
+          dateToCheck = data.dateTraitement.toDate ? data.dateTraitement.toDate() : new Date(data.dateTraitement);
+        } else if (data.dateCreation) {
+          dateToCheck = data.dateCreation.toDate ? data.dateCreation.toDate() : new Date(data.dateCreation);
+        } else {
+          // Si aucune date, considérer comme ce mois-ci par sécurité
+          dateToCheck = new Date();
+        }
+        
+        // Vérifier si la date est dans le mois en cours
+        if (dateToCheck >= startOfMonth && dateToCheck <= endOfMonth) {
+          totalAvancesApprouveesMonthly += data.montantDemande || 0;
+        }
       });
 
       const avanceDisponible = maxAvanceMonthly - totalAvancesApprouveesMonthly;
