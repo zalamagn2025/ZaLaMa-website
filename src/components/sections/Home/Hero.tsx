@@ -16,7 +16,7 @@ export function HeroSection() {
             <main className="overflow-x-hidden">
                 <section>
                     <Herodemo
-                        title="Le bien-être financier de vos employés est un leviers de performance"
+                        title="Le bien-être financier de vos employés est un levier de performance"
                         subtitle={
                           <ul className="space-y-1.5 text-sm sm:text-base text-left">
                             <li className="flex items-start">
