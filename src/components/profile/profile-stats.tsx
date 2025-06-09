@@ -112,7 +112,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
 
   // Trouver la demande d'avance active (approuvée)
   
-  const activeAdvance = advanceRequests.find(request => request.statut === 'APPROUVEE')
+  const activeAdvance = advanceRequests.find(request => request.statut === 'approuve')
   const advanceValue = activeAdvance ? activeAdvance.montantDemande : 0
   const advanceStatus = activeAdvance ? `1 avance en cours` : 'Aucune avance active'
 
