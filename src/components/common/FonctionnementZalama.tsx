@@ -71,7 +71,7 @@ const FonctionnementZalama = () => {
         "L'employeur signe un contrat de partenariat avec ZaLaMa",
         "Un salarié peut également recommander le service à son employeur",
       ],
-      image: "/images/etape1.svg",
+      image: "/images/etape1.jpg",
       reverse: false,
     },
     {
@@ -81,7 +81,7 @@ const FonctionnementZalama = () => {
         "ZaLaMa fournit une application mobile ou web aux salariés",
         "Chaque salarié reçoit un lien d'accès pour activer son compte.",
       ],
-      image: "/images/etape2.svg",
+      image: "/images/etape2.jpg",
       reverse: true,
     },
     {
@@ -91,14 +91,13 @@ const FonctionnementZalama = () => {
         "Le salarié télécharge l'application ou se connecte au site web",
         "Il modifie son mot de passe et accède à son compte",
       ],
-      image: "/images/etape3.svg",
-      reverse: false,
+      image: "/images/etape3.jpg"
     },
     {
       id: 4,
       title: "Accès aux services ZaLaMa",
       description: "Découvrez les services dédiés aux salariés et employeurs.",
-      image: "",
+      image: "/images/etape4.jpg",
       reverse: true,
       tabs: [
         {
@@ -127,7 +126,7 @@ const FonctionnementZalama = () => {
         "Prêts : Remboursement échelonné selon un pourcentage choisi par le salarié",
         "Conseils financiers : Service 100% gratuit"
       ],
-      image: "/images/etape5.svg",
+      image: "/images/etape5.jpg",
       reverse: false,
     },
     {
@@ -138,7 +137,7 @@ const FonctionnementZalama = () => {
         "Offres exclusives et personnalisées selon le profil",
         "Programme de fidélité avec avantages progressifs"
       ],
-      image: "/images/etape6.svg", // Vous devrez ajouter cette image dans votre dossier public/images
+      image: "/images/etape6.jpg", // Vous devrez ajouter cette image dans votre dossier public/images
       reverse: true,
     }
   ];
