@@ -4,6 +4,7 @@ import { UserWithEmployeData } from "@/types/employe"
 import { IconCheck, IconCreditCard, IconInfoCircle, IconX } from "@tabler/icons-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 interface SalaryAdvanceFormProps {
   onClose: () => void
@@ -28,7 +29,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [error, setError] = useState("")
   const [avanceData, setAvanceData] = useState<AvanceData | null>(null)
   const [loadingAvance, setLoadingAvance] = useState(true)
-
+  const router = useRouter()
   // Récupérer l'avance disponible en temps réel
   const fetchAvailableAdvance = async () => {
     try {
@@ -46,7 +47,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
             avanceDisponible: data.avanceDisponible
           })
         }
+        console.log('🔍 Données d\'avance disponibles:', data)
       }
+    
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'avance disponible:', error)
     } finally {
@@ -147,6 +150,8 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
       const result = await response.json()
       console.log("result", result)
+    //actualiser la page
+    router.refresh()
       
       // Actualiser les données d'avance après la soumission
       await fetchAvailableAdvance()
