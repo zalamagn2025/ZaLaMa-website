@@ -112,9 +112,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
 
   // Trouver la demande d'avance active (approuvée)
   
-  const activeAdvance = advanceRequests.find(request => request.statut === 'APPROUVEE')
-  const advanceValue = activeAdvance ? activeAdvance.montantDemande : 0
-  const advanceStatus = activeAdvance ? `1 avance en cours` : 'Aucune avance active'
+  const activeAdvance = advanceRequests.find(request => request.statut === 'approuve')
+  //la somme de toutes les demandes d'avance approuvées
+  const totalAdvance = advanceRequests.reduce((acc, request) => acc + (request.montantDemande as number), 0)
+  const advanceValue = activeAdvance ? activeAdvance.montantTotal : 0
+  const advanceStatus = activeAdvance ? `${advanceRequests.length} avances en cours` : 'Aucune avance active'
 
   console.log("activeAdvance", activeAdvance)
   console.log("advanceValue", advanceValue)
@@ -147,7 +149,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     },
     {
       title: "Avance actif",
-      value: activeAdvance ? activeAdvance.montantDemande.toLocaleString() : "0",
+      value: activeAdvance ? totalAdvance.toLocaleString() : "0",
       remaining: "",
       currency: "GNF",
       icon: <IconArrowUpRight className="h-6 w-6" />,
