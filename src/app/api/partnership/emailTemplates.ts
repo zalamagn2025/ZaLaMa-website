@@ -1,12 +1,18 @@
 
 export const getAdminEmailTemplate = (data: {
   companyName: string;
+  legalStatus: string;
+  rccm: string;
+  nif: string;
   legalRepresentative: string;
   position: string;
   headquartersAddress: string;
   phone: string;
   email: string;
   employeesCount: string;
+  payroll: string;
+  cdiCount: string;
+  cddCount: string;
   docId: string;
 }) => `
 <!DOCTYPE html>
@@ -54,7 +60,37 @@ export const getAdminEmailTemplate = (data: {
           </tr>
           <tr>
             <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Raison sociale :</span> ${data.legalStatus}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">RCCM :</span> ${data.rccm}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">NIF :</span> ${data.nif}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
               <span style="font-weight: bold; color: #1e40af;">Nombre d'employés :</span> ${data.employeesCount}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Masse salariale :</span> ${data.payroll}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Employés CDI :</span> ${data.cdiCount}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Employés CDD :</span> ${data.cddCount}
             </td>
           </tr>
           

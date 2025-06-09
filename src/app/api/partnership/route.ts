@@ -1,20 +1,27 @@
 
-import { NextRequest, NextResponse } from 'next/server';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Resend } from 'resend';
 import { db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
 import { getAdminEmailTemplate, getUserEmailTemplate } from './emailTemplates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface PartnershipData {
   companyName: string;
+  legalStatus: string;
+  rccm: string;
+  nif: string;
   legalRepresentative: string;
   position: string;
   headquartersAddress: string;
   phone: string;
   email: string;
   employeesCount: string;
+  payroll: string;
+  cdiCount: string;
+  cddCount: string;
+  agreement: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,16 +42,23 @@ export async function POST(request: NextRequest) {
     
     const {
       companyName,
+      legalStatus,
+      rccm,
+      nif,
       legalRepresentative,
       position,
       headquartersAddress,
       phone,
       email,
-      employeesCount
+      employeesCount,
+      payroll,
+      cdiCount,
+      cddCount,
+      agreement
     } = body;
 
     // Validation des données
-    if (!companyName || !legalRepresentative || !position || !headquartersAddress || !phone || !email || !employeesCount) {
+    if (!companyName || !legalStatus || !rccm || !nif || !legalRepresentative || !position || !headquartersAddress || !phone || !email || !employeesCount || !payroll || !cdiCount || !cddCount || !agreement) {
       console.log('❌ Validation échouée - champs manquants');
       return NextResponse.json(
         { error: 'Tous les champs sont requis' },
@@ -77,12 +91,19 @@ export async function POST(request: NextRequest) {
     console.log('💾 Tentative de sauvegarde dans Firestore...');
     const partnershipData = {
       companyName,
+      legalStatus,
+      rccm,
+      nif,
       legalRepresentative,
       position,
       headquartersAddress,
       phone,
       email,
       employeesCount: parseInt(employeesCount),
+      payroll,
+      cdiCount: parseInt(cdiCount),
+      cddCount: parseInt(cddCount),
+      agreement,
       status: 'pending',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -119,12 +140,18 @@ export async function POST(request: NextRequest) {
         subject: `Nouvelle demande de partenariat - ${companyName}`,
         html: getAdminEmailTemplate({
           companyName,
+          legalStatus,
+          rccm,
+          nif,
           legalRepresentative,
           position,
           headquartersAddress,
           phone,
           email,
           employeesCount,
+          payroll,
+          cdiCount,
+          cddCount,
           docId: docRef.id
         })
       });

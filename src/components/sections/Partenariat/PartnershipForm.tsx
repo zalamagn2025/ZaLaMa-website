@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
 
 export const PartnershipForm = () => {
   const [formData, setFormData] = useState({
@@ -25,9 +25,63 @@ export const PartnershipForm = () => {
     agreement: false
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Formulaire soumis:', formData);
+    setLoading(true);
+    setError('');
+
+    try {
+      console.log('📤 Envoi des données de partenariat:', formData);
+
+      const response = await fetch('/api/partnership', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la soumission');
+      }
+
+      const result = await response.json();
+      console.log('✅ Demande envoyée avec succès:', result);
+      
+      setSuccess(true);
+      
+      // Réinitialiser le formulaire après 3 secondes
+      setTimeout(() => {
+        setFormData({
+          companyName: '',
+          legalStatus: '',
+          rccm: '',
+          nif: '',
+          legalRepresentative: '',
+          position: '',
+          headquartersAddress: '',
+          phone: '',
+          email: '',
+          employeesCount: '',
+          payroll: '',
+          cdiCount: '',
+          cddCount: '',
+          agreement: false
+        });
+        setSuccess(false);
+      }, 3000);
+
+    } catch (err) {
+      console.error('❌ Erreur lors de l\'envoi:', err);
+      setError(err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -416,6 +470,27 @@ export const PartnershipForm = () => {
           </div>
         </motion.div>
 
+        {/* Messages d'état */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm"
+          >
+            ✅ Votre demande de partenariat a été envoyée avec succès ! Nous vous contacterons bientôt.
+          </motion.div>
+        )}
+
         {/* Bouton de soumission */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -430,12 +505,29 @@ export const PartnershipForm = () => {
         >
           <Button
             type="submit"
-            className="w-full h-14 rounded-xl text-base font-bold bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300 px-6"
+            disabled={loading || success}
+            className="w-full h-14 rounded-xl text-base font-bold bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="drop-shadow-sm">Soumettre la demande</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-3" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Envoi en cours...</span>
+              </>
+            ) : success ? (
+              <>
+                <span className="drop-shadow-sm">Demande envoyée ✓</span>
+              </>
+            ) : (
+              <>
+                <span className="drop-shadow-sm">Soumettre la demande</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </>
+            )}
           </Button>
         </motion.div>
       </form>
