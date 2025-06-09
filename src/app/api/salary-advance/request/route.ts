@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { Resend } from 'resend';
 import { db } from '@/lib/firebase';
+import { getAdminAdvanceEmailTemplate, getUserAdvanceEmailTemplate } from './emailAdminAdvance';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -9,7 +10,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Débogage : afficher les données reçues
     console.log('📦 Données reçues:', body);
     
     const { 
@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
       entrepriseId 
     } = body;
 
-    // Débogage détaillé
     console.log('employeId:', employeId);
     console.log('montantDemande:', montantDemande);
     console.log('motif:', motif);
@@ -96,7 +95,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sauvegarde dans Firestore avec tous les champs du frontend
+    // Sauvegarde dans Firestore
     const requestData = {
       employeId,
       montantDemande: parseFloat(montantDemande),
@@ -120,54 +119,48 @@ export async function POST(request: NextRequest) {
     const userData = userDoc.data();
 
     if (userData?.email && userData?.nom) {
-      // Vérification de la configuration Resend
       if (!process.env.RESEND_API_KEY) {
         console.error('❌ RESEND_API_KEY manquante');
         throw new Error('Configuration Resend manquante');
       }
 
-      console.log('📧 Envoi de l\'email admin...');
+      const requestDate = new Date().toLocaleString('fr-FR');
+      const amount = parseFloat(montantDemande);
+      const availableSalary = parseFloat(salaireDisponible);
+      const availableAdvance = parseFloat(avanceDisponible);
+
       // Email à l'admin
+      console.log('📧 Envoi de l\'email admin...');
       const adminEmailResult = await resend.emails.send({
         from: 'contact@zalamagn.com',
         to: ['contact@zalamagn.com'],
         subject: `Nouvelle demande d'avance - ${userData.nom}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Nouvelle demande d'avance</h2>
-            <p><strong>Employé:</strong> ${userData.nom}</p>
-            <p><strong>Email:</strong> ${userData.email}</p>
-            <p><strong>Montant:</strong> ${montantDemande.toLocaleString()} GNF</p>
-            <p><strong>Motif:</strong> ${motif}</p>
-            <p><strong>Date:</strong> ${new Date().toLocaleString('fr-FR')}</p>
-            <p><strong>ID de la demande:</strong> ${docRef.id}</p>
-            <br>
-            <p>Veuillez vous connecter au système pour traiter cette demande.</p>
-          </div>
-        `,
+        html: getAdminAdvanceEmailTemplate({
+          employeeName: userData.nom,
+          employeeEmail: userData.email,
+          amount,
+          reason: motif,
+          requestDate,
+          requestId: docRef.id,
+          availableSalary,
+          availableAdvance
+        }),
       });
 
       console.log('✅ Email admin envoyé:', adminEmailResult.data?.id);
 
+      // Email à l'employé
       console.log('📧 Envoi de l\'email employé...');
-      // Email de confirmation à l'employé
       const userEmailResult = await resend.emails.send({
         from: 'contact@zalamagn.com',
         to: [userData.email],
         subject: 'Confirmation de votre demande d\'avance - Zalama SAS',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Demande d'avance reçue</h2>
-            <p>Bonjour ${userData.nom},</p>
-            <p>Votre demande d'avance de <strong>${montantDemande.toLocaleString()} GNF</strong> a été reçue avec succès.</p>
-            <p><strong>Motif:</strong> ${motif}</p>
-            <p>Elle sera examinée dans les plus brefs délais par notre équipe RH.</p>
-            <p>Vous recevrez une notification dès qu'une décision sera prise.</p>
-            <p>Numéro de référence: ${docRef.id}</p>
-            <br>
-            <p>Cordialement,<br>L'équipe RH - Zalama SAS</p>
-          </div>
-        `,
+        html: getUserAdvanceEmailTemplate({
+          employeeName: userData.nom,
+          amount,
+          reason: motif,
+          requestId: docRef.id
+        }),
       });
 
       console.log('✅ Email employé envoyé:', userEmailResult.data?.id);
@@ -182,7 +175,6 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
-      // Si pas d'email, retourner quand même le succès
       return NextResponse.json({
         success: true,
         message: "Demande d'avance créée avec succès (emails non envoyés)",
@@ -231,7 +223,7 @@ export async function GET(request: NextRequest) {
       ...doc.data()
     })) as Array<{ id: string; dateCreation: string; [key: string]: string }>;
 
-    // Trier par date côté client pour éviter l'index composite
+    // Trier par date côté client
     demandes = demandes.sort((a, b) => 
       new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime()
     );
@@ -250,4 +242,4 @@ export async function GET(request: NextRequest) {
       details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : String(error) : undefined
     }, { status: 500 });
   }
-} 
+}

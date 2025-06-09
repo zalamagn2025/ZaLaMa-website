@@ -7,6 +7,8 @@ import { Lock, Eye, EyeClosed, ArrowRight, Mail, CheckCircle, AlertCircle, User 
 
 import { cn } from "@/lib/utils"
 import Image from 'next/image';
+import { Button } from './button';
+
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -570,12 +572,13 @@ export function Component() {
                       </span>
                     </label>
                     
-                    <Link 
-                      href="/auth/forgot-password" 
-                      className="text-white/60 hover:text-white transition-colors duration-300"
+                    <Button 
+                      onClick={() => router.push('/auth/forgot-password')}
+                      asChild
+                      className="text-white/60 hover:text-white transition-colors duration-300 bg-transparent border-none"
                     >
-                      Mot de passe oublié ?
-                    </Link>
+                      <Link href="/auth/forgot-password">Mot de passe oublié ?</Link>
+                    </Button>
                   </div>
 
                   {/* Sign in button */}

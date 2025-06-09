@@ -1,15 +1,17 @@
 "use client"
 
-import { ProfileHeader } from "@/components/profile/profile-header"
+// import { ProfileHeader } from "@/components/profile/profile-header"
 import { FinancialServices } from "@/components/profile/financial-services"
 // import { TransactionHistory } from "@/components/profile/transaction-history"
 import { ProfileStats } from "@/components/profile/profile-stats"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { motion, AnimatePresence } from "framer-motion"
-import { useState, useEffect, useRef } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useRef, useState } from "react"
 // import { AI } from "@/components/profile/AI"
-import { useRouter } from "next/navigation"
+import { ProfileHeader } from "@/components/profile/profile-header"
 import { UserWithEmployeData } from "@/types/employe"
+import { Partenaire } from "@/types/partenaire"
+import { useRouter } from "next/navigation"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -23,7 +25,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserWithEmployeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [entreprise, setEntreprise] = useState<unknown>(null)
+  const [entreprise, setEntreprise] = useState<Partenaire | null>(null)
 
   // Vérifier l'authentification et récupérer les données utilisateur
   useEffect(() => {
@@ -138,7 +140,7 @@ export default function ProfilePage() {
         <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div>
-              <ProfileHeader user={user} entreprise={entreprise} />
+              <ProfileHeader user={user} entreprise={entreprise as Partenaire} />
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

@@ -58,8 +58,8 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         throw new Error("Format de numéro de téléphone invalide")
       }
 
-      // Calcul des frais de service (2%)
-      const serviceFee = Math.floor(requestedAmount * 0.02)
+      // Calcul des frais de service (6.5%)
+      const serviceFee = Math.floor(requestedAmount * 0.065)
       const totalDeduction = requestedAmount + serviceFee
 
       // Données de la demande
@@ -260,8 +260,16 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       <label htmlFor="receive-phone" className="text-sm font-medium text-gray-300">
                         Numéro de réception
                       </label>
-                      <div className="flex items-center space-x-2">
-                        <label htmlFor="use-default" className="text-xs text-gray-400">
+                      <div 
+                        className="flex items-center space-x-2 cursor-pointer"
+                        onClick={() => {
+                          setUseDefaultPhone(!useDefaultPhone)
+                          if (!useDefaultPhone) {
+                            setReceivePhone(user.telephone)
+                          }
+                        }}
+                      >
+                        <label htmlFor="use-default" className="text-xs text-gray-400 cursor-pointer">
                           Utiliser mon numéro
                         </label>
                         <div className="relative inline-flex items-center">
@@ -309,19 +317,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <ul className="mt-2 space-y-1.5 text-xs text-gray-300">
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
-                            <span>Avance maximale: 25% de votre salaire net</span>
+                            <span>Le montant sera déduit de votre prochain salaire + les frais</span>
                           </li>
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
-                            <span>Le montant sera déduit de votre prochain salaire</span>
+                            <span>Frais de service: 6,5% du montant demandé</span>
                           </li>
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
-                            <span>Frais de service: 2% du montant</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="mr-2">•</span>
-                            <span>Traitement sous 24 heures ouvrables</span>
+                            <span>Traitement en moins de 30 minutes</span>
                           </li>
                         </ul>
                       </div>
