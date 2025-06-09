@@ -49,7 +49,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérifier s'il y a déjà une demande approuvée ce mois-ci
+    // Récupérer d'abord les données de l'employé pour vérifier le salaire
+    console.log('🔍 Recherche des données employé pour validation:', employeId);
+    const employeDocValidation = await getDoc(doc(db, 'employes', employeId));
+    const employeDataValidation = employeDocValidation.data();
+    
+    if (!employeDocValidation.exists() || !employeDataValidation?.salaireNet) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Données employé introuvables ou salaire non défini' 
+        },
+        { status: 400 }
+      );
+    }
+
+    const salaireNet = employeDataValidation.salaireNet;
+    const maxAvanceMonthly = Math.floor(salaireNet * 0.25); // 25% du salaire mensuel
+
+    // Vérifier le total des demandes approuvées ce mois-ci
     const currentMonth = new Date();
     const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
     const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
@@ -64,14 +82,31 @@ export async function POST(request: NextRequest) {
     
     const monthlyApprovedSnapshot = await getDocs(monthlyApprovedQuery);
     
-    if (!monthlyApprovedSnapshot.empty) {
-      const existingRequest = monthlyApprovedSnapshot.docs[0].data();
-      const approvalDate = existingRequest.dateTraitement?.toDate();
-      
+    // Calculer le total des avances approuvées ce mois-ci
+    let totalAvancesApprouvees = 0;
+    monthlyApprovedSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      totalAvancesApprouvees += data.montantDemande || 0;
+    });
+
+    // Vérifier si la nouvelle demande + total existant dépasse 25%
+    const nouvelleDemande = parseFloat(montantDemande);
+    const totalApresNouvelleDemande = totalAvancesApprouvees + nouvelleDemande;
+    
+    console.log('💰 Vérification des limites:', {
+      salaireNet,
+      maxAvanceMonthly,
+      totalAvancesApprouvees,
+      nouvelleDemande,
+      totalApresNouvelleDemande
+    });
+
+    if (totalApresNouvelleDemande > maxAvanceMonthly) {
+      const avanceDisponible = maxAvanceMonthly - totalAvancesApprouvees;
       return NextResponse.json(
         { 
           success: false, 
-          message: `Vous avez déjà une demande d'avance approuvée ce mois-ci (${approvalDate?.toLocaleDateString('fr-FR')}). Vous ne pouvez faire qu'une demande approuvée par mois.` 
+          message: `Cette demande dépasse votre limite mensuelle. Avance disponible ce mois-ci: ${avanceDisponible.toLocaleString()} GNF (déjà utilisé: ${totalAvancesApprouvees.toLocaleString()} GNF sur ${maxAvanceMonthly.toLocaleString()} GNF)` 
         },
         { status: 400 }
       );
@@ -248,6 +283,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const employeId = searchParams.get('employeId');
+    const action = searchParams.get('action');
 
     if (!employeId) {
       return NextResponse.json(
@@ -256,7 +292,58 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Récupérer les demandes d'avance de l'employé
+    // Si demande d'avance disponible
+    if (action === 'available-advance') {
+      // Récupérer les données de l'employé
+      const employeDoc = await getDoc(doc(db, 'employes', employeId));
+      const employeData = employeDoc.data();
+      
+      if (!employeDoc.exists() || !employeData?.salaireNet) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Données employé introuvables ou salaire non défini' 
+          },
+          { status: 400 }
+        );
+      }
+
+      const salaireNet = employeData.salaireNet;
+      const maxAvanceMonthly = Math.floor(salaireNet * 0.25);
+
+      // Calculer le total des avances approuvées ce mois-ci
+      const currentMonth = new Date();
+      const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
+
+      const monthlyApprovedQuery = query(
+        collection(db, 'salary_advance_requests'),
+        where('employeId', '==', employeId),
+        where('statut', '==', 'approuve'),
+        where('dateTraitement', '>=', startOfMonth),
+        where('dateTraitement', '<=', endOfMonth)
+      );
+      
+      const monthlyApprovedSnapshot = await getDocs(monthlyApprovedQuery);
+      
+      let totalAvancesApprouvees = 0;
+      monthlyApprovedSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        totalAvancesApprouvees += data.montantDemande || 0;
+      });
+
+      const avanceDisponible = maxAvanceMonthly - totalAvancesApprouvees;
+
+      return NextResponse.json({
+        success: true,
+        salaireNet,
+        maxAvanceMonthly,
+        totalAvancesApprouvees,
+        avanceDisponible: Math.max(0, avanceDisponible)
+      });
+    }
+
+    // Récupérer les demandes d'avance de l'employé (comportement par défaut)
     const requestsQuery = query(
       collection(db, 'salary_advance_requests'),
       where('employeId', '==', employeId),

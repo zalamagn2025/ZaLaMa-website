@@ -1,12 +1,19 @@
 "use client"
 
-import { useState } from "react"
-import { IconCreditCard, IconX, IconCheck, IconInfoCircle } from "@tabler/icons-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { UserWithEmployeData } from "@/types/employe"
+import { IconCheck, IconCreditCard, IconInfoCircle, IconX } from "@tabler/icons-react"
+import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useState } from "react"
+
 interface SalaryAdvanceFormProps {
   onClose: () => void
- 
+}
+
+interface AvanceData {
+  salaireNet: number
+  maxAvanceMonthly: number
+  totalAvancesApprouvees: number
+  avanceDisponible: number
 }
 
 export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { user: UserWithEmployeData }) {
@@ -17,8 +24,39 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
+  const [avanceData, setAvanceData] = useState<AvanceData | null>(null)
+  const [loadingAvance, setLoadingAvance] = useState(true)
 
-  // Fonction pour calculer l'avance disponible (25% du salaire net)
+  // Récupérer l'avance disponible en temps réel
+  const fetchAvailableAdvance = async () => {
+    try {
+      setLoadingAvance(true)
+      const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}&action=available-advance`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setAvanceData({
+            salaireNet: data.salaireNet,
+            maxAvanceMonthly: data.maxAvanceMonthly,
+            totalAvancesApprouvees: data.totalAvancesApprouvees,
+            avanceDisponible: data.avanceDisponible
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'avance disponible:', error)
+    } finally {
+      setLoadingAvance(false)
+    }
+  }
+
+  useEffect(() => {
+    if (user.employeId) {
+      fetchAvailableAdvance()
+    }
+  }, [user.employeId])
+
+  // Fonction pour calculer l'avance disponible (25% du salaire net) - DEPRECATED, remplacée par l'API
   const calculateAvailableAdvance = (salaireNet: number): number => {
     const maxAdvancePercentage = 0.25 // 25% du salaire
     return Math.floor(salaireNet * maxAdvancePercentage)
@@ -32,7 +70,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     try {
       // Validation des données
       const requestedAmount = parseFloat(amount.replace(/,/g, ''))
-      const availableAdvance = calculateAvailableAdvance(user.salaireNet || 0)
+      const availableAdvance = avanceData?.avanceDisponible || 0
 
       // Vérifications
       if (isNaN(requestedAmount) || requestedAmount <= 0) {
@@ -40,7 +78,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       }
 
       if (requestedAmount > availableAdvance) {
-        throw new Error(`Le montant demandé dépasse votre avance disponible (${availableAdvance.toLocaleString()} GNF)`)
+        throw new Error(`Le montant demandé dépasse votre avance disponible ce mois-ci (${availableAdvance.toLocaleString()} GNF)`)
       }
 
       if (!reason.trim()) {
@@ -108,8 +146,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     }
   }
 
-  // Calculer l'avance disponible pour l'affichage
-  const availableAdvance = user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0
+  // Calculer l'avance disponible pour l'affichage (utilise les données de l'API ou fallback)
+  const availableAdvance = avanceData?.avanceDisponible ?? (user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0)
+  const totalUsedThisMonth = avanceData?.totalAvancesApprouvees ?? 0
+  const maxMonthlyAdvance = avanceData?.maxAvanceMonthly ?? (user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0)
 
   return (
     <div className="flex items-start justify-center min-h-screen pt-16"> {/* Changé de pt-10 à pt-16 */}
@@ -187,6 +227,39 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                   </motion.button>
                 </div>
 
+                {/* Affichage des informations d'avance en temps réel */}
+                {loadingAvance ? (
+                  <div className="mb-4 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-[#1A2B6B] rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-[#1A2B6B] rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ) : avanceData && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mb-4 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]"
+                  >
+                    <h4 className="text-sm font-medium text-[#FF8E53] mb-2">État de vos avances ce mois-ci</h4>
+                    <div className="space-y-1 text-xs text-gray-300">
+                      <div className="flex justify-between">
+                        <span>Limite mensuelle (25%):</span>
+                        <span className="text-white">{maxMonthlyAdvance.toLocaleString()} GNF</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Déjà utilisé:</span>
+                        <span className="text-orange-400">{totalUsedThisMonth.toLocaleString()} GNF</span>
+                      </div>
+                      <div className="flex justify-between border-t border-[#1A2B6B] pt-1">
+                        <span>Disponible:</span>
+                        <span className="text-green-400 font-medium">{availableAdvance.toLocaleString()} GNF</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <motion.div 
                     initial={{ opacity: 0, x: -10 }}
@@ -217,7 +290,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       </span>
                     </div>
                     <p className="text-xs text-gray-400">
-                      Disponible: {availableAdvance.toLocaleString()} GNF
+                      Disponible ce mois-ci: {availableAdvance.toLocaleString()} GNF
                     </p>
                     {error && (
                       <motion.p 
@@ -309,7 +382,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <ul className="mt-2 space-y-1.5 text-xs text-gray-300">
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
-                            <span>Avance maximale: 25% de votre salaire net</span>
+                            <span>Limite mensuelle: 25% de votre salaire net ({maxMonthlyAdvance.toLocaleString()} GNF)</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="mr-2">•</span>
+                            <span>Vous pouvez faire plusieurs demandes dans le mois</span>
                           </li>
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
