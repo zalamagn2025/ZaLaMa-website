@@ -1,18 +1,14 @@
 "use client"
 
-import { IconArrowRight, IconX } from "@tabler/icons-react"
-import { useState, useEffect, useMemo } from "react"
-import type React from "react"
-import type { JSX } from "react"
+import { IconArrowRight } from "@tabler/icons-react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { SalaryAdvanceForm } from "./salary-advance-form"
 import { AI } from "@/components/profile/AI"
 import { UserWithEmployeData } from "@/types/employe"
 import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
-import { Timestamp } from "firebase/firestore"
 
-// Interface Firestore pour les services
 interface Service {
   id: string
   nom: string
@@ -21,122 +17,89 @@ interface Service {
   pourcentageMax: number
   duree: string
   disponible: boolean
-  createdAt: Timestamp
-}
-
-// Interface frontend pour les services avec champs UI
-interface FrontendService {
-  id: string
-  title: string
-  description: string
-  icon: JSX.Element
-  maxpourcent?: string
-  maxAmount?: string
-  eligibility: string
+  createdAt: Date // Timestamp
 }
 
 export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [activeService, setActiveService] = useState<string | null>(null)
   const [isChatbotOpen, setIsChatbotOpen] = useState(false)
-  const [services, setServices] = useState<FrontendService[]>([])
+  const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  // Définir les icônes pour chaque service
-
-  const serviceIcons: { [key: string]: JSX.Element } = useMemo(
-    () => ({
-      advance: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-8 w-8 text-blue-500"
-        >
-          <rect x="2" y="5" width="20" height="14" rx="2" />
-          <line x1="2" y1="10" x2="22" y2="10" />
-          <line x1="7" y1="15" x2="9" y2="15" />
-          <line x1="11" y1="15" x2="13" y2="15" />
-        </svg>
-      ),
-      p2p: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-8 w-8 text-orange-500"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 6v6l4 2" />
-        </svg>
-      ),
-      loan: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-8 w-8 text-green-500"
-        >
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
-        </svg>
-      ),
-    }),
-    []
-  )
-
-  // Récupérer les services depuis Firestore
+  // Fetch services from Firestore
   useEffect(() => {
     const fetchServices = async () => {
       try {
         setLoading(true)
-        setError(null)
-        const querySnapshot = await getDocs(collection(db, "services"))
-        const fetchedServices: FrontendService[] = querySnapshot.docs.map((doc) => {
-          const data = doc.data() as Service
-          return {
-            id: doc.id,
-            title: data.nom,
-            description: data.description,
-            icon: serviceIcons[doc.id] || serviceIcons.advance,
-            maxpourcent: data.pourcentageMax ? `${data.pourcentageMax}%` : undefined,
-            maxAmount: doc.id === "p2p" ? "25 000 000" : undefined,
-            eligibility: data.disponible ? "Disponible" : "Indisponible",
-          }
-        })
-        setServices(fetchedServices)
+        const servicesCollection = collection(db, "services")
+        const servicesSnapshot = await getDocs(servicesCollection)
+        const servicesData = servicesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Service[]
+        setServices(servicesData)
       } catch (error) {
-        console.error("Erreur lors de la récupération des services :", error)
-        setError("Impossible de charger les services.")
-        setServices([])
+        console.error("Erreur lors de la récupération des services:", error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchServices()
-  }, [serviceIcons])
+  }, [])
+
+  // Map Firestore services to the format used in the component
+  const mappedServices = services.map(service => ({
+    id: service.id,
+    nom: service.nom, // Add nom property for later use
+    title: service.nom,
+    description: service.description,
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={`h-8 w-8 ${
+          service.nom.toLowerCase().includes("avance") ? "text-blue-500" :
+          service.nom.toLowerCase().includes("prêt") ? "text-orange-500" :
+          "text-green-500"
+        }`}
+      >
+        {service.nom.toLowerCase().includes("avance") && (
+          <>
+            <rect x="2" y="5" width="20" height="14" rx="2" />
+            <line x1="2" y1="10" x2="22" y2="10" />
+            <line x1="7" y1="15" x2="9" y2="15" />
+            <line x1="11" y1="15" x2="13" y2="15" />
+          </>
+        )}
+        {service.nom.toLowerCase().includes("prêt") && (
+          <>
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </>
+        )}
+        {service.nom.toLowerCase().includes("conseil") && (
+          <>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </>
+        )}
+      </svg>
+    ),
+    maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentageMax}%`,
+    maxAmount: service.nom.toLowerCase().includes("prêt") ? "25 000 000" : undefined,
+    eligibility: service.disponible ? "Disponible" : "Indisponible"
+  }))
 
   return (
     <div className="py-8 bg-[#010D3E]">
@@ -150,46 +113,41 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       </motion.h2>
 
       {loading ? (
-        <div className="text-white text-center">Chargement des services...</div>
-      ) : error ? (
-        <div className="text-red-500 text-center">{error}</div>
-      ) : services.length === 0 ? (
-        <div className="text-white text-center">Aucun service disponible.</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
+          {[1, 2, 3].map((_, index) => (
+            <div
+              key={index}
+              className="bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border border-gray-100/30 animate-pulse"
+            >
+              <div className="h-8 w-8 bg-gray-600 rounded mb-4"></div>
+              <div className="h-4 bg-gray-600 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-600 rounded w-full mb-4"></div>
+              <div className="h-3 bg-gray-600 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
-          {services.map((service, index) => (
+          {mappedServices.map((service, index) => (
             <motion.div
               key={service.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={
-                service.eligibility === "Disponible"
-                  ? {
-                      scale: 1.03,
-                      boxShadow:
-                        service.id === "advance"
-                          ? "0 8px 20px rgba(59, 130, 246, 0.3)"
-                          : service.id === "loan"
-                          ? "0 8px 20px rgba(34, 197, 94, 0.3)"
-                          : "0 8px 20px rgba(249, 115, 22, 0.3)",
-                    }
-                  : {}
-              }
+              whileHover={service.eligibility === "Disponible" ? { 
+                scale: 1.03,
+                boxShadow: service.nom.toLowerCase().includes("avance") ? "0 8px 20px rgba(59, 130, 246, 0.3)" : 
+                          service.nom.toLowerCase().includes("conseil") ? "0 8px 20px rgba(34, 197, 94, 0.3)" : 
+                          "0 8px 20px rgba(249, 115, 22, 0.3)"
+              } : {}}
               className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border ${
-                service.id === "advance"
-                  ? "border-blue-500/30"
-                  : service.id === "loan"
-                  ? "border-green-500/30"
-                  : "border-orange-500/30"
-              } ${
-                service.eligibility === "Disponible"
-                  ? "cursor-pointer"
-                  : "cursor-not-allowed opacity-60"
-              } transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
+                service.nom.toLowerCase().includes("avance") ? "border-blue-500/30" : 
+                service.nom.toLowerCase().includes("conseil") ? "border-green-500/30" : 
+                "border-orange-500/30"
+              } ${service.eligibility === "Disponible" ? "cursor-pointer" : "cursor-not-allowed opacity-60"} transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
               onClick={() => {
                 if (service.eligibility === "Disponible") {
-                  if (service.id === "loan") {
+                  if (service.nom.toLowerCase().includes("conseil")) {
                     setIsChatbotOpen(true)
                   } else {
                     setActiveService(service.id)
@@ -199,8 +157,8 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
             >
               <motion.div
                 className={`absolute top-2 right-2 text-white text-xs font-medium px-2 py-1 rounded-full ${
-                  service.eligibility === "Disponible"
-                    ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53]"
+                  service.eligibility === "Disponible" 
+                    ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53]" 
                     : "bg-gray-500"
                 }`}
                 initial={{ scale: 0 }}
@@ -219,11 +177,9 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               <div className="flex justify-between items-center mt-auto">
                 <div>
                   <p className="text-xs text-white/60">
-                    {service.id === "p2p" ? "Montant max" : "Pourcentage max"}
+                    {service.nom.toLowerCase().includes("prêt") ? "Montant max" : "Pourcentage max"}
                   </p>
-                  <p className="font-semibold text-white">
-                    {service.id === "p2p" ? service.maxAmount : service.maxpourcent}
-                  </p>
+                  <p className="font-semibold text-white">{service.nom.toLowerCase().includes("prêt") ? service.maxAmount : service.maxpourcent}</p>
                 </div>
                 <motion.button
                   whileHover={service.eligibility === "Disponible" ? { scale: 1.1, x: 5 } : {}}
@@ -231,19 +187,19 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
                   onClick={(e) => {
                     e.stopPropagation()
                     if (service.eligibility === "Disponible") {
-                      if (service.id === "loan") {
+                      if (service.nom.toLowerCase().includes("conseil")) {
                         setIsChatbotOpen(true)
                       } else {
                         setActiveService(service.id)
                       }
                     }
                   }}
-                  disabled={service.eligibility !== "Disponible"}
                   className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
                     service.eligibility === "Disponible"
                       ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
                       : "bg-gray-500 cursor-not-allowed"
                   }`}
+                  disabled={service.eligibility !== "Disponible"}
                 >
                   Demander <IconArrowRight className="ml-1 h-4 w-4" />
                 </motion.button>
@@ -254,7 +210,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       )}
 
       <AnimatePresence>
-        {activeService && activeService !== "loan" && (
+        {activeService && !services.find(s => s.id === activeService)?.nom.toLowerCase().includes("conseil") && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -269,10 +225,21 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               transition={{ duration: 0.3 }}
               className="relative w-full max-w-lg bg-[#010D3E] rounded-2xl p-6 shadow-xl border border-gray-100/10"
             >
-              {activeService === "advance" ? (
+              {services.find(s => s.id === activeService)?.nom.toLowerCase().includes("avance") ? (
                 <SalaryAdvanceForm onClose={() => setActiveService(null)} user={user} />
               ) : (
-                <ServiceForm serviceId={activeService} onClose={() => setActiveService(null)} />
+                <div className="text-white text-center p-4">
+                  <p>Le formulaire pour ce service n&apos;est pas encore disponible.</p>
+                  <p>Le formulaire pour ce service n&#39;est pas encore disponible.</p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setActiveService(null)}
+                    className="mt-4 px-4 py-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white rounded-lg"
+                  >
+                    Fermer
+                  </motion.button>
+                </div>
               )}
             </motion.div>
           </motion.div>
@@ -296,160 +263,5 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
         )}
       </AnimatePresence>
     </div>
-  )
-}
-
-interface ServiceFormProps {
-  serviceId: string
-  onClose: () => void
-}
-
-function ServiceForm({ serviceId, onClose }: ServiceFormProps) {
-  const [amount, setAmount] = useState("")
-  const [reason, setReason] = useState("")
-  const [duration, setDuration] = useState("1")
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      onClose()
-    }, 1500)
-  }
-
-  const getServiceTitle = () => {
-    switch (serviceId) {
-      case "p2p":
-        return "Demande de prêt entre particuliers"
-      case "loan":
-        return "Demande de conseil financier"
-      default:
-        return "Demande de service financier"
-    }
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-semibold text-white">{getServiceTitle()}</h3>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onClose}
-          className="p-1 rounded-full hover:bg-[#010D3E]/50"
-        >
-          <IconX className="h-5 w-5 text-white" />
-        </motion.button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-white/80 mb-1">
-            Montant demandé (GNF)
-          </label>
-          <motion.input
-            whileFocus={{ scale: 1.02, boxShadow: "0 0 10px rgba(255, 103, 30, 0.3)" }}
-            type="text"
-            id="amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="block w-full px-3 py-2 bg-[#010D3E]/50 border border-gray-100/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FF8E53] transition-all duration-200"
-            placeholder="Ex: 500000"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="reason" className="block text-sm font-medium text-white/80 mb-1">
-            Motif de la demande
-          </label>
-          <motion.textarea
-            whileFocus={{ scale: 1.02, boxShadow: "0 0 10px rgba(255, 103, 30, 0.3)" }}
-            id="reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            rows={3}
-            className="block w-full px-3 py-2 bg-[#010D3E]/50 border border-gray-100/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FF8E53] transition-all duration-200"
-            placeholder="Expliquez brièvement pourquoi vous avez besoin de ce financement"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="duration" className="block text-sm font-medium text-white/80 mb-1">
-            Durée de remboursement (mois)
-          </label>
-          <motion.select
-            whileFocus={{ scale: 1.02, boxShadow: "0 0 10px rgba(255, 103, 30, 0.3)" }}
-            id="duration"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            className="block w-full px-3 py-2 bg-[#010D3E]/50 border border-gray-100/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#FF8E53] transition-all duration-200"
-            required
-          >
-            <option value="1">1 mois</option>
-            <option value="3">3 mois</option>
-            <option value="6">6 mois</option>
-            <option value="12">12 mois</option>
-          </motion.select>
-        </div>
-
-        <div className="flex items-center mt-6">
-          <motion.input
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            id="terms"
-            type="checkbox"
-            className="h-4 w-4 text-[#FF8E53] focus:ring-[#FF8E53] border-gray-100/10 rounded"
-            checked={true}
-            onChange={() => {}}
-            readOnly
-            required
-          />
-          <label htmlFor="terms" className="ml-2 block text-sm text-white/80">
-            J&apos;accepte les conditions générales et je comprends les modalités de remboursement
-          </label>
-        </div>
-
-        <div className="mt-6 flex justify-end space-x-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-[#010D3E]/50 border border-gray-100/10 rounded-lg text-sm font-medium text-white hover:bg-[#010D3E]/70 transition-all duration-200"
-          >
-            Annuler
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white rounded-lg text-sm font-medium hover:from-[#FF551E] hover:to-[#FF7E53] disabled:opacity-70 transition-all duration-200"
-          >
-            {loading ? (
-              <div className="flex items-center">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
-                />
-                Traitement...
-              </div>
-            ) : (
-              "Soumettre la demande"
-            )}
-          </motion.button>
-        </div>
-      </form>
-    </motion.div>
   )
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBell, IconEdit, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash } from "@tabler/icons-react";
+import { IconBell, IconEdit, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash, IconLogout } from "@tabler/icons-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -9,7 +9,8 @@ import { ProfileSettings } from "./profile-settings";
 import { AdCarousel } from "./AdCarousel";
 import { UserWithEmployeData } from "@/types/employe";
 import { Partenaire } from "@/types/partenaire";
-import { User, Mail, Phone, MapPin, Briefcase, Building } from "lucide-react";
+import { User, Mail, Phone, MapPin, Briefcase, Building, Home } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Notification {
   id: number;
@@ -22,8 +23,9 @@ interface ProfileHeaderProps {
   entreprise: Partenaire;
 }
 
-export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
-  const { currentUser, userData } = useAuth();
+export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
+  const { currentUser, userData, logout } = useAuth();
+  const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -38,13 +40,31 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
 
   // Sync user data with AuthContext
   useEffect(() => {
-
-    
     if (currentUser && userData) {
       // Update user data with data from AuthContext
       // This is a placeholder and should be replaced with actual logic to update user data
     }
   }, [currentUser, userData]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  const handleHomeNavigation = () => {
+    router.push("/");
+  };
+
+  // Format date safely
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return "Non défini";
+    const date = new Date(dateStr);
+    return date.toString() !== "Invalid Date" ? date.toLocaleDateString("fr-FR") : "Date invalide";
+  };
 
   // Notification Details Component
   function NotificationDetails({ notification, onClose }: { notification: Notification; onClose: () => void }) {
@@ -276,7 +296,7 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
                     />
                   ) : (
                     <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-xl font-bold text-[#FFFFFF] border-2 border-[#FF671E]/30">
-                      {user.nomComplet?.split(" ").map((n) => n[0]).join("") || 'U'}
+                      {user.nomComplet?.split(" ").map((n) => n[0]).join("") || "U"}
                     </div>
                   )}
                 </motion.div>
@@ -304,7 +324,8 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
                 <motion.input
                   type={field.type}
                   name={field.name}
-                  // value={formData[field.name as keyof UserWithEmployeData] || ''}
+                  // Note: Commented out to avoid type errors; value should be properly typed
+                  // value={formData[field.name as keyof UserWithEmployeData] || ""}
                   onChange={handleInputChange}
                   whileFocus={{ scale: 1.02 }}
                   className="w-full px-4 py-2 bg-white/5 border border-[#FF671E]/30 rounded-lg text-[#FFFFFF] focus:outline-none focus:ring-2 focus:ring-[#FF671E] transition-all"
@@ -351,42 +372,59 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
           {/* Entête avec logo blanc et titre */}
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-4">
-              <div className="bg-white rounded-lg p-2 shadow-sm">
-                <Image src="/images/zalama-logo.svg" width={100} height={0} alt="Logo de ZaLaMa" className="h-auto w-24" priority />
-              </div>
-              <h2 className="text-[#FFFFFF] font-medium text-lg hidden sm:block">{entreprise?.nom }</h2>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleHomeNavigation}
+                aria-label="Retour à l'accueil"
+              >
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <Image
+                    src="/images/zalama-logo.svg"
+                    width={100}
+                    height={0}
+                    alt="Logo de ZaLaMa"
+                    className="h-auto w-24"
+                    priority
+                  />
+                </div>
+              </motion.button>
+              
             </div>
 
-            {/* Bouton Paramètres amélioré */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowSettings(true)}
-              aria-label="Ouvrir les paramètres"
-            >
-              <div className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
-                <IconSettings className="w-5 h-5 text-[#FFFFFF]" />
-              </div>
-            </motion.button>
+            {/* Boutons Paramètres et Retour à l'accueil */}
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: "0 4px 14px rgba(255, 103, 30, 0.3)",
+                }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleHomeNavigation}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-[#FFFFFF] shadow-lg hover:shadow-[#FF671E]/30 transition-all text-sm"
+                aria-label="Retour à l'accueil"
+              >
+                <Home size={20} />
+                <span className="sr-only md:not-sr-only">Accueil</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowSettings(true)}
+                aria-label="Ouvrir les paramètres"
+              >
+                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+                  <IconSettings className="w-5 h-5 text-[#FFFFFF]" />
+                </div>
+              </motion.button>
+            </div>
           </div>
 
           {/* Texte publicitaire centré */}
           <div className="flex-1 flex items-center justify-center p-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#FFFFFF]/90 mb-2">
-                {user.nom || user.nomComplet || `${user.prenom} ${user.nom}` || user.displayName || 'Utilisateur'}
-              </h2>
-              <p className="text-[#FFFFFF]/80 text-lg md:text-xl max-w-lg mx-auto">
-                {user.poste && (
-                  <div className="flex items-center gap-2 text-white/70">
-                    <Briefcase className="w-4 h-4" />
-                    <span>{user.poste}</span>
-                    {user.role && user.role !== user.poste && (
-                      <span className="text-[#FF671E]">({user.role})</span>
-                    )}
-                  </div>
-                )}
-              </p>
+              
+              
             </motion.div>
           </div>
         </div>
@@ -420,7 +458,7 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
           {/* Section gauche - Avatar + Infos */}
           <div className="flex flex-col sm:flex-row gap-6">
             {/* Avatar */}
-            <motion.div className="relative group mt-4" whileHover={{ scale: 1.03 }}>
+            <motion.div className="relative group" whileHover={{ scale: 1.03 }}>
               <div className="absolute -inset-1 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
 
               {user.photoURL ? (
@@ -447,7 +485,7 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-bold text-[#FFFFFF]">
-                  {user.nom || user.nomComplet || `${user.prenom} ${user.nom}` || user.displayName || 'Utilisateur'}
+                  {user.nom || user.nomComplet || `${user.prenom} ${user.nom}` || user.displayName || "Utilisateur"}
                 </h1>
                 <div className="flex items-center gap-2">
                   <motion.div
@@ -489,20 +527,12 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
                 </div>
                 <div className="flex items-center text-gray-300">
                   <IconCalendar className="mr-2 text-[#FF671E]" />
-                  <span>Embauché le {new Date(user.dateEmbauche || '' ).toLocaleDateString('fr-FR')}</span>
+                  <span>crée le  {formatDate(user.dateEmbauche)}</span>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2 pt-1">
-                <motion.a
-                  key={user.telephone}
-                  href={`tel:${user.telephone}`}
-                  whileHover={{ y: -2 }}
-                  className="flex items-center px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm"
-                >
-                  <Phone className="mr-1.5 text-[#FF671E]" />
-                  <span>{user.telephone}</span>
-                </motion.a>
+                
                 <motion.a
                   key={user.email}
                   href={`mailto:${user.email}`}
@@ -531,6 +561,15 @@ export function ProfileHeader({ user , entreprise }: ProfileHeaderProps) {
             >
               <IconBell size={20} className="text-[#FFFFFF]" />
               <span className="sr-only md:not-sr-only text-[#FFFFFF]">Notifications</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 border border-white/20 shadow-sm hover:bg-white/20 transition-all text-sm"
+            >
+              <IconLogout size={20} className="text-[#FFFFFF]" />
+              <span className="sr-only md:not-sr-only text-[#FFFFFF]">Déconnexion</span>
             </motion.button>
             <motion.button
               whileHover={{
