@@ -41,7 +41,7 @@ const teamMembers: TeamMember[] = [
     name: "Mory Koulibaly",
     role: "Cofondateur & Directeur Général",
     description:
-      "Fort d’une expérience technique acquise à travers des projets innovants tels que Kambily (e-commerce) et Findaara (gestion de couveuse intelligente), il dirige Zalama avec rigueur et vision. Aujourd’hui, il fait partie de cette nouvelle génération qui construit activement l’avenir du digital en Guinée.",
+      "Je suis un jeune entrepreneur et développeur guinéen, Directeur Général de Zalama. Fort d’une expérience technique acquise à travers des projets innovants comme Kambily (e-commerce) et Findaara (gestion de couveuse intelligente), je dirige Zalama avec rigueur et vision. Aujourd’hui, je fais partie de cette nouvelle génération qui construit activement l’avenir du digital en Guinée.",
     image: "/images/mory.jpg",
     phone: "+224 625 21 21 15",
     email: "morykoulibaly2023@gmail.com",
