@@ -1,100 +1,52 @@
 "use client"
 
 import { IconArrowRight, IconX } from "@tabler/icons-react"
-import { useState, useEffect, useMemo } from "react"
-import type React from "react"
-import type { JSX } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { SalaryAdvanceForm } from "./salary-advance-form"
 import { AI } from "@/components/profile/AI"
 import { UserWithEmployeData } from "@/types/employe"
-import { db } from "@/lib/firebase"
-import { collection, getDocs } from "firebase/firestore"
-import { Timestamp } from "firebase/firestore"
-
-// Interface Firestore pour les services
-interface Service {
-  id: string
-  nom: string
-  description: string
-  categorie: string
-  pourcentageMax: number
-  duree: string
-  disponible: boolean
-  createdAt: Timestamp
-}
-
-// Interface frontend pour les services avec champs UI
-interface FrontendService {
-  id: string
-  title: string
-  description: string
-  icon: JSX.Element
-  maxpourcent?: string
-  maxAmount?: string
-  eligibility: string
-}
 
 export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [activeService, setActiveService] = useState<string | null>(null)
   const [isChatbotOpen, setIsChatbotOpen] = useState(false)
-  const [services, setServices] = useState<FrontendService[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+ 
 
-  // Définir les icônes pour chaque service
-
-  const serviceIcons: { [key: string]: JSX.Element } = useMemo(
-    () => ({
-      advance: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-8 w-8 text-blue-500"
-        >
+  const services = [
+    {
+      id: "advance",
+      title: "Avance sur salaire",
+      description: "Obtenez une avance sur votre prochain salaire, pour vos imprevus et urgences financières",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-blue-500">
           <rect x="2" y="5" width="20" height="14" rx="2" />
           <line x1="2" y1="10" x2="22" y2="10" />
           <line x1="7" y1="15" x2="9" y2="15" />
           <line x1="11" y1="15" x2="13" y2="15" />
         </svg>
       ),
-      p2p: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-8 w-8 text-orange-500"
-        >
+      maxpourcent: "25%",
+      eligibility: "Disponible"
+    },
+    {
+      id: "p2p",
+      title: "Prêt entre particuliers",
+      description: "Des prêts directs entre utilisateurs, à moindre coût pour les emprunteurs et rentables pour les prêteurs.",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-orange-500">
           <circle cx="12" cy="12" r="10" />
           <path d="M12 6v6l4 2" />
         </svg>
       ),
-      loan: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-8 w-8 text-green-500"
-        >
+      maxAmount: "25 000 000",
+      eligibility: "Indisponible"
+    },
+    {
+      id: "loan",
+      title: "Conseil financier",
+      description: "Obtenez des conseils financiers personnalisés pour gérer vos finances.",
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-green-500">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
           <line x1="16" y1="13" x2="8" y2="13" />
@@ -102,41 +54,10 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
           <polyline points="10 9 9 9 8 9" />
         </svg>
       ),
-    }),
-    []
-  )
-
-  // Récupérer les services depuis Firestore
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const querySnapshot = await getDocs(collection(db, "services"))
-        const fetchedServices: FrontendService[] = querySnapshot.docs.map((doc) => {
-          const data = doc.data() as Service
-          return {
-            id: doc.id,
-            title: data.nom,
-            description: data.description,
-            icon: serviceIcons[doc.id] || serviceIcons.advance,
-            maxpourcent: data.pourcentageMax ? `${data.pourcentageMax}%` : undefined,
-            maxAmount: doc.id === "p2p" ? "25 000 000" : undefined,
-            eligibility: data.disponible ? "Disponible" : "Indisponible",
-          }
-        })
-        setServices(fetchedServices)
-      } catch (error) {
-        console.error("Erreur lors de la récupération des services :", error)
-        setError("Impossible de charger les services.")
-        setServices([])
-      } finally {
-        setLoading(false)
-      }
+      maxpourcent: "50%",
+      eligibility: "Indisponible"
     }
-
-    fetchServices()
-  }, [serviceIcons])
+  ]
 
   return (
     <div className="py-8 bg-[#010D3E]">
@@ -149,109 +70,73 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
         Services financiers disponibles
       </motion.h2>
 
-      {loading ? (
-        <div className="text-white text-center">Chargement des services...</div>
-      ) : error ? (
-        <div className="text-red-500 text-center">{error}</div>
-      ) : services.length === 0 ? (
-        <div className="text-white text-center">Aucun service disponible.</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
-          {services.map((service, index) => (
-            <motion.div
-              key={service.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={
-                service.eligibility === "Disponible"
-                  ? {
-                      scale: 1.03,
-                      boxShadow:
-                        service.id === "advance"
-                          ? "0 8px 20px rgba(59, 130, 246, 0.3)"
-                          : service.id === "loan"
-                          ? "0 8px 20px rgba(34, 197, 94, 0.3)"
-                          : "0 8px 20px rgba(249, 115, 22, 0.3)",
-                    }
-                  : {}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
+        {services.map((service, index) => (
+          <motion.div
+            key={service.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            whileHover={{ 
+              scale: 1.03,
+              boxShadow: service.id === "advance" ? "0 8px 20px rgba(59, 130, 246, 0.3)" : 
+                        service.id === "loan" ? "0 8px 20px rgba(34, 197, 94, 0.3)" : 
+                        "0 8px 20px rgba(249, 115, 22, 0.3)"
+            }}
+            className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border ${
+              service.id === "advance" ? "border-blue-500/30" : 
+              service.id === "loan" ? "border-green-500/30" : 
+              "border-orange-500/30"
+            } cursor-pointer transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
+            onClick={() => {
+              if (service.id === "loan") {
+                setIsChatbotOpen(true)
+              } else {
+                setActiveService(service.id)
               }
-              className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border ${
-                service.id === "advance"
-                  ? "border-blue-500/30"
-                  : service.id === "loan"
-                  ? "border-green-500/30"
-                  : "border-orange-500/30"
-              } ${
-                service.eligibility === "Disponible"
-                  ? "cursor-pointer"
-                  : "cursor-not-allowed opacity-60"
-              } transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
-              onClick={() => {
-                if (service.eligibility === "Disponible") {
+            }}
+          >
+            <motion.div
+              className="absolute top-2 right-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white text-xs font-medium px-2 py-1 rounded-full"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: index * 0.2, type: "spring", stiffness: 200 }}
+            >
+              {service.eligibility}
+            </motion.div>
+            <div className="flex items-center mb-4">
+              <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+                {service.icon}
+              </motion.div>
+              <h3 className="ml-3 text-lg font-semibold text-white">{service.title}</h3>
+            </div>
+            <p className="text-white/80 text-sm mb-4 flex-grow">{service.description}</p>
+            <div className="flex justify-between items-center mt-auto">
+              <div>
+                <p className="text-xs text-white/60">
+                  {service.id === "p2p" ? "Montant max" : "Pourcentage max"}
+                </p>
+                <p className="font-semibold text-white">{service.id === "p2p" ? service.maxAmount : service.maxpourcent}</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.1, x: 5 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation() // Prevent card click from triggering
                   if (service.id === "loan") {
                     setIsChatbotOpen(true)
                   } else {
                     setActiveService(service.id)
                   }
-                }
-              }}
-            >
-              <motion.div
-                className={`absolute top-2 right-2 text-white text-xs font-medium px-2 py-1 rounded-full ${
-                  service.eligibility === "Disponible"
-                    ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53]"
-                    : "bg-gray-500"
-                }`}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.2, type: "spring", stiffness: 200 }}
+                }}
+                className="inline-flex items-center text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] px-4 py-2 rounded-lg hover:from-[#FF551E] hover:to-[#FF7E53] transition-all duration-300"
               >
-                {service.eligibility}
-              </motion.div>
-              <div className="flex items-center mb-4">
-                <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
-                  {service.icon}
-                </motion.div>
-                <h3 className="ml-3 text-lg font-semibold text-white">{service.title}</h3>
-              </div>
-              <p className="text-white/80 text-sm mb-4 flex-grow">{service.description}</p>
-              <div className="flex justify-between items-center mt-auto">
-                <div>
-                  <p className="text-xs text-white/60">
-                    {service.id === "p2p" ? "Montant max" : "Pourcentage max"}
-                  </p>
-                  <p className="font-semibold text-white">
-                    {service.id === "p2p" ? service.maxAmount : service.maxpourcent}
-                  </p>
-                </div>
-                <motion.button
-                  whileHover={service.eligibility === "Disponible" ? { scale: 1.1, x: 5 } : {}}
-                  whileTap={service.eligibility === "Disponible" ? { scale: 0.95 } : {}}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (service.eligibility === "Disponible") {
-                      if (service.id === "loan") {
-                        setIsChatbotOpen(true)
-                      } else {
-                        setActiveService(service.id)
-                      }
-                    }
-                  }}
-                  disabled={service.eligibility !== "Disponible"}
-                  className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
-                    service.eligibility === "Disponible"
-                      ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
-                      : "bg-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  Demander <IconArrowRight className="ml-1 h-4 w-4" />
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+                Demander <IconArrowRight className="ml-1 h-4 w-4" />
+              </motion.button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
 
       <AnimatePresence>
         {activeService && activeService !== "loan" && (
@@ -270,7 +155,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               className="relative w-full max-w-lg bg-[#010D3E] rounded-2xl p-6 shadow-xl border border-gray-100/10"
             >
               {activeService === "advance" ? (
-                <SalaryAdvanceForm onClose={() => setActiveService(null)} user={user} />
+                <SalaryAdvanceForm onClose={() => setActiveService(null)}  user={user}  />
               ) : (
                 <ServiceForm serviceId={activeService} onClose={() => setActiveService(null)} />
               )}
