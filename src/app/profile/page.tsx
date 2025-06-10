@@ -4,7 +4,7 @@
 import { FinancialServices } from "@/components/profile/financial-services"
 // import { TransactionHistory } from "@/components/profile/transaction-history"
 import { ProfileStats } from "@/components/profile/profile-stats"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 // import { AI } from "@/components/profile/AI"
@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("services")
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false)
+  const [isChatbotOpen] = useState(false)
   const tabsRef = useRef<HTMLDivElement>(null)
   const [activeTabRect, setActiveTabRect] = useState<{ left: number; width: number } | null>(null)
   
@@ -26,6 +26,27 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [entreprise, setEntreprise] = useState<Partenaire | null>(null)
+
+  // Fonction pour récupérer les informations de l'entreprise
+  const fetchEntrepriseInfo = async (partenaireId: string) => {
+    try {
+      console.log('🏢 Récupération des informations de l\'entreprise...')
+      const response = await fetch(`/api/partenaires/${partenaireId}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const entrepriseData = await response.json()
+        console.log('✅ Informations entreprise récupérées:', entrepriseData.nom)
+        setEntreprise(entrepriseData)
+      } else {
+        console.error('❌ Erreur lors de la récupération de l\'entreprise')
+      }
+    } catch (error) {
+      console.error('💥 Erreur lors de la récupération de l\'entreprise:', error)
+    }
+  }
 
   // Vérifier l'authentification et récupérer les données utilisateur
   useEffect(() => {
@@ -67,26 +88,6 @@ export default function ProfilePage() {
       }
     }
 
-    const fetchEntrepriseInfo = async (partenaireId: string) => {
-      try {
-        console.log('🏢 Récupération des informations de l\'entreprise...')
-        const response = await fetch(`/api/partenaires/${partenaireId}`, {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        if (response.ok) {
-          const entrepriseData = await response.json()
-          console.log('✅ Informations entreprise récupérées:', entrepriseData.nom)
-          setEntreprise(entrepriseData)
-        } else {
-          console.error('❌ Erreur lors de la récupération de l\'entreprise')
-        }
-      } catch (error) {
-        console.error('💥 Erreur lors de la récupération de l\'entreprise:', error)
-      }
-    }
-
     checkAuthAndFetchUser()
   }, [router])
 
@@ -118,7 +119,7 @@ export default function ProfilePage() {
           className="flex flex-col items-center gap-4"
         >
           <div className="w-8 h-8 border-2 border-[#FF671E] border-t-transparent rounded-full animate-spin" />
-          <p className="text-white/60">Vérification de l&apos;authentification...</p>
+          <p className="text-white/60">Vérification de l&#39;authentification...</p>
         </motion.div>
       </div>
     )
@@ -140,7 +141,7 @@ export default function ProfilePage() {
         <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div>
-              <ProfileHeader user={user} entreprise={entreprise as Partenaire} />
+              {entreprise && <ProfileHeader user={user} entreprise={entreprise} />}
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -148,7 +149,7 @@ export default function ProfilePage() {
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="mt-6"
               >
-                <ProfileStats user={user}  />
+                <ProfileStats user={user} />
               </motion.div>
               
               <motion.div
@@ -197,7 +198,7 @@ export default function ProfilePage() {
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </motion.svg>
-                        <span className="hidden sm:inline">Services</span>
+                        Services
                       </motion.span>
                     </TabsTrigger>
                     
@@ -220,7 +221,7 @@ export default function ProfilePage() {
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </motion.svg>
-                        <span className="hidden sm:inline">Historique</span>
+                        Historique
                       </motion.span>
                     </TabsTrigger>
                   </TabsList>
@@ -234,7 +235,7 @@ export default function ProfilePage() {
                       transition={{ duration: 0.2 }}
                     >
                       <TabsContent value="services" className="mt-2">
-                        <FinancialServices user={user}  />
+                        <FinancialServices user={user} />
                       </TabsContent>
                       <TabsContent value="history" className="mt-2">
                         {/* <TransactionHistory user={user} entreprise={entreprise} /> */}
@@ -250,10 +251,8 @@ export default function ProfilePage() {
 
       {/* AI Button */}
       <motion.button
-        className="fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] shadow-lg flex items-center justify-center text-white font-semibold text-sm"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setIsChatbotOpen(true)}
+        className="fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] shadow-lg flex items-center justify-center text-white font-semibold text-sm  cursor-not-allowed"
+        disabled
       >
         AI
       </motion.button>
