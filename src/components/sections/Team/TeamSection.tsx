@@ -2,103 +2,38 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import * as LucideIcons from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, Linkedin, Mail } from "lucide-react";
 
-type SocialNetwork = {
-  name: string;
-  url: string;
-  icon: keyof typeof LucideIcons;
-  color?: string;
-};
-
-type TeamMember = {
-  name: string;
-  role: string;
-  description: string;
-  image: string;
-  phone: string;
-  email: string;
-  socials: SocialNetwork[];
-};
-
-const teamMembers: TeamMember[] = [
-  {
-    name: "Fassou Gbagan HABA",
-    role: "Cofondateur & Président",
-    description:
-      "Fort d'une expertise solide, il dirige la vision stratégique de ZaLaMa. Visionnaire et engagé, il incarne un leadership audacieux et représente une nouvelle génération d'entrepreneurs Guinéens.",
-    image: "/images/fassou.jpg",
-    phone: "+224 627 12 94 79",
-    email: "fassougbaganhaba@gmail.com",
-    socials: [
-      { name: 'LinkedIn', url: 'https://www.linkedin.com/in/gbagan-fati-haba-6339a3269?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app', icon: 'Linkedin' },
-      { name: 'Facebook', url: 'https://www.facebook.com/gbagan.haba', icon: 'Facebook' },
-      // { name: 'GitHub', url: 'https://github.com/example', icon: 'Github' },
-      { name: 'Email', url: 'mailto:fassougbaganhaba@gmail.com', icon: 'Mail' },
-    ],
-  },
-  {
-    name: "Mory Koulibaly",
-    role: "Cofondateur & Directeur Général",
-    description:
-      "Je suis un jeune entrepreneur et développeur guinéen, Directeur Général de Zalama. Fort d’une expérience technique acquise à travers des projets innovants comme Kambily (e-commerce) et Findaara (gestion de couveuse intelligente), je dirige Zalama avec rigueur et vision. Aujourd’hui, je fais partie de cette nouvelle génération qui construit activement l’avenir du digital en Guinée.",
-    image: "/images/mory.jpg",
-    phone: "+224 625 21 21 15",
-    email: "morykoulibaly2023@gmail.com",
-    socials: [
-      { name: 'LinkedIn', url: 'https://www.linkedin.com/in/mory-koulibaly-76005a324/?originalSubdomain=gn', icon: 'Linkedin' },
-      { name: 'GitHub', url: 'https://github.com/Morymirco', icon: 'Github' },
-      { name: 'Portfolio', url: 'https://www.morykoulibaly.me/', icon: 'BriefcaseBusiness' },
-      { name: 'Mail', url: 'mailto:morykoulibaly2023@gmail.com', icon: 'Mail' },
-    ],
-  },
-  {
-    name: "Karfalla Diaby",
-    role: "Co-Fontdateur & Directeur des Opérations",
-    description:
-      "Designer, stratège opérationnel et créateur de solutions, il transforme les idées en produits concrets. À la croisée du design, de la tech et de l’organisation, il pilote les opérations avec une vision claire : construire des projets utiles, agiles et profondément ancrés dans la réalité Guinéenne.",
-    image: "/images/Karfalla.jpg",
-    phone: "+224 628 77 45 73",
-    email: "diabykarfalla2@gmailcom",
-    socials: [
-      { name: 'GitHub', url: 'https://github.com/KarfallaDiaby', icon: 'Github' },
-      { name: 'LinkedIn', url: 'https://www.linkedin.com/in/karfalla-diaby-75bb66217/', icon: 'Linkedin' },
-      // { name: 'Behance', url: 'https://behance.net/example', icon: 'Behance' },
-      { name: 'Facebook', url: 'https://www.facebook.com/karfalla.diaby.18/', icon: 'Facebook' },
-      { name: 'Mail', url: 'mailto:diabykarfalla2@gmailcom', icon: 'Mail' },
-    ],
-  },
-  {
-    name: "Jean Keloua Ouamouno",
-    role: "Cofondateur & Développeur",
-    description:
-      "Conçoit des solutions web et mobiles robustes, centrées sur l’impact et la performance. Expert en Symfony, Laravel, Next.js, Django et Expo, il allie maîtrise technique et vision stratégique.Chez Zalama, il contribue activement à l’innovation numérique en Guinée...",
-    image: "/images/jeanos.jpg",
-    phone: "+224 620 32 79 06",
-    email: "jeankelouaouamouno71@gmailcom",
-    socials: [
-      { name: 'GitHub', url: 'https://github.com/Jeanos224', icon: 'Github' },
-      { name: 'LinkedIn', url: 'https://www.linkedin.com/in/jeanos-ouamouno-183a09356/', icon: 'Linkedin' },
-      // { name: 'Behance', url: 'https://behance.net/example', icon: 'Behance' },
-      { name: 'Facebook', url: 'https://www.facebook.com/jeanos.ouamouno', icon: 'Facebook' },
-      { name: 'Mail', url: 'mailto:jeankelouaouamouno71@gmailcom', icon: 'Mail' },
-    ],
-  },
+const teamMembers = [
   {
     name: "Mamadouba Youla",
-    role: "Co-fondateur & Responsable Client",
+    role: "Fondateur & CEO",
     description:
-      "Il garantit une expérience client exceptionnelle, en créant des liens forts avec la communauté Zalama. Expert en développement web et mobile, passionné par l’intelligence artificielle, il incarne la synergie entre la technologie et la relation client au sein de Zalama.",
-    image: "/images/youla.jpg",
+      "Mamadouba dirige la vision stratégique de ZaLaMa, avec une expertise en inclusion financière et en technologies financières pour transformer la Guinée.",
+    image: "/images/shawn.jpeg",
     phone: "+224 612 34 75 79",
-    email: "mamadoubayoula240@gmail.com",
-    socials: [
-      { name: 'GitHub', url: 'https://github.com/YoulaMamadouba', icon: 'Github' },
-      // { name: 'LinkedIn', url: 'https://www.linkedin.com/in/jeanos-ouamouno-183a09356/', icon: 'Linkedin' },
-      // { name: 'Behance', url: 'https://behance.net/example', icon: 'Behance' },
-      { name: 'Facebook', url: 'https://www.facebook.com/profile.php?id=100086278847241', icon: 'Facebook' },
-      { name: 'Mail', url: 'mailto:mamadoubayoula240@gmail.com', icon: 'Mail' },
-    ],
+    linkedin: "https://linkedin.com/in/mamadouba-youla",
+    email: "mamadouba@zalama.com",
+  },
+  {
+    name: "Aissata Camara",
+    role: "Directrice Technologie",
+    description:
+      "Aissata supervise le développement de notre IA locale, garantissant des solutions financières sécurisées et adaptées aux besoins des utilisateurs.",
+    image: "/images/télécharger (1).jpg",
+    phone: "+224 623 45 67 89",
+    linkedin: "https://linkedin.com/in/aissata-camara",
+    email: "aissata@zalama.com",
+  },
+  {
+    name: "Ibrahima Diallo",
+    role: "Responsable Produit",
+    description:
+      "Ibrahima conçoit des interfaces intuitives, rendant les services de ZaLaMa accessibles et agréables pour tous, avec un focus sur l’expérience utilisateur.",
+    image: "/images/télécharger (2).jpg",
+    phone: "+224 634 56 78 90",
+    linkedin: "https://linkedin.com/in/ibrahima-diallo",
+    email: "ibrahima@zalama.com",
   },
 ];
 
@@ -180,29 +115,28 @@ export default function TeamSection() {
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <span className="flex items-center gap-2 text-gray-300">
-                  <LucideIcons.Phone className="h-5 w-5 text-[#3B82F6]" />
+                  <Phone className="h-5 w-5 text-[#3B82F6]" />
                   {currentMember.phone}
                 </span>
-                <div className="flex gap-4 mt-2">
-                  {currentMember.socials.map((social, index) => {
-                    const IconComponent = LucideIcons[social.icon] as React.ElementType;
-                    return (
-                      <motion.a
-                        key={`${social.name}-${index}`}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#3B82F6] hover:text-[#60A5FA] transition-colors"
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
-                        title={social.name}
-                        aria-label={`${social.name} de ${currentMember.name}`}
-                      >
-                        <IconComponent className="h-5 w-5" />
-                      </motion.a>
-                    );
-                  })}
+                <div className="flex gap-4">
+                  <motion.a
+                    href={currentMember.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#3B82F6]"
+                    whileHover={{ scale: 1.2, color: "#60A5FA" }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Linkedin className="h-5 w-5" />
+                  </motion.a>
+                  <motion.a
+                    href={`mailto:${currentMember.email}`}
+                    className="text-[#3B82F6]"
+                    whileHover={{ scale: 1.2, color: "#60A5FA" }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Mail className="h-5 w-5" />
+                  </motion.a>
                 </div>
               </motion.div>
             </motion.div>
@@ -218,7 +152,7 @@ export default function TeamSection() {
             whileTap={{ scale: 0.9 }}
             transition={{ duration: 0.2 }}
           >
-            <LucideIcons.ChevronLeft size={28} />
+            <ChevronLeft size={28} />
           </motion.button>
           <motion.button
             onClick={next}
@@ -227,7 +161,7 @@ export default function TeamSection() {
             whileTap={{ scale: 0.9 }}
             transition={{ duration: 0.2 }}
           >
-            <LucideIcons.ChevronRight size={28} />
+            <ChevronRight size={28} />
           </motion.button>
         </div>
       </div>
