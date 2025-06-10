@@ -161,11 +161,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     },
     {
       title: "Prêts actifs",
-      value: "1,200,000",
+      value: "0",
       remaining: "",
       currency: "GNF",
       icon: <IconReceipt className="h-6 w-6" />,
-      change: "1 prêt en cours",
+      change: "0 prêt en cours",
       trend: "neutral" as const,
       color: "from-[#010D3E] to-[#1A3A8F]",
       pulse: false,

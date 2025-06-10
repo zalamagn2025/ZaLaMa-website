@@ -440,11 +440,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <ul className="mt-2 space-y-1.5 text-xs text-gray-300">
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
-                            <span>Limite mensuelle: 25% de votre salaire net ({maxMonthlyAdvance.toLocaleString()} GNF)</span>
-                          </li>
-                          <li className="flex items-start">
-                            <span className="mr-2">•</span>
-                            <span>Vous pouvez faire plusieurs demandes dans le mois</span>
+                            <span>Le montant sera déduit de votre prochain salaire + les frais</span>
                           </li>
                           <li className="flex items-start">
                             <span className="mr-2">•</span>
