@@ -11,6 +11,10 @@ const FAQS = {
       answer: "Les étudiants, les salariés et les pensionnaires affiliés à une entreprise ou minsitère partenaire.",
     },
     {
+      question: "Quels sont les avantages de ZaLaMa pour un utilisateur ?",
+      answer: "•Réduction du stress financier en cas d'urgence.\n• Augmentation du pouvoir d'achat sans recourir à l'endettement.\n• Amélioration de la gestion budgétaire personnelle.\n• Réduction des inégalités en matière d'accès au financement, notamment pour les plus modestes.\n• Diminution des risques de surendettement en limitant les prêts informels et usuriers.",
+    },
+    {
       question: "Quel est le montant maximum que je peux demander ?",
       answer: "Avance sur salaire : Jusqu'à 25% de votre revenu mensuel.\nPrêt P2P : 25 000 000 GNF",
     },
@@ -30,7 +34,7 @@ const FAQS = {
   employeur: [
     {
       question: "Quels sont les avantages pour une entreprise d'adhérer à ZaLaMa ?",
-      answer: "Motivation accrue des employés, réduction du stress financier, fidélisation du personnel.",
+      answer: "• Renforcement de la relation employeur-employé en valorisant votre politique sociale.\n• Réduction du turnover et fidélisation des talents.\n• Augmentation de la motivation et de la productivité des collaborateurs.\n• Gestion sereine des éventuels retards de paiement sans tensions internes.\n• Élimination des demandes d'avances internes souvent difficiles à gérer.",
     },
     {
       question: "Comment l'entreprise est-elle impliquée dans le processus ?",

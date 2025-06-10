@@ -122,9 +122,9 @@ const FonctionnementZalama = () => {
       id: 5,
       title: "Remboursement automatique",
       description: [
-        "Avances : Déduction automatique du salaire mensuel + frais minimes",
+        "Avances : Déduction automatique du salaire mensuel",
         "Prêts : Remboursement échelonné selon un pourcentage choisi par le salarié",
-        "Conseils financiers : Service 100% gratuit"
+        "Gestion & Conseils financiers : Service 100% gratuit"
       ],
       image: "/images/etape5.jpg",
       reverse: false,
