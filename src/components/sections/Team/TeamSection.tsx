@@ -27,7 +27,7 @@ const teamMembers: TeamMember[] = [
     role: "Cofondateur & Président",
     description:
       "Fort d'une expertise solide, il dirige la vision stratégique de ZaLaMa. Visionnaire et engagé, il incarne un leadership audacieux et représente une nouvelle génération d'entrepreneurs Guinéens.",
-    image: "/images/fassou.jpg",
+    image: "/images/fassou.JPG",
     phone: "+224 627 12 94 79",
     email: "fassougbaganhaba@gmail.com",
     socials: [
@@ -42,7 +42,7 @@ const teamMembers: TeamMember[] = [
     role: "Cofondateur & Directeur général",
     description:
       "Fort d’une expérience technique acquise à travers des projets innovants tels que Kambily et Findaara, il dirige ZaLaMa avec rigueur et vision. Aujourd’hui, il fait partie de cette nouvelle génération qui construit activement l’avenir du digital en Guinée.",
-    image: "/images/mory.jpg",
+    image: "/images/mory.JPG",
     phone: "+224 625 21 21 15",
     email: "morykoulibaly2023@gmail.com",
     socials: [
@@ -57,7 +57,7 @@ const teamMembers: TeamMember[] = [
     role: "Co-Fontdateur & Directeur des Opérations",
     description:
       "Designer, stratège opérationnel et créateur de solutions, il transforme les idées en produits concrets. À la croisée du design, de la tech et de l’organisation, il pilote les opérations avec une vision claire : construire des projets utiles, agiles et profondément ancrés dans la réalité Guinéenne.",
-    image: "/images/Karfalla.jpg",
+    image: "/images/Karfalla.JPG",
     phone: "+224 628 77 45 73",
     email: "diabykarfalla2@gmailcom",
     socials: [
@@ -73,7 +73,7 @@ const teamMembers: TeamMember[] = [
     role: "Cofondateur & Développeur",
     description:
       "Conçoit des solutions web et mobiles robustes, centrées sur l’impact et la performance. Expert en Symfony, Laravel, Next.js, Django et Expo, il allie maîtrise technique et vision stratégique.Chez Zalama, il contribue activement à l’innovation numérique en Guinée...",
-    image: "/images/jeanos.jpg",
+    image: "/images/jeanos.JPG",
     phone: "+224 620 32 79 06",
     email: "jeankelouaouamouno71@gmailcom",
     socials: [
@@ -89,7 +89,7 @@ const teamMembers: TeamMember[] = [
     role: "Co-fondateur & Responsable Client",
     description:
       "Il garantit une expérience client exceptionnelle, en créant des liens forts avec la communauté Zalama. Expert en développement web et mobile, passionné par l’intelligence artificielle, il incarne la synergie entre la technologie et la relation client au sein de Zalama.",
-    image: "/images/youla.jpg",
+    image: "/images/youla.JPG",
     phone: "+224 612 34 75 79",
     email: "mamadoubayoula240@gmail.com",
     socials: [
@@ -146,8 +146,8 @@ export default function TeamSection() {
               <Image
                 src={currentMember.image}
                 alt={currentMember.name}
-                width={320}
-                height={384}
+                width={220}
+                height={284}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/70 to-transparent" />
