@@ -33,9 +33,12 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 Envoi d\'email de réinitialisation pour:', email);
 
+    // Construire l'URL de réinitialisation
+    const resetUrl = new URL(`/auth/reset-password`, request.nextUrl.origin);
+
     // Envoyer l'email de réinitialisation via Firebase Auth
     await sendPasswordResetEmail(auth, email, {
-      url: `http://localhost:3000/auth/reset-password`,
+      url: resetUrl.toString(),
       handleCodeInApp: false,
     });
     
