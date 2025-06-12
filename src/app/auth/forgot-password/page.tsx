@@ -1,4 +1,5 @@
 'use client'
+import { BackgroundEffects } from "@/components/ui/background-effects";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle, Mail } from 'lucide-react';
@@ -65,30 +66,20 @@ export default function ForgotPasswordPage() {
   };
 
   return (
+    <>
+    <BackgroundEffects />
     <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
-      {/* Bouton Retour */}
-      <Link
-        href="/login"
-        className="absolute top-6 left-6 flex items-center gap-2 px-3 py-1.5 bg-white/80 hover:bg-white/90 text-[#FF671E] font-semibold rounded shadow transition-all z-20"
-        style={{backdropFilter: 'blur(6px)'}}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Retour à la connexion
-      </Link>
-
-      {/* Background gradient effect */}
+      {/* Background effects */}
       <div className="absolute inset-0" />
-      
-      {/* Subtle noise texture overlay */}
       <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light" 
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           backgroundSize: '200px 200px'
         }}
       />
-
-      {/* Top radial glow */}
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px]" />
+      
+      {/* Animated glow effects */}
       <motion.div 
         className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[100vh] h-[60vh] rounded-b-full bg-[#FF671E]/20 blur-[60px]"
         animate={{ 
@@ -114,10 +105,11 @@ export default function ForgotPasswordPage() {
           delay: 1
         }}
       />
-
-      {/* Animated glow spots */}
+      
+      {/* Glow spots */}
       <div className="absolute left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40" />
       <div className="absolute right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40" />
+
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -211,9 +203,8 @@ export default function ForgotPasswordPage() {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Email input */}
                   <motion.div 
-                    className={`relative ${focusedInput === "email" ? 'z-10' : ''}`}
+                    className={`relative ${focusedInput === 'email' ? 'z-10' : ''}`}
                     whileFocus={{ scale: 1.02 }}
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -222,34 +213,22 @@ export default function ForgotPasswordPage() {
                     
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Mail className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "email" ? 'text-white' : 'text-white/40'
+                        focusedInput === 'email' ? 'text-white' : 'text-white/40'
                       }`} />
                       
                       <Input
                         type="email"
-                        placeholder="Votre email professionnel"
+                        placeholder="Votre adresse email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        onFocus={() => setFocusedInput("email")}
+                        onFocus={() => setFocusedInput('email')}
                         onBlur={() => setFocusedInput(null)}
                         required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
+                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-4 focus:bg-white/10"
                       />
-                      
-                      {focusedInput === "email" && (
-                        <motion.div 
-                          layoutId="input-highlight"
-                          className="absolute inset-0 bg-white/5 -z-10"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        />
-                      )}
                     </div>
                   </motion.div>
 
-                  {/* Submit button */}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -259,7 +238,7 @@ export default function ForgotPasswordPage() {
                   >
                     <div className="absolute inset-0 bg-white/10 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
                     
-                    <div className="relative overflow-hidden bg-[#FF671E] text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center">
+                    <div className="relative overflow-hidden bg-[#FF671E] disabled:bg-gray-600 disabled:opacity-50 text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center">
                       <AnimatePresence mode="wait">
                         {isLoading ? (
                           <motion.div
@@ -269,7 +248,7 @@ export default function ForgotPasswordPage() {
                             exit={{ opacity: 0 }}
                             className="flex items-center justify-center"
                           >
-                            <div className="w-4 h-4 border-2 border-black/70 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
                           </motion.div>
                         ) : (
                           <motion.span
@@ -279,8 +258,8 @@ export default function ForgotPasswordPage() {
                             exit={{ opacity: 0 }}
                             className="flex items-center justify-center gap-1 text-sm font-medium"
                           >
-                            Envoyer le lien
-                            <ArrowRight className="w-3 h-3 group-hover/button:translate-x-1 transition-transform duration-300" />
+                            Envoyer le lien de réinitialisation
+                            <ArrowRight className="w-4 h-4" />
                           </motion.span>
                         )}
                       </AnimatePresence>
@@ -302,27 +281,20 @@ export default function ForgotPasswordPage() {
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-white">Email envoyé !</h3>
                   <p className="text-white/60 text-sm px-2">
-                    {message}
+                    Un lien de réinitialisation a été envoyé à votre adresse email.
                   </p>
                   <p className="text-white/40 text-xs px-2 mt-3">
-                    Vérifiez votre boîte mail et vos spams
+                    Vérifiez votre boîte de réception et votre dossier de courrier indésirable.
                   </p>
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="pt-4"
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm mt-4"
                 >
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Retour à la connexion
-                  </Link>
-                </motion.div>
+                  <ArrowLeft className="w-4 h-4" />
+                  Retour à la connexion
+                </Link>
               </motion.div>
             )}
 
@@ -343,5 +315,6 @@ export default function ForgotPasswordPage() {
         </div>
       </motion.div>
     </div>
+    </>
   );
 } 

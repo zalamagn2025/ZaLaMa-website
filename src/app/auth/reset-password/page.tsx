@@ -1,92 +1,107 @@
-'use client'
-import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle, Eye, EyeClosed, Lock } from 'lucide-react';
+// reset-password/page.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
+import { verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, CheckCircle, XCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { BackgroundEffects } from '@/components/ui/background-effects';
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
       data-slot="input"
-      className={cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-        className
-      )}
+      className={`
+        file:text-foreground placeholder:text-muted-foreground 
+        selection:bg-primary selection:text-primary-foreground 
+        dark:bg-input/30 border-input flex h-10 w-full min-w-0 
+        rounded-md border bg-white/5 px-3 py-1 text-base shadow-xs 
+        transition-[color,box-shadow] outline-none 
+        file:inline-flex file:h-7 file:border-0 file:bg-transparent 
+        file:text-sm file:font-medium disabled:pointer-events-none 
+        disabled:cursor-not-allowed disabled:opacity-50 md:text-sm
+        focus-visible:border-ring focus-visible:ring-ring/50 
+        focus-visible:ring-[3px] text-white
+        aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 
+        aria-invalid:border-destructive
+        ${className}
+      `}
       {...props}
     />
-  )
+  );
+}
+
+async function determineUserType(email: string): Promise<'employee' | 'manager' | 'rh'> {
+  try {
+    // Vérifier d'abord dans la collection users (responsables/RH)
+    const usersRef = collection(db, 'users');
+    const usersQuery = query(usersRef, where('email', '==', email));
+    const usersSnapshot = await getDocs(usersQuery);
+    
+    if (!usersSnapshot.empty) {
+      const userData = usersSnapshot.docs[0].data();
+      if (userData.role === 'responsable') {
+        return 'manager';
+      } else if (userData.role === 'rh') {
+        return 'rh';
+      }
+    }
+    
+    // Si pas trouvé dans users, vérifier dans employes
+    const employesRef = collection(db, 'employes');
+    const employesQuery = query(employesRef, where('email', '==', email));
+    const employesSnapshot = await getDocs(employesQuery);
+    
+    if (!employesSnapshot.empty) {
+      return 'employee';
+    }
+    
+    return 'employee';
+  } catch (error) {
+    console.error('Erreur lors de la détermination du type utilisateur:', error);
+    return 'employee';
+  }
 }
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const oobCode = searchParams.get('oobCode');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'verifying' | 'ready' | 'success' | 'error' | 'loading'>('verifying');
   const [message, setMessage] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
-  const [oobCode, setOobCode] = useState<string | null>(null);
 
   useEffect(() => {
-    const code = searchParams.get('oobCode');
-    if (code) {
-      setOobCode(code);
-      // Vérifier la validité du code
-      verifyResetCode(code);
-    } else {
-      setStatus('error');
-      setMessage('Lien de réinitialisation invalide');
-    }
-  }, [searchParams]);
-
-  const verifyResetCode = async (code: string) => {
-    try {
-      const response = await fetch('/api/auth/verify-reset-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ oobCode: code }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
+    const verifyCodeAndGetEmail = async () => {
+      if (!oobCode) {
         setStatus('error');
-        setMessage(data.error || 'Lien de réinitialisation invalide');
+        setMessage('Lien de réinitialisation invalide');
+        return;
       }
-    } catch (error) {
-      console.error('Erreur lors de la vérification du code:', error);
-      setStatus('error');
-      setMessage('Erreur lors de la vérification du lien');
-    }
-  };
 
-  const validatePassword = (password: string) => {
-    const errors = [];
-    if (password.length < 8) {
-      errors.push('Au moins 8 caractères');
-    }
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Une majuscule');
-    }
-    if (!/[a-z]/.test(password)) {
-      errors.push('Une minuscule');
-    }
-    if (!/[0-9]/.test(password)) {
-      errors.push('Un chiffre');
-    }
-    return errors;
-  };
+      try {
+        const email = await verifyPasswordResetCode(auth, oobCode);
+        setEmail(email);
+        setStatus('ready');
+      } catch (error) {
+        console.error('Erreur:', error);
+        setStatus('error');
+        setMessage('Le lien de réinitialisation est invalide ou a expiré');
+      }
+    };
+
+    verifyCodeAndGetEmail();
+  }, [oobCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,76 +118,63 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const passwordErrors = validatePassword(password);
-    if (passwordErrors.length > 0) {
-      setStatus('error');
-      setMessage(`Mot de passe invalide. Requis : ${passwordErrors.join(', ')}`);
-      return;
-    }
-
-    setIsLoading(true);
-    setStatus('idle');
+    setStatus('loading');
     setMessage('');
 
     try {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          oobCode,
-          newPassword: password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setStatus('success');
-        setMessage('Mot de passe réinitialisé avec succès');
-        // Redirection vers la page de connexion après 3 secondes
-        setTimeout(() => {
-          router.push('/login');
-        }, 3000);
-      } else {
-        setStatus('error');
-        setMessage(data.error || 'Une erreur est survenue');
-      }
+      await confirmPasswordReset(auth, oobCode, password);
+      setStatus('success');
+      setMessage('Mot de passe réinitialisé avec succès');
+      
+      // Déterminer le type d'utilisateur et rediriger
+      const userType = await determineUserType(email);
+      const redirectUrl = userType === 'employee' 
+        ? 'https://zalamasas.com/login'
+        : 'https://partner.zalamasas.com/login';
+        
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 2000);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors de la réinitialisation:', error);
       setStatus('error');
-      setMessage('Erreur de connexion. Veuillez réessayer.');
-    } finally {
-      setIsLoading(false);
+      setMessage('Une erreur est survenue lors de la réinitialisation');
     }
   };
 
-  const passwordErrors = validatePassword(password);
-  const isPasswordValid = password.length > 0 && passwordErrors.length === 0;
+  // Afficher un indicateur de chargement pendant la vérification
+  if (status === 'verifying') {
+    return (
+      <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center bg-black">
+        <div className="absolute inset-0" />
+        <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light" 
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+            backgroundSize: '200px 200px'
+          }}
+        />
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px]" />
+        
+        <div className="relative z-10 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+          <p className="mt-4 text-white/60">Vérification du lien de réinitialisation...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
-      {/* Bouton Retour */}
-      <Link
-        href="/login"
-        className="absolute top-6 left-6 flex items-center gap-2 px-3 py-1.5 bg-white/80 hover:bg-white/90 text-[#FF671E] font-semibold rounded shadow transition-all z-20"
-        style={{backdropFilter: 'blur(6px)'}}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Retour à la connexion
-      </Link>
-
-      {/* Background effects - same as other pages */}
+    <>
+    <BackgroundEffects />
+    <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center ">
+      {/* Background effects */}
       <div className="absolute inset-0" />
-      
       <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light" 
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           backgroundSize: '200px 200px'
         }}
       />
-
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px]" />
       <motion.div 
         className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[100vh] h-[60vh] rounded-b-full bg-[#FF671E]/20 blur-[60px]"
@@ -199,10 +201,10 @@ export default function ResetPasswordPage() {
           delay: 1
         }}
       />
-
       <div className="absolute left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40" />
       <div className="absolute right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40" />
 
+      {/* Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -261,7 +263,7 @@ export default function ResetPasswordPage() {
                 transition={{ delay: 0.2 }}
                 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80"
               >
-                Nouveau mot de passe
+                Réinitialiser le mot de passe
               </motion.h1>
               
               <motion.p
@@ -270,28 +272,44 @@ export default function ResetPasswordPage() {
                 transition={{ delay: 0.3 }}
                 className="text-white/60 text-sm px-2"
               >
-                Choisissez un nouveau mot de passe sécurisé
+                Entrez votre nouveau mot de passe
               </motion.p>
             </div>
 
-            {status !== 'success' ? (
-              <>
-                {/* Messages de statut */}
-                <AnimatePresence>
-                  {status === 'error' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded-lg flex items-center"
-                    >
-                      <AlertCircle className="w-4 h-4 text-red-400 mr-2 flex-shrink-0" />
-                      <p className="text-red-200 text-sm">{message}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            <AnimatePresence>
+              {status === 'error' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded-lg flex items-center"
+                >
+                  <XCircle className="w-4 h-4 text-red-400 mr-2 flex-shrink-0" />
+                  <p className="text-red-200 text-sm">{message}</p>
+                </motion.div>
+              )}
 
-                {/* Form */}
+              {status === 'success' ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center space-y-4"
+                >
+                  <div className="mx-auto w-16 h-16 bg-green-900/20 border border-green-700 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-green-400" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-white">Succès !</h3>
+                    <p className="text-white/60 text-sm px-2">
+                      Mot de passe réinitialisé avec succès
+                    </p>
+                    <p className="text-white/40 text-xs px-2 mt-3">
+                      Redirection en cours...
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Password input */}
                   <motion.div 
@@ -318,40 +336,19 @@ export default function ResetPasswordPage() {
                         className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
                       />
                       
-                      <div 
+                      <button 
+                        type="button"
                         onClick={() => setShowPassword(!showPassword)} 
-                        className="absolute right-3 cursor-pointer"
+                        className="absolute right-3 text-white/40 hover:text-white transition-colors duration-300"
                       >
                         {showPassword ? (
-                          <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <EyeOff className="w-4 h-4" />
                         ) : (
-                          <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <Eye className="w-4 h-4" />
                         )}
-                      </div>
+                      </button>
                     </div>
                   </motion.div>
-
-                  {/* Password validation */}
-                  {password.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="text-xs space-y-1"
-                    >
-                      {passwordErrors.map((error, index) => (
-                        <div key={index} className="flex items-center gap-2 text-red-400">
-                          <div className="w-1 h-1 bg-red-400 rounded-full" />
-                          {error}
-                        </div>
-                      ))}
-                      {isPasswordValid && (
-                        <div className="flex items-center gap-2 text-green-400">
-                          <CheckCircle className="w-3 h-3" />
-                          Mot de passe valide
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
 
                   {/* Confirm Password input */}
                   <motion.div 
@@ -378,53 +375,33 @@ export default function ResetPasswordPage() {
                         className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
                       />
                       
-                      <div 
+                      <button 
+                        type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
-                        className="absolute right-3 cursor-pointer"
+                        className="absolute right-3 text-white/40 hover:text-white transition-colors duration-300"
                       >
                         {showConfirmPassword ? (
-                          <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <EyeOff className="w-4 h-4" />
                         ) : (
-                          <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+                          <Eye className="w-4 h-4" />
                         )}
-                      </div>
+                      </button>
                     </div>
                   </motion.div>
-
-                  {/* Password match validation */}
-                  {confirmPassword.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="text-xs"
-                    >
-                      {password === confirmPassword ? (
-                        <div className="flex items-center gap-2 text-green-400">
-                          <CheckCircle className="w-3 h-3" />
-                          Les mots de passe correspondent
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-red-400">
-                          <div className="w-1 h-1 bg-red-400 rounded-full" />
-                          Les mots de passe ne correspondent pas
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
 
                   {/* Submit button */}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={isLoading || !isPasswordValid || password !== confirmPassword || !oobCode}
+                    disabled={status === 'loading' || !password || !confirmPassword}
                     className="w-full relative group/button mt-6"
                   >
                     <div className="absolute inset-0 bg-white/10 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
                     
                     <div className="relative overflow-hidden bg-[#FF671E] disabled:bg-gray-600 disabled:opacity-50 text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center">
                       <AnimatePresence mode="wait">
-                        {isLoading ? (
+                        {status === 'loading' ? (
                           <motion.div
                             key="loading"
                             initial={{ opacity: 0 }}
@@ -432,7 +409,7 @@ export default function ResetPasswordPage() {
                             exit={{ opacity: 0 }}
                             className="flex items-center justify-center"
                           >
-                            <div className="w-4 h-4 border-2 border-black/70 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-4 h-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
                           </motion.div>
                         ) : (
                           <motion.span
@@ -443,54 +420,33 @@ export default function ResetPasswordPage() {
                             className="flex items-center justify-center gap-1 text-sm font-medium"
                           >
                             Réinitialiser le mot de passe
-                            <ArrowRight className="w-3 h-3 group-hover/button:translate-x-1 transition-transform duration-300" />
                           </motion.span>
                         )}
                       </AnimatePresence>
                     </div>
                   </motion.button>
                 </form>
-              </>
-            ) : (
-              /* Success state */
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center space-y-4"
-              >
-                <div className="mx-auto w-16 h-16 bg-green-900/20 border border-green-700 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-green-400" />
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-white">Succès !</h3>
-                  <p className="text-white/60 text-sm px-2">
-                    {message}
-                  </p>
-                  <p className="text-white/40 text-xs px-2 mt-3">
-                    Redirection vers la connexion...
-                  </p>
-                </div>
+              )}
+            </AnimatePresence>
 
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="pt-4"
-                >
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Aller à la connexion
-                  </Link>
-                </motion.div>
-              </motion.div>
-            )}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="pt-4 text-center"
+            >
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Retour à la connexion
+              </Link>
+            </motion.div>
           </div>
         </div>
       </motion.div>
     </div>
+    </>
   );
-} 
+}

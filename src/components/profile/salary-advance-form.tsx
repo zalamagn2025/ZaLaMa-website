@@ -3,7 +3,7 @@
 import { UserWithEmployeData } from "@/types/employe"
 import { IconCheck, IconCreditCard, IconInfoCircle, IconX } from "@tabler/icons-react"
 import { AnimatePresence, motion } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 interface SalaryAdvanceFormProps {
@@ -31,7 +31,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [loadingAvance, setLoadingAvance] = useState(true)
   const router = useRouter()
   // Récupérer l'avance disponible en temps réel
-  const fetchAvailableAdvance = async () => {
+  const fetchAvailableAdvance = useCallback(async () => {
     try {
       setLoadingAvance(true)
       const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}&action=available-advance`)
@@ -49,19 +49,18 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         }
         console.log('🔍 Données d\'avance disponibles:', data)
       }
-    
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'avance disponible:', error)
     } finally {
       setLoadingAvance(false)
     }
-  }
+  }, [user.employeId])
 
   useEffect(() => {
     if (user.employeId) {
       fetchAvailableAdvance()
     }
-  }, [user.employeId])
+  }, [user.employeId, fetchAvailableAdvance])
 
   // Actualiser les données quand le composant devient visible
   useEffect(() => {
@@ -73,7 +72,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [user.employeId])
+  }, [user.employeId, fetchAvailableAdvance])
 
   // Fonction pour calculer l'avance disponible (25% du salaire net) - DEPRECATED, remplacée par l'API
   const calculateAvailableAdvance = (salaireNet: number): number => {
