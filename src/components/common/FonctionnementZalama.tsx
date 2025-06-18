@@ -104,7 +104,7 @@ const FonctionnementZalama = () => {
           value: "salarie",
           label: "Service Salarié",
           content: [
-            "Le salarié effectue une demande en remplissant un formulaire correspondant au service souhaité.",
+            "Le salarié effectue une demande en remplissant un formulaire.",
             "Les fonds sont débloqués après validation de la demande, de manière rapide et sécurisés"
           ]
         },
@@ -123,7 +123,6 @@ const FonctionnementZalama = () => {
       title: "Remboursement automatique",
       description: [
         "Avances : Déduction automatique du salaire mensuel",
-        "Prêts : Remboursement échelonné selon un pourcentage choisi par le salarié",
         "Gestion & Conseils financiers : Service 100% gratuit"
       ],
       image: "/images/etape5.jpg",
