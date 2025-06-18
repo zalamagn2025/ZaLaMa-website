@@ -94,7 +94,7 @@ const steps = [
 
 const AdhesionProcess = () => {
   return (
-    <section className="relative py-16 md:py-24 lg:py-32 overflow-x-clip">
+    <section className="relative py-0 overflow-x-clip">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="mb-14 mx-auto max-w-3xl text-center space-y-4">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent inline-block">

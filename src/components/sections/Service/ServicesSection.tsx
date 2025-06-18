@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { HandCoins, BarChart3, LineChart, Megaphone, Wallet } from 'lucide-react';
+import { HandCoins, LineChart, Megaphone } from 'lucide-react';
 import { ServiceCard } from './ServiceCard';
 
 export function ServicesSection() {
@@ -18,19 +18,19 @@ export function ServicesSection() {
       // ctaText: "Demander une avance",
       // ctaLink: "/contact"
     },
-    {
-      title: "Prêt P2P (Peer-to-Peer)",
-      description: "Faciliter l'octroi de prêts entre particuliers en toute sécurité grâce à un système fiable et structuré.",
-      icon: <BarChart3 className="w-6 h-6" />,
-      features: [
-        "Montant de 5.000.000 à 25.000.000 GNF",
-        "Durée de 6 à 24 mois",
-        "Taux d'intérêt compétitifs",
-        "Réponse de principe en 7 jours"
-      ],
-      // ctaText: "Demander un prêt",
-      // ctaLink: "/contact"
-    },
+    // {
+    //   title: "Prêt P2P (Peer-to-Peer)",
+    //   description: "Faciliter l'octroi de prêts entre particuliers en toute sécurité grâce à un système fiable et structuré.",
+    //   icon: <BarChart3 className="w-6 h-6" />,
+    //   features: [
+    //     "Montant de 5.000.000 à 25.000.000 GNF",
+    //     "Durée de 6 à 24 mois",
+    //     "Taux d'intérêt compétitifs",
+    //     "Réponse de principe en 7 jours"
+    //   ],
+    //   // ctaText: "Demander un prêt",
+    //   // ctaLink: "/contact"
+    // },
     {
       title: "Gestion & Conseil financier",
       description: "IA sur-mesure intégrer pour accompagner les utilisateurs dans la gestion de leurs dépenses, leurs comptabilités et la planification de leurs avenir financière.",
@@ -59,24 +59,24 @@ export function ServicesSection() {
       // ctaText: "Découvrir l'épargne",
       // ctaLink: "/contact"
     },
-    {
-      title: "Payement de salaire & pension",
-      description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
-      icon: <Wallet className="w-6 h-6" />,
-      features: [
-        "paiement 100% digitalisé",
-        "Tableau de bord RH",
-        "Relevé automatique et exportable ",
-        "Accès à une carte santé pour employés"
-      ],
-      // ctaText: "Découvrir l'épargne",
-      // ctaLink: "/contact"
-    }
+    // {
+    //   title: "Paiement de salaire & pension",
+    //   description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
+    //   icon: <Wallet className="w-6 h-6" />,
+    //   features: [
+    //     "paiement 100% digitalisé",
+    //     "Tableau de bord RH",
+    //     "Relevé automatique et exportable ",
+    //     "Accès à une carte santé pour employés"
+    //   ],
+    //   // ctaText: "Découvrir l'épargne",
+    //   // ctaLink: "/contact"
+    // }
   ];
 
   return (
-    <section className="py-16 md:py-24 lg:py-32">
-      <div className="container px-4 md:px-6">
+    <section className="w-full py-16 md:py-24 lg:py-32 ">
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl">
         <motion.div 
           className="text-center mb-12 md:mb-16"
           initial={{ opacity: 0, y: 20 }}
@@ -87,12 +87,12 @@ export function ServicesSection() {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent inline-block">
             Nos Services
           </h2>
-          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
             Découvrez nos solutions financières innovantes conçues pour répondre à tous vos besoins
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
           {services.map((service, index) => (
             <ServiceCard
               key={service.title}
@@ -114,10 +114,10 @@ export function ServicesSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+          <h3 className="text-2xl font-bold mb-4 text-white">
             Vous avez des questions sur nos services ?
           </h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
+          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
             Notre équipe est à votre disposition pour vous guider et vous conseiller dans le choix de la solution la plus adaptée à vos besoins.
           </p>
           <a
