@@ -109,18 +109,19 @@ const dummyContent = [
     description: (
       <>
         <p>
-          ZaLaMa est une FinTech guinéenne innovante à fort impact social. Elle propose aux salariés,
-          pensionnés et étudiants les services d&apos;avance sur salaire, de prêt P2P, de paiement de salaire et
-          de conseil financier via une intelligence artificielle locale et sur mesure. 
+          ZaLaMa est une fintech guinéenne innovante au service du bien-être financier. 
+          Elle offre aux salariés, pensionnés et étudiants un accès rapide à l&apos;avance 
+          sur salaire, ainsi qu&apos;un accompagnement personnalisé en gestion financière 
+          grâce à une intelligence artificielle locale.
         </p>
         <p>
-          ZaLaMa répond aux besoins de trésorerie immédiate, facilite le paiement des non-bancarisés et
-          l&apos;accès aux crédits spéciaux, tout en favorisant une meilleure gestion des finances personnelles.
+          ZaLaMa répond aux besoins urgents de trésorerie tout en encourageant une 
+          meilleure gestion des finances personnelles.
         </p>
       </>
     ),
     badge: "",
-    image: "/images/zalamaHeroImg1.png",
+    image: "/images/team.jpg",
   },
   {
     title: "Notre mission sociale",
