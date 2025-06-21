@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 // import { AI } from "@/components/profile/AI"
 import { ProfileHeader } from "@/components/profile/profile-header"
+import { ProfileSettings } from "@/components/profile/profile-settings"
 import { UserWithEmployeData } from "@/types/employe"
 import { Partenaire } from "@/types/partenaire"
 import { useRouter } from "next/navigation"
@@ -19,6 +20,7 @@ export default function ProfilePage() {
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("services")
   const [isChatbotOpen] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const tabsRef = useRef<HTMLDivElement>(null)
   const [activeTabRect, setActiveTabRect] = useState<{ left: number; width: number } | null>(null)
   
@@ -301,6 +303,11 @@ export default function ProfilePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Paramètres utilisateur */}
+      {showSettings && (
+        <ProfileSettings onClose={() => setShowSettings(false)} />
+      )}
     </div>
   )
 }

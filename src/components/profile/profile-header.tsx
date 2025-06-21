@@ -189,70 +189,85 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
     );
   }
 
-  // Edit Profile Form Component
+  // Edit Profile Form Component - Version simplifiée pour le téléchargement d'image uniquement
   function EditProfileForm({ onClose }: { onClose: () => void }) {
-    const [formData, setFormData] = useState<UserWithEmployeData>({ ...user });
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string>(user.photoURL || "");
-    const [errors, setErrors] = useState<Partial<Record<keyof UserWithEmployeData, string>>>({});
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Cleanup avatarPreview URL when component unmounts or new image is uploaded
+    // Nettoyer l'URL de l'aperçu lors du démontage du composant
     useEffect(() => {
       return () => {
-        if (avatarPreview && avatarFile) {
+        if (avatarPreview) {
           URL.revokeObjectURL(avatarPreview);
         }
       };
-    }, [avatarPreview, avatarFile]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    }, [avatarPreview]);
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        if (!["image/png", "image/jpeg"].includes(file.type)) {
-          setErrors((prev) => ({ ...prev, photoURL: "Seuls PNG et JPG sont acceptés" }));
-          return;
-        }
-        if (file.size > 2 * 1024 * 1024) {
-          setErrors((prev) => ({ ...prev, photoURL: "L'image doit être < 2MB" }));
-          return;
-        }
-        // Revoke previous URL if exists
-        if (avatarPreview && avatarFile) {
-          URL.revokeObjectURL(avatarPreview);
-        }
-        setAvatarFile(file);
-        const url = URL.createObjectURL(file);
-        setAvatarPreview(url);
-        setErrors((prev) => ({ ...prev, photoURL: undefined }));
+      if (!file) return;
+
+      // Vérifier le type de fichier
+      if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+        setError("Format non supporté. Veuillez utiliser une image au format JPG ou PNG.");
+        return;
       }
+
+      // Vérifier la taille du fichier (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setError("L'image est trop volumineuse. Taille maximale : 2MB.");
+        return;
+      }
+
+      setError(null);
+      setAvatarFile(file);
+      const url = URL.createObjectURL(file);
+      setAvatarPreview(url);
     };
 
-    const validateForm = () => {
-      const newErrors: Partial<Record<keyof UserWithEmployeData, string>> = {};
-      if (!formData.nomComplet?.trim()) newErrors.nomComplet = "Le nom est requis";
-      if (!formData.email?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = "Email invalide";
-      if (!formData.telephone?.match(/^\+?\d{1,3}(?:\s?\d{1,4}){2,4}$/))
-        newErrors.telephone = "Numéro invalide (ex: +224 612 34 75 79 ou +224612347579)";
-      if (!formData.poste?.trim()) newErrors.poste = "Le poste est requis";
-      if (!formData.adresse?.trim()) newErrors.adresse = "L'adresse est requise";
-      if (!formData.dateEmbauche?.match(/^\d{2} \w+ \d{4}$/)) newErrors.dateEmbauche = "Date invalide (ex: 12 Mars 2023)";
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (validateForm()) {
-        setFormData({
-          ...formData,
-          photoURL: avatarFile ? avatarPreview : formData.photoURL,
-        });
+      
+      if (!avatarFile) {
+        setError("Veuillez sélectionner une image avant d'enregistrer");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        // Ici, vous devrez implémenter la logique pour téléverser l'image
+        // Par exemple, avec une API ou un service de stockage
+        console.log("Téléversement de l'image :", avatarFile);
+        
+        // Simulation d'un délai de téléversement
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Mettre à jour l'URL de l'image dans le profil utilisateur
+        // Créer une nouvelle URL d'image à partir du fichier
+        const imageUrl = URL.createObjectURL(avatarFile);
+        
+        // Mettre à jour l'utilisateur avec la nouvelle URL d'image
+        // Note: Dans une application réelle, vous devriez envoyer le fichier au serveur
+        // et utiliser l'URL renvoyée par le serveur
+        user.photoURL = imageUrl;
+        
+        // Afficher un message de succès
+        alert("Photo de profil mise à jour avec succès !");
+        
+        // Forcer le re-render du composant parent pour afficher la nouvelle image
+        // Cette partie dépend de comment votre état utilisateur est géré
+        // Ici, on rafraîchit la page pour voir les changements
+        window.location.reload();
+        
+        // Fermer le modal après le succès
         onClose();
+      } catch (err) {
+        console.error("Erreur lors du téléversement de l'image :", err);
+        setError("Une erreur est survenue lors du téléversement de l'image");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -283,75 +298,87 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-200 mb-2">Avatar</label>
-              <div className="flex items-center gap-4">
-                <motion.div initial={{ scale: 1 }} animate={{ scale: avatarPreview ? 1 : 1 }} className="relative">
+              <div className="flex flex-col items-center gap-6 py-4">
+                <motion.div 
+                  initial={{ scale: 1 }} 
+                  whileHover={{ scale: 1.02 }}
+                  className="relative group"
+                >
                   {avatarPreview ? (
                     <Image
                       key={avatarPreview}
-                      width={64}
-                      height={64}
+                      width={128}
+                      height={128}
                       src={avatarPreview}
                       alt="Aperçu de l'avatar"
-                      className="h-16 w-16 rounded-full object-cover border-2 border-[#FF671E]/30"
+                      className="h-32 w-32 rounded-full object-cover border-4 border-[#FF671E]/30 shadow-lg"
                     />
                   ) : (
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-xl font-bold text-[#FFFFFF] border-2 border-[#FF671E]/30">
+                    <div className="h-32 w-32 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-4xl font-bold text-[#FFFFFF] border-4 border-[#FF671E]/30 shadow-lg">
                       {user.nomComplet?.split(" ").map((n) => n[0]).join("") || "U"}
                     </div>
                   )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    <IconEdit className="w-8 h-8 text-white" />
+                  </div>
                 </motion.div>
+                
                 <motion.label
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-gray-200 hover:bg-white/20 cursor-pointer"
+                  className="px-6 py-3 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-lg text-sm font-medium text-white cursor-pointer shadow-lg hover:shadow-[#FF671E]/40 transition-all"
                 >
-                  Choisir une image
-                  <input type="file" accept="image/png,image/jpeg" onChange={handleAvatarChange} className="hidden" />
+                  {avatarPreview ? "Changer la photo" : "Ajouter une photo"}
+                  <input 
+                    type="file" 
+                    accept="image/png,image/jpeg" 
+                    onChange={handleAvatarChange} 
+                    className="hidden" 
+                  />
                 </motion.label>
-              </div>
-              {errors.photoURL && <p className="text-red-400 text-xs mt-2 bg-red-500/10 p-2 rounded">{errors.photoURL}</p>}
-            </div>
-            {[
-              { name: "nomComplet", label: "Nom", type: "text" },
-              { name: "email", label: "Email", type: "email" },
-              { name: "telephone", label: "Téléphone", type: "tel" },
-              { name: "poste", label: "Poste", type: "text" },
-              { name: "adresse", label: "Adresse", type: "text" },
-              { name: "dateEmbauche", label: "Date d'adhésion", type: "text" },
-            ].map((field) => (
-              <div key={field.name}>
-                <label className="block text-sm font-medium text-gray-200 mb-2">{field.label}</label>
-                <motion.input
-                  type={field.type}
-                  name={field.name}
-                  // Note: Commented out to avoid type errors; value should be properly typed
-                  // value={formData[field.name as keyof UserWithEmployeData] || ""}
-                  onChange={handleInputChange}
-                  whileFocus={{ scale: 1.02 }}
-                  className="w-full px-4 py-2 bg-white/5 border border-[#FF671E]/30 rounded-lg text-[#FFFFFF] focus:outline-none focus:ring-2 focus:ring-[#FF671E] transition-all"
-                />
-                {errors[field.name as keyof UserWithEmployeData] && (
-                  <p className="text-red-400 text-xs mt-2 bg-red-500/10 p-2 rounded">{errors[field.name as keyof UserWithEmployeData]}</p>
+                
+                {error && (
+                  <div className="mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <p className="text-red-400 text-sm text-center">{error}</p>
+                  </div>
                 )}
+                
+                <p className="text-xs text-gray-400 text-center mt-2">
+                  Formats acceptés : JPG, PNG (max. 2MB)
+                </p>
               </div>
-            ))}
-            <div className="flex gap-4 justify-end pt-4">
+            </div>
+            
+            <div className="flex gap-4 justify-center pt-6">
               <motion.button
                 type="button"
                 onClick={onClose}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-6 py-2 rounded-lg bg-white/10 border border-white/20 text-[#FFFFFF] hover:bg-white/20 transition-all"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                disabled={isLoading}
+                className="px-8 py-3 rounded-lg bg-white/10 border border-white/20 text-[#FFFFFF] hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Annuler
               </motion.button>
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-[#FFFFFF] shadow-lg hover:shadow-[#FF671E]/40 transition-all"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                disabled={isLoading || !avatarFile}
+                className={`px-8 py-3 rounded-lg text-white shadow-lg transition-all ${
+                  isLoading || !avatarFile 
+                    ? 'bg-gray-500/50 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:shadow-[#FF671E]/40'
+                }`}
               >
-                Enregistrer
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Enregistrement...</span>
+                  </div>
+                ) : (
+                  'Enregistrer la photo'
+                )}
               </motion.button>
             </div>
           </form>
