@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { Star, StarHalf, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../ui/button'
-import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 type Service = {
