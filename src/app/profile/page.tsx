@@ -14,7 +14,6 @@ import { ProfileSettings } from "@/components/profile/profile-settings"
 import { UserWithEmployeData } from "@/types/employe"
 import { Partenaire } from "@/types/partenaire"
 import { useRouter } from "next/navigation"
-import { IconSettings } from "@tabler/icons-react"
 
 export default function ProfilePage() {
   const router = useRouter()

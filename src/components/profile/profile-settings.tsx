@@ -17,13 +17,10 @@ import {
   IconCheck
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 // Interface pour le type User
 interface User {
@@ -146,7 +143,7 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
     };
 
     loadUserPreferences();
-  }, []);
+  }, [theme]); // Ajout de theme comme dépendance
 
   const handleSettingChange = (name: string, value: boolean | string) => {
     if (name === 'darkMode') {
@@ -217,9 +214,9 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
     router.push('/auth/reset-password');
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
+  // const handleCardClick = (e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  // };
 
   const handleModalClick = (e: React.MouseEvent) => {
     // Empêcher la propagation uniquement si on clique sur le contenu de la modale
@@ -239,12 +236,12 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
       ...prev,
       darkMode: theme === 'dark'
     }));
-  }, [theme]);
+  }, [theme, setSettings]);
 
   // Initialiser le thème
   useEffect(() => {
     setTheme('dark'); // Thème sombre par défaut
-  }, []);
+  }, [setTheme]);
 
   return (
     <AnimatePresence>
