@@ -4,6 +4,7 @@
 import { FinancialServices } from "@/components/profile/financial-services"
 // import { TransactionHistory } from "@/components/profile/transaction-history"
 import { ProfileStats } from "@/components/profile/profile-stats"
+import { FeedbackSection } from "@/components/profile/feedback-section"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
@@ -165,7 +166,7 @@ export default function ProfilePage() {
                 >
                   <TabsList 
                     ref={tabsRef}
-                    className="relative w-full grid grid-cols-2 mb-8 bg-[#010D3E]/50 p-1 rounded-xl h-12 backdrop-blur-md border border-[#1A3A8F]"
+                    className="relative w-full grid grid-cols-3 mb-8 bg-[#010D3E]/50 p-1 rounded-xl h-12 backdrop-blur-md border border-[#1A3A8F]"
                   >
                     {activeTabRect && (
                       <motion.div
@@ -224,6 +225,29 @@ export default function ProfilePage() {
                         Historique
                       </motion.span>
                     </TabsTrigger>
+                    
+                    <TabsTrigger 
+                      value="feedback" 
+                      className="relative z-10 flex-1 flex items-center justify-center text-sm font-medium transition-colors h-full rounded-lg data-[state=active]:font-bold data-[state=active]:text-white"
+                    >
+                      <motion.span
+                        className="flex items-center gap-2 text-gray-300 hover:text-white"
+                        whileHover={{ scale: 1.05, textShadow: "0 0 8px rgba(255,255,255,0.3)" }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <motion.svg 
+                          className="w-5 h-5"
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor"
+                          animate={activeTab === "feedback" ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                          transition={{ repeat: activeTab === "feedback" ? Infinity : 0, duration: 1 }}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </motion.svg>
+                        Avis
+                      </motion.span>
+                    </TabsTrigger>
                   </TabsList>
 
                   <AnimatePresence mode="wait">
@@ -239,6 +263,9 @@ export default function ProfilePage() {
                       </TabsContent>
                       <TabsContent value="history" className="mt-2">
                         {/* <TransactionHistory user={user} entreprise={entreprise} /> */}
+                      </TabsContent>
+                      <TabsContent value="feedback" className="mt-2">
+                        <FeedbackSection />
                       </TabsContent>
                     </motion.div>
                   </AnimatePresence>

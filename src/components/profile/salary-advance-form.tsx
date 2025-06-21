@@ -19,8 +19,20 @@ interface AvanceData {
   avanceDisponible: number
 }
 
+type RequestType = 'transport' | 'sante' | 'education' | 'logement' | 'alimentation' | 'autre';
+
+const REQUEST_TYPES = [
+  { value: 'transport', label: 'Transport' },
+  { value: 'sante', label: 'Santé' },
+  { value: 'education', label: 'Éducation' },
+  { value: 'logement', label: 'Logement' },
+  { value: 'alimentation', label: 'Alimentation' },
+  { value: 'autre', label: 'Autre' }
+] as const;
+
 export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { user: UserWithEmployeData }) {
   const [amount, setAmount] = useState("")
+  const [requestType, setRequestType] = useState<RequestType>('transport')
   const [reason, setReason] = useState("")
   const [receivePhone, setReceivePhone] = useState(user.telephone)
   const [useDefaultPhone, setUseDefaultPhone] = useState(true)
@@ -99,6 +111,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         throw new Error(`Le montant demandé dépasse votre avance disponible ce mois-ci (${availableAdvance.toLocaleString()} GNF)`)
       }
 
+      if (!requestType) {
+        throw new Error("Veuillez sélectionner un type de motif")
+      }
+
       if (!reason.trim()) {
         throw new Error("Veuillez indiquer le motif de votre demande")
       }
@@ -122,6 +138,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       const advanceRequest = {
         employeId: user.employeId,
         montantDemande: requestedAmount,
+        typeMotif: requestType,
         motif: reason.trim(),
         numeroReception: cleanPhone,
         fraisService: serviceFee,
@@ -356,20 +373,42 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.15, duration: 0.3 }}
-                    className="space-y-1"
+                    className="space-y-4"
                   >
-                    <label htmlFor="reason" className="text-sm font-medium text-gray-300">
-                      Motif de la demande
-                    </label>
-                    <textarea
-                      id="reason"
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                      rows={3}
-                      className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
-                      placeholder="Expliquez pourquoi vous avez besoin de cette avance..."
-                      required
-                    />
+                    <div>
+                      <label htmlFor="requestType" className="block text-sm font-medium text-gray-300 mb-1">
+                        Type de motif
+                      </label>
+                      <select
+                        id="requestType"
+                        value={requestType}
+                        onChange={(e) => setRequestType(e.target.value as RequestType)}
+                        className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 text-white"
+                        required
+                      >
+                        {REQUEST_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-xs text-gray-400 ml-1">Sélectionnez la catégorie de votre demande</p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="reason" className="block text-sm font-medium text-gray-300 mb-1">
+                        Détails du motif
+                      </label>
+                      <textarea
+                        id="reason"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        rows={3}
+                        className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
+                        placeholder="Expliquez pourquoi vous avez besoin de cette avance..."
+                        required
+                      />
+                    </div>
                   </motion.div>
 
                   <motion.div 
