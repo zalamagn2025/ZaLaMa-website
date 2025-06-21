@@ -4,22 +4,22 @@ import { motion } from 'framer-motion'
 import { Star, StarHalf, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
-type Service = {
-  id: string
-  name: string
-}
+// type Service = {
+//   id: string
+//   name: string
+// }
 
-const services: Service[] = [
-  { id: 'avance-salaire', name: 'Avance sur salaire' },
-  { id: 'pret-personnel', name: 'Prêt personnel' },
-  { id: 'epargne', name: 'Compte épargne' },
-  { id: 'conseil-financier', name: 'Conseil financier' },
-]
+// const services: Service[] = [
+//   { id: 'avance-salaire', name: 'Avance sur salaire' },
+//   { id: 'pret-personnel', name: 'Prêt personnel' },
+//   { id: 'epargne', name: 'Compte épargne' },
+//   { id: 'conseil-financier', name: 'Conseil financier' },
+// ]
 
 export function FeedbackSection() {
-  const [selectedService, setSelectedService] = useState('')
+  // const [selectedService, setSelectedService] = useState('')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [comment, setComment] = useState('')
@@ -30,7 +30,7 @@ export function FeedbackSection() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
-    if (!selectedService || !rating || !comment) {
+    if (!rating || !comment) {
       return
     }
 
@@ -41,7 +41,7 @@ export function FeedbackSection() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       // Réinitialiser le formulaire
-      setSelectedService('')
+      // setSelectedService('')
       setRating(0)
       setHoverRating(0)
       setComment('')
@@ -118,6 +118,7 @@ export function FeedbackSection() {
         </motion.div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Section commentée pour le moment
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Service concerné</label>
             <Select value={selectedService} onValueChange={setSelectedService}>
@@ -133,6 +134,7 @@ export function FeedbackSection() {
               </SelectContent>
             </Select>
           </div>
+          */}
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Note</label>
@@ -187,7 +189,7 @@ export function FeedbackSection() {
           <div className="flex justify-end">
             <Button 
               type="submit" 
-              disabled={!selectedService || !rating || !comment || isSubmitting}
+              disabled={!rating || !comment || isSubmitting}
               className="bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF8E53] hover:to-[#FF671E] text-white font-medium transition-all duration-300 transform hover:scale-105"
             >
               {isSubmitting ? (
