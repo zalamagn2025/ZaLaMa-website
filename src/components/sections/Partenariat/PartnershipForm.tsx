@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export const PartnershipForm = () => {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -70,7 +72,7 @@ export const PartnershipForm = () => {
       hrEmail: '',
       hrPhone: '+224',
     });
-    setStep(1);
+    router.push('https://www.zalamasas.com');
   };
 
   const handleSubmitStep = (e: React.FormEvent<HTMLFormElement>, nextStep: number | null) => {
@@ -106,7 +108,7 @@ export const PartnershipForm = () => {
         transition={{ type: 'spring', stiffness: 300 }}
         className="mb-8"
       >
-        <Link href="http://localhost:3001/partnership" passHref>
+        <Link href="https://www.zalamasas.com/partnership" passHref>
           <Button variant="ghost" className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors">
             <ArrowLeft className="h-5 w-5" />
             <span className="text-sm font-medium">Retour aux partenariats</span>
