@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     creator: "@zalama",
   },
   robots: {
-    index: true,        // Autorise l’indexation de la page
+    index: true,        // Autorise l'indexation de la page
     follow: true,       // Autorise les bots à suivre les liens sur la page
     googleBot: {
       index: true,
@@ -62,7 +62,6 @@ export default function RootLayout({
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
         />

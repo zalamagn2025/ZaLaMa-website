@@ -74,7 +74,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   // Récupérer les demandes d'avance
   useEffect(() => {
     const fetchAdvanceRequests = async () => {
-      if (!user.employeId) return
+      if (!user.employeId) {
+        console.log("⚠️ employeId non défini, impossible de récupérer les demandes")
+        setLoading(false)
+        return
+      }
       
       try {
         const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}`)

@@ -1,33 +1,68 @@
-import jwt from 'jsonwebtoken';
-import { NextRequest } from 'next/server';
-import { UserWithEmployeData } from '@/types/employe';
+import { createServerClient } from '@supabase/ssr'
+import { NextRequest } from 'next/server'
+import { UserWithEmployeData } from '@/types/employe'
 
-export function verifyToken(token: string): UserWithEmployeData | null {
+export async function getUserFromRequest(request: NextRequest): Promise<UserWithEmployeData | null> {
   try {
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET non configuré');
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            // Ne pas modifier les cookies dans le middleware
+          },
+          remove(name: string, options: any) {
+            // Ne pas modifier les cookies dans le middleware
+          },
+        },
+      }
+    )
+
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error || !session) {
+      return null
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      issuer: 'zalamasas.com',
-      audience: 'zalamasas-employes'
-    }) as UserWithEmployeData;
+    // Récupérer les données utilisateur depuis la table users
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', session.user.email)
+      .single()
 
-    return decoded;
+    if (userError || !userData) {
+      return null
+    }
+
+    // Récupérer les données employé si l'utilisateur est un employé
+    let employeData = null
+    if (userData.type === 'Salarié') {
+      const { data: employe, error: employeError } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('email', session.user.email)
+        .single()
+
+      if (!employeError && employe) {
+        employeData = employe
+      }
+    }
+
+    // Combiner les données
+    const user: UserWithEmployeData = {
+      ...session.user,
+      ...userData,
+      ...employeData
+    }
+
+    return user
   } catch (error) {
-    console.error('❌ Token invalide:', error);
-    return null;
+    console.error('Erreur dans getUserFromRequest:', error)
+    return null
   }
-}
-
-export function getTokenFromRequest(request: NextRequest): string | null {
-  const token = request.cookies.get('auth-token')?.value;
-  return token || null;
-}
-
-export function getUserFromRequest(request: NextRequest): UserWithEmployeData | null {
-  const token = getTokenFromRequest(request);
-  if (!token) return null;
-  
-  return verifyToken(token);
 } 

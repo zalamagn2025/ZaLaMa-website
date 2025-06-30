@@ -20,7 +20,7 @@ interface Notification {
 
 interface ProfileHeaderProps {
   user: UserWithEmployeData;
-  entreprise: Partenaire;
+  entreprise?: Partenaire;
 }
 
 export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {

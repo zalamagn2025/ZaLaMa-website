@@ -6,18 +6,21 @@ import { motion, AnimatePresence } from "framer-motion"
 import { SalaryAdvanceForm } from "./salary-advance-form"
 import { AI } from "@/components/profile/AI"
 import { UserWithEmployeData } from "@/types/employe"
-import { db } from "@/lib/firebase"
-import { collection, getDocs } from "firebase/firestore"
+import { supabase } from '@/lib/supabase'
 
 interface Service {
   id: string
   nom: string
   description: string
   categorie: string
-  pourcentageMax: number
+  frais_attribues: number
+  pourcentage_max: number
   duree: string
   disponible: boolean
-  createdAt: Date // Timestamp
+  image_url?: string
+  date_creation: string
+  created_at: string
+  updated_at: string
 }
 
 export function FinancialServices({ user }: { user: UserWithEmployeData }) {
@@ -25,21 +28,43 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false)
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
-
-  // Fetch services from Firestore
+  const [error, setError] = useState<string | null>(null)
+  
+  // Fetch services from Supabase
   useEffect(() => {
     const fetchServices = async () => {
       try {
         setLoading(true)
-        const servicesCollection = collection(db, "services")
-        const servicesSnapshot = await getDocs(servicesCollection)
-        const servicesData = servicesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Service[]
-        setServices(servicesData)
+        setError(null)
+        console.log("🔍 Récupération des services depuis Supabase...")
+        console.log("🔑 URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+        console.log("🔑 Clé anonyme présente:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+        
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+        
+        console.log("📊 Services récupérés:", data)
+        console.log("📊 Nombre de services:", data?.length || 0)
+        console.log("❌ Erreur services:", error)
+        
+        if (error) {
+          console.error("Erreur lors de la récupération des services:", error)
+          setError(error.message)
+          return
+        }
+        
+        if (!data || data.length === 0) {
+          console.warn("⚠️ Aucun service trouvé dans la base de données")
+          setError("Aucun service disponible")
+        } else {
+          console.log("✅ Services chargés avec succès:", data.length, "services")
+        }
+        
+        setServices(data || [])
       } catch (error) {
         console.error("Erreur lors de la récupération des services:", error)
+        setError("Erreur de connexion")
       } finally {
         setLoading(false)
       }
@@ -48,58 +73,64 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
     fetchServices()
   }, [])
 
-  // Map Firestore services to the format used in the component
-  const mappedServices = services.map(service => ({
-    id: service.id,
-    nom: service.nom, // Add nom property for later use
-    title: service.nom,
-    description: service.description,
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="32"
-        height="32"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={`h-8 w-8 ${
-          service.nom.toLowerCase().includes("avance") ? "text-blue-500" :
-          service.nom.toLowerCase().includes("prêt") ? "text-orange-500" :
-          "text-green-500"
-        }`}
-      >
-        {service.nom.toLowerCase().includes("avance") && (
-          <>
-            <rect x="2" y="5" width="20" height="14" rx="2" />
-            <line x1="2" y1="10" x2="22" y2="10" />
-            <line x1="7" y1="15" x2="9" y2="15" />
-            <line x1="11" y1="15" x2="13" y2="15" />
-          </>
-        )}
-        {service.nom.toLowerCase().includes("prêt") && (
-          <>
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </>
-        )}
-        {service.nom.toLowerCase().includes("conseil") && (
-          <>
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-            <polyline points="10 9 9 9 8 9" />
-          </>
-        )}
-      </svg>
-    ),
-    maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentageMax}%`,
-    maxAmount: service.nom.toLowerCase().includes("prêt") ? "25 000 000" : undefined,
-    eligibility: service.disponible ? "Disponible" : "Indisponible"
-  }))
+  // Map Supabase services to the format used in the component
+  const mappedServices = services.map(service => {
+    console.log("🔄 Mapping service:", service.nom, service.disponible)
+    return {
+      id: service.id,
+      nom: service.nom,
+      title: service.nom,
+      description: service.description,
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`h-8 w-8 ${
+            service.nom.toLowerCase().includes("avance") ? "text-blue-500" :
+            service.nom.toLowerCase().includes("prêt") ? "text-orange-500" :
+            "text-green-500"
+          }`}
+        >
+          {service.nom.toLowerCase().includes("avance") && (
+            <>
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+              <line x1="7" y1="15" x2="9" y2="15" />
+              <line x1="11" y1="15" x2="13" y2="15" />
+            </>
+          )}
+          {service.nom.toLowerCase().includes("prêt") && (
+            <>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </>
+          )}
+          {service.nom.toLowerCase().includes("conseil") && (
+            <>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </>
+          )}
+        </svg>
+      ),
+      maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentage_max || 25}%`,
+      maxAmount: service.nom.toLowerCase().includes("prêt") ? "25 000 000" : undefined,
+      eligibility: service.disponible ? "Disponible" : "Indisponible"
+    }
+  })
+
+  console.log("🎯 Services mappés:", mappedServices.length)
+  console.log("🎯 Services disponibles:", mappedServices.filter(s => s.eligibility === "Disponible").length)
 
   return (
     <div className="py-8 bg-[#010D3E]">
@@ -125,6 +156,21 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               <div className="h-3 bg-gray-600 rounded w-1/2"></div>
             </div>
           ))}
+        </div>
+      ) : error ? (
+        <div className="text-center text-white">
+          <p className="text-red-400 mb-4">Erreur: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
+          >
+            Recharger
+          </button>
+        </div>
+      ) : mappedServices.length === 0 ? (
+        <div className="text-center text-white">
+          <p className="mb-4">Aucun service disponible</p>
+          <p className="text-sm text-gray-400">Vérifiez que les services ont été ajoutés à la base de données</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
@@ -230,7 +276,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               ) : (
                 <div className="text-white text-center p-4">
                   <p>Le formulaire pour ce service n&apos;est pas encore disponible.</p>
-                  <p>Le formulaire pour ce service n&#39;est pas encore disponible.</p>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

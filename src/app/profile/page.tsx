@@ -28,7 +28,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserWithEmployeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [entreprise, setEntreprise] = useState<Partenaire | null>(null)
+  const [entreprise, setEntreprise] = useState<Partenaire | undefined>(undefined)
 
   // Fonction pour récupérer les informations de l'entreprise
   const fetchEntrepriseInfo = async (partenaireId: string) => {
@@ -144,7 +144,7 @@ export default function ProfilePage() {
         <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div>
-              {entreprise && <ProfileHeader user={user} entreprise={entreprise} />}
+              <ProfileHeader user={user} entreprise={entreprise} />
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

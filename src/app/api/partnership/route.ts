@@ -1,214 +1,181 @@
-
-import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
-import { getAdminEmailTemplate, getUserEmailTemplate } from './emailTemplates';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { createClient } from '@supabase/supabase-js'
+import { NextRequest, NextResponse } from 'next/server'
 
 interface PartnershipData {
-  companyName: string;
-  legalStatus: string;
-  rccm: string;
-  nif: string;
-  legalRepresentative: string;
-  position: string;
-  headquartersAddress: string;
-  phone: string;
-  email: string;
-  employeesCount: string;
-  payroll: string;
-  cdiCount: string;
-  cddCount: string;
-  agreement: boolean;
+  companyName: string
+  legalStatus: string
+  rccm: string
+  nif: string
+  activityDomain: string
+  headquartersAddress: string
+  phone: string
+  email: string
+  employeesCount: string
+  payroll: string
+  cdiCount: string
+  cddCount: string
+  paymentDate: string
+  agreement: boolean
+  repFullName: string
+  repEmail: string
+  repPhone: string
+  repPosition: string
+  hrFullName: string
+  hrEmail: string
+  hrPhone: string
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 Début de la requête partnership');
+    // Utiliser le client Supabase avec la clé anon pour l'insertion publique
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
     
-    let body: PartnershipData;
-    try {
-      body = await request.json();
-      console.log('📝 Données reçues:', body);
-    } catch (e) {
-      console.log('❌ Erreur de parsing JSON:', e);
+    const body = await request.json()
+
+    // Validation des données requises
+    const requiredFields = [
+      'companyName', 'legalStatus', 'rccm', 'nif', 'activityDomain',
+      'headquartersAddress', 'phone', 'email', 'employeesCount', 'payroll',
+      'cdiCount', 'cddCount', 'paymentDate', 'repFullName', 'repPosition',
+      'repEmail', 'repPhone', 'hrFullName', 'hrEmail', 'hrPhone', 'agreement'
+    ]
+
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        return NextResponse.json(
+          { error: `Le champ ${field} est requis` },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validation de l'accord
+    if (!body.agreement) {
       return NextResponse.json(
-        { error: 'Données JSON invalides' },
+        { error: 'Vous devez accepter l\'engagement' },
         { status: 400 }
-      );
+      )
     }
-    
-    const {
-      companyName,
-      legalStatus,
-      rccm,
-      nif,
-      legalRepresentative,
-      position,
-      headquartersAddress,
-      phone,
-      email,
-      employeesCount,
-      payroll,
-      cdiCount,
-      cddCount,
-      agreement
-    } = body;
 
-    // Validation des données
-    if (!companyName || !legalStatus || !rccm || !nif || !legalRepresentative || !position || !headquartersAddress || !phone || !email || !employeesCount || !payroll || !cdiCount || !cddCount || !agreement) {
-      console.log('❌ Validation échouée - champs manquants');
+    // Validation des emails uniques
+    const emails = [body.email, body.repEmail, body.hrEmail]
+    const uniqueEmails = new Set(emails)
+    if (uniqueEmails.size !== emails.length) {
       return NextResponse.json(
-        { error: 'Tous les champs sont requis' },
+        { error: 'Les emails doivent être uniques' },
         { status: 400 }
-      );
+      )
     }
 
-    // Validation de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      console.log('❌ Validation échouée - email invalide');
-      return NextResponse.json(
-        { error: 'Format d\'email invalide' },
-        { status: 400 }
-      );
-    }
-
-    console.log('✅ Validation réussie');
-
-    // Vérification de la configuration Firebase
-    if (!db) {
-      console.error('❌ Firebase non configuré');
-      return NextResponse.json(
-        { error: 'Configuration Firebase manquante' },
-        { status: 500 }
-      );
-    }
-
-    // Sauvegarde dans Firestore
-    console.log('💾 Tentative de sauvegarde dans Firestore...');
+    // Préparation des données pour Supabase
     const partnershipData = {
-      companyName,
-      legalStatus,
-      rccm,
-      nif,
-      legalRepresentative,
-      position,
-      headquartersAddress,
-      phone,
-      email,
-      employeesCount: parseInt(employeesCount),
-      payroll,
-      cdiCount: parseInt(cdiCount),
-      cddCount: parseInt(cddCount),
-      agreement,
-      status: 'pending',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
+      company_name: body.companyName,
+      legal_status: body.legalStatus,
+      rccm: body.rccm,
+      nif: body.nif,
+      activity_domain: body.activityDomain,
+      headquarters_address: body.headquartersAddress,
+      phone: body.phone,
+      email: body.email,
+      employees_count: parseInt(body.employeesCount),
+      payroll: body.payroll,
+      cdi_count: parseInt(body.cdiCount),
+      cdd_count: parseInt(body.cddCount),
+      payment_date: body.paymentDate,
+      rep_full_name: body.repFullName,
+      rep_position: body.repPosition,
+      rep_email: body.repEmail,
+      rep_phone: body.repPhone,
+      hr_full_name: body.hrFullName,
+      hr_email: body.hrEmail,
+      hr_phone: body.hrPhone,
+      agreement: body.agreement,
+      status: 'pending'
+    }
 
-    let docRef;
+    console.log('📤 Tentative d\'insertion des données:', partnershipData)
+
+    // Insertion dans Supabase
+    const { data, error } = await supabase
+      .from('partnership_requests')
+      .insert([partnershipData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Erreur Supabase:', error)
+      return NextResponse.json(
+        { error: 'Erreur lors de l\'enregistrement de la demande', details: error.message },
+        { status: 500 }
+      )
+    }
+
+    console.log('✅ Données insérées avec succès:', data)
+
+    // Envoi d'email de notification (optionnel)
     try {
-      docRef = await addDoc(collection(db, 'demandepartner'), partnershipData);
-      console.log('✅ Document créé avec ID:', docRef.id);
-    } catch (e) {
-      console.error('❌ Erreur Firestore:', e);
-      return NextResponse.json(
-        { error: 'Erreur lors de la sauvegarde des données' },
-        { status: 500 }
-      );
+      // Ici vous pouvez ajouter l'envoi d'email de notification
+      // Par exemple avec Resend, SendGrid, etc.
+      console.log('📧 Email de notification à envoyer pour:', data.id)
+    } catch (emailError) {
+      console.error('Erreur envoi email:', emailError)
+      // Ne pas faire échouer la requête si l'email échoue
     }
 
-    // Vérification de la configuration Resend
-    if (!process.env.RESEND_API_KEY) {
-      console.error('❌ RESEND_API_KEY manquante');
-      return NextResponse.json(
-        { error: 'Configuration Resend manquante' },
-        { status: 500 }
-      );
-    }
-
-    console.log('📧 Envoi de l\'email admin...');
-    // Email à l'admin
-    let adminEmailResult;
-    try {
-      adminEmailResult = await resend.emails.send({
-        from: 'contact@zalamagn.com',
-        to: [process.env.ADMIN_EMAIL || 'contact@zalamagn.com'],
-        subject: `Nouvelle demande de partenariat - ${companyName}`,
-        html: getAdminEmailTemplate({
-          companyName,
-          legalStatus,
-          rccm,
-          nif,
-          legalRepresentative,
-          position,
-          headquartersAddress,
-          phone,
-          email,
-          employeesCount,
-          payroll,
-          cdiCount,
-          cddCount,
-          docId: docRef.id
-        })
-      });
-      console.log('✅ Email admin envoyé:', adminEmailResult.data?.id);
-    } catch (e) {
-      console.error('❌ Erreur envoi email admin:', e);
-      return NextResponse.json(
-        { error: 'Erreur lors de l\'envoi de l\'email admin' },
-        { status: 500 }
-      );
-    }
-
-    console.log('📧 Envoi de l\'email utilisateur...');
-    // Email de confirmation à l'utilisateur
-    let userEmailResult;
-    try {
-      userEmailResult = await resend.emails.send({
-        from: 'contact@zalamagn.com',
-        to: [email],
-        subject: 'Confirmation de votre demande de partenariat - Zalama SAS',
-        html: getUserEmailTemplate({
-          legalRepresentative,
-          companyName,
-          docId: docRef.id
-        })
-      });
-      console.log('✅ Email utilisateur envoyé:', userEmailResult.data?.id);
-    } catch (e) {
-      console.error('❌ Erreur envoi email utilisateur:', e);
-      return NextResponse.json(
-        { error: 'Erreur lors de l\'envoi de l\'email utilisateur' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      { 
-        message: 'Demande de partenariat soumise avec succès',
-        id: docRef.id,
-        emailsSent: {
-          admin: !!adminEmailResult.data,
-          user: !!userEmailResult.data
-        }
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: 'Demande de partenariat enregistrée avec succès',
+      data: {
+        id: data.id,
+        companyName: data.company_name,
+        status: data.status
+      }
+    })
 
   } catch (error) {
-    console.error('💥 Erreur détaillée:', error);
-    console.error('Stack trace:', error instanceof Error ? error.stack : 'Pas de stack trace');
-    
+    console.error('💥 Erreur serveur:', error)
     return NextResponse.json(
-      { 
-        error: 'Erreur interne du serveur',
-        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.message : String(error) : undefined
-      },
+      { error: 'Erreur interne du serveur' },
       { status: 500 }
-    );
+    )
+  }
+}
+
+export async function GET() {
+  try {
+    // Pour la lecture, utiliser le client avec authentification
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY! // Utiliser la clé service pour les admins
+    )
+    
+    // Récupérer les demandes de partenariat
+    const { data, error } = await supabase
+      .from('partnership_requests')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Erreur Supabase:', error)
+      return NextResponse.json(
+        { error: 'Erreur lors de la récupération des demandes' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: data
+    })
+
+  } catch (error) {
+    console.error('Erreur serveur:', error)
+    return NextResponse.json(
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
+    )
   }
 }

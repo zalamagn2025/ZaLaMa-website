@@ -1,5 +1,5 @@
-import { auth } from '@/lib/firebase';
-import { confirmPasswordReset } from 'firebase/auth';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface ResetPasswordData {
@@ -30,10 +30,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Réinitialisation du mot de passe avec Firebase Auth...');
+    console.log('🔍 Réinitialisation du mot de passe avec Supabase Auth...');
 
-    // Confirmer la réinitialisation du mot de passe via Firebase Auth
-    await confirmPasswordReset(auth, oobCode, newPassword);
+    // Créer le client Supabase
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
+    // Confirmer la réinitialisation du mot de passe via Supabase Auth
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      console.error('❌ Erreur Supabase lors de la réinitialisation:', error);
+      
+      // Gestion des erreurs Supabase Auth spécifiques
+      let errorMessage = 'Erreur lors de la réinitialisation du mot de passe';
+      
+      switch (error.message) {
+        case 'Password should be at least 6 characters':
+          errorMessage = 'Le mot de passe doit contenir au moins 6 caractères';
+          break;
+        case 'Invalid recovery token':
+          errorMessage = 'Le lien de réinitialisation est invalide ou a déjà été utilisé';
+          break;
+        case 'Token expired':
+          errorMessage = 'Le lien de réinitialisation a expiré. Demandez un nouveau lien';
+          break;
+        case 'User not found':
+          errorMessage = 'Utilisateur non trouvé';
+          break;
+        case 'Password is too weak':
+          errorMessage = 'Le mot de passe est trop faible';
+          break;
+        default:
+          errorMessage = 'Erreur lors de la réinitialisation du mot de passe';
+      }
+      
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 400 }
+      );
+    }
     
     console.log('✅ Mot de passe réinitialisé avec succès');
 
@@ -48,34 +102,9 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('💥 Erreur lors de la réinitialisation du mot de passe:', error);
     
-    // Gestion des erreurs Firebase Auth spécifiques
-    let errorMessage = 'Erreur interne du serveur';
-    
-    if (error instanceof Error && 'code' in error) {
-      switch (error.code) {
-        case 'auth/expired-action-code':
-          errorMessage = 'Le lien de réinitialisation a expiré. Demandez un nouveau lien';
-          break;
-        case 'auth/invalid-action-code':
-          errorMessage = 'Le lien de réinitialisation est invalide ou a déjà été utilisé';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'Ce compte a été désactivé';
-          break;
-        case 'auth/user-not-found':
-          errorMessage = 'Utilisateur non trouvé';
-          break;
-        case 'auth/weak-password':
-          errorMessage = 'Le mot de passe est trop faible';
-          break;
-        default:
-          errorMessage = 'Erreur lors de la réinitialisation du mot de passe';
-      }
-    }
-    
     return NextResponse.json(
-      { error: errorMessage },
-      { status: 400 }
+      { error: 'Erreur lors de la réinitialisation du mot de passe' },
+      { status: 500 }
     );
   }
 } 

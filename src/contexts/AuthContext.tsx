@@ -1,27 +1,26 @@
 "use client"
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { 
-  User, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  updateProfile,
-  sendPasswordResetEmail
-} from 'firebase/auth'
-import { auth, db } from '../lib/firebase'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { supabase } from '../lib/supabase'
+import { User } from '@supabase/supabase-js'
 
 interface UserData {
-  name: string
-  phone: string
+  id: string
+  user_id: string
+  nom: string
+  prenom: string
+  telephone: string | null
   email: string
-  role: string
-  entreprise: string
-  department: string
-  joinDate: string
-  avatar: string
-  createdAt: string
+  genre: string
+  adresse: string | null
+  poste: string | null
+  role: string | null
+  type_contrat: string
+  salaire_net: number
+  date_embauche: string
+  actif: boolean
+  partner_id: string | null
+  created_at: string
+  updated_at: string
 }
 
 interface AuthContextType {
@@ -54,63 +53,130 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user)
-      
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid))
-          if (userDoc.exists()) {
-            setUserData(userDoc.data() as UserData)
-          }
-        } catch (error) {
-          console.error('Erreur lors de la récupération des données utilisateur:', error)
-        }
-      } else {
-        setUserData(null)
-      }
-      
-      setLoading(false)
-    })
+    // Écouter les changements d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setCurrentUser(session?.user ?? null)
+        
+        if (session?.user) {
+          try {
+            // Récupérer les données utilisateur depuis la table employees
+            const { data: userData, error } = await supabase
+              .from('employees')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .eq('actif', true)
+              .single()
 
-    return unsubscribe
+            if (error) {
+              console.error('Erreur lors de la récupération des données utilisateur:', error)
+            } else if (userData) {
+              setUserData(userData as UserData)
+            }
+          } catch (error) {
+            console.error('Erreur lors de la récupération des données utilisateur:', error)
+          }
+        } else {
+          setUserData(null)
+        }
+        
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
   async function login(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        throw error
+      }
+
+      // Note: La mise à jour de la dernière connexion se fait automatiquement
+      // via l'AuthContext lors de la récupération des données employé
+    } catch (error) {
+      console.error('Erreur de connexion:', error)
+      throw error
+    }
   }
 
   async function register(email: string, password: string, name: string) {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-    const user = userCredential.user
-    
-    // Mettre à jour le profil utilisateur
-    await updateProfile(user, { displayName: name })
-    
-    // Créer un document utilisateur dans Firestore
-    await setDoc(doc(db, 'users', user.uid), {
-      name,
-      email,
-      phone: "",
-      role: 'Employé',
-      entreprise: 'ZALAMA',
-      department: 'Direction générale',
-      joinDate: new Date().toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      }),
-      avatar: "",
-      createdAt: serverTimestamp(),
-    })
+    try {
+      // Créer l'utilisateur dans Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+
+      if (authError) {
+        throw authError
+      }
+
+      if (authData.user) {
+        // Extraire nom et prénom
+        const nameParts = name.trim().split(' ')
+        const prenom = nameParts[0] || ''
+        const nom = nameParts.slice(1).join(' ') || prenom
+
+        // Créer un employé dans la table employees
+        const { error: employeeError } = await supabase
+          .from('employees')
+          .insert({
+            user_id: authData.user.id,
+            nom,
+            prenom,
+            email,
+            poste: 'Employé',
+            type_contrat: 'CDI',
+            salaire_net: 500000, // Salaire par défaut
+            date_embauche: new Date().toISOString().split('T')[0],
+            actif: true,
+            genre: 'HOMME', // Valeur par défaut
+          })
+
+        if (employeeError) {
+          console.error('Erreur lors de la création du profil employé:', employeeError)
+          // Note: On ne peut pas supprimer l'utilisateur Auth sans admin
+          throw employeeError
+        }
+      }
+    } catch (error) {
+      console.error('Erreur d\'inscription:', error)
+      throw error
+    }
   }
 
   async function resetPassword(email: string) {
-    await sendPasswordResetEmail(auth, email)
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+
+      if (error) {
+        throw error
+      }
+    } catch (error) {
+      console.error('Erreur de réinitialisation de mot de passe:', error)
+      throw error
+    }
   }
 
   async function logout() {
-    await signOut(auth)
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        throw error
+      }
+    } catch (error) {
+      console.error('Erreur de déconnexion:', error)
+      throw error
+    }
   }
 
   const value = {

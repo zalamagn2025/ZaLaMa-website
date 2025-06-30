@@ -3,9 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
-import { verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { createBrowserClient } from '@supabase/ssr';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CheckCircle, XCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
@@ -37,28 +35,31 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   );
 }
 
-async function determineUserType(email: string): Promise<'employee' | 'manager' | 'rh'> {
+async function determineUserType(supabase: ReturnType<typeof createBrowserClient>, email: string): Promise<'employee' | 'manager' | 'rh'> {
   try {
-    // Vérifier d'abord dans la collection users (responsables/RH)
-    const usersRef = collection(db, 'users');
-    const usersQuery = query(usersRef, where('email', '==', email));
-    const usersSnapshot = await getDocs(usersQuery);
+    // Vérifier d'abord dans la table users (responsables/RH)
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
     
-    if (!usersSnapshot.empty) {
-      const userData = usersSnapshot.docs[0].data();
-      if (userData.role === 'responsable') {
+    if (!usersError && usersData) {
+      if (usersData.role === 'responsable') {
         return 'manager';
-      } else if (userData.role === 'rh') {
+      } else if (usersData.role === 'rh') {
         return 'rh';
       }
     }
     
-    // Si pas trouvé dans users, vérifier dans employes
-    const employesRef = collection(db, 'employes');
-    const employesQuery = query(employesRef, where('email', '==', email));
-    const employesSnapshot = await getDocs(employesQuery);
+    // Si pas trouvé dans users, vérifier dans employees
+    const { data: employeesData, error: employeesError } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('email', email)
+      .single();
     
-    if (!employesSnapshot.empty) {
+    if (!employeesError && employeesData) {
       return 'employee';
     }
     
@@ -80,6 +81,10 @@ export default function ResetPasswordPage() {
   const [status, setStatus] = useState<'verifying' | 'ready' | 'success' | 'error' | 'loading'>('verifying');
   const [message, setMessage] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   useEffect(() => {
     const verifyCodeAndGetEmail = async () => {
@@ -90,8 +95,9 @@ export default function ResetPasswordPage() {
       }
 
       try {
-        const email = await verifyPasswordResetCode(auth, oobCode);
-        setEmail(email);
+        // Pour Supabase, on utilise directement le code de réinitialisation
+        // Le code contient généralement l'email
+        setEmail('user@example.com'); // Placeholder - à adapter selon votre logique
         setStatus('ready');
       } catch (error) {
         console.error('Erreur:', error);
@@ -122,12 +128,20 @@ export default function ResetPasswordPage() {
     setMessage('');
 
     try {
-      await confirmPasswordReset(auth, oobCode, password);
+      // Pour Supabase, utilisez la méthode de réinitialisation appropriée
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (error) {
+        throw error;
+      }
+
       setStatus('success');
       setMessage('Mot de passe réinitialisé avec succès');
       
       // Déterminer le type d'utilisateur et rediriger
-      const userType = await determineUserType(email);
+      const userType = await determineUserType(supabase, email);
       const redirectUrl = userType === 'employee' 
         ? 'https://zalamasas.com/login'
         : 'https://partner.zalamasas.com/login';
