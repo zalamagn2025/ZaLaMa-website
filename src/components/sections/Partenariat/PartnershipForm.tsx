@@ -124,19 +124,32 @@ FormField.displayName = 'FormField';
 export const PartnershipForm = () => {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const router = useRouter();
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     companyName: '',
     legalStatus: '',
     rccm: '',
     nif: '',
     activityDomain: '',
+    activityDomain: '',
     headquartersAddress: '',
+    phone: '+224',
     phone: '+224',
     email: '',
     employeesCount: '',
     payroll: '',
     cdiCount: '',
     cddCount: '',
+    paymentDate: '',
+    agreement: false,
+    repFullName: '',
+    repEmail: '',
+    repPhone: '+224',
+    repPosition: '',
+    hrFullName: '',
+    hrEmail: '',
+    hrPhone: '+224',
     paymentDate: '',
     agreement: false,
     repFullName: '',
@@ -484,11 +497,13 @@ export const PartnershipForm = () => {
       className="max-w-xl mx-auto p-8 rounded-3xl shadow-2xl backdrop-blur-lg bg-blue-900/10 border border-blue-700/80"
     >
       {/* Bouton de retour */}
+      {/* Bouton de retour */}
       <motion.div 
         whileHover={{ x: -3 }}
         transition={{ type: 'spring', stiffness: 300 }}
         className="mb-8"
       >
+        <Link href="https://www.zalamasas.com/partnership" passHref>
         <Link href="https://www.zalamasas.com/partnership" passHref>
           <Button variant="ghost" className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors">
             <ArrowLeft className="h-5 w-5" />
@@ -497,6 +512,7 @@ export const PartnershipForm = () => {
         </Link>
       </motion.div>
 
+      {/* Titre et progression */}
       {/* Titre et progression */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
@@ -510,6 +526,7 @@ export const PartnershipForm = () => {
           transition={{ type: 'spring', stiffness: 400 }}
         >
           Devenez Partenaire - Étape {step}/3
+          Devenez Partenaire - Étape {step}/3
         </motion.h2>
         <motion.p 
           className="text-blue-300/90 text-sm max-w-md mx-auto leading-relaxed"
@@ -517,6 +534,9 @@ export const PartnershipForm = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
+          {step === 1 && "Informations sur l'entreprise"}
+          {step === 2 && "Informations du représentant"}
+          {step === 3 && "Informations du responsable RH"}
           {step === 1 && "Informations sur l'entreprise"}
           {step === 2 && "Informations du représentant"}
           {step === 3 && "Informations du responsable RH"}
