@@ -38,36 +38,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    
-    console.log('📦 Données reçues:', body)
-    
-    const { 
-      employeId, 
-      montantDemande, 
+    // Extraire les données de la requête
+    const {
+      employeId,
+      montantDemande,
       typeMotif,
-      motif, 
-      numeroReception, 
-      fraisService, 
+      motif,
+      numeroReception,
+      fraisService,
       montantTotal,
       salaireDisponible,
       avanceDisponible,
       entrepriseId,
-      password 
-    } = body
-
-    console.log('employeId:', employeId)
-    console.log('montantDemande:', montantDemande)
-    console.log('motif:', motif)
-    console.log('session.user.id:', session.user.id)
+      password
+    } = await request.json()
 
     // Validation des données
-    if (!employeId || !montantDemande || !motif || !password) {
+    if (!employeId || !montantDemande || !motif || !password || !entrepriseId) {
       return NextResponse.json(
         { 
           success: false, 
-          message: 'Tous les champs sont requis',
-          debug: { employeId: !!employeId, montantDemande: !!montantDemande, motif: !!motif, password: !!password }
+          message: 'Tous les champs sont requis, y compris l\'identifiant de l\'entreprise',
+          debug: { 
+            employeId: !!employeId, 
+            montantDemande: !!montantDemande, 
+            motif: !!motif, 
+            password: !!password,
+            entrepriseId: !!entrepriseId
+          }
         },
         { status: 400 }
       )
@@ -147,12 +145,12 @@ export async function POST(request: NextRequest) {
     cookieStore.set(attemptKey, '0', { maxAge: 0 })
     cookieStore.set(`lockout_${session.user.id}`, '', { maxAge: 0 })
 
-    // Récupérer les données de l'employé pour vérifier le salaire
-    console.log('🔍 Recherche des données employé pour validation:', employeId)
+    // Récupérer les données de l'employé pour vérifier le salaire et l'appartenance à l'entreprise
     const { data: employeDataValidation, error: employeError } = await supabase
       .from('employees')
       .select('*')
       .eq('id', employeId)
+      .eq('partner_id', entrepriseId) // Vérifier que l'employé appartient à l'entreprise
       .single()
     
     if (employeError || !employeDataValidation?.salaire_net) {
@@ -161,7 +159,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          message: 'Données employé introuvables ou salaire non défini' 
+          message: 'Données employé introuvables, salaire non défini, ou employé n\'appartient pas à l\'entreprise spécifiée' 
         },
         { status: 400 }
       )
@@ -177,10 +175,9 @@ export async function POST(request: NextRequest) {
 
     // Récupérer toutes les demandes approuvées pour cet utilisateur
     const { data: allApprovedData, error: allApprovedError } = await supabase
-      .from('financial_transactions')
+      .from('salary_advance_requests')
       .select('*')
-      .eq('utilisateur_id', employeId)
-      .eq('type', 'Débloqué')
+      .eq('employe_id', employeId)
       .eq('statut', 'Validé')
     
     if (allApprovedError) {
@@ -191,46 +188,28 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    console.log(`🔍 Trouvé ${allApprovedData?.length || 0} transactions approuvées pour utilisateur: ${employeId}`)
-    
     // Filtrer manuellement les demandes du mois en cours et calculer le total
     let totalAvancesApprouvees = 0
     const demandesMonthly: Array<{id: string, montant: number, date: Date}> = []
     
     allApprovedData?.forEach(transaction => {
-      console.log('📋 Transaction approuvée:', {
-        id: transaction.id,
-        montant: transaction.montant,
-        dateTransaction: transaction.date_transaction,
-        statut: transaction.statut
-      })
-      
       // Vérifier si la date est dans le mois en cours
-      const transactionDate = new Date(transaction.date_transaction)
+      const transactionDate = new Date(transaction.date_creation)
       if (transactionDate >= startOfMonth && transactionDate <= endOfMonth) {
-        totalAvancesApprouvees += transaction.montant || 0
+        totalAvancesApprouvees += transaction.montant_demande || 0
         demandesMonthly.push({
           id: transaction.id,
-          montant: transaction.montant,
+          montant: transaction.montant_demande,
           date: transactionDate
         })
       }
     })
     
-    console.log(`💰 Total avances approuvées ce mois (${currentMonth.getMonth() + 1}/${currentMonth.getFullYear()}):`, totalAvancesApprouvees)
     console.log('📅 Demandes du mois en cours:', demandesMonthly)
 
     // Vérifier si la nouvelle demande + total existant dépasse 25%
     const nouvelleDemande = parseFloat(montantDemande)
     const totalApresNouvelleDemande = totalAvancesApprouvees + nouvelleDemande
-    
-    console.log('💰 Vérification des limites:', {
-      salaireNet,
-      maxAvanceMonthly,
-      totalAvancesApprouvees,
-      nouvelleDemande,
-      totalApresNouvelleDemande
-    })
 
     if (totalApresNouvelleDemande > maxAvanceMonthly) {
       const avanceDisponible = maxAvanceMonthly - totalAvancesApprouvees
@@ -249,13 +228,11 @@ export async function POST(request: NextRequest) {
       type: 'Débloqué' as const,
       description: `Demande d'avance: ${motif.trim()}`,
       utilisateur_id: employeId,
-      partenaire_id: entrepriseId || null,
+      partenaire_id: entrepriseId,
       statut: 'En attente' as const,
       date_transaction: new Date().toISOString(),
       reference: numeroReception || `REF-${Date.now()}`
     }
-
-    console.log('💾 Tentative d\'insertion dans financial_transactions:', transactionData)
 
     const { data: transactionDataResult, error: transactionError } = await supabase
       .from('financial_transactions')
@@ -271,39 +248,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('✅ Transaction financière créée avec ID:', transactionDataResult.id)
-
-    // Créer une demande d'avance dans la table demande-avance-salaire
+    // Créer une demande d'avance dans la table salary_advance_requests
     const demandeAvanceData = {
       employe_id: employeId,
+      partenaire_id: entrepriseId,
       montant_demande: parseFloat(montantDemande),
-      type_motif: typeMotif.toUpperCase() as any, // Convertir en enum
+      type_motif: typeMotif.toUpperCase(),
       motif: motif.trim(),
       numero_reception: numeroReception || `REF-${Date.now()}`,
       frais_service: parseFloat(fraisService) || 0,
       montant_total: parseFloat(montantTotal),
       salaire_disponible: salaireDisponible ? parseFloat(salaireDisponible) : null,
       avance_disponible: avanceDisponible ? parseFloat(avanceDisponible) : null,
-      partenaire_id: entrepriseId || null,
-      transaction_id: transactionDataResult.id,
-      statut: 'EN_ATTENTE' as const,
-      date_demande: new Date().toISOString()
+      statut: 'En attente' as const,
+      date_creation: new Date().toISOString()
     }
 
-    console.log('💾 Tentative d\'insertion dans demande-avance-salaire:', demandeAvanceData)
-
     const { data: demandeAvanceResult, error: demandeAvanceError } = await supabase
-      .from('demande-avance-salaire')
+      .from('salary_advance_requests')
       .insert(demandeAvanceData)
       .select()
       .single()
 
     if (demandeAvanceError) {
       console.error('❌ Erreur lors de la création de la demande d\'avance:', demandeAvanceError)
-      // Ne pas faire échouer la demande pour cette raison, mais logger l'erreur
-      console.warn('⚠️ La transaction financière a été créée mais pas la demande d\'avance')
-    } else {
-      console.log('✅ Demande d\'avance créée avec ID:', demandeAvanceResult.id)
     }
 
     // Enregistrer l'activité de l'utilisateur (optionnel - commenté pour éviter les erreurs)
@@ -320,14 +288,19 @@ export async function POST(request: NextRequest) {
           },
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
         })
-      console.log('✅ Activité utilisateur enregistrée')
     } catch (activityError) {
-      console.warn('⚠️ Impossible d\'enregistrer l\'activité utilisateur:', activityError)
       // Ne pas faire échouer la demande pour cette raison
     }
 
-      return NextResponse.json({
-        success: true,
+    console.log('✅ Demande d\'avance créée:', {
+      id: transactionDataResult.id,
+      montant: montantDemande,
+      employe: employeId,
+      entreprise: entrepriseId
+    })
+
+    return NextResponse.json({
+      success: true,
       message: 'Demande d\'avance créée avec succès',
       data: {
         id: transactionDataResult.id,
@@ -393,16 +366,28 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Récupérer les demandes de l'utilisateur depuis la table demande-avance-salaire
+    // Récupérer les demandes de l'utilisateur depuis la table salary_advance_requests
     const { data: demandes, error } = await supabase
-      .from('demande-avance-salaire')
+      .from('salary_advance_requests')
       .select(`
-        *,
-        employees!inner(nom, prenom, email, poste),
-        partners(nom as partenaire_nom)
+        id,
+        montant_demande,
+        type_motif,
+        motif,
+        numero_reception,
+        frais_service,
+        montant_total,
+        salaire_disponible,
+        avance_disponible,
+        statut,
+        date_creation,
+        date_validation,
+        date_rejet,
+        motif_rejet,
+        created_at
       `)
       .eq('employe_id', employeData.id)
-      .order('date_demande', { ascending: false })
+      .order('date_creation', { ascending: false })
 
     if (error) {
       console.error('Erreur lors de la récupération des demandes:', error)

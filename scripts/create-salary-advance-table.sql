@@ -6,8 +6,8 @@
 -- =====================================================
 CREATE TABLE IF NOT EXISTS salary_advance_requests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  employe_id UUID REFERENCES employees(id) ON DELETE CASCADE,
-  partenaire_id UUID REFERENCES partners(id) ON DELETE CASCADE,
+  employe_id UUID REFERENCES employees(id) ON DELETE CASCADE NOT NULL,
+  partenaire_id UUID REFERENCES partners(id) ON DELETE CASCADE NOT NULL,
   montant_demande DECIMAL(15,2) NOT NULL,
   type_motif VARCHAR(50) NOT NULL,
   motif TEXT NOT NULL,

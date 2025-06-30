@@ -21,31 +21,32 @@ interface AvanceData {
   workingDaysElapsed: number
   totalWorkingDays: number
   workingDaysPercentage: number
+  limiteAvance: number
 }
 
 type FormStep = 'form' | 'verification' | 'confirmation' | 'success';
 
-// Fonction pour calculer l'avance disponible (même logique que ProfileStats)
-function calculateAvailableAdvance(salaireNet: number): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number } {
+// Fonction pour calculer l'avance disponible pour les demandes d'avance sur salaire
+function calculateAvailableAdvance(salaireNet: number): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number; limiteAvance: number } {
   const today = new Date()
   const currentMonth = today.getMonth()
   const currentYear = today.getFullYear()
   
-  // Calculer le nombre de jours ouvrables écoulés ce mois
+  // Calculer le nombre de jours ouvrables écoulés ce mois (pour information)
   const workingDaysElapsed = getWorkingDaysElapsed(currentYear, currentMonth, today.getDate())
-  
-  // Calculer le total de jours ouvrables du mois
   const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
+  const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
   
-  // Calculer le pourcentage d'avance disponible
-  const workingDaysPercentage = workingDaysElapsed / totalWorkingDays
-  const avanceDisponible = Math.floor(salaireNet * workingDaysPercentage)
+  // L'avance disponible pour les demandes d'avance sur salaire est limitée à 25% du salaire net
+  const avanceDisponible = Math.floor(salaireNet * 0.25)
+  const limiteAvance = avanceDisponible // Même valeur que l'avance disponible
   
   return {
     avanceDisponible,
     workingDaysElapsed,
     totalWorkingDays,
-    workingDaysPercentage: Math.round(workingDaysPercentage * 100)
+    workingDaysPercentage,
+    limiteAvance
   }
 }
 
@@ -107,6 +108,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   
   const router = useRouter()
 
+  // Log des données utilisateur pour débogage
+  console.log('🔍 Données utilisateur dans SalaryAdvanceForm:', {
+    employeId: user.employeId,
+    partenaireId: user.partenaireId,
+    salaireNet: user.salaireNet,
+    nom: user.nom,
+    prenom: user.prenom
+  })
+
   // Calculer l'avance disponible en temps réel
   const calculateAdvanceData = useCallback(() => {
     if (!user.salaireNet) {
@@ -127,7 +137,8 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         avanceDisponible: calculation.avanceDisponible,
         workingDaysElapsed: calculation.workingDaysElapsed,
         totalWorkingDays: calculation.totalWorkingDays,
-        workingDaysPercentage: calculation.workingDaysPercentage
+        workingDaysPercentage: calculation.workingDaysPercentage,
+        limiteAvance: calculation.limiteAvance
       })
       
       console.log('🔍 Données d\'avance calculées:', calculation)
@@ -157,14 +168,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   // Validation du formulaire
   const validateForm = () => {
       const requestedAmount = parseFloat(amount.replace(/,/g, ''))
-      const availableAdvance = avanceData?.avanceDisponible || 0
+      const limiteAvance = avanceData?.limiteAvance || 0
 
       if (isNaN(requestedAmount) || requestedAmount <= 0) {
         throw new Error("Veuillez entrer un montant valide")
       }
 
-      if (requestedAmount > availableAdvance) {
-        throw new Error(`Le montant demandé dépasse votre avance disponible ce mois-ci (${availableAdvance.toLocaleString()} GNF)`)
+      if (requestedAmount > limiteAvance) {
+        throw new Error(`Le montant demandé dépasse votre limite d'avance sur salaire ce mois-ci (${limiteAvance.toLocaleString()} GNF)`)
       }
 
       if (!requestType) {
@@ -238,9 +249,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         avanceDisponible: avanceData?.avanceDisponible || 0,
         dateCreation: new Date().toISOString(),
         statut: 'EN_ATTENTE',
-        entrepriseId: user.partnerId,
+        entrepriseId: user.partenaireId,
         password: password
       }
+
+      console.log('📤 Données envoyées à l\'API:', advanceRequest)
 
       // Appel API pour soumettre la demande
       const response = await fetch('/api/salary-advance/request', {
@@ -365,7 +378,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     </motion.div>
                     <div>
                     <h3 className="text-2xl font-bold text-white">
-                      Avance sur salaire
+                      Demande d'avance sur salaire
                     </h3>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className={`w-2 h-2 rounded-full ${currentStep === 'form' ? 'bg-[#FF671E]' : 'bg-gray-600'}`} />
@@ -414,7 +427,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53]">
                               <IconCalculator className="h-4 w-4 text-white" />
                             </div>
-                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible</h4>
+                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible (25%)</h4>
                           </div>
                        <button
                             type="button"
@@ -432,7 +445,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             {avanceData.avanceDisponible.toLocaleString()} GNF
                           </div>
                           <div className="text-xs text-gray-400 mt-1">
-                            Basé sur {avanceData.workingDaysElapsed}/{avanceData.totalWorkingDays} jours ouvrables ({avanceData.workingDaysPercentage}%)
+                            Avance disponible (25% du salaire net)
+                          </div>
+                          <div className="text-xs text-blue-400 mt-1">
+                            Progression du mois: {avanceData.workingDaysElapsed}/{avanceData.totalWorkingDays} jours ({avanceData.workingDaysPercentage}%)
                           </div>
                         </div>
 
@@ -480,7 +496,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                        </div>
                                 <div className="space-y-1">
                          <div className="flex justify-between">
-                                    <span className="text-gray-400">Limite 25%:</span>
+                                    <span className="text-gray-400">Limite d'avance:</span>
                                     <span className="text-orange-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
                          </div>
                          <div className="flex justify-between">
@@ -542,15 +558,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-gray-400">
-                          Disponible: {avanceData?.avanceDisponible.toLocaleString() || 0} GNF
+                          Limite d'avance: {avanceData?.limiteAvance.toLocaleString() || 0} GNF
                         </span>
                         {amount && avanceData && (
                           <span className={`font-medium ${
-                            parseFloat(amount.replace(/,/g, '')) > avanceData.avanceDisponible 
+                            parseFloat(amount.replace(/,/g, '')) > avanceData.limiteAvance 
                               ? 'text-red-400' 
                               : 'text-green-400'
                           }`}>
-                            {parseFloat(amount.replace(/,/g, '')) > avanceData.avanceDisponible 
+                            {parseFloat(amount.replace(/,/g, '')) > avanceData.limiteAvance 
                               ? 'Montant trop élevé' 
                               : 'Montant valide'
                             }

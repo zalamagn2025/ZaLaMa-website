@@ -50,6 +50,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    console.log('🔍 Données employé récupérées:', {
+      id: employeData.id,
+      nom: employeData.nom,
+      prenom: employeData.prenom,
+      partner_id: employeData.partner_id,
+      salaire_net: employeData.salaire_net
+    })
+
     // Calculer l'avance disponible
     const salaireNet = employeData.salaire_net || 0
     const maxAvanceMonthly = Math.floor(salaireNet * 0.25)

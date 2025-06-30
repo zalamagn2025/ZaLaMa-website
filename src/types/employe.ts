@@ -38,6 +38,7 @@ export interface UserWithEmployeData {
   typeContrat?: string
   dateEmbauche?: string
   partnerId?: string
+  partenaireId?: string
   userId?: string
   entreprise?: {
     nom: string

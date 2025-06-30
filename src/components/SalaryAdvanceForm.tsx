@@ -62,18 +62,19 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
       try {
         setIsLoading(true)
         
-        const response = await fetch('/api/user/profile')
+        const response = await fetch('/api/auth/me')
         const result = await response.json()
 
-        if (result.success && result.data.employe) {
-          const employeData = result.data.employe
+        if (result.user) {
+          const userData = result.user
           
-          console.log('📊 Données employé récupérées:', employeData)
+          console.log('📊 Données utilisateur récupérées:', userData)
+          console.log('🏢 Partenaire ID:', userData.partenaireId)
 
           // Utiliser la même logique que le profil pour calculer l'avance disponible
-          const salaireNet = employeData.salaire_net || 0
+          const salaireNet = userData.salaireNet || 0
           
-          // Calculer les jours ouvrables écoulés ce mois-ci
+          // Calculer les jours ouvrables écoulés ce mois-ci (pour information seulement)
           const today = new Date()
           const currentMonth = today.getMonth()
           const currentYear = today.getFullYear()
@@ -81,28 +82,27 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
           const workingDaysElapsed = getWorkingDaysElapsed(currentYear, currentMonth, today.getDate())
           const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
           
-          // Calculer l'avance disponible basée sur les jours ouvrables écoulés
-          const workingDaysPercentage = workingDaysElapsed / totalWorkingDays
-          const availableAdvance = Math.floor(salaireNet * workingDaysPercentage)
+          // L'avance sur salaire est limitée à 25% du salaire net (pas de calcul de jours)
+          const availableAdvance = Math.floor(salaireNet * 0.25)
           
-          console.log('💰 Calcul avance disponible:', {
+          console.log('💰 Calcul avance sur salaire:', {
             salaireNet,
+            availableAdvance,
             workingDaysElapsed,
             totalWorkingDays,
-            workingDaysPercentage,
-            availableAdvance
+            partenaireId: userData.partenaireId
           })
 
           setFormData(prev => ({
             ...prev,
-            employeId: employeData.id,
-            entrepriseId: employeData.partner_id,
+            employeId: userData.employeId,
+            entrepriseId: userData.partenaireId,
             salaireDisponible: salaireNet.toLocaleString(),
             avanceDisponible: availableAdvance.toLocaleString()
           }))
 
         } else {
-          console.error('Erreur récupération données:', result.message)
+          console.error('Erreur récupération données:', result.error)
         }
 
       } catch (error) {
@@ -186,24 +186,28 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
     setPasswordError('')
 
     try {
+      const requestData = {
+        employeId: formData.employeId,
+        montantDemande: formData.montantDemande,
+        typeMotif: formData.typeMotif,
+        motif: formData.motif,
+        numeroReception: formData.numeroReception,
+        fraisService: formData.fraisService,
+        montantTotal: formData.montantTotal,
+        salaireDisponible: formData.salaireDisponible,
+        avanceDisponible: formData.avanceDisponible,
+        entrepriseId: formData.entrepriseId,
+        password: password
+      }
+
+      console.log('📤 Données envoyées à l\'API:', requestData)
+
       const response = await fetch('/api/salary-advance/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          employeId: formData.employeId,
-          montantDemande: formData.montantDemande,
-          typeMotif: formData.typeMotif,
-          motif: formData.motif,
-          numeroReception: formData.numeroReception,
-          fraisService: formData.fraisService,
-          montantTotal: formData.montantTotal,
-          salaireDisponible: formData.salaireDisponible,
-          avanceDisponible: formData.avanceDisponible,
-          entrepriseId: formData.entrepriseId,
-          password: password
-        }),
+        body: JSON.stringify(requestData),
       })
 
       const result = await response.json()
@@ -328,11 +332,14 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
               {/* Montant disponible */}
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-900">Disponible ce mois-ci</span>
+                  <span className="text-sm font-medium text-blue-900">Avance disponible</span>
                   <span className="text-lg font-bold text-blue-900">{formData.avanceDisponible} GNF</span>
                 </div>
                 <p className="text-xs text-blue-700 mt-1">
-                  Basé sur les jours ouvrables écoulés ({getWorkingDaysElapsed(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())} jours sur {getTotalWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth())} jours ouvrables)
+                  Limite mensuelle: 25% de votre salaire net
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Information: {getWorkingDaysElapsed(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())} jours ouvrables écoulés sur {getTotalWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth())} jours
                 </p>
               </div>
 
