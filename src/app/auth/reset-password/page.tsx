@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CheckCircle, XCircle, Lock, Eye, EyeOff } from 'lucide-react';
@@ -72,12 +72,15 @@ async function determineUserType(supabase: ReturnType<typeof createBrowserClient
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const oobCode = searchParams.get('oobCode');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [status, setStatus] = useState<'verifying' | 'ready' | 'success' | 'error' | 'loading'>('verifying');
   const [message, setMessage] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
@@ -86,7 +89,17 @@ export default function ResetPasswordPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // Détecter si c'est un changement de mot de passe depuis les paramètres
+  const isChangePasswordMode = !oobCode;
+
   useEffect(() => {
+    if (isChangePasswordMode) {
+      // Mode changement de mot de passe depuis les paramètres
+      setStatus('ready');
+      return;
+    }
+
+    // Mode réinitialisation par lien (logique existante)
     const verifyCodeAndGetEmail = async () => {
       if (!oobCode) {
         setStatus('error');
@@ -107,11 +120,73 @@ export default function ResetPasswordPage() {
     };
 
     verifyCodeAndGetEmail();
-  }, [oobCode]);
+  }, [oobCode, isChangePasswordMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isChangePasswordMode) {
+      // Mode changement de mot de passe
+      if (!currentPassword || !password || !confirmPassword) {
+        setStatus('error');
+        setMessage('Veuillez remplir tous les champs');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setStatus('error');
+        setMessage('Les mots de passe ne correspondent pas');
+        return;
+      }
+
+      setStatus('loading');
+      setMessage('');
+
+      try {
+        const response = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentPassword,
+            newPassword: password
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setStatus('error');
+          setMessage(data.error || 'Erreur lors du changement de mot de passe');
+          return;
+        }
+
+        setStatus('success');
+        setMessage('Mot de passe changé avec succès');
+
+        // Déconnexion et redirection après 1 seconde (au lieu de 2)
+        setTimeout(async () => {
+          try {
+            await supabase.auth.signOut();
+            // Redirection immédiate
+            window.location.href = '/login?message=password_changed';
+          } catch (error) {
+            console.error('Erreur lors de la déconnexion:', error);
+            // Redirection même en cas d'erreur
+            window.location.href = '/login?message=password_changed';
+          }
+        }, 1000);
+
+      } catch (error) {
+        console.error('Erreur lors du changement de mot de passe:', error);
+        setStatus('error');
+        setMessage('Erreur lors du changement de mot de passe');
+      }
+      return;
+    }
+
+    // Mode réinitialisation par lien (logique existante)
     if (!oobCode) {
       setStatus('error');
       setMessage('Code de réinitialisation manquant');
@@ -277,7 +352,7 @@ export default function ResetPasswordPage() {
                 transition={{ delay: 0.2 }}
                 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80"
               >
-                Réinitialiser le mot de passe
+                {isChangePasswordMode ? 'Changer le mot de passe' : 'Réinitialiser le mot de passe'}
               </motion.h1>
               
               <motion.p
@@ -286,7 +361,7 @@ export default function ResetPasswordPage() {
                 transition={{ delay: 0.3 }}
                 className="text-white/60 text-sm px-2"
               >
-                Entrez votre nouveau mot de passe
+                {isChangePasswordMode ? 'Entrez votre ancien et nouveau mot de passe' : 'Entrez votre nouveau mot de passe'}
               </motion.p>
             </div>
 
@@ -316,15 +391,56 @@ export default function ResetPasswordPage() {
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-white">Succès !</h3>
                     <p className="text-white/60 text-sm px-2">
-                      Mot de passe réinitialisé avec succès
+                      {isChangePasswordMode ? 'Mot de passe changé avec succès' : 'Mot de passe réinitialisé avec succès'}
                     </p>
                     <p className="text-white/40 text-xs px-2 mt-3">
-                      Redirection en cours...
+                      {isChangePasswordMode ? 'Déconnexion et redirection vers la page de connexion...' : 'Redirection en cours...'}
                     </p>
                   </div>
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Ancien mot de passe (uniquement en mode changement) */}
+                  {isChangePasswordMode && (
+                    <motion.div 
+                      className={`relative ${focusedInput === "currentPassword" ? 'z-10' : ''}`}
+                      whileFocus={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.01 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    >
+                      <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                      
+                      <div className="relative flex items-center overflow-hidden rounded-lg">
+                        <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                          focusedInput === "currentPassword" ? 'text-white' : 'text-white/40'
+                        }`} />
+                        
+                        <Input
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder="Mot de passe actuel"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          onFocus={() => setFocusedInput("currentPassword")}
+                          onBlur={() => setFocusedInput(null)}
+                          required
+                          className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
+                        />
+                        
+                        <button 
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)} 
+                          className="absolute right-3 text-white/40 hover:text-white transition-colors duration-300"
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* Password input */}
                   <motion.div 
                     className={`relative ${focusedInput === "password" ? 'z-10' : ''}`}
@@ -341,7 +457,7 @@ export default function ResetPasswordPage() {
                       
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Nouveau mot de passe"
+                        placeholder={isChangePasswordMode ? "Nouveau mot de passe" : "Nouveau mot de passe"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onFocus={() => setFocusedInput("password")}
@@ -380,7 +496,7 @@ export default function ResetPasswordPage() {
                       
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirmer le mot de passe"
+                        placeholder="Confirmation du nouveau mot de passe"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         onFocus={() => setFocusedInput("confirmPassword")}
@@ -408,7 +524,8 @@ export default function ResetPasswordPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={status === 'loading' || !password || !confirmPassword}
+                    disabled={status === 'loading' || 
+                      (isChangePasswordMode ? (!currentPassword || !password || !confirmPassword) : (!password || !confirmPassword))}
                     className="w-full relative group/button mt-6"
                   >
                     <div className="absolute inset-0 bg-white/10 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
@@ -433,7 +550,7 @@ export default function ResetPasswordPage() {
                             exit={{ opacity: 0 }}
                             className="flex items-center justify-center gap-1 text-sm font-medium"
                           >
-                            Réinitialiser le mot de passe
+                            {isChangePasswordMode ? 'Changer le mot de passe' : 'Réinitialiser le mot de passe'}
                           </motion.span>
                         )}
                       </AnimatePresence>

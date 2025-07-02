@@ -29,7 +29,15 @@ export async function GET(request: NextRequest) {
     // Récupérer la session utilisateur
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
-    if (sessionError || !session) {
+    if (sessionError) {
+      console.error('❌ Erreur de session:', sessionError)
+      return NextResponse.json(
+        { error: 'Erreur de session', details: sessionError.message },
+        { status: 401 }
+      )
+    }
+    
+    if (!session) {
       console.log('❌ Aucune session trouvée')
       return NextResponse.json(
         { error: 'Non authentifié' },
@@ -38,20 +46,25 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('✅ Session trouvée pour:', session.user.email)
+    console.log('🔍 User ID:', session.user.id)
 
     // Essayer d'abord de récupérer les données depuis la table users (responsables/RH)
+    console.log('🔍 Recherche dans la table users...')
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('email', session.user.email)
       .single()
 
-    if (userError && userError.code !== 'PGRST116') {
-      console.error('❌ Erreur lors de la récupération des données utilisateur:', userError)
-      return NextResponse.json(
-        { error: 'Erreur lors de la récupération des données utilisateur' },
-        { status: 500 }
-      )
+    if (userError) {
+      console.log('❌ Erreur ou utilisateur non trouvé dans users:', userError.message)
+      if (userError.code !== 'PGRST116') {
+        console.error('❌ Erreur lors de la récupération des données utilisateur:', userError)
+        return NextResponse.json(
+          { error: 'Erreur lors de la récupération des données utilisateur', details: userError.message },
+          { status: 500 }
+        )
+      }
     }
 
     // Si l'utilisateur est trouvé dans la table users
@@ -75,6 +88,7 @@ export async function GET(request: NextRequest) {
 
     // Si l'utilisateur n'est pas dans users, essayer dans employees
     console.log('🔍 Utilisateur non trouvé dans users, recherche dans employees...')
+    console.log('🔍 Recherche avec user_id:', session.user.id)
     
     const { data: employeeData, error: employeeError } = await supabase
       .from('employees')
@@ -82,12 +96,15 @@ export async function GET(request: NextRequest) {
       .eq('user_id', session.user.id)
       .single()
 
-    if (employeeError && employeeError.code !== 'PGRST116') {
-      console.error('❌ Erreur lors de la récupération des données employé:', employeeError)
-      return NextResponse.json(
-        { error: 'Erreur lors de la récupération des données employé' },
-        { status: 500 }
-      )
+    if (employeeError) {
+      console.log('❌ Erreur ou employé non trouvé:', employeeError.message)
+      if (employeeError.code !== 'PGRST116') {
+        console.error('❌ Erreur lors de la récupération des données employé:', employeeError)
+        return NextResponse.json(
+          { error: 'Erreur lors de la récupération des données employé', details: employeeError.message },
+          { status: 500 }
+        )
+      }
     }
 
     if (employeeData) {
@@ -126,15 +143,32 @@ export async function GET(request: NextRequest) {
 
     // Si ni dans users ni dans employees
     console.log('⚠️ Utilisateur non trouvé dans users ni employees')
+    console.log('🔍 Email de session:', session.user.email)
+    console.log('🔍 User ID de session:', session.user.id)
+    
+    // Vérifier s'il y a des employés avec cet email
+    const { data: emailCheck, error: emailError } = await supabase
+      .from('employees')
+      .select('user_id, email, nom, prenom')
+      .eq('email', session.user.email)
+    
+    if (emailCheck && emailCheck.length > 0) {
+      console.log('🔍 Employés trouvés avec cet email:', emailCheck)
+    }
+    
     return NextResponse.json(
-      { error: 'Utilisateur non trouvé dans la base de données' },
+      { 
+        error: 'Utilisateur non trouvé dans la base de données',
+        sessionEmail: session.user.email,
+        sessionUserId: session.user.id
+      },
       { status: 404 }
     )
     
   } catch (error) {
     console.error('💥 Erreur dans /api/auth/me:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Erreur serveur', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

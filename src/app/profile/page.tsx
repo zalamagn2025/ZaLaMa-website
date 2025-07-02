@@ -311,7 +311,7 @@ export default function ProfilePage() {
 
       {/* Paramètres utilisateur */}
       {showSettings && (
-        <ProfileSettings onClose={() => setShowSettings(false)} />
+        <ProfileSettings onClose={() => setShowSettings(false)} userData={user} />
       )}
     </div>
   )

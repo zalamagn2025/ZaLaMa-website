@@ -22,17 +22,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-// Interface pour le type User
-interface User {
+// Interface pour les données utilisateur
+interface UserData {
   uid: string;
   email?: string | null;
   displayName?: string | null;
   photoURL?: string | null;
+  nom?: string;
+  prenom?: string;
+  nomComplet?: string;
 }
 
 // Interface pour le contexte d'authentification
 interface AuthContextType {
-  currentUser: User | null;
+  currentUser: UserData | null;
   // Ajoutez ici les autres méthodes de votre contexte si nécessaire
 }
 
@@ -56,7 +59,7 @@ interface SecurityAlertPreference {
   icon: React.ReactNode;
 }
 
-export function ProfileSettings({ onClose }: { onClose: () => void }) {
+export function ProfileSettings({ onClose, userData }: { onClose: () => void; userData?: UserData }) {
   const router = useRouter();
   const { currentUser } = useAuth() as AuthContextType;
   const [isSaving, setIsSaving] = useState(false);
@@ -121,6 +124,12 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
       icon: <IconShieldCheck className="w-5 h-5 text-blue-400" />
     }
   ]);
+
+  // Utiliser userData si disponible, sinon fallback sur currentUser
+  const displayUser = userData || currentUser;
+  const displayName = userData?.nomComplet || userData?.displayName || currentUser?.displayName || 'Utilisateur';
+  const displayEmail = userData?.email || currentUser?.email;
+  const displayInitial = displayName.charAt(0).toUpperCase();
 
   // Charger les préférences utilisateur
   useEffect(() => {
@@ -274,9 +283,9 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
                 </motion.div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Paramètres</h2>
-                  {currentUser?.displayName && (
+                  {displayName && (
                     <p className="text-sm text-blue-200 mt-1">
-                      Connecté en tant que <span className="font-medium text-white">{currentUser.displayName}</span>
+                      Connecté en tant que <span className="font-medium text-white">{displayName}</span>
                     </p>
                   )}
                 </div>
@@ -299,11 +308,11 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
               <div className="bg-[#0A1A5A]/50 p-4 rounded-lg space-y-4">
                 <div className="flex items-center gap-3 p-3 bg-[#0A1A5A] rounded-lg">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-white font-bold">
-                    {currentUser?.displayName?.charAt(0) || currentUser?.email?.charAt(0).toUpperCase() || 'U'}
+                    {displayInitial}
                   </div>
                   <div>
-                    <p className="font-medium text-white">{currentUser?.displayName || 'Utilisateur'}</p>
-                    <p className="text-xs text-gray-400">{currentUser?.email}</p>
+                    <p className="font-medium text-white">{displayName}</p>
+                    <p className="text-xs text-gray-400">{displayEmail}</p>
                   </div>
                 </div>
               </div>
