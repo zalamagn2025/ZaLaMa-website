@@ -624,7 +624,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed inset-0 flex items-center justify-center z-50"
           >
-            <ProfileSettings onClose={() => setShowSettings(false)} />
+            <ProfileSettings onClose={() => setShowSettings(false)} userData={user} />
           </motion.div>
         )}
       </AnimatePresence>

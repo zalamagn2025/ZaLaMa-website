@@ -556,6 +556,28 @@ export default function ResetPasswordPage() {
                       </AnimatePresence>
                     </div>
                   </motion.button>
+
+                  {/* Bouton Annuler (uniquement en mode changement de mot de passe) */}
+                  {isChangePasswordMode && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={() => router.push('/profile')}
+                      disabled={status === 'loading'}
+                      className="w-full relative group/button mt-3"
+                    >
+                      <div className="absolute inset-0 bg-white/5 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
+                      
+                      <div className="relative overflow-hidden bg-white/10 disabled:bg-gray-600 disabled:opacity-50 text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center border border-white/20">
+                        <motion.span
+                          className="flex items-center justify-center gap-1 text-sm font-medium"
+                        >
+                          Annuler
+                        </motion.span>
+                      </div>
+                    </motion.button>
+                  )}
                 </form>
               )}
             </AnimatePresence>

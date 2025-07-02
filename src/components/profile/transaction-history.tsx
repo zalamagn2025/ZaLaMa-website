@@ -5,8 +5,10 @@ import { IconSearch, IconFilter, IconEye, IconDownload, IconShare, IconX } from 
 import { motion, AnimatePresence } from "framer-motion";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { TransactionPDF } from "./TransactionPDF";
+import { useTransactions } from "@/hooks/use-transactions";
+import { Transaction as ApiTransaction } from "@/types/transaction";
 
-// Définition du type Transaction pour correspondre à TransactionPDF.tsx
+// Interface pour la compatibilité avec TransactionPDF
 interface Transaction {
   id: string;
   date: string;
@@ -17,74 +19,44 @@ interface Transaction {
   description: string;
 }
 
-// Données fictives corrigées
-const allTransactions: Transaction[] = [
-  {
-    id: "TX123456",
-    date: "15/05/2023",
-    type: "Avance sur salaire",
-    amount: "500,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "Remboursé",
-    description: "Avance sur salaire de mai 2023",
-  },
-  {
-    id: "TX123457",
-    date: "02/06/2023",
-    type: "Prêt personnel",
-    amount: "1,200,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "En cours",
-    description: "Prêt pour rénovation domicile",
-  },
-  {
-    id: "TX123458",
-    date: "10/07/2023",
-    type: "Avance sur salaire",
-    amount: "300,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "Remboursé",
-    description: "Avance sur salaire de juillet 2023",
-  },
-  {
-    id: "TX123459",
-    date: "25/07/2023",
-    type: "Prêt entre particuliers",
-    amount: "800,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "En cours",
-    description: "Prêt pour frais médicaux",
-  },
-  {
-    id: "TX123460",
-    date: "05/08/2023",
-    type: "Avance sur salaire",
-    amount: "450,000 GNF",
-    status: "En attente",
-    paymentStatus: "En cours",
-    description: "Avance sur salaire d'août 2023",
-  },
-  {
-    id: "TX123461",
-    date: "15/08/2023",
-    type: "Prêt personnel",
-    amount: "750,000 GNF",
-    status: "Rejeté",
-    paymentStatus: "Échoué",
-    description: "Prêt pour vacances",
-  },
-  {
-    id: "TX123462",
-    date: "20/08/2023",
-    type: "Prêt entre particuliers",
-    amount: "1,500,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "En cours",
-    description: "Prêt pour frais scolaires",
-  },
-];
+// Fonction pour convertir les données API en format d'affichage
+const convertApiTransactionToDisplay = (apiTransaction: ApiTransaction): Transaction => {
+  // Formater la date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
+  };
+
+  // Formater le montant
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'GNF',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Déterminer le statut de paiement basé sur le statut
+  const getPaymentStatus = (status: string): "Remboursé" | "En cours" | "Échoué" => {
+    if (status === 'Rejeté') return 'Échoué';
+    if (status === 'Terminé') return 'Remboursé';
+    return 'En cours';
+  };
+
+  return {
+    id: apiTransaction.reference || `TX${apiTransaction.transaction_id}-${apiTransaction.id}`,
+    date: formatDate(apiTransaction.date_transaction),
+    type: apiTransaction.type,
+    amount: formatAmount(apiTransaction.montant),
+    status: apiTransaction.statut as "Approuvé" | "En attente" | "Rejeté",
+    paymentStatus: getPaymentStatus(apiTransaction.statut),
+    description: apiTransaction.description || `${apiTransaction.type} - ${apiTransaction.service}`,
+  };
+};
 
 export function TransactionHistory() {
+  const { transactions: apiTransactions, loading, error, total } = useTransactions();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
@@ -98,6 +70,9 @@ export function TransactionHistory() {
   const transactionsPerPage = 5;
   const sharePopupRef = useRef<HTMLDivElement>(null);
 
+  // Convertir les transactions API en format d'affichage
+  const allTransactions: Transaction[] = apiTransactions.map(convertApiTransactionToDisplay);
+
   // Filtrer les transactions
   const filteredTransactions = allTransactions.filter((transaction) => {
     const matchesSearch =
@@ -107,9 +82,9 @@ export function TransactionHistory() {
 
     const matchesType =
       filters.type === "" ||
-      (filters.type === "advance" && transaction.type === "Avance sur salaire") ||
+      (filters.type === "advance" && transaction.type === "Avance de salaire") ||
       (filters.type === "loan" && transaction.type === "Prêt personnel") ||
-      (filters.type === "p2p" && transaction.type === "Prêt entre particuliers");
+      (filters.type === "p2p" && transaction.type === "Prêt entre pairs");
 
     const matchesStatus =
       filters.status === "" ||
@@ -148,6 +123,37 @@ export function TransactionHistory() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Afficher l'état de chargement
+  if (loading) {
+    return (
+      <div className="bg-[#010D3E]/50 backdrop-blur-md rounded-2xl p-6 border border-[#1A3A8F]">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-2 border-[#FF671E] border-t-transparent rounded-full animate-spin" />
+            <p className="text-white/60">Chargement des transactions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Afficher l'erreur
+  if (error) {
+    return (
+      <div className="bg-[#010D3E]/50 backdrop-blur-md rounded-2xl p-6 border border-[#1A3A8F]">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+              <IconX className="w-6 h-6 text-red-400" />
+            </div>
+            <p className="text-red-400 text-center">Erreur lors du chargement des transactions</p>
+            <p className="text-white/40 text-sm text-center">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Styles et animations
   const getStatusColor = (status: string) => {
@@ -413,7 +419,7 @@ export function TransactionHistory() {
               {currentTransactions.length > 0 ? (
                 currentTransactions.map((transaction, index) => (
                   <motion.tr
-                    key={transaction.id}
+                    key={`${transaction.id}-${index}`}
                     custom={index}
                     initial="hidden"
                     animate="visible"
@@ -781,7 +787,7 @@ export function TransactionHistory() {
                       name: "Telegram",
                       icon: (
                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
+                          <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
                         </svg>
                       ),
                       color: "bg-blue-400 hover:bg-blue-500",

@@ -69,9 +69,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .single()
 
             if (error) {
-              console.error('Erreur lors de la récupération des données utilisateur:', error)
+              console.error('Erreur lors de la récupération des données utilisateur:', error.message || error)
             } else if (userData) {
+              console.log('✅ Données employé récupérées:', userData.nom, userData.prenom)
               setUserData(userData as UserData)
+            } else {
+              console.warn('⚠️ Aucune donnée employé trouvée pour l\'utilisateur:', session.user.id)
             }
           } catch (error) {
             console.error('Erreur lors de la récupération des données utilisateur:', error)

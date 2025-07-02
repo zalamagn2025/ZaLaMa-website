@@ -24,20 +24,31 @@ import { toast } from "sonner";
 
 // Interface pour les données utilisateur
 interface UserData {
-  uid: string;
+  uid?: string;
+  id?: string;
+  user_id?: string;
   email?: string | null;
   displayName?: string | null;
   photoURL?: string | null;
   nom?: string;
   prenom?: string;
   nomComplet?: string;
+  poste?: string;
+  telephone?: string | null;
+  adresse?: string | null;
+  dateEmbauche?: string;
+  date_embauche?: string;
+  role?: string | null;
+  genre?: string;
+  type_contrat?: string;
+  salaire_net?: number;
+  actif?: boolean;
+  partner_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Interface pour le contexte d'authentification
-interface AuthContextType {
-  currentUser: UserData | null;
-  // Ajoutez ici les autres méthodes de votre contexte si nécessaire
-}
+
 
 // Types pour les paramètres de notification
 type NotificationChannel = 'email' | 'push' | 'sms';
@@ -61,7 +72,6 @@ interface SecurityAlertPreference {
 
 export function ProfileSettings({ onClose, userData }: { onClose: () => void; userData?: UserData }) {
   const router = useRouter();
-  const { currentUser } = useAuth() as AuthContextType;
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveButton, setShowSaveButton] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -125,11 +135,31 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     }
   ]);
 
-  // Utiliser userData si disponible, sinon fallback sur currentUser
-  const displayUser = userData || currentUser;
-  const displayName = userData?.nomComplet || userData?.displayName || currentUser?.displayName || 'Utilisateur';
-  const displayEmail = userData?.email || currentUser?.email;
+  // Utiliser directement les données de l'employé connecté (comme dans ProfileHeader)
+  const employeeData = userData;
+  
+  // Construire le nom complet de l'employé connecté (même logique que ProfileHeader)
+  const getDisplayName = () => {
+    if (employeeData?.nom || employeeData?.nomComplet || employeeData?.displayName) {
+      return employeeData.nom || employeeData.nomComplet || `${employeeData.prenom} ${employeeData.nom}` || employeeData.displayName || "Utilisateur";
+    }
+    return 'Employé ZaLaMa';
+  };
+  
+  const displayName = getDisplayName();
+  const displayEmail = employeeData?.email || 'Email non disponible';
   const displayInitial = displayName.charAt(0).toUpperCase();
+
+  // Debug: Afficher les données de l'employé connecté
+  useEffect(() => {
+    console.log('🔍 ProfileSettings - Données employé connecté:');
+    console.log('userData reçu:', userData);
+    console.log('employeeData:', employeeData);
+    console.log('displayName:', displayName);
+    console.log('displayEmail:', displayEmail);
+    console.log('poste:', employeeData?.poste);
+    console.log('role:', employeeData?.role);
+  }, [userData, employeeData, displayName, displayEmail]);
 
   // Charger les préférences utilisateur
   useEffect(() => {
@@ -283,7 +313,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                 </motion.div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Paramètres</h2>
-                  {displayName && (
+                  {displayName && displayName !== 'Utilisateur' && (
                     <p className="text-sm text-blue-200 mt-1">
                       Connecté en tant que <span className="font-medium text-white">{displayName}</span>
                     </p>
@@ -310,11 +340,45 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-white font-bold">
                     {displayInitial}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium text-white">{displayName}</p>
                     <p className="text-xs text-gray-400">{displayEmail}</p>
+                    {employeeData?.poste && (
+                      <p className="text-xs text-[#FF671E] mt-1 font-medium">
+                        {employeeData.poste}
+                      </p>
+                    )}
+                    {employeeData?.role && (
+                      <p className="text-xs text-blue-300 mt-1">
+                        Rôle: {employeeData.role}
+                      </p>
+                    )}
                   </div>
                 </div>
+                
+                {/* Informations supplémentaires de l'employé connecté */}
+                {employeeData && (
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    {employeeData.telephone && (
+                      <div className="flex items-center gap-2 p-2 bg-[#0A1A5A] rounded-lg">
+                        <span className="text-gray-400">📞</span>
+                        <span className="text-white">{employeeData.telephone}</span>
+                      </div>
+                    )}
+                    {employeeData.adresse && (
+                      <div className="flex items-center gap-2 p-2 bg-[#0A1A5A] rounded-lg">
+                        <span className="text-gray-400">📍</span>
+                        <span className="text-white">{employeeData.adresse}</span>
+                      </div>
+                    )}
+                    {(employeeData.date_embauche || employeeData.dateEmbauche) && (
+                      <div className="flex items-center gap-2 p-2 bg-[#0A1A5A] rounded-lg">
+                        <span className="text-gray-400">📅</span>
+                        <span className="text-white">Embauché le {new Date(employeeData.date_embauche || employeeData.dateEmbauche || '').toLocaleDateString('fr-FR')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
