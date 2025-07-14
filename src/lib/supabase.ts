@@ -169,6 +169,7 @@ export interface Database {
           type_contrat: 'CDI' | 'CDD' | 'Consultant' | 'Stage' | 'Autre'
           salaire_net: number | null
           date_embauche: string | null
+          photo_url: string | null
           actif: boolean
           created_at: string
           updated_at: string
@@ -187,6 +188,7 @@ export interface Database {
           type_contrat: 'CDI' | 'CDD' | 'Consultant' | 'Stage' | 'Autre'
           salaire_net?: number | null
           date_embauche?: string | null
+          photo_url?: string | null
           actif?: boolean
           created_at?: string
           updated_at?: string
@@ -205,6 +207,7 @@ export interface Database {
           type_contrat?: 'CDI' | 'CDD' | 'Consultant' | 'Stage' | 'Autre'
           salaire_net?: number | null
           date_embauche?: string | null
+          photo_url?: string | null
           actif?: boolean
           created_at?: string
           updated_at?: string

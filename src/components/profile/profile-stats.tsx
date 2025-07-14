@@ -416,168 +416,22 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       pulse: (financialAmounts?.totalActiveAdvances || 0) > 0 ? true : false,
       showRemaining: false
     },
-    {
-      title: "Prêts actifs",
-      value: "0",
-      remaining: "",
-      currency: "GNF",
-      icon: <IconReceipt className="h-6 w-6" />,
-      change: "0 prêt en cours",
-      trend: "neutral" as const,
-      color: "from-[#010D3E] to-[#1A3A8F]",
-      pulse: false,
-      showRemaining: false
-    }
+    // {
+    //   title: "Prêts actifs",
+    //   value: "0",
+    //   remaining: "",
+    //   currency: "GNF",
+    //   icon: <IconReceipt className="h-6 w-6" />,
+    //   change: "0 prêt en cours",
+    //   trend: "neutral" as const,
+    //   color: "from-[#010D3E] to-[#1A3A8F]",
+    //   pulse: false,
+    //   showRemaining: false
+    // }
   ]
 
   return (
     <div className="space-y-4">
-      {/* Boutons de test pour le débogage */}
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={testSupabaseData}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
-        >
-          🧪 Test Supabase
-        </button>
-        <button
-          onClick={testSchemaData}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
-        >
-          🏗️ Test Schéma
-        </button>
-        <button
-          onClick={testWorkingDaysCalculation}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
-        >
-          📅 Test Calcul Jours
-        </button>
-        <button
-          onClick={testEndOfMonthCalculation}
-          className="px-4 py-2 bg-pink-600 text-white rounded-lg text-sm hover:bg-pink-700 transition-colors"
-        >
-          🎯 Test Fin de Mois
-        </button>
-        <button
-          onClick={testCurrentCalculation}
-          className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700 transition-colors"
-        >
-          🔍 Test Calcul Actuel
-        </button>
-      </div>
-
-      {/* Affichage des données de débogage */}
-      {debugData && (
-        <div className="bg-gray-900 p-4 rounded-lg text-xs">
-          <h3 className="text-white font-bold mb-2">Données de débogage:</h3>
-          <pre className="text-green-400 overflow-auto max-h-40">
-            {JSON.stringify(debugData, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {/* Affichage des données de schéma */}
-      {schemaData && (
-        <div className="bg-gray-900 p-4 rounded-lg text-xs">
-          <h3 className="text-white font-bold mb-2">Données de schéma:</h3>
-          <pre className="text-green-400 overflow-auto max-h-40">
-            {JSON.stringify(schemaData, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {/* Explication de la logique financière */}
-      {financialAmounts && (
-        <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
-          <h3 className="text-blue-300 font-bold mb-3 text-sm">📊 Explication des calculs financiers</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-blue-200">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Salaire net:</span>
-                <span className="font-mono">{financialAmounts.salaireNet.toLocaleString()} GNF</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Limite mensuelle (25%):</span>
-                <span className="font-mono">{financialAmounts.monthlyLimit.toLocaleString()} GNF</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Avances actives:</span>
-                <span className="font-mono text-orange-300">{financialAmounts.totalActiveAdvances.toLocaleString()} GNF</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Jours ouvrables écoulés:</span>
-                <span className="font-mono text-blue-300">{financialAmounts.workingDaysElapsed}/{financialAmounts.totalWorkingDays}</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Salaire restant:</span>
-                <span className="font-mono text-green-300">{financialAmounts.remainingSalary.toLocaleString()} GNF</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Acompte disponible:</span>
-                <span className="font-mono text-blue-300">{financialAmounts.acompteDisponible.toLocaleString()} GNF</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Restant ce mois:</span>
-                <span className="font-mono text-yellow-300">{financialAmounts.remainingMonthlyAdvance.toLocaleString()} GNF</span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-blue-300/70">
-            <p><strong>Formule:</strong> Salaire restant = Salaire net - Avances actives</p>
-            <p><strong>Acompte disponible:</strong> (Salaire net / Total jours ouvrables) × Jours écoulés</p>
-            <p><strong>Limite mensuelle pour avance:</strong> Maximum 25% du salaire net par mois</p>
-            <p><strong>Jours ouvrables:</strong> Lundi à Vendredi (samedi et dimanche exclus)</p>
-            <p><strong>✅ Important:</strong> L'acompte disponible augmente avec les jours écoulés</p>
-            <p><strong>💡 Note:</strong> L'acompte disponible et la limite d'avance sont deux concepts différents</p>
-          </div>
-          
-          {/* Exemple concret */}
-          <div className="mt-4 p-3 bg-blue-800/20 rounded-lg border border-blue-400/30">
-            <h4 className="text-blue-200 font-semibold mb-2 text-xs">💡 Exemple concret:</h4>
-            <div className="text-xs text-blue-200 space-y-1">
-              <p><strong>Salaire net:</strong> 1,000,000 GNF</p>
-              <p><strong>Total jours ouvrables du mois:</strong> 22 jours</p>
-              <p><strong>Salaire par jour ouvrable:</strong> 1,000,000 ÷ 22 = 45,455 GNF</p>
-              <p><strong>Si 11 jours ouvrables écoulés:</strong></p>
-              <p><strong>Acompte disponible:</strong> 45,455 × 11 = 500,000 GNF</p>
-              <p><strong>Limite d'avance (25%):</strong> 1,000,000 × 0.25 = 250,000 GNF</p>
-              <p><strong>✅ Résultat:</strong> L'acompte disponible (500,000) peut dépasser la limite d'avance (250,000)</p>
-            </div>
-          </div>
-
-          {/* Calcul actuel détaillé */}
-          {financialAmounts && (
-            <div className="mt-4 p-3 bg-green-800/20 rounded-lg border border-green-400/30">
-              <h4 className="text-green-200 font-semibold mb-2 text-xs">🔍 Calcul actuel détaillé:</h4>
-              <div className="text-xs text-green-200 space-y-1">
-                <p><strong>Salaire net actuel:</strong> {financialAmounts.salaireNet.toLocaleString()} GNF</p>
-                <p><strong>Total jours ouvrables du mois:</strong> {financialAmounts.totalWorkingDays} jours</p>
-                <p><strong>Salaire par jour ouvrable:</strong> {Math.floor(financialAmounts.salaireNet / financialAmounts.totalWorkingDays).toLocaleString()} GNF</p>
-                <p><strong>Jours ouvrables écoulés:</strong> {financialAmounts.workingDaysElapsed} jours</p>
-                <p><strong>Acompte disponible calculé:</strong> {financialAmounts.acompteDisponible.toLocaleString()} GNF</p>
-                <p><strong>Vérification:</strong> ({Math.floor(financialAmounts.salaireNet / financialAmounts.totalWorkingDays).toLocaleString()} × {financialAmounts.workingDaysElapsed}) = {financialAmounts.acompteDisponible.toLocaleString()} GNF ✅</p>
-              </div>
-            </div>
-          )}
-
-          {/* Différence entre acompte disponible et limite mensuelle */}
-          {financialAmounts && (
-            <div className="mt-4 p-3 bg-yellow-800/20 rounded-lg border border-yellow-400/30">
-              <h4 className="text-yellow-200 font-semibold mb-2 text-xs">⚖️ Différence importante:</h4>
-              <div className="text-xs text-yellow-200 space-y-1">
-                <p><strong>🎯 Acompte disponible:</strong> {financialAmounts.acompteDisponible.toLocaleString()} GNF</p>
-                <p><strong>📊 Basé sur:</strong> {financialAmounts.workingDaysElapsed} jours écoulés sur {financialAmounts.totalWorkingDays} jours</p>
-                <p><strong>📈 Limite d'avance (25%):</strong> {financialAmounts.monthlyLimit.toLocaleString()} GNF</p>
-                <p><strong>📋 Pour les demandes d'avance:</strong> Maximum {financialAmounts.monthlyLimit.toLocaleString()} GNF par mois</p>
-                <p><strong>💡 Explication:</strong> L'acompte disponible représente ce que vous avez "gagné" jusqu'à présent. La limite de 25% s'applique seulement quand vous demandez une avance sur salaire.</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((stat, index) => (
           <motion.div
@@ -651,7 +505,7 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
 
   return (
     <div 
-      className="relative group h-full"
+      className="relative justify-between group h-full w-full "
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

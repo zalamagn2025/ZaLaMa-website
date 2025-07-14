@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBell, IconEdit, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash, IconLogout } from "@tabler/icons-react";
+import { IconBell, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash } from "@tabler/icons-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -24,11 +24,10 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
-  const { currentUser, userData, logout } = useAuth();
+  const { currentUser, userData } = useAuth();
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, message: "Nouveau message de l'équipe financière", timestamp: "2025-05-18 09:30" },
     { id: 2, message: "Mise à jour du profil validée", timestamp: "2025-05-17 14:15" },
@@ -46,15 +45,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
     }
   }, [currentUser, userData]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
-
   const handleHomeNavigation = () => {
     router.push("/");
   };
@@ -65,45 +55,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
     const date = new Date(dateStr);
     return date.toString() !== "Invalid Date" ? date.toLocaleDateString("fr-FR") : "Date invalide";
   };
-
-  // Notification Details Component
-  function NotificationDetails({ notification, onClose }: { notification: Notification; onClose: () => void }) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-0 flex items-center justify-center z-60 p-4"
-      >
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-6 w-full max-w-sm shadow-xl">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">
-              Détails de la Notification
-            </h3>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onClose}
-              className="text-gray-300 hover:text-[#FFFFFF]"
-              aria-label="Fermer les détails"
-            >
-              <IconX size={20} />
-            </motion.button>
-          </div>
-          <div className="space-y-2 text-gray-200">
-            <p>
-              <strong>Message:</strong> {notification.message}
-            </p>
-            <p>
-              <strong>Date:</strong> {notification.timestamp}
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
 
   // Notifications View Component
   function NotificationsView({ onClose }: { onClose: () => void }) {
@@ -138,7 +89,8 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                 <IconX size={24} />
               </motion.button>
             </div>
-            <div className="space-y-4 h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-[#010D3E] scrollbar-thumb-[#FF671E]">
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
                 <p className="text-gray-300 text-center py-4">Aucune notification</p>
               ) : (
@@ -160,19 +112,19 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleViewDetails(notification)}
-                          className="text-[#FF671E] hover:text-[#FF8E53]"
-                          aria-label={`Voir les détails de ${notification.message}`}
+                          className="p-1 text-gray-400 hover:text-[#FF671E] transition-colors"
+                          aria-label="Voir les détails"
                         >
-                          <IconEye size={18} />
+                          <IconEye size={16} />
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleDelete(notification.id)}
-                          className="text-red-400 hover:text-red-300"
-                          aria-label={`Supprimer ${notification.message}`}
+                          className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                          aria-label="Supprimer la notification"
                         >
-                          <IconTrash size={18} />
+                          <IconTrash size={16} />
                         </motion.button>
                       </div>
                     </div>
@@ -182,208 +134,47 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             </div>
           </div>
         </motion.div>
+
+        {/* Modal de détails */}
         <AnimatePresence>
-          {showDetails && <NotificationDetails notification={showDetails} onClose={() => setShowDetails(null)} />}
+          {showDetails && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            >
+              <div className="absolute inset-0 bg-black/50" onClick={() => setShowDetails(null)} />
+              <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md shadow-xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">Détails</h3>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowDetails(null)}
+                    className="text-gray-300 hover:text-[#FFFFFF]"
+                    aria-label="Fermer les détails"
+                  >
+                    <IconX size={24} />
+                  </motion.button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-gray-300 text-sm">Message</p>
+                    <p className="text-white font-medium">{showDetails.message}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-300 text-sm">Date</p>
+                    <p className="text-white">{showDetails.timestamp}</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </>
-    );
-  }
-
-  // Edit Profile Form Component - Version simplifiée pour le téléchargement d'image uniquement
-  function EditProfileForm({ onClose }: { onClose: () => void }) {
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [avatarPreview, setAvatarPreview] = useState<string>(user.photoURL || "");
-    const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    // Nettoyer l'URL de l'aperçu lors du démontage du composant
-    useEffect(() => {
-      return () => {
-        if (avatarPreview) {
-          URL.revokeObjectURL(avatarPreview);
-        }
-      };
-    }, [avatarPreview]);
-
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      // Vérifier le type de fichier
-      if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
-        setError("Format non supporté. Veuillez utiliser une image au format JPG ou PNG.");
-        return;
-      }
-
-      // Vérifier la taille du fichier (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        setError("L'image est trop volumineuse. Taille maximale : 2MB.");
-        return;
-      }
-
-      setError(null);
-      setAvatarFile(file);
-      const url = URL.createObjectURL(file);
-      setAvatarPreview(url);
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      
-      if (!avatarFile) {
-        setError("Veuillez sélectionner une image avant d'enregistrer");
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // Ici, vous devrez implémenter la logique pour téléverser l'image
-        // Par exemple, avec une API ou un service de stockage
-        console.log("Téléversement de l'image :", avatarFile);
-        
-        // Simulation d'un délai de téléversement
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mettre à jour l'URL de l'image dans le profil utilisateur
-        // Créer une nouvelle URL d'image à partir du fichier
-        const imageUrl = URL.createObjectURL(avatarFile);
-        
-        // Mettre à jour l'utilisateur avec la nouvelle URL d'image
-        // Note: Dans une application réelle, vous devriez envoyer le fichier au serveur
-        // et utiliser l'URL renvoyée par le serveur
-        user.photoURL = imageUrl;
-        
-        // Afficher un message de succès
-        alert("Photo de profil mise à jour avec succès !");
-        
-        // Forcer le re-render du composant parent pour afficher la nouvelle image
-        // Cette partie dépend de comment votre état utilisateur est géré
-        // Ici, on rafraîchit la page pour voir les changements
-        window.location.reload();
-        
-        // Fermer le modal après le succès
-        onClose();
-      } catch (err) {
-        console.error("Erreur lors du téléversement de l'image :", err);
-        setError("Une erreur est survenue lors du téléversement de l'image");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-0 flex items-center justify-center z-50 p-4"
-      >
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md shadow-xl max-h-[80vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">
-              Modifier le Profil
-            </h2>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onClose}
-              className="text-gray-300 hover:text-[#FFFFFF]"
-              aria-label="Fermer le formulaire"
-            >
-              <IconX size={24} />
-            </motion.button>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-200 mb-2">Avatar</label>
-              <div className="flex flex-col items-center gap-6 py-4">
-                <motion.div 
-                  initial={{ scale: 1 }} 
-                  whileHover={{ scale: 1.02 }}
-                  className="relative group"
-                >
-                  {avatarPreview ? (
-                    <Image
-                      key={avatarPreview}
-                      width={128}
-                      height={128}
-                      src={avatarPreview}
-                      alt="Aperçu de l'avatar"
-                      className="h-32 w-32 rounded-full object-cover border-4 border-[#FF671E]/30 shadow-lg"
-                    />
-                  ) : (
-                    <div className="h-32 w-32 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-4xl font-bold text-[#FFFFFF] border-4 border-[#FF671E]/30 shadow-lg">
-                      {user.nomComplet?.split(" ").map((n) => n[0]).join("") || "U"}
-                    </div>
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <IconEdit className="w-8 h-8 text-white" />
-                  </div>
-                </motion.div>
-                
-                <motion.label
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-6 py-3 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-lg text-sm font-medium text-white cursor-pointer shadow-lg hover:shadow-[#FF671E]/40 transition-all"
-                >
-                  {avatarPreview ? "Changer la photo" : "Ajouter une photo"}
-                  <input 
-                    type="file" 
-                    accept="image/png,image/jpeg" 
-                    onChange={handleAvatarChange} 
-                    className="hidden" 
-                  />
-                </motion.label>
-                
-                {error && (
-                  <div className="mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                    <p className="text-red-400 text-sm text-center">{error}</p>
-                  </div>
-                )}
-                
-                <p className="text-xs text-gray-400 text-center mt-2">
-                  Formats acceptés : JPG, PNG (max. 2MB)
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex gap-4 justify-center pt-6">
-              <motion.button
-                type="button"
-                onClick={onClose}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                disabled={isLoading}
-                className="px-8 py-3 rounded-lg bg-white/10 border border-white/20 text-[#FFFFFF] hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Annuler
-              </motion.button>
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                disabled={isLoading || !avatarFile}
-                className={`px-8 py-3 rounded-lg text-white shadow-lg transition-all ${
-                  isLoading || !avatarFile 
-                    ? 'bg-gray-500/50 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:shadow-[#FF671E]/40'
-                }`}
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Enregistrement...</span>
-                  </div>
-                ) : (
-                  'Enregistrer la photo'
-                )}
-              </motion.button>
-            </div>
-          </form>
-        </div>
-      </motion.div>
     );
   }
 
@@ -420,7 +211,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             </div>
 
             {/* Boutons Paramètres et Retour à l'accueil */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <motion.button
                 whileHover={{
                   scale: 1.05,
@@ -481,7 +272,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
         transition={{ duration: 0.4 }}
         className="bg-[#010D3E]/80 dark:bg-gray-800/90 backdrop-blur-sm px-6 pb-6 -mt-12"
       >
-        <div className="flex flex-col md:flex-row justify-between gap-6 pt-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
           {/* Section gauche - Avatar + Infos */}
           <div className="flex flex-col sm:flex-row gap-6">
             {/* Avatar */}
@@ -509,10 +300,15 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             </motion.div>
 
             {/* Informations utilisateur */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-bold text-[#FFFFFF]">
-                  {user.nom || user.nomComplet || `${user.prenom} ${user.nom}` || user.displayName || "Utilisateur"}
+                {
+                  user.nomComplet
+                  || (user.prenom && user.nom && `${user.prenom} ${user.nom}`)
+                  || user.nom
+                  || "Utilisateur"
+                }
                 </h1>
                 <div className="flex items-center gap-2">
                   <motion.div
@@ -527,13 +323,14 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                     className="z-20 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-[#FFFFFF] text-xs font-bold px-3 py-0.5 rounded-full shadow-md flex items-center gap-1"
                     whileHover={{ scale: 1.1 }}
                   >
-                    <IconCrown size={12} />
+                    {/* <IconCrown size={12} /> */}
+                    <p>Mat:</p>
                     <span>{user.role}</span>
                   </motion.div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center text-gray-300">
                   <Briefcase className="mr-2 text-[#FF671E]" />
                   <span>{user.poste}</span>
@@ -552,13 +349,13 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                   <MapPin className="mr-2 text-[#FF671E]" />
                   <span>{user.adresse}</span>
                 </div>
-                <div className="flex items-center text-gray-300">
+                {/* <div className="flex items-center text-gray-300">
                   <IconCalendar className="mr-2 text-[#FF671E]" />
                   <span>crée le  {formatDate(user.dateEmbauche)}</span>
-                </div>
+                </div> */}
               </div>
 
-              <div className="flex flex-wrap gap-2 pt-1">
+              {/* <div className="flex flex-wrap gap-2 pt-1">
                 
                 <motion.a
                   key={user.email}
@@ -569,7 +366,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                   <Mail className="mr-1.5 text-[#FF671E]" />
                   <span>{user.email}</span>
                 </motion.a>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -588,27 +385,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             >
               <IconBell size={20} className="text-[#FFFFFF]" />
               <span className="sr-only md:not-sr-only text-[#FFFFFF]">Notifications</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 border border-white/20 shadow-sm hover:bg-white/20 transition-all text-sm"
-            >
-              <IconLogout size={20} className="text-[#FFFFFF]" />
-              <span className="sr-only md:not-sr-only text-[#FFFFFF]">Déconnexion</span>
-            </motion.button>
-            <motion.button
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 4px 14px rgba(255, 103, 30, 0.3)",
-              }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowEditForm(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-[#FFFFFF] shadow-lg hover:shadow-[#FF671E]/30 transition-all text-sm"
-            >
-              <IconEdit size={20} />
-              <span className="sr-only md:not-sr-only">Modifier</span>
             </motion.button>
           </motion.div>
         </div>
@@ -632,11 +408,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
       {/* Panneau des notifications */}
       <AnimatePresence>
         {showNotifications && <NotificationsView onClose={() => setShowNotifications(false)} />}
-      </AnimatePresence>
-
-      {/* Panneau de modification */}
-      <AnimatePresence>
-        {showEditForm && <EditProfileForm onClose={() => setShowEditForm(false)} />}
       </AnimatePresence>
     </div>
   );

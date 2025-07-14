@@ -14,13 +14,18 @@ import {
   IconMail,
   IconShieldCheck,
   IconRefreshAlert,
-  IconCheck
+  IconCheck,
+  IconEdit,
+  IconLogout,
+  IconUser
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ImageUploadService } from "@/services/imageUploadService";
+import Image from "next/image";
 
 // Interface pour les données utilisateur
 interface UserData {
@@ -48,8 +53,6 @@ interface UserData {
   updated_at?: string;
 }
 
-
-
 // Types pour les paramètres de notification
 type NotificationChannel = 'email' | 'push' | 'sms';
 type SecurityAlertType = 'login' | 'password' | 'device';
@@ -72,6 +75,7 @@ interface SecurityAlertPreference {
 
 export function ProfileSettings({ onClose, userData }: { onClose: () => void; userData?: UserData }) {
   const router = useRouter();
+  const { logout } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveButton, setShowSaveButton] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -79,6 +83,13 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     language: 'fr',
     darkMode: theme === 'dark',
   });
+
+  // États pour la modification de l'image de profil
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>(userData?.photoURL || "");
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [settings, setSettings] = useState({
     darkMode: theme === 'dark',
@@ -159,7 +170,19 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     console.log('displayEmail:', displayEmail);
     console.log('poste:', employeeData?.poste);
     console.log('role:', employeeData?.role);
+    console.log('user_id:', employeeData?.user_id);
+    console.log('uid:', userData?.uid);
+    console.log('id:', userData?.id);
   }, [userData, employeeData, displayName, displayEmail]);
+
+  // Nettoyer l'URL de l'aperçu lors du démontage du composant
+  useEffect(() => {
+    return () => {
+      if (avatarPreview && avatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   // Charger les préférences utilisateur
   useEffect(() => {
@@ -253,9 +276,116 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     router.push('/auth/reset-password');
   };
 
-  // const handleCardClick = (e: React.MouseEvent) => {
-  //   e.stopPropagation();
-  // };
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/login");
+      onClose();
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Erreur lors de la déconnexion");
+    }
+  };
+
+  // Fonctions pour la modification de l'image de profil
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    
+    console.log('🔍 Debug handleAvatarChange:', {
+      file: file ? {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        sizeMB: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+      } : 'Aucun fichier sélectionné'
+    });
+
+    if (!file) {
+      console.log('❌ Aucun fichier sélectionné');
+      return;
+    }
+
+    // Vérifier le type de fichier
+    if (!["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
+      console.log('❌ Format non supporté:', file.type);
+      setImageError("Format non supporté. Veuillez utiliser une image au format JPG, PNG ou WebP.");
+      return;
+    }
+
+    // Vérifier la taille du fichier (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      console.log('❌ Fichier trop volumineux:', file.size);
+      setImageError("L'image est trop volumineuse. Taille maximale : 5MB.");
+      return;
+    }
+
+    console.log('✅ Fichier validé, mise à jour des états');
+    setImageError(null);
+    setAvatarFile(file);
+    const url = URL.createObjectURL(file);
+    setAvatarPreview(url);
+    
+    console.log('✅ États mis à jour:', {
+      avatarFile: 'Fichier défini',
+      avatarPreview: 'URL créée'
+    });
+  };
+
+  const handleImageUpload = async () => {
+    // Récupérer l'user_id depuis différentes sources possibles
+    const userId = employeeData?.user_id || userData?.uid || userData?.id;
+    
+    console.log('🔍 Debug handleImageUpload:', {
+      avatarFile: avatarFile ? 'Fichier sélectionné' : 'Aucun fichier',
+      employeeData: employeeData ? 'Données employé présentes' : 'Aucune donnée employé',
+      userData: userData ? 'Données utilisateur présentes' : 'Aucune donnée utilisateur',
+      employeeUserId: employeeData?.user_id,
+      userDataUid: userData?.uid,
+      userDataId: userData?.id,
+      finalUserId: userId
+    });
+
+    if (!avatarFile) {
+      setImageError("Veuillez sélectionner une image avant d'enregistrer");
+      return;
+    }
+
+    if (!userId) {
+      setImageError("Impossible de récupérer l'identifiant utilisateur. Veuillez vous reconnecter.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const result = await ImageUploadService.uploadProfileImage(
+        avatarFile, 
+        userId
+      );
+
+      if (result.success && result.url) {
+        // Mettre à jour l'aperçu avec la nouvelle URL
+        setAvatarPreview(result.url);
+        
+        // Supprimer l'ancienne image si elle existe
+        if (userData?.photoURL && userData.photoURL !== result.url) {
+          await ImageUploadService.deleteProfileImage(userData.photoURL);
+        }
+
+        toast.success("Photo de profil mise à jour avec succès !");
+        setShowImageUpload(false);
+        
+        // Rafraîchir la page pour voir les changements
+        window.location.reload();
+      } else {
+        setImageError(result.error || "Une erreur est survenue lors du téléversement");
+      }
+    } catch (error) {
+      console.error("Erreur lors du téléversement de l'image :", error);
+      setImageError("Une erreur inattendue est survenue");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleModalClick = (e: React.MouseEvent) => {
     // Empêcher la propagation uniquement si on clique sur le contenu de la modale
@@ -337,8 +467,24 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
               
               <div className="bg-[#0A1A5A]/50 p-4 rounded-lg space-y-4">
                 <div className="flex items-center gap-3 p-3 bg-[#0A1A5A] rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-white font-bold">
-                    {displayInitial}
+                  <div className="relative group">
+                    {avatarPreview ? (
+                      <Image
+                        key={avatarPreview}
+                        width={40}
+                        height={40}
+                        src={avatarPreview}
+                        alt="Avatar"
+                        className="w-10 h-10 rounded-full object-cover border-2 border-[#FF671E]/30"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-white font-bold">
+                        {displayInitial}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <IconEdit className="w-4 h-4 text-white" />
+                    </div>
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-white">{displayName}</p>
@@ -354,6 +500,14 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                       </p>
                     )}
                   </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowImageUpload(true)}
+                    className="px-3 py-1.5 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-lg text-xs font-medium text-white hover:shadow-[#FF671E]/40 transition-all"
+                  >
+                    Modifier
+                  </motion.button>
                 </div>
                 
                 {/* Informations supplémentaires de l'employé connecté */}
@@ -545,6 +699,15 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                   <IconLock className="w-4 h-4 mr-2" />
                   Changer le mot de passe
                 </Button>
+
+                <Button 
+                  variant="outline" 
+                  className={`w-full ${theme === 'dark' ? 'border-red-500 text-red-400 hover:bg-red-500/10' : 'border-red-300 text-red-600 hover:bg-red-50'} mt-2`}
+                  onClick={handleLogout}
+                >
+                  <IconLogout className="w-4 h-4 mr-2" />
+                  Se déconnecter
+                </Button>
               </div>
             </div>
 
@@ -592,6 +755,126 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
             </AnimatePresence>
           </div>
         </motion.div>
+
+        {/* Modal de modification de l'image de profil */}
+        <AnimatePresence>
+          {showImageUpload && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            >
+              <div className="absolute inset-0 bg-black/50" onClick={() => setShowImageUpload(false)} />
+              <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md shadow-xl max-h-[80vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">
+                    Modifier la photo de profil
+                  </h2>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowImageUpload(false)}
+                    className="text-gray-300 hover:text-[#FFFFFF]"
+                    aria-label="Fermer le formulaire"
+                  >
+                    <IconX size={24} />
+                  </motion.button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-200 mb-2">Photo de profil</label>
+                    <div className="flex flex-col items-center gap-6 py-4">
+                      <motion.div 
+                        initial={{ scale: 1 }} 
+                        whileHover={{ scale: 1.02 }}
+                        className="relative group"
+                      >
+                        {avatarPreview ? (
+                          <Image
+                            key={avatarPreview}
+                            width={128}
+                            height={128}
+                            src={avatarPreview}
+                            alt="Aperçu de l'avatar"
+                            className="h-32 w-32 rounded-full object-cover border-4 border-[#FF671E]/30 shadow-lg"
+                          />
+                        ) : (
+                          <div className="h-32 w-32 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-4xl font-bold text-[#FFFFFF] border-4 border-[#FF671E]/30 shadow-lg">
+                            {displayInitial}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                          <IconEdit className="w-8 h-8 text-white" />
+                        </div>
+                      </motion.div>
+                      
+                      <motion.label
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-3 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-lg text-sm font-medium text-white cursor-pointer shadow-lg hover:shadow-[#FF671E]/40 transition-all"
+                      >
+                        {avatarPreview ? "Changer la photo" : "Ajouter une photo"}
+                        <input 
+                          type="file" 
+                          accept="image/png,image/jpeg,image/jpg,image/webp" 
+                          onChange={handleAvatarChange} 
+                          className="hidden" 
+                        />
+                      </motion.label>
+                      
+                      {imageError && (
+                        <div className="mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                          <p className="text-red-400 text-sm text-center">{imageError}</p>
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-gray-400 text-center mt-2">
+                        Formats acceptés : JPG, PNG, WebP (max. 5MB)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4 justify-center pt-6">
+                    <motion.button
+                      type="button"
+                      onClick={() => setShowImageUpload(false)}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      disabled={isUploading}
+                      className="px-8 py-3 rounded-lg bg-white/10 border border-white/20 text-[#FFFFFF] hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Annuler
+                    </motion.button>
+                    <motion.button
+                      type="button"
+                      onClick={handleImageUpload}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      disabled={isUploading || !avatarFile}
+                      className={`px-8 py-3 rounded-lg text-white shadow-lg transition-all ${
+                        isUploading || !avatarFile 
+                          ? 'bg-gray-500/50 cursor-not-allowed' 
+                          : 'bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:shadow-[#FF671E]/40'
+                      }`}
+                    >
+                      {isUploading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Enregistrement...</span>
+                        </div>
+                      ) : (
+                        'Enregistrer la photo'
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </AnimatePresence>
   );

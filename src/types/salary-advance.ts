@@ -33,9 +33,10 @@ export interface CreateSalaryAdvanceRequest {
   password: string
 }
 
-export type RequestType = 'transport' | 'sante' | 'education' | 'logement' | 'alimentation' | 'autre'
+export type RequestType = 'aucune' | 'transport' | 'sante' | 'education' | 'logement' | 'alimentation' | 'autre'
 
 export const REQUEST_TYPES = [
+  { value: 'aucune', label: 'Aucune' },
   { value: 'transport', label: 'Transport' },
   { value: 'sante', label: 'Santé' },
   { value: 'education', label: 'Éducation' },

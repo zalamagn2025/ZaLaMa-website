@@ -104,8 +104,8 @@ CREATE POLICY "Allow admin read" ON partnership_requests
             SELECT 1 FROM auth.users 
             WHERE auth.users.id = auth.uid() 
             AND auth.users.email IN (
-                'admin@zalamasas.com',
-                'contact@zalamasas.com'
+                'admin@zalamagn.com',
+                'contact@zalamagn.com'
             )
         )
     );
@@ -117,8 +117,9 @@ CREATE POLICY "Allow admin update" ON partnership_requests
             SELECT 1 FROM auth.users 
             WHERE auth.users.id = auth.uid() 
             AND auth.users.email IN (
-                'admin@zalamasas.com',
-                'contact@zalamasas.com'
+                'admin@zalamagn.com',
+                'contact@zalamagn.com'
+
             )
         )
     );

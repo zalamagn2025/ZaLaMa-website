@@ -54,17 +54,11 @@ export async function GET(request: NextRequest) {
       .from('users')
       .select('*')
       .eq('email', session.user.email)
-      .single()
+      .maybeSingle() // Utiliser maybeSingle() au lieu de single() pour éviter l'erreur
 
     if (userError) {
-      console.log('❌ Erreur ou utilisateur non trouvé dans users:', userError.message)
-      if (userError.code !== 'PGRST116') {
-        console.error('❌ Erreur lors de la récupération des données utilisateur:', userError)
-        return NextResponse.json(
-          { error: 'Erreur lors de la récupération des données utilisateur', details: userError.message },
-          { status: 500 }
-        )
-      }
+      console.log('❌ Erreur lors de la recherche dans users:', userError.message)
+      // Ne pas retourner d'erreur ici, continuer vers employees
     }
 
     // Si l'utilisateur est trouvé dans la table users

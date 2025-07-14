@@ -7,6 +7,10 @@ import { ArrowLeft, X, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useCallback, useMemo, memo } from 'react';
+import { FileUpload } from '@/components/ui/file-upload';
+import { PaymentDaySelector } from '@/components/ui/payment-day-selector';
+import { MotivationLetterInput } from '@/components/ui/motivation-letter-input';
+import { CreatePartnershipRequest } from '@/types/partenaire';
 
 // Composant FormField mémorisé pour éviter les re-renders
 const FormField = memo(({ 
@@ -138,6 +142,7 @@ export const PartnershipForm = () => {
     cdiCount: '',
     cddCount: '',
     paymentDate: '',
+    paymentDay: '',
     agreement: false,
     repFullName: '',
     repEmail: '',
@@ -146,7 +151,12 @@ export const PartnershipForm = () => {
     hrFullName: '',
     hrEmail: '',
     hrPhone: '+224',
+    motivation_letter_url: '', // URL du fichier uploadé
+    motivation_letter_text: '' // Texte de la lettre rédigée
   });
+
+  // État pour le fichier de lettre de motivation
+  const [motivationLetterFile, setMotivationLetterFile] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -221,7 +231,14 @@ export const PartnershipForm = () => {
         break;
         
       case 'paymentDate':
-        if (!stringValue) return 'La date de paiement est obligatoire';
+        // Validation supprimée car remplacée par paymentDay
+        break;
+        
+      case 'paymentDay':
+        console.log('🔧 PaymentDay validation:', stringValue, typeof stringValue);
+        if (!stringValue) return 'Le jour de paiement est obligatoire';
+        const day = parseInt(stringValue);
+        if (isNaN(day) || day < 1 || day > 31) return 'Le jour doit être entre 1 et 31';
         break;
         
       case 'repFullName':
@@ -260,6 +277,13 @@ export const PartnershipForm = () => {
         
       case 'agreement':
         if (!value) return 'Vous devez accepter l\'engagement';
+        break;
+        
+      case 'motivation_letter_url':
+        // Validation supprimée car maintenant gérée par le nouveau composant
+        break;
+      case 'motivation_letter_text':
+        // Validation supprimée car maintenant gérée par le nouveau composant
         break;
     }
     
@@ -301,6 +325,7 @@ export const PartnershipForm = () => {
   const handleCdiCountBlur = useCallback(() => handleBlur('cdiCount'), [handleBlur]);
   const handleCddCountBlur = useCallback(() => handleBlur('cddCount'), [handleBlur]);
   const handlePaymentDateBlur = useCallback(() => handleBlur('paymentDate'), [handleBlur]);
+  const handlePaymentDayBlur = useCallback(() => handleBlur('paymentDay'), [handleBlur]);
   const handleRepFullNameBlur = useCallback(() => handleBlur('repFullName'), [handleBlur]);
   const handleRepPositionBlur = useCallback(() => handleBlur('repPosition'), [handleBlur]);
   const handleRepEmailBlur = useCallback(() => handleBlur('repEmail'), [handleBlur]);
@@ -311,9 +336,10 @@ export const PartnershipForm = () => {
 
   const validateStep = useCallback((stepNumber: number) => {
     const stepFields: Record<number, string[]> = {
-      1: ['companyName', 'legalStatus', 'rccm', 'nif', 'activityDomain', 'headquartersAddress', 'phone', 'email', 'employeesCount', 'payroll', 'cdiCount', 'cddCount', 'paymentDate'],
+      1: ['companyName', 'legalStatus', 'rccm', 'nif', 'activityDomain', 'headquartersAddress', 'phone', 'email', 'employeesCount', 'payroll', 'cdiCount', 'cddCount', 'paymentDay'],
       2: ['repFullName', 'repPosition', 'repEmail', 'repPhone'],
-      3: ['hrFullName', 'hrEmail', 'hrPhone', 'agreement']
+      3: ['hrFullName', 'hrEmail', 'hrPhone', 'agreement'],
+      4: [] // Pas de champs spécifiques, validation spéciale pour la lettre de motivation
     };
     
     const fieldsToValidate = stepFields[stepNumber];
@@ -351,6 +377,14 @@ export const PartnershipForm = () => {
     
     setErrors(newErrors);
     
+    // Validation spéciale pour l'étape 4 (lettre de motivation)
+    if (stepNumber === 4) {
+      const motivationError = validateMotivationLetter()
+      if (motivationError) {
+        newErrors.motivation_letter = motivationError
+      }
+    }
+    
     // Si pas d'erreurs, marquer l'étape comme validée
     if (Object.keys(newErrors).length === 0) {
       setValidatedSteps(prev => new Set([...prev, stepNumber]));
@@ -375,6 +409,7 @@ export const PartnershipForm = () => {
       cdiCount: '',
       cddCount: '',
       paymentDate: '',
+      paymentDay: '',
       agreement: false,
       repFullName: '',
       repEmail: '',
@@ -383,6 +418,8 @@ export const PartnershipForm = () => {
       hrFullName: '',
       hrEmail: '',
       hrPhone: '+224',
+      motivation_letter_url: '', // URL du fichier uploadé
+      motivation_letter_text: '' // Texte de la lettre rédigée
     });
     setErrors({});
     setTouched({});
@@ -401,23 +438,55 @@ export const PartnershipForm = () => {
       }
     } else {
       // Validation finale avant envoi
-      if (!validateStep(3)) {
+      if (!validateStep(4)) {
         setError('Veuillez corriger toutes les erreurs avant de soumettre');
         return;
+      }
+      
+      // Upload du fichier si présent
+      let motivationLetterUrl = formData.motivation_letter_url;
+      
+      if (motivationLetterFile) {
+        try {
+          const formDataFile = new FormData();
+          formDataFile.append('file', motivationLetterFile);
+          formDataFile.append('folder', 'partnership-letters');
+          
+          const uploadResponse = await fetch('/api/partnership/upload', {
+            method: 'POST',
+            body: formDataFile,
+          });
+          
+          if (!uploadResponse.ok) {
+            throw new Error('Erreur lors de l\'upload du fichier');
+          }
+          
+          const uploadResult = await uploadResponse.json();
+          motivationLetterUrl = uploadResult.url;
+        } catch (uploadError) {
+          console.error('❌ Erreur upload:', uploadError);
+          throw new Error('Erreur lors de l\'upload de la lettre de motivation');
+        }
       }
       
       // Envoi réel à l'API
       setLoading(true);
 
     try {
-      console.log('📤 Envoi des données de partenariat:', formData);
+        const finalData = {
+          ...formData,
+          motivation_letter_url: motivationLetterUrl,
+          motivation_letter_text: formData.motivation_letter_text || null
+        };
+
+        console.log('📤 Envoi des données de partenariat:', finalData);
 
       const response = await fetch('/api/partnership', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+          body: JSON.stringify(finalData),
       });
 
       if (!response.ok) {
@@ -475,6 +544,69 @@ export const PartnershipForm = () => {
     { value: 'ONG', label: 'ONG (Organisation Non Gouvernementale)' },
     { value: 'Autre', label: 'Autre' }
   ], []);
+
+  const handleInputChange = (field: keyof CreatePartnershipRequest, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleFileUploaded = (url: string) => {
+    handleInputChange('motivation_letter_url', url)
+    setTouched(prev => ({ ...prev, motivation_letter_url: true }))
+  }
+
+  const handleFileRemoved = () => {
+    handleInputChange('motivation_letter_url', '')
+    setTouched(prev => ({ ...prev, motivation_letter_url: true }))
+  }
+
+  // Nouvelles fonctions pour la lettre de motivation
+  const handleMotivationLetterTextChange = (text: string) => {
+    handleInputChange('motivation_letter_text', text)
+    setTouched(prev => ({ ...prev, motivation_letter_text: true }))
+  }
+
+  const handleMotivationLetterFileChange = (file: File | null) => {
+    setMotivationLetterFile(file)
+    if (file) {
+      handleInputChange('motivation_letter_url', '')
+      setTouched(prev => ({ ...prev, motivation_letter_url: true }))
+    }
+  }
+
+  // Validation personnalisée pour la lettre de motivation
+  const validateMotivationLetter = () => {
+    const hasText = formData.motivation_letter_text.trim().length > 0
+    const hasFile = motivationLetterFile !== null
+    
+    if (!hasText && !hasFile) {
+      return 'Vous devez fournir une lettre de motivation (texte ou fichier)'
+    }
+    
+    if (hasText && hasFile) {
+      return 'Vous ne pouvez pas fournir à la fois un texte et un fichier'
+    }
+    
+    if (hasText && formData.motivation_letter_text.trim().length < 100) {
+      return 'Le texte de la lettre doit contenir au moins 100 caractères'
+    }
+    
+    return null
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // onSubmit(formData) // This line was removed as per the new_code, as the onSubmit prop was removed.
+  }
+
+  const setMotivationLetterUrl = (url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      motivation_letter_url: url
+    }));
+  };
 
   return (
     <motion.div 
@@ -711,18 +843,23 @@ export const PartnershipForm = () => {
               </div>
             </div>
 
-            <FormField 
-              name="paymentDate" 
-              label="Date de paiement" 
-              type="date"
+            <PaymentDaySelector
+              value={formData.paymentDay?.toString() || ''}
+              onChange={(value) => {
+                console.log('🔧 PaymentDay onChange:', value, typeof value);
+                setFormData(prev => ({ ...prev, paymentDay: value }));
+                if (errors.paymentDay) {
+                  setErrors(prev => ({ ...prev, paymentDay: '' }));
+                }
+              }}
+              onBlur={handlePaymentDayBlur}
+              hasError={!!(touched.paymentDay && errors.paymentDay)}
+              isValid={validatedSteps.has(1) && !!(touched.paymentDay && !errors.paymentDay && formData.paymentDay)}
+              errorMessage={errors.paymentDay || ''}
               delay={1}
-              value={formData.paymentDate}
-              onChange={handleChange}
-              onBlur={handlePaymentDateBlur}
-              hasError={!!(touched.paymentDate && errors.paymentDate)}
-              isValid={validatedSteps.has(1) && !!(touched.paymentDate && !errors.paymentDate && formData.paymentDate)}
-              errorMessage={errors.paymentDate || ''}
             />
+
+
 
             {/* Bouton de soumission */}
             <motion.div 
@@ -855,7 +992,7 @@ export const PartnershipForm = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
-            onSubmit={(e) => handleSubmitStep(e, null)}
+            onSubmit={(e) => handleSubmitStep(e, 4)}
             className="space-y-7"
           >
             <FormField 
@@ -972,6 +1109,65 @@ export const PartnershipForm = () => {
                 whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
+                      <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-14 rounded-xl text-base font-bold bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Suivant
+            </Button>
+        </motion.div>
+            </div>
+          </motion.form>
+        )}
+
+        {step === 4 && (
+          <motion.form
+            key="step4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            onSubmit={(e) => handleSubmitStep(e, null)}
+            className="space-y-7"
+          >
+            <MotivationLetterInput
+              textValue={formData.motivation_letter_text}
+              fileValue={motivationLetterFile}
+              onTextChange={handleMotivationLetterTextChange}
+              onFileChange={handleMotivationLetterFileChange}
+              onBlur={() => setTouched(prev => ({ ...prev, motivation_letter: true }))}
+              hasError={!!(touched.motivation_letter && errors.motivation_letter)}
+              isValid={validatedSteps.has(4) && !!(touched.motivation_letter && !errors.motivation_letter)}
+              errorMessage={errors.motivation_letter || ''}
+              delay={0.4}
+            />
+
+            {/* Boutons de navigation */}
+            <div className="grid grid-cols-2 gap-4 pt-6">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  variant="outline"
+                  className="w-full h-14 rounded-xl text-base font-bold border-blue-700/70 text-blue-200 hover:bg-blue-950/30"
+                >
+                  Précédent
+                </Button>
+              </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.65 }}
+                whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           <Button
             type="submit"
                   disabled={loading}
@@ -987,7 +1183,7 @@ export const PartnershipForm = () => {
               </>
             ) : (
               <>
-                <span className="drop-shadow-sm">Soumettre la demande</span>
+                      <span className="drop-shadow-sm">Suivant</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-3" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>

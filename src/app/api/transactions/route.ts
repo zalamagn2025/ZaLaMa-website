@@ -1,101 +1,88 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 GET /api/transactions - Début de la requête');
-    
-    const cookieStore = await cookies();
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
-      }
-    );
-    
-    // Vérifier l'authentification
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    
-    if (authError || !session) {
-      console.log('❌ Erreur d\'authentification:', authError);
-      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
-    }
-    
-    const userEmail = session.user.email;
-    console.log('✅ Utilisateur authentifié:', userEmail);
-    
-    // Récupérer l'ID de l'employé connecté
-    const { data: employee, error: employeeError } = await supabase
-      .from('employees')
-      .select('id, nom, prenom')
-      .eq('email', userEmail)
-      .single();
-    
-    if (employeeError || !employee) {
-      console.log('❌ Employé non trouvé:', employeeError);
-      return NextResponse.json({ error: 'Employé non trouvé' }, { status: 404 });
-    }
-    
-    console.log('✅ Employé trouvé:', employee.id);
-    
-    // Récupérer les transactions de l'employé
-    const { data: transactions, error: transactionsError } = await supabase
-      .from('financial_transactions')
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const offset = (page - 1) * limit;
+
+    // Récupérer les transactions avec les relations
+    const { data: transactions, error: transactionsError, count } = await supabase
+      .from('transactions')
       .select(`
         *,
-        services:service_id (
+        employees!transactions_employe_id_fkey (
+          id,
           nom,
-          description
+          prenom,
+          email
         ),
-        partenaires:partenaire_id (
-          nom
+        partners!transactions_entreprise_id_fkey (
+          id,
+          nom,
+          email
+        ),
+        salary_advance_requests!transactions_demande_avance_id_fkey (
+          id,
+          montant_demande,
+          motif
         )
-      `)
-      .eq('utilisateur_id', employee.id)
-      .order('date_transaction', { ascending: false });
-    
+      `, { count: 'exact' })
+      .order('date_transaction', { ascending: false })
+      .range(offset, offset + limit - 1);
+
     if (transactionsError) {
-      console.log('❌ Erreur lors de la récupération des transactions:', transactionsError);
-      return NextResponse.json({ error: 'Erreur lors de la récupération des transactions' }, { status: 500 });
+      console.error('Erreur lors de la récupération des transactions:', transactionsError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la récupération des transactions' },
+        { status: 500 }
+      );
     }
-    
-    console.log('✅ Transactions récupérées:', transactions?.length || 0);
-    
-    // Formater les transactions pour l'affichage
+
+    // Formater les données pour l'affichage
     const formattedTransactions = transactions?.map(transaction => ({
       id: transaction.id,
+      demande_avance_id: transaction.demande_avance_id,
+      employe_id: transaction.employe_id,
+      entreprise_id: transaction.entreprise_id,
       montant: transaction.montant,
-      type: transaction.type,
-      description: transaction.description,
-      statut: transaction.statut,
+      numero_transaction: transaction.numero_transaction,
+      methode_paiement: transaction.methode_paiement,
+      numero_compte: transaction.numero_compte,
+      numero_reception: transaction.numero_reception,
       date_transaction: transaction.date_transaction,
-      date_validation: transaction.date_validation,
-      reference: transaction.reference,
-      service: transaction.services?.nom || 'Service non spécifié',
-      partenaire: transaction.partenaires?.nom || 'Partenaire non spécifié',
-      transaction_id: transaction.transaction_id || transaction.id
+      recu_url: transaction.recu_url,
+      date_creation: transaction.date_creation,
+      statut: transaction.statut,
+      created_at: transaction.created_at,
+      updated_at: transaction.updated_at,
+      description: transaction.description,
+      message_callback: transaction.message_callback,
+      // Données des relations
+      employe: transaction.employees,
+      entreprise: transaction.partners,
+      demande_avance: transaction.salary_advance_requests
     })) || [];
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       transactions: formattedTransactions,
-      total: formattedTransactions.length
+      total: count || 0,
+      page,
+      limit
     });
-    
+
   } catch (error) {
-    console.error('❌ Erreur serveur:', error);
-    return NextResponse.json({ error: 'Erreur serveur interne' }, { status: 500 });
+    console.error('Erreur serveur:', error);
+    return NextResponse.json(
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
+    );
   }
 } 

@@ -123,7 +123,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
           )}
         </svg>
       ),
-      maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentage_max || 25}%`,
+      maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentage_max}%`,
       maxAmount: service.nom.toLowerCase().includes("prêt") ? "25 000 000" : undefined,
       eligibility: service.disponible ? "Disponible" : "Indisponible"
     }
@@ -134,14 +134,14 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
 
   return (
     <div className="py-8 bg-[#010D3E]">
-      <motion.h2
+      {/* <motion.h2
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="text-2xl font-bold text-white mb-8 text-center"
       >
         Services financiers disponibles
-      </motion.h2>
+      </motion.h2> */}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
