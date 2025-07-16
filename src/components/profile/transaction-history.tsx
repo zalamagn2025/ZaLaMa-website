@@ -733,7 +733,6 @@ export function TransactionHistory() {
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
                       { label: "Montant demandé", value: request.amount, type: "amount" },
-                      { label: "Expéditeur", value: "LengoPay" },
                       { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
                       { label: "Date", value: request.date, type: "date" },
                     ];
@@ -746,7 +745,8 @@ export function TransactionHistory() {
                       { label: "Montant reçu", value: `${(parseInt((request.amount || "0").replace(/[^0-9]/g, ""), 10) - parseInt((request.fraisService || "0").replace(/[^0-9]/g, ""), 10)).toLocaleString("fr-FR")} GNF`, type: "total" },
                       { label: "Expéditeur", value: "LengoPay" },
                       { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
-                      { label: "Date", value: request.dateValidation || request.date, type: "date" },
+                      { label: "Date", value: request.date, type: "date" },
+                      { label: "Date de validation", value: request.dateValidation || request.date, type: "date" },
                       { label: "Référence", value: request.numeroReception || `REF-${request.id.slice(-8)}`, type: "ref" },
                     ];
                   }
