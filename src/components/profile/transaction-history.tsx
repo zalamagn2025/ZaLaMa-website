@@ -6,7 +6,6 @@ import {
   IconFilter, 
   IconEye, 
   IconDownload, 
-  IconShare, 
   IconX,
   IconClock,
   IconCheck,
@@ -15,17 +14,12 @@ import {
   IconPhone,
   IconCalendar,
   IconCurrency,
-  IconBrandWhatsapp,
-  IconBrandFacebook,
-  IconBrandLinkedin,
-  IconBrandTelegram,
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
-import html2canvas from "html2canvas";
-import Color from "color";
 import { TransactionPDF } from "./TransactionPDF";
+import { ImageRecu } from "./ImageRecu";
 
 // Interface pour les demandes d'avance
 interface SalaryAdvanceRequest {
@@ -98,17 +92,6 @@ function useSalaryAdvanceRequests() {
     error,
     refetch: fetchRequests
   };
-}
-
-// Précharger le logo SVG pour éviter les erreurs de préchargement
-function preloadImage(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = src;
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error(`Échec du chargement de l'image ${src}`));
-  });
 }
 
 // Fonction pour convertir les données API en format d'affichage
@@ -184,7 +167,7 @@ const SalaryAdvanceIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
     className="h-10 w-10"
-    style={{ color: 'rgb(256, 256, 256)' }}
+    style={{ color: 'rgb(255, 255, 255)' }}
   >
     <rect x="2" y="5" width="20" height="14" rx="2" />
     <line x1="2" y1="10" x2="22" y2="10" />
@@ -203,7 +186,7 @@ const cardVariants = {
     transition: {
       delay: i * 0.1,
       duration: 0.4,
-      type: "spring",
+      type: "spring" as const,
       stiffness: 300,
       damping: 30
     }
@@ -223,7 +206,7 @@ const modalVariants = {
     y: 0,
     transition: { 
       duration: 0.3,
-      type: "spring",
+      type: "spring" as const,
       stiffness: 300,
       damping: 30
     }
@@ -233,320 +216,6 @@ const modalVariants = {
     scale: 0.9, 
     y: 20,
     transition: { duration: 0.2 }
-  }
-};
-
-const shareModalVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.3, type: "spring", stiffness: 300, damping: 20 }
-  },
-  exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 }
-}
-};
-
-// Cache pour le SVG rasterisé
-let cachedSvgImage: string | null = null;
-
-// Service pour générer l'image de la card
-const generateCardImage = async (element: HTMLElement | null): Promise<string | null> => {
-  if (!element) {
-    console.error("Erreur : l'élément à capturer est null");
-    alert("Impossible de générer l'image : élément non trouvé.");
-    return null;
-  }
-
-  try {
-    // Map des classes Tailwind vers leurs valeurs RGB pour l'image partagée
-    const tailwindColorMap: { [key: string]: string } = {
-      'text-orange-400': 'rgb(251, 146, 60)', // Conservé pour amount/total
-      'text-red-400': 'rgb(248, 113, 113)', // Conservé pour fees
-      'text-blue-300': 'rgb(147, 197, 253)', // Conservé pour status
-      'text-white': 'rgb(0, 0, 0)', // Noir pour titre, ref, date
-      'text-white/70': 'rgb(0, 0, 0)', // Noir pour labels
-      'text-white/50': 'rgb(0, 0, 0)', // Noir pour texte général
-      'text-gray-400': 'rgb(0, 0, 0)', // Noir pour texte général
-      'text-white/80': 'rgb(0, 0, 0)', // Noir pour texte général
-      'text-white/60': 'rgb(0, 0, 0)', // Noir pour texte général
-      'text-white/40': 'rgb(0, 0, 0)', // Noir pour texte général
-      'text-yellow-300': 'rgb(252, 211, 77)',
-      'text-green-300': 'rgb(134, 239, 172)',
-      'bg-[#010D3E]': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-[#010D3E]/80': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-[#010D3E]/50': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-[#010D3E]/30': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-white/10': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-white/20': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-yellow-500/20': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-green-500/20': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-red-500/20': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-gray-500/20': 'rgb(255, 255, 255)', // Fond blanc
-      'border-white/10': 'rgb(200, 200, 200)', // Bordure grise légère
-      'border-yellow-500/30': 'rgb(200, 200, 200)', // Bordure grise légère
-      'border-green-500/30': 'rgb(200, 200, 200)', // Bordure grise légère
-      'border-red-500/30': 'rgb(200, 200, 200)', // Bordure grise légère
-      'border-gray-500/30': 'rgb(200, 200, 200)', // Bordure grise légère
-      'divide-white/10': 'rgb(200, 200, 200)', // Bordure grise légère
-      'bg-gradient-to-r from-[#FF671E] to-[#FF8E53]': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-gradient-to-br from-blue-500 to-blue-700': 'rgb(255, 255, 255)', // Fond blanc
-      'bg-gradient-to-br from-emerald-500 to-emerald-700': 'rgb(255, 255, 255)', // Fond blanc
-      'from-blue-500': 'rgb(255, 255, 255)', // Fond blanc
-      'to-blue-700': 'rgb(255, 255, 255)', // Fond blanc
-      'from-emerald-500': 'rgb(255, 255, 255)', // Fond blanc
-      'to-emerald-700': 'rgb(255, 255, 255)', // Fond blanc
-    };
-
-    // Fonction récursive pour nettoyer les styles de tous les éléments
-    const applyStylesAndColors = async (node: Node) => {
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const el = node as HTMLElement | SVGElement;
-        const computedStyle = window.getComputedStyle(el);
-        const className = typeof el.className === 'string' ? el.className : el.className?.baseVal || '';
-
-        // Appliquer les styles Tailwind comme inline
-        Object.keys(tailwindColorMap).forEach((twClass) => {
-          if (className.includes(twClass)) {
-            const [prop, value] = twClass.includes('text-') 
-              ? ['color', tailwindColorMap[twClass]]
-              : twClass.includes('bg-') 
-                ? ['background-color', tailwindColorMap[twClass]]
-                : twClass.includes('border-') 
-                  ? ['border-color', tailwindColorMap[twClass]]
-                  : twClass.includes('divide-') 
-                    ? ['border-color', tailwindColorMap[twClass]]
-                    : ['', ''];
-            if (prop && value) {
-              el.style.setProperty(prop, value, 'important');
-            }
-          }
-        });
-
-        // Forcer la date à être visible pour le statut "Validé"
-        if (el.tagName.toLowerCase() === 'span' && el.textContent?.includes('Date')) {
-          el.style.setProperty('display', 'block', 'important');
-          el.style.setProperty('visibility', 'visible', 'important');
-          el.style.setProperty('opacity', '1', 'important');
-          el.style.setProperty('color', 'rgb(0, 0, 0)', 'important');
-          el.style.setProperty('font-size', '22px', 'important');
-          el.style.setProperty('font-weight', '700', 'important');
-        }
-
-        // Appliquer font-bold et noir aux labels et titre, mais préserver les couleurs des valeurs
-        if (el.tagName.toLowerCase() === 'span' || el.tagName.toLowerCase() === 'h3') {
-          // Vérifier si c'est un label (côté gauche) ou le titre
-          if (className.includes('font-medium')) {
-            el.style.setProperty('font-weight', '700', 'important');
-            el.style.setProperty('color', 'rgb(0, 0, 0)', 'important');
-            el.style.setProperty('font-size', '22px', 'important');
-          } else if (el.tagName.toLowerCase() === 'h3') {
-            el.style.setProperty('font-weight', '700', 'important');
-            el.style.setProperty('color', 'rgb(0, 0, 0)', 'important');
-            el.style.setProperty('font-size', '36px', 'important');
-          }
-          // Préserver les couleurs des valeurs (côté droit)
-          if (className.includes('font-bold')) {
-            el.style.setProperty('font-size', '22px', 'important');
-            if (className.includes('text-orange-400')) {
-              el.style.setProperty('color', 'rgb(251, 146, 60)', 'important');
-            } else if (className.includes('text-red-400')) {
-              el.style.setProperty('color', 'rgb(248, 113, 113)', 'important');
-            } else if (className.includes('text-blue-300')) {
-              el.style.setProperty('color', 'rgb(147, 197, 253)', 'important');
-            } else {
-              el.style.setProperty('color', 'rgb(0, 0, 0)', 'important');
-            }
-            // Forcer la date à être visible
-            if (el.textContent?.includes('Date')) {
-              el.style.setProperty('display', 'block', 'important');
-              el.style.setProperty('visibility', 'visible', 'important');
-              el.style.setProperty('opacity', '1', 'important');
-              el.style.setProperty('color', 'rgb(0, 0, 0)', 'important');
-              el.style.setProperty('font-size', '22px', 'important');
-            }
-          }
-        }
-
-        // S'assurer que le conteneur du titre et de l'icône est aligné
-        if (className.includes('flex items-center gap-3 mb-2')) {
-          el.style.setProperty('display', 'flex', 'important');
-          el.style.setProperty('align-items', 'center', 'important');
-          el.style.setProperty('margin-bottom', '8px', 'important');
-        }
-
-        // Inspecter toutes les propriétés CSS pour détecter oklab/oklch
-        const properties = Array.from(computedStyle);
-        properties.forEach((prop) => {
-          const value = computedStyle.getPropertyValue(prop);
-          if (value && (value.toLowerCase().includes('oklab') || value.toLowerCase().includes('oklch'))) {
-            console.log(`Couleur problématique détectée dans ${prop} pour`, el, `:`, value);
-            try {
-              const color = Color(value);
-              el.style.setProperty(prop, color.rgb().string(), 'important');
-            } catch (err) {
-              console.warn(`Impossible de convertir la couleur ${value} pour ${prop}:`, err);
-              el.style.setProperty(prop, 'rgb(255, 255, 255)', 'important');
-            }
-          }
-        });
-
-        // Nettoyer les styles inline contenant oklab/oklch
-        if (el.hasAttribute('style')) {
-          let style = el.getAttribute('style') || '';
-          if (style.toLowerCase().includes('oklab') || style.toLowerCase().includes('oklch')) {
-            style = style.replace(/(color|background-color|border-color|fill|stroke|background|border|outline|box-shadow|text-decoration-color|stop-color|flood-color|lighting-color)\s*:\s*oklab\([^)]+\)/gi, '$1: rgb(255, 255, 255)')
-                         .replace(/(color|background-color|border-color|fill|stroke|background|border|outline|box-shadow|text-decoration-color|stop-color|flood-color|lighting-color)\s*:\s*oklch\([^)]+\)/gi, '$1: rgb(255, 255, 255)');
-            el.setAttribute('style', style);
-          }
-        }
-
-        // Gérer les attributs SVG
-        ['fill', 'stroke', 'stop-color', 'flood-color', 'lighting-color'].forEach((attr) => {
-          if (el.hasAttribute(attr)) {
-            const value = el.getAttribute(attr);
-            if (value?.toLowerCase().includes('oklab') || value?.toLowerCase().includes('oklch')) {
-              console.log(`Couleur problématique détectée dans l'attribut ${attr} pour`, el, `:`, value);
-              el.setAttribute(attr, 'rgb(255, 255, 255)');
-            }
-          }
-        });
-
-        // S'assurer que les images sont chargées
-        if (el.tagName.toLowerCase() === 'img') {
-          const img = el as HTMLImageElement;
-          if (!img.complete || img.naturalWidth === 0) {
-            await new Promise((resolve) => {
-              img.onload = resolve;
-              img.onerror = () => {
-                console.warn(`Échec du chargement de l'image ${img.src}`);
-                img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-                resolve();
-              };
-              img.src = img.src;
-            });
-          }
-          // Ajuster la taille du logo pour un aspect plus compact
-          if (img.src.includes('zalama-logo.svg')) {
-            img.style.width = '100px';
-            img.style.height = '25px';
-            img.style.opacity = '1';
-            img.style.objectFit = 'contain';
-            img.style.objectPosition = 'center';
-          }
-        }
-
-        // Supprimer le footer avec les boutons et ajouter "Reçu"
-        if (el.tagName.toLowerCase() === 'div' && className.includes('flex items-center justify-center gap-8 pt-8 pb-2 sticky bottom-0')) {
-          el.innerHTML = '';
-          const receiptText = document.createElement('div');
-          receiptText.style.textAlign = 'center';
-          receiptText.style.padding = '16px';
-          receiptText.style.fontWeight = '700';
-          receiptText.style.color = 'rgb(0, 0, 0)';
-          receiptText.style.backgroundColor = 'rgb(255, 255, 255)';
-          receiptText.style.fontSize = '24px';
-          receiptText.textContent = 'Reçu';
-          el.appendChild(receiptText);
-          el.style.setProperty('background-color', 'rgb(255, 255, 255)', 'important');
-        }
-
-        // Parcourir les enfants récursivement
-        el.childNodes.forEach((child) => applyStylesAndColors(child));
-      }
-    };
-
-    // Cloner l'élément
-    const clonedElement = element.cloneNode(true) as HTMLElement;
-
-    // Précharger et rasteriser l'image SVG
-    const images = clonedElement.getElementsByTagName('img');
-    for (const img of Array.from(images)) {
-      if (img.src.includes('zalama-logo.svg')) {
-        if (cachedSvgImage) {
-          img.src = cachedSvgImage;
-          img.crossOrigin = 'anonymous';
-        } else {
-          try {
-            await preloadImage(img.src);
-            const response = await fetch(img.src, { mode: 'cors' });
-            if (!response.ok) throw new Error(`Échec du chargement du SVG ${img.src}`);
-            let svgText = await response.text();
-            
-            // Nettoyer les couleurs oklab/oklch dans le SVG
-            svgText = svgText.replace(/(fill|stroke|stop-color|flood-color|lighting-color)\s*=\s*["']oklab\([^)]+\)["']/gi, '$1="rgb(255, 255, 255)"')
-                             .replace(/(fill|stroke|stop-color|flood-color|lighting-color)\s*=\s*["']oklch\([^)]+\)["']/gi, '$1="rgb(255, 255, 255)"')
-                             .replace(/style\s*=\s*["'][^"']*oklab\([^)]+\)[^"']*["']/gi, 'style="fill: rgb(255, 255, 255); stroke: rgb(255, 255, 255)"')
-                             .replace(/style\s*=\s*["'][^"']*oklch\([^)]+\)[^"']*["']/gi, 'style="fill: rgb(255, 255, 255); stroke: rgb(255, 255, 255)"');
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 200; // Ajusté pour un logo plus compact
-            canvas.height = 50; // Ajusté pour un logo plus compact
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
-              const url = URL.createObjectURL(svgBlob);
-              const svgImage = new Image();
-              svgImage.crossOrigin = 'anonymous';
-              await new Promise((resolve, reject) => {
-                svgImage.onload = resolve;
-                svgImage.onerror = () => {
-                  console.warn(`Échec du chargement du SVG ${img.src}`);
-                  img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-                  resolve();
-                };
-                svgImage.src = url;
-              });
-              ctx.drawImage(svgImage, 0, 0, canvas.width, canvas.height);
-              URL.revokeObjectURL(url);
-              cachedSvgImage = canvas.toDataURL('image/png');
-              img.src = cachedSvgImage;
-              img.crossOrigin = 'anonymous';
-            }
-          } catch (err) {
-            console.warn(`Impossible de rasteriser l'image SVG ${img.src}:`, err);
-            img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-          }
-        }
-      }
-    }
-
-    // Appliquer les styles à tous les éléments
-    await applyStylesAndColors(clonedElement);
-
-    // S'assurer que l'élément cloné est dans le DOM pour le rendu
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '-9999px';
-    container.style.width = `${element.scrollWidth}px`;
-    container.style.height = `${element.scrollHeight}px`;
-    container.style.backgroundColor = '#FFFFFF';
-    container.appendChild(clonedElement);
-    document.body.appendChild(container);
-
-    // Forcer la mise à jour des styles
-    clonedElement.offsetHeight;
-
-    const canvas = await html2canvas(clonedElement, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#FFFFFF',
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
-      skipAutoScale: true,
-      ignoreElements: (el) => el.tagName.toLowerCase() === 'iframe',
-      logging: true,
-    });
-
-    // Nettoyer le DOM
-    document.body.removeChild(container);
-
-    return canvas.toDataURL('image/png');
-  } catch (error) {
-    console.error('Erreur lors de la génération de l\'image :', error);
-    alert('Une erreur est survenue lors de la génération de l\'image.');
-    return null;
   }
 };
 
@@ -560,7 +229,7 @@ const generateAndDownloadPDF = async (request: ReturnType<typeof convertApiReque
         date={request.date}
         typeMotif={request.type}
         fraisService={request.fraisService}
-        dateValidation={request.dateValidation}
+        dateValidation={request.dateValidation || undefined}
         motifRejet={request.motifRejet}
       />
     ).toBlob();
@@ -571,60 +240,11 @@ const generateAndDownloadPDF = async (request: ReturnType<typeof convertApiReque
   }
 };
 
-// Fonction pour partager l'image
-const shareImage = async (imageDataUrl: string, platform: string, requestId: string) => {
-  const shareData = {
-    files: [
-      new File(
-        [await (await fetch(imageDataUrl)).blob()],
-        `Demande_Avance_Salaire_${requestId}.png`,
-        { type: "image/png" }
-      )
-    ],
-    title: "Demande d'Avance sur Salaire - ZaLaMa",
-    text: "Détails de ma demande d'avance sur salaire via ZaLaMa"
-  };
-
-  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-    try {
-      await navigator.share(shareData);
-    } catch (error) {
-      console.error("Erreur lors du partage via Web Share API :", error);
-      fallbackShare(imageDataUrl, platform, requestId);
-    }
-  } else {
-    fallbackShare(imageDataUrl, platform, requestId);
-  }
-};
-
-// Fallback pour le partage
-const fallbackShare = (imageDataUrl: string, platform: string, requestId: string) => {
-  const encodedText = encodeURIComponent("Détails de ma demande d'avance sur salaire via ZaLaMa");
-  const encodedImage = encodeURIComponent(imageDataUrl);
-  switch (platform) {
-    case "whatsapp":
-      window.open(`https://api.whatsapp.com/send?text=${encodedText}%20${encodedImage}`);
-      break;
-    case "facebook":
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedImage}&t=${encodedText}`);
-      break;
-    case "linkedin":
-      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodedImage}&title=${encodeURIComponent("Demande d'Avance sur Salaire - ZaLaMa")}`);
-      break;
-    case "telegram":
-      window.open(`https://t.me/share/url?url=${encodedImage}&text=${encodedText}`);
-      break;
-    default:
-      saveAs(imageDataUrl, `Demande_Avance_Salaire_${requestId}.png`);
-  }
-};
-
 export function TransactionHistory() {
   const { requests: apiRequests, loading, error } = useSalaryAdvanceRequests();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     type: "",
     status: "",
@@ -633,13 +253,6 @@ export function TransactionHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const modalRef = useRef<HTMLDivElement>(null);
   const requestsPerPage = 10;
-
-  // Précharger le logo SVG au montage du composant
-  useEffect(() => {
-    preloadImage("/images/zalama-logo.svg").catch((err) => {
-      console.warn("Erreur lors du préchargement du logo SVG :", err);
-    });
-  }, []);
 
   const allRequests = apiRequests.map(convertApiRequestToDisplay);
 
@@ -718,17 +331,6 @@ export function TransactionHistory() {
         return "Annulé";
       default:
         return status;
-    }
-  };
-
-  const handleShare = async (platform: string) => {
-    if (modalRef.current && selectedRequest) {
-      const imageDataUrl = await generateCardImage(modalRef.current);
-      if (imageDataUrl) {
-        const request = allRequests.find((r) => r.id === selectedRequest)!;
-        await shareImage(imageDataUrl, platform, request.id);
-        setShareModalOpen(false);
-      }
     }
   };
 
@@ -1098,7 +700,7 @@ export function TransactionHistory() {
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setSelectedRequest(null)}
                 className="absolute top-6 right-6 p-2 rounded-lg transition-colors"
-                style={{ color: 'rgba(255, 255, 255, 0.5)', hover: { color: 'rgb(255, 255, 255)', backgroundColor: 'rgba(255, 255, 255, 0.1)' } }}
+                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
               >
                 <IconX className="w-7 h-7" />
               </motion.button>
@@ -1192,74 +794,15 @@ export function TransactionHistory() {
                         >
                           <IconDownload className="w-7 h-7" style={{ color: 'rgb(255, 255, 255)' }} />
                         </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShareModalOpen(true)}
-                          className="w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition-all duration-300"
-                          style={{ background: 'linear-gradient(to bottom right, rgb(16, 185, 129), rgb(4, 120, 87))' }}
-                        >
-                          <IconShare className="w-7 h-7" style={{ color: 'rgb(255, 255, 255)' }} />
-                        </motion.button>
+                        <ImageRecu 
+                          request={request}
+                          modalRef={modalRef}
+                          onClose={() => setSelectedRequest(null)}
+                        />
                       </div>
                     </div>
                   );
                 })()}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {shareModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#010D3E]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShareModalOpen(false)}
-          >
-            <motion.div
-              variants={shareModalVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="relative mx-auto w-full max-w-md rounded-2xl shadow-2xl border p-6"
-              style={{ backgroundColor: 'rgb(1, 13, 62)', borderColor: 'rgba(255, 255, 255, 0.1)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold" style={{ color: 'rgb(255, 255, 255)' }}>Partager cette fiche</h3>
-                <motion.button
-                  whileHover={{ scale: 1.2, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShareModalOpen(false)}
-                  className="p-2 rounded-lg transition-colors"
-                  style={{ color: 'rgba(255, 255, 255, 0.5)', hover: { color: 'rgb(255, 255, 255)', backgroundColor: 'rgba(255, 255, 255, 0.1)' } }}
-                >
-                  <IconX className="w-6 h-6" />
-                </motion.button>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { platform: "whatsapp", icon: <IconBrandWhatsapp className="w-8 h-8" style={{ color: 'rgb(34, 197, 94)' }} />, label: "WhatsApp" },
-                  { platform: "facebook", icon: <IconBrandFacebook className="w-8 h-8" style={{ color: 'rgb(59, 130, 246)' }} />, label: "Facebook" },
-                  { platform: "linkedin", icon: <IconBrandLinkedin className="w-8 h-8" style={{ color: 'rgb(29, 78, 216)' }} />, label: "LinkedIn" },
-                  { platform: "telegram", icon: <IconBrandTelegram className="w-8 h-8" style={{ color: 'rgb(56, 189, 248)' }} />, label: "Telegram" },
-                ].map(({ platform, icon, label }) => (
-                  <motion.button
-                    key={platform}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleShare(platform)}
-                    className="flex flex-col items-center p-4 rounded-lg transition-colors"
-                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-                  >
-                    {icon}
-                    <span className="mt-2 text-sm font-medium" style={{ color: 'rgb(255, 255, 255)' }}>{label}</span>
-                  </motion.button>
-                ))}
               </div>
             </motion.div>
           </motion.div>

@@ -1,9 +1,9 @@
 import { Client } from 'nimbasms';
 
-interface SMSConfig = {
-  SERVICE_ID: process.env.NIMBA_SMS_SERVICE_ID;
-  SECRET_TOKEN: process.env.NIMBA_SMS_SECRET_TOKEN;
-};
+interface SMSConfig {
+  SERVICE_ID: string;
+  SECRET_TOKEN: string;
+}
 
 interface PartnershipSMSData {
   partnerName: string;
