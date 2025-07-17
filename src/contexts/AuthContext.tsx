@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { User } from '@supabase/supabase-js'
 
 interface UserData {
-  id: string
+  employeId: string // ✅ Utiliser employeId au lieu de id
   user_id: string
   nom: string
   prenom: string
@@ -17,6 +17,7 @@ interface UserData {
   type_contrat: string
   salaire_net: number
   date_embauche: string
+  photo_url: string | null
   actif: boolean
   partner_id: string | null
   created_at: string
@@ -31,6 +32,8 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<void>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
+  updateUserData: (updates: Partial<UserData>) => Promise<void>
+  refreshUserData: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -52,14 +55,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // ✅ Debug pour suivre l'état du contexte
   useEffect(() => {
+    console.log('🔍 AuthContext Debug - État actuel:', {
+      currentUser: currentUser ? 'Présent' : 'Absent',
+      userData: userData ? 'Présent' : 'Absent',
+      loading,
+      userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée',
+      userDataValues: userData ? {
+        employeId: userData.employeId,
+        nom: userData.nom,
+        prenom: userData.prenom,
+        user_id: userData.user_id
+      } : 'Aucune donnée'
+    });
+  }, [currentUser, userData, loading]);
+
+  useEffect(() => {
+    console.log('🚀 AuthContext - Initialisation...');
+    
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔍 AuthContext - Événement auth:', event, 'Session:', session ? 'Présente' : 'Absente');
+        
         setCurrentUser(session?.user ?? null)
         
         if (session?.user) {
           try {
+            console.log('🔍 AuthContext - Récupération des données employee pour:', session.user.id);
+            
             // Récupérer les données utilisateur depuis la table employees
             const { data: userData, error } = await supabase
               .from('employees')
@@ -69,17 +94,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
               .single()
 
             if (error) {
-              console.error('Erreur lors de la récupération des données utilisateur:', error.message || error)
+              console.error('❌ Erreur lors de la récupération des données utilisateur:', error.message || error)
+              setUserData(null)
             } else if (userData) {
-              console.log('✅ Données employé récupérées:', userData.nom, userData.prenom)
+              console.log('✅ Données employé récupérées:', {
+                employeId: userData.employeId,
+                nom: userData.nom,
+                prenom: userData.prenom,
+                user_id: userData.user_id
+              })
               setUserData(userData as UserData)
             } else {
               console.warn('⚠️ Aucune donnée employé trouvée pour l\'utilisateur:', session.user.id)
+              setUserData(null)
             }
           } catch (error) {
-            console.error('Erreur lors de la récupération des données utilisateur:', error)
+            console.error('❌ Erreur lors de la récupération des données utilisateur:', error)
+            setUserData(null)
           }
         } else {
+          console.log('🔍 AuthContext - Pas de session, reset userData');
           setUserData(null)
         }
         
@@ -182,6 +216,75 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  async function updateUserData(updates: Partial<UserData>) {
+    if (!userData?.employeId) {
+      console.warn('Tentative de mise à jour des données employee sans employeId')
+      return
+    }
+
+    try {
+      // Mettre à jour dans Supabase en utilisant l'ID de l'employee
+      const { data, error } = await supabase
+        .from('employees')
+        .update(updates)
+        .eq('employeId', userData.employeId) // ✅ Utiliser employeId dans la requête
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Erreur lors de la mise à jour des données employee:', error)
+        throw error
+      }
+
+      // Mettre à jour le state local
+      if (data) {
+        setUserData(prev => prev ? { ...prev, ...data } : data)
+        console.log('✅ Données employee mises à jour dans le contexte')
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des données employee:', error)
+      throw error
+    }
+  }
+
+  async function refreshUserData() {
+    if (!currentUser) {
+      console.warn('Tentative de rafraîchissement des données utilisateur sans utilisateur connecté')
+      return
+    }
+
+    try {
+      console.log('🔄 AuthContext - Rafraîchissement des données pour:', currentUser.id);
+      
+      // Récupérer les données utilisateur depuis la table employees
+      const { data: userData, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('actif', true)
+        .single()
+
+      if (error) {
+        console.error('❌ Erreur lors du rafraîchissement des données utilisateur:', error.message || error)
+        throw error
+      } else if (userData) {
+        console.log('✅ Données employé rafraîchies:', {
+          employeId: userData.employeId,
+          nom: userData.nom,
+          prenom: userData.prenom,
+          user_id: userData.user_id
+        })
+        setUserData(userData as UserData)
+      } else {
+        console.warn('⚠️ Aucune donnée employé trouvée lors du rafraîchissement')
+        setUserData(null)
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors du rafraîchissement des données utilisateur:', error)
+      throw error
+    }
+  }
+
   const value = {
     currentUser,
     userData,
@@ -189,7 +292,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     register,
     logout,
-    resetPassword
+    resetPassword,
+    updateUserData,
+    refreshUserData
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

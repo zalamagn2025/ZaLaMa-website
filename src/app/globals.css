@@ -110,7 +110,7 @@
 }
 
 /* Thème clair */
-[data-theme="light"] {
+[data-theme="light"], .light {
   --zalama-bg-dark: #f5f7fa;      /* Fond principal - gris très clair */
   --zalama-bg-darker: #e2e8f0;    /* Sidebar - gris clair */
   --zalama-bg-light: #edf2f7;     /* Cards, hover - gris très clair */
@@ -127,10 +127,49 @@
   --zalama-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
+/* Styles spécifiques pour le mode clair */
+[data-theme="light"] .bg-\[#010D3E\] {
+  background-color: #ffffff;
+}
+
+[data-theme="light"] .bg-\[#0A1A5A\] {
+  background-color: #f8fafc;
+}
+
+[data-theme="light"] .bg-\[#1A2B6B\] {
+  background-color: #e2e8f0;
+}
+
+[data-theme="light"] .text-white {
+  color: #1e293b;
+}
+
+[data-theme="light"] .text-gray-300 {
+  color: #64748b;
+}
+
+[data-theme="light"] .text-gray-400 {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .border-\[#1A2B6B\] {
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .border-\[#1A3A8F\] {
+  border-color: #e2e8f0;
+}
+
 body {
   background: var(--zalama-bg-dark);
   color: var(--zalama-text);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Transition fluide pour tous les éléments */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* Styles de base pour les cartes */

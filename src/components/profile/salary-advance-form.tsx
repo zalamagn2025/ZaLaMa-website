@@ -27,7 +27,7 @@ interface AvanceData {
 type FormStep = 'form' | 'verification' | 'confirmation' | 'success';
 
 // Fonction pour calculer l'avance disponible pour les demandes d'avance sur salaire
-function calculateAvailableAdvance(salaireNet: number): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number; limiteAvance: number } {
+function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number; limiteAvance: number } {
   const today = new Date()
   const currentMonth = today.getMonth()
   const currentYear = today.getFullYear()
@@ -37,9 +37,10 @@ function calculateAvailableAdvance(salaireNet: number): { avanceDisponible: numb
   const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
   const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
   
-  // L'avance disponible pour les demandes d'avance sur salaire est limitée à 25% du salaire net
-  const avanceDisponible = Math.floor(salaireNet * 0.25)
-  const limiteAvance = avanceDisponible // Même valeur que l'avance disponible
+  // L'avance disponible = 25% du salaire net - avance active
+  const limiteAvanceBase = Math.floor(salaireNet * 0.25)
+  const avanceDisponible = Math.max(0, limiteAvanceBase - avanceActive)
+  const limiteAvance = avanceDisponible
   
   return {
     avanceDisponible,
@@ -117,6 +118,30 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     prenom: user.prenom
   })
 
+  // États pour les avances actives
+  const [advanceRequests, setAdvanceRequests] = useState<any[]>([])
+  const [loadingAdvanceRequests, setLoadingAdvanceRequests] = useState(true)
+
+  // Récupérer les avances actives
+  const fetchAdvanceRequests = useCallback(async () => {
+    if (!user.employeId) {
+      setLoadingAdvanceRequests(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAdvanceRequests(data.data || [])
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des avances:', error)
+    } finally {
+      setLoadingAdvanceRequests(false)
+    }
+  }, [user.employeId])
+
   // Calculer l'avance disponible en temps réel
   const calculateAdvanceData = useCallback(() => {
     if (!user.salaireNet) {
@@ -126,14 +151,22 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     }
 
     try {
-      const calculation = calculateAvailableAdvance(user.salaireNet)
+      // Calculer le total des avances actives (validées) - même logique que profile-stats
+      const totalActiveAdvances = advanceRequests
+        .filter(request => request.statut === 'Validé')
+        .reduce((acc, request) => acc + (request.montant_demande as number), 0)
       
-          setAvanceData({
+      const calculation = calculateAvailableAdvance(user.salaireNet, totalActiveAdvances)
+      
+      // Calculer le salaire restant - même logique que profile-stats
+      const remainingSalary = user.salaireNet - totalActiveAdvances
+      
+      setAvanceData({
         salaireNet: user.salaireNet,
-        avanceActive: 0, // Sera mis à jour par l'API
-        salaireRestant: user.salaireNet - calculation.avanceDisponible,
+        avanceActive: totalActiveAdvances, // Total des avances actives
+        salaireRestant: remainingSalary, // Salaire net - avances actives
         maxAvanceMonthly: Math.floor(user.salaireNet * 0.25), // 25% max
-        totalAvancesApprouveesMonthly: 0, // Sera mis à jour par l'API
+        totalAvancesApprouveesMonthly: totalActiveAdvances, // Total des avances approuvées
         avanceDisponible: calculation.avanceDisponible,
         workingDaysElapsed: calculation.workingDaysElapsed,
         totalWorkingDays: calculation.totalWorkingDays,
@@ -141,14 +174,25 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         limiteAvance: calculation.limiteAvance
       })
       
-      console.log('🔍 Données d\'avance calculées:', calculation)
+      console.log('🔍 Données d\'avance calculées:', {
+        salaireNet: user.salaireNet,
+        totalActiveAdvances,
+        remainingSalary,
+        calculation
+      })
     } catch (error) {
       console.error('Erreur lors du calcul de l\'avance disponible:', error)
     } finally {
       setLoadingAvance(false)
     }
-  }, [user.salaireNet])
+  }, [user.salaireNet, advanceRequests])
 
+  // Récupérer les avances actives au chargement
+  useEffect(() => {
+    fetchAdvanceRequests()
+  }, [fetchAdvanceRequests])
+
+  // Recalculer quand les avances changent
   useEffect(() => {
     calculateAdvanceData()
   }, [calculateAdvanceData])
@@ -157,13 +201,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
+        fetchAdvanceRequests()
         calculateAdvanceData()
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [calculateAdvanceData])
+  }, [fetchAdvanceRequests, calculateAdvanceData])
 
   // Validation du formulaire
   const validateForm = () => {
@@ -407,7 +452,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     className="space-y-6"
                   >
                     {/* Affichage des informations d'avance */}
-                {loadingAvance ? (
+                {(loadingAvance || loadingAdvanceRequests) ? (
                   <div className="mb-4 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
                     <div className="animate-pulse">
                       <div className="h-4 bg-[#1A2B6B] rounded w-3/4 mb-2"></div>
@@ -427,7 +472,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53]">
                               <IconCalculator className="h-4 w-4 text-white" />
                             </div>
-                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible (25% du salaire net)</h4>
+                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible</h4>
                           </div>
                        <button
                             type="button"
@@ -439,18 +484,21 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                        </button>
                      </div>
 
-                        {/* Montant principal */}
-                        <div className="text-center mb-3">
-                          <div className="text-2xl font-bold text-white">
-                            {avanceData.avanceDisponible.toLocaleString()} GNF
+                       {/* Montant principal */}
+                       <div className="text-center mb-3">
+                         <div className="text-2xl font-bold text-white">
+                           {avanceData.avanceDisponible.toLocaleString()} GNF
+                         </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Disponible après déduction des avances actives
                           </div>
-                          {/* <div className="text-xs text-gray-400 mt-1">
-                            Avance disponible (25% du salaire net)
+                          {/* <div className="text-xs text-blue-400 mt-1">
+                            Salaire restant: {avanceData.salaireRestant.toLocaleString()} GNF (Salaire net - Avances actives)
                           </div> */}
                           <div className="text-xs text-blue-400 mt-1">
                             Progression du mois: {avanceData.workingDaysElapsed}/{avanceData.totalWorkingDays} jours ({avanceData.workingDaysPercentage}%)
                           </div>
-                        </div>
+                       </div>
 
                         {/* Détails dépliables */}
                         <AnimatePresence>
@@ -480,34 +528,34 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
                               {/* Informations détaillées */}
                               <div className="grid grid-cols-2 gap-3 text-xs">
-                                <div className="space-y-1">
+                               <div className="space-y-1">
                        <div className="flex justify-between">
-                                    <span className="text-gray-400">Salaire net:</span>
-                                    <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
-                       </div>
+                                   <span className="text-gray-400">Salaire net:</span>
+                                   <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
+                      </div>
                        <div className="flex justify-between">
-                                    <span className="text-gray-400">Jours écoulés:</span>
-                                    <span className="text-blue-400">{avanceData.workingDaysElapsed} jours</span>
+                                    <span className="text-gray-400">Limite base (25%):</span>
+                                    <span className="text-blue-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
                        </div>
-                       <div className="flex justify-between">
-                                    <span className="text-gray-400">Total jours:</span>
-                                    <span className="text-blue-400">{avanceData.totalWorkingDays} jours</span>
-                                  </div>
-                       </div>
-                                <div className="space-y-1">
-                         <div className="flex justify-between">
-                            <span className="text-gray-400">Limite d'avance:</span>
-                            <span className="text-orange-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
-                         </div>
-                         <div className="flex justify-between">
-                                    <span className="text-gray-400">Salaire restant:</span>
-                                    <span className="text-green-400 font-medium">{avanceData.salaireRestant.toLocaleString()} GNF</span>
-                         </div>
+                      <div className="flex justify-between">
+                                   <span className="text-gray-400">Jours écoulés:</span>
+                                   <span className="text-blue-400">{avanceData.workingDaysElapsed} jours</span>
+                      </div>
+                      </div>
+                               <div className="space-y-1">
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Avances actives:</span>
-                                    <span className="text-red-400">{avanceData.avanceActive.toLocaleString()} GNF</span>
+                                    <span className="text-red-400">-{avanceData.avanceActive.toLocaleString()} GNF</span>
                          </div>
-                       </div>
+                         <div className="flex justify-between border-t border-[#1A2B6B] pt-1">
+                            <span className="text-gray-400 font-medium">Disponible:</span>
+                            <span className="text-green-400 font-bold">{avanceData.avanceDisponible.toLocaleString()} GNF</span>
+                         </div>
+                        <div className="flex justify-between">
+                                   <span className="text-gray-400">Salaire restant:</span>
+                                   <span className="text-green-400 font-medium">{avanceData.salaireRestant.toLocaleString()} GNF</span>
+                        </div>
+                      </div>
                      </div>
 
                               {/* Indicateur de statut */}

@@ -24,7 +24,7 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
-  const { currentUser, userData } = useAuth();
+  const { userData } = useAuth(); // ✅ Utiliser uniquement userData du contexte
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -37,13 +37,50 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   ]);
   const [showDetails, setShowDetails] = useState<Notification | null>(null);
 
-  // Sync user data with AuthContext
-  useEffect(() => {
-    if (currentUser && userData) {
-      // Update user data with data from AuthContext
-      // This is a placeholder and should be replaced with actual logic to update user data
+  // ✅ Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
+  const displayUser = userData || user;
+  
+  // Construire le nom complet
+  const getDisplayName = () => {
+    if (!displayUser) return "Utilisateur";
+  
+    // Priorité : nomComplet > (prenom + nom) > nom > prenom > "Utilisateur"
+    if (displayUser.nomComplet) {
+      return displayUser.nomComplet;
     }
-  }, [currentUser, userData]);
+  
+    if (displayUser.prenom && displayUser.nom) {
+      return `${displayUser.prenom} ${displayUser.nom}`;
+    }
+  
+    if (displayUser.nom) {
+      return displayUser.nom;
+    }
+  
+    if (displayUser.prenom) {
+      return displayUser.prenom;
+    }
+  
+    return "Utilisateur";
+  };
+  
+
+  const displayName = getDisplayName();
+  const displayEmail = displayUser?.email || 'Email non disponible';
+  // ✅ Utiliser directement photo_url du contexte AuthContext
+  const displayPhotoURL = userData?.photo_url || displayUser?.photo_url || displayUser?.photoURL;
+  const displayInitial = displayName.charAt(0).toUpperCase();
+
+  // ✅ Debug pour vérifier les données
+  useEffect(() => {
+    console.log('🔍 ProfileHeader Debug:', {
+      userData: userData ? 'Présent' : 'Absent',
+      userDataPhoto: userData?.photo_url,
+      displayUserPhoto: displayUser?.photo_url,
+      finalPhotoURL: displayPhotoURL,
+      userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée'
+    });
+  }, [userData, displayPhotoURL]);
 
   const handleHomeNavigation = () => {
     router.push("/");
@@ -279,19 +316,28 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             <motion.div className="relative group" whileHover={{ scale: 1.03 }}>
               <div className="absolute -inset-1 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-full blur-md opacity-30 group-hover:opacity-50 transition-opacity"></div>
 
-              {user.photoURL ? (
+              {displayPhotoURL ? (
                 <Image
-                  key={user.photoURL}
+                  key={displayPhotoURL} // ✅ Key pour forcer le re-render
                   width={96}
                   height={96}
-                  src={user.photoURL}
-                  alt={`Avatar de ${user.nomComplet || `${user.prenom} ${user.nom}`}`}
+                  src={displayPhotoURL}
+                  alt={`Avatar de ${displayName}`}
                   className="h-24 w-24 rounded-full border-4 border-white object-cover relative z-10 shadow-lg"
-                  priority
+                  priority={true} // ✅ Priority pour l'image de profil (au-dessus de la ligne de flottaison)
+                  quality={85} // ✅ Qualité optimisée
+                  placeholder="blur" // ✅ Placeholder pour améliorer l'UX
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                  onError={(e) => {
+                    console.warn('⚠️ Erreur chargement image:', displayPhotoURL);
+                    // Fallback vers l'avatar par défaut en cas d'erreur
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
                 />
               ) : (
                 <div
-                  key={user.nomComplet || `${user.prenom} ${user.nom}`}
+                  key={`avatar-${displayName}`} // ✅ Key unique pour éviter les conflits
                   className="h-24 w-24 rounded-full border-4 border-white bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-3xl font-bold text-[#FFFFFF] relative z-10 shadow-lg"
                 >
                   <User className="w-10 h-10 text-white" />
@@ -304,10 +350,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-bold text-[#FFFFFF]">
                 {
-                  user.nomComplet
-                  || (user.prenom && user.nom && `${user.prenom} ${user.nom}`)
-                  || user.nom
-                  || "Utilisateur"
+                  displayName
                 }
                 </h1>
                 <div className="flex items-center gap-2">
@@ -319,13 +362,13 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                     Actif
                   </motion.div>
                   <motion.div
-                    key={user.role}
+                    key={displayUser?.role}
                     className="z-20 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-[#FFFFFF] text-xs font-bold px-3 py-0.5 rounded-full shadow-md flex items-center gap-1"
                     whileHover={{ scale: 1.1 }}
                   >
                     {/* <IconCrown size={12} /> */}
                     <p>Mat:</p>
-                    <span>{user.role}</span>
+                    <span>{displayUser?.role}</span>
                   </motion.div>
                 </div>
               </div>
@@ -333,7 +376,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
               <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center text-gray-300">
                   <Briefcase className="mr-2 text-[#FF671E]" />
-                  <span>{user.poste}</span>
+                  <span>{displayUser?.poste}</span>
                 </div>
                 {entreprise && (
                   <div className="flex items-center text-gray-300">
@@ -343,11 +386,11 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                 )}
                 <div className="flex items-center text-gray-300">
                   <Phone className="mr-2 text-[#FF671E]" />
-                  <span>{user.telephone}</span>
+                  <span>{displayUser?.telephone}</span>
                 </div>
                 <div className="flex items-center text-gray-300">
                   <MapPin className="mr-2 text-[#FF671E]" />
-                  <span>{user.adresse}</span>
+                  <span>{displayUser?.adresse}</span>
                 </div>
                 {/* <div className="flex items-center text-gray-300">
                   <IconCalendar className="mr-2 text-[#FF671E]" />
@@ -400,7 +443,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed inset-0 flex items-center justify-center z-50"
           >
-            <ProfileSettings onClose={() => setShowSettings(false)} userData={user} />
+            <ProfileSettings onClose={() => setShowSettings(false)} userData={displayUser} />
           </motion.div>
         )}
       </AnimatePresence>

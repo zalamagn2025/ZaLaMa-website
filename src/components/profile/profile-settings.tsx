@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "../../contexts/AuthContext";
 import { 
   IconSettings, 
@@ -24,8 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ImageUploadService } from "@/services/imageUploadService";
 import Image from "next/image";
+import { useProfileImageUpload } from "@/hooks/useProfileImageUpload";
 
 // Interface pour les données utilisateur
 interface UserData {
@@ -75,7 +76,7 @@ interface SecurityAlertPreference {
 
 export function ProfileSettings({ onClose, userData }: { onClose: () => void; userData?: UserData }) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, userData: authUserData } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveButton, setShowSaveButton] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -86,10 +87,18 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
 
   // États pour la modification de l'image de profil
   const [showImageUpload, setShowImageUpload] = useState(false);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string>(userData?.photoURL || "");
-  const [imageError, setImageError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  
+  // Utiliser le hook personnalisé pour l'upload d'image
+  const initialPhotoURL = authUserData?.photo_url || userData?.photoURL;
+  const {
+    avatarFile,
+    avatarPreview,
+    imageError,
+    isUploading,
+    handleAvatarChange,
+    handleImageUpload,
+    resetUpload
+  } = useProfileImageUpload(initialPhotoURL);
 
   const [settings, setSettings] = useState({
     darkMode: theme === 'dark',
@@ -146,8 +155,8 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     }
   ]);
 
-  // Utiliser directement les données de l'employé connecté (comme dans ProfileHeader)
-  const employeeData = userData;
+  // Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
+  const employeeData = authUserData || userData;
   
   // Construire le nom complet de l'employé connecté (même logique que ProfileHeader)
   const getDisplayName = () => {
@@ -165,6 +174,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   useEffect(() => {
     console.log('🔍 ProfileSettings - Données employé connecté:');
     console.log('userData reçu:', userData);
+    console.log('authUserData:', authUserData);
     console.log('employeeData:', employeeData);
     console.log('displayName:', displayName);
     console.log('displayEmail:', displayEmail);
@@ -173,7 +183,16 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     console.log('user_id:', employeeData?.user_id);
     console.log('uid:', userData?.uid);
     console.log('id:', userData?.id);
-  }, [userData, employeeData, displayName, displayEmail]);
+  }, [userData, authUserData, employeeData, displayName, displayEmail]);
+
+  // Mettre à jour l'aperçu quand les données du contexte changent
+  useEffect(() => {
+    const newPhotoURL = authUserData?.photo_url || userData?.photoURL;
+    if (newPhotoURL && newPhotoURL !== avatarPreview) {
+      console.log('🔄 Mise à jour de l\'aperçu avec la nouvelle photo:', newPhotoURL);
+      // resetUpload(); // This will reset the file input, which is not ideal for preview
+    }
+  }, [authUserData?.photo_url, userData?.photoURL, avatarPreview]);
 
   // Nettoyer l'URL de l'aperçu lors du démontage du composant
   useEffect(() => {
@@ -288,102 +307,12 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   };
 
   // Fonctions pour la modification de l'image de profil
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
-    console.log('🔍 Debug handleAvatarChange:', {
-      file: file ? {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        sizeMB: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
-      } : 'Aucun fichier sélectionné'
-    });
+  // handleAvatarChange and handleImageUpload are now managed by useProfileImageUpload
 
-    if (!file) {
-      console.log('❌ Aucun fichier sélectionné');
-      return;
-    }
-
-    // Vérifier le type de fichier
-    if (!["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
-      console.log('❌ Format non supporté:', file.type);
-      setImageError("Format non supporté. Veuillez utiliser une image au format JPG, PNG ou WebP.");
-      return;
-    }
-
-    // Vérifier la taille du fichier (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      console.log('❌ Fichier trop volumineux:', file.size);
-      setImageError("L'image est trop volumineuse. Taille maximale : 5MB.");
-      return;
-    }
-
-    console.log('✅ Fichier validé, mise à jour des états');
-    setImageError(null);
-    setAvatarFile(file);
-    const url = URL.createObjectURL(file);
-    setAvatarPreview(url);
-    
-    console.log('✅ États mis à jour:', {
-      avatarFile: 'Fichier défini',
-      avatarPreview: 'URL créée'
-    });
-  };
-
-  const handleImageUpload = async () => {
-    // Récupérer l'user_id depuis différentes sources possibles
-    const userId = employeeData?.user_id || userData?.uid || userData?.id;
-    
-    console.log('🔍 Debug handleImageUpload:', {
-      avatarFile: avatarFile ? 'Fichier sélectionné' : 'Aucun fichier',
-      employeeData: employeeData ? 'Données employé présentes' : 'Aucune donnée employé',
-      userData: userData ? 'Données utilisateur présentes' : 'Aucune donnée utilisateur',
-      employeeUserId: employeeData?.user_id,
-      userDataUid: userData?.uid,
-      userDataId: userData?.id,
-      finalUserId: userId
-    });
-
-    if (!avatarFile) {
-      setImageError("Veuillez sélectionner une image avant d'enregistrer");
-      return;
-    }
-
-    if (!userId) {
-      setImageError("Impossible de récupérer l'identifiant utilisateur. Veuillez vous reconnecter.");
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const result = await ImageUploadService.uploadProfileImage(
-        avatarFile, 
-        userId
-      );
-
-      if (result.success && result.url) {
-        // Mettre à jour l'aperçu avec la nouvelle URL
-        setAvatarPreview(result.url);
-        
-        // Supprimer l'ancienne image si elle existe
-        if (userData?.photoURL && userData.photoURL !== result.url) {
-          await ImageUploadService.deleteProfileImage(userData.photoURL);
-        }
-
-        toast.success("Photo de profil mise à jour avec succès !");
-        setShowImageUpload(false);
-        
-        // Rafraîchir la page pour voir les changements
-        window.location.reload();
-      } else {
-        setImageError(result.error || "Une erreur est survenue lors du téléversement");
-      }
-    } catch (error) {
-      console.error("Erreur lors du téléversement de l'image :", error);
-      setImageError("Une erreur inattendue est survenue");
-    } finally {
-      setIsUploading(false);
+  const handleImageUploadWithClose = async () => {
+    await handleImageUpload();
+    if (!imageError) {
+      setShowImageUpload(false);
     }
   };
 
@@ -585,34 +514,17 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
               <div className="bg-[#0A1A5A]/50 p-4 rounded-lg space-y-4">
                 <div 
                   className="flex items-center justify-between p-3 bg-[#0A1A5A] rounded-lg"
-
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-[#1A2B6B]' : 'bg-blue-100'} text-[#FF8E53]`}>
                       <IconMoon className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Mode sombre</p>
-                      <p className="text-xs text-gray-400">Activer/désactiver le mode sombre</p>
+                      <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Thème</p>
+                      <p className="text-xs text-gray-400">Choisir entre mode clair, sombre ou système</p>
                     </div>
                   </div>
-                  <div className="relative inline-block w-12 h-6">
-                    <input
-                      type="checkbox"
-                      checked={settings.darkMode}
-                      onChange={() => handleSettingChange('darkMode', !settings.darkMode)}
-                      className="sr-only"
-                      id="dark-mode-switch"
-                    />
-                    <label
-                      htmlFor="dark-mode-switch"
-                      className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${settings.darkMode ? 'bg-[#FF671E]' : 'bg-gray-600'}`}
-                    >
-                      <span 
-                        className={`block h-5 w-5 mt-0.5 rounded-full bg-white shadow-md transform transition-transform ${settings.darkMode ? 'translate-x-6' : 'translate-x-1'}`}
-                      />
-                    </label>
-                  </div>
+                  <ThemeToggle variant="switch" size="sm" />
                 </div>
                 
                 <div className={`p-3 ${theme === 'dark' ? 'bg-[#0A1A5A]' : 'bg-white shadow-sm'} rounded-lg`}>
@@ -850,7 +762,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                     </motion.button>
                     <motion.button
                       type="button"
-                      onClick={handleImageUpload}
+                      onClick={handleImageUploadWithClose}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       disabled={isUploading || !avatarFile}

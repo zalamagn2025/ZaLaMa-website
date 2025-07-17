@@ -12,8 +12,7 @@ export class ImageUploadService {
    */
   static async uploadProfileImage(
     file: File, 
-    userId: string,
-    employeeId?: string
+    employeeId: string,
   ): Promise<ImageUploadResult> {
     try {
       // 1. Vérifier le type et la taille du fichier
@@ -33,8 +32,16 @@ export class ImageUploadService {
 
       // 2. Générer un nom de fichier unique
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const fileName = `${employeeId}-${Date.now()}.${fileExt}`;
       const filePath = `profile-images/${fileName}`;
+
+      console.log('📤 Upload vers Supabase Storage:', {
+        bucket: 'employee-photos',
+        filePath,
+        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        fileType: file.type,
+        employeeId
+      });
 
       // 3. Upload vers Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -45,12 +52,14 @@ export class ImageUploadService {
         });
 
       if (uploadError) {
-        console.error('Erreur upload Supabase:', uploadError);
+        console.error('❌ Erreur upload Supabase:', uploadError);
         return {
           success: false,
           error: 'Erreur lors du téléversement de l\'image'
         };
       }
+
+      console.log('✅ Upload réussi:', uploadData);
 
       // 4. Obtenir l'URL publique
       const { data: urlData } = supabase.storage
@@ -59,17 +68,20 @@ export class ImageUploadService {
 
       const publicUrl = urlData.publicUrl;
 
+      console.log('🔗 URL publique générée:', publicUrl);
+
       // 5. Mettre à jour la photo_url dans la table employees
+      // Utiliser l'ID de l'employee directement
       const { error: updateError } = await supabase
         .from('employees')
         .update({ 
           photo_url: publicUrl,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', userId);
+        .eq('id', employeeId);
 
       if (updateError) {
-        console.error('Erreur mise à jour photo_url:', updateError);
+        console.error('❌ Erreur mise à jour photo_url:', updateError);
         // Supprimer le fichier uploadé en cas d'erreur
         await supabase.storage
           .from('employee-photos')
@@ -81,13 +93,15 @@ export class ImageUploadService {
         };
       }
 
+      console.log('✅ Photo de profil mise à jour avec succès');
+
       return {
         success: true,
         url: publicUrl
       };
 
     } catch (error) {
-      console.error('Erreur upload image:', error);
+      console.error('💥 Erreur upload image:', error);
       return {
         success: false,
         error: 'Une erreur inattendue est survenue'
