@@ -641,7 +641,7 @@ export const PartnershipForm = () => {
           whileHover={{ scale: 1.02 }}
           transition={{ type: 'spring', stiffness: 400 }}
         >
-          Devenez Partenaire - Étape {step}/3
+          Devenez Partenaire - Étape {step}/4
         </motion.h2>
         <motion.p 
           className="text-blue-300/90 text-sm max-w-md mx-auto leading-relaxed"
@@ -997,7 +997,7 @@ export const PartnershipForm = () => {
           >
             <FormField 
               name="hrFullName" 
-              label="Nom complet du responsable RH" 
+              label="Nom complet du RH" 
               placeholder="Ex: Fatou Camara"
               delay={0.4}
               value={formData.hrFullName}

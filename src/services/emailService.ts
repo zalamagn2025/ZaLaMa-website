@@ -75,8 +75,8 @@ class EmailService {
       const htmlContent = getAdminEmailTemplate(data)
       
               const result = await this.resend.emails.send({
-          from: 'Zalama SAS <noreply@zalamagn.com>',
-          to: ['admin@zalamagn.com'], // E-mail admin principal
+          from: 'Zalama <noreply@zalamagn.com>',
+          to: ['contact@zalamagn.com'], // E-mail admin principal
           cc: [data.hrEmail, data.repEmail], // Copie aux contacts de l'entreprise
           subject: `Nouvelle demande de partenariat - ${data.companyName}`,
           html: htmlContent,
@@ -141,7 +141,7 @@ class EmailService {
       const htmlContent = getUserEmailTemplate(data)
       
               const result = await this.resend.emails.send({
-          from: 'Zalama SAS <noreply@zalamagn.com>',
+          from: 'Zalama <noreply@zalamagn.com>',
           to: [data.repEmail],
           subject: `Confirmation de votre demande de partenariat - ${data.companyName}`,
           html: htmlContent,
