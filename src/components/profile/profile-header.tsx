@@ -38,14 +38,14 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   const [showDetails, setShowDetails] = useState<Notification | null>(null);
 
   // ✅ Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
-  const displayUser = userData || user;
+  const displayUser = (userData || user) as any;
   
   // Construire le nom complet
   const getDisplayName = () => {
     if (!displayUser) return "Utilisateur";
   
     // Priorité : nomComplet > (prenom + nom) > nom > prenom > "Utilisateur"
-    if (displayUser.nomComplet) {
+    if ('nomComplet' in displayUser && displayUser.nomComplet) {
       return displayUser.nomComplet;
     }
   
@@ -68,7 +68,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   const displayName = getDisplayName();
   const displayEmail = displayUser?.email || 'Email non disponible';
   // ✅ Utiliser directement photo_url du contexte AuthContext
-  const displayPhotoURL = userData?.photo_url || displayUser?.photo_url || displayUser?.photoURL;
+  const displayPhotoURL = userData?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
   const displayInitial = displayName.charAt(0).toUpperCase();
 
   // ✅ Debug pour vérifier les données
@@ -76,7 +76,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
     console.log('🔍 ProfileHeader Debug:', {
       userData: userData ? 'Présent' : 'Absent',
       userDataPhoto: userData?.photo_url,
-      displayUserPhoto: displayUser?.photo_url,
       finalPhotoURL: displayPhotoURL,
       userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée'
     });

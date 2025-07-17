@@ -26,7 +26,7 @@ export interface AvisResponse {
 
 export interface AvisListResponse {
   success: boolean
-  data: Avis[]
+  data?: Avis[]
   error?: string
 }
 

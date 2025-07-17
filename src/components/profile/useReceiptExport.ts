@@ -150,7 +150,7 @@ export async function generateSalaryAdvancePDF({
 
 export const handleDownloadPDF = async (request: { id: string | any[]; amount: any; status: any; date: any; telephone: any; numeroReception: any; }) => {
   const blob = await generateSalaryAdvancePDF({
-    id: request.id,
+    id: Array.isArray(request.id) ? request.id[0] : request.id,
     montant: request.amount,
     statut: request.status,
     date: request.date,
@@ -166,9 +166,9 @@ export const handleDownloadPDF = async (request: { id: string | any[]; amount: a
   alert("PDF téléchargé !");
 };
 
-export const handleSharePDF = async (request) => {
+export const handleSharePDF = async (request: { id: string | any[]; amount: any; status: any; date: any; telephone: any; numeroReception: any; }) => {
   const blob = await generateSalaryAdvancePDF({
-    id: request.id,
+    id: Array.isArray(request.id) ? request.id[0] : request.id,
     montant: request.amount,
     statut: request.status,
     date: request.date,

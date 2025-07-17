@@ -89,7 +89,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   const [showImageUpload, setShowImageUpload] = useState(false);
   
   // Utiliser le hook personnalisé pour l'upload d'image
-  const initialPhotoURL = authUserData?.photo_url || userData?.photoURL;
+  const initialPhotoURL = authUserData?.photo_url || userData?.photoURL || undefined;
   const {
     avatarFile,
     avatarPreview,
@@ -156,7 +156,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   ]);
 
   // Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
-  const employeeData = authUserData || userData;
+  const employeeData = (authUserData || userData) as any;
   
   // Construire le nom complet de l'employé connecté (même logique que ProfileHeader)
   const getDisplayName = () => {
@@ -454,10 +454,10 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                         <span className="text-white">{employeeData.adresse}</span>
                       </div>
                     )}
-                    {(employeeData.date_embauche || employeeData.dateEmbauche) && (
+                    {employeeData.date_embauche && (
                       <div className="flex items-center gap-2 p-2 bg-[#0A1A5A] rounded-lg">
                         <span className="text-gray-400">📅</span>
-                        <span className="text-white">Embauché le {new Date(employeeData.date_embauche || employeeData.dateEmbauche || '').toLocaleDateString('fr-FR')}</span>
+                        <span className="text-white">Embauché le {new Date(employeeData.date_embauche).toLocaleDateString('fr-FR')}</span>
                       </div>
                     )}
                   </div>

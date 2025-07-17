@@ -15,8 +15,8 @@ import {
   IconX as IconClose,
   IconDotsVertical,
   IconAlertCircle,
-  IconCheckCircle,
-  IconXCircle
+  IconCircleCheck,
+  IconCircleX
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -272,11 +272,11 @@ export function SalaryAdvanceHistory() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "Validé":
-        return <IconCheckCircle className="w-4 h-4" />;
+        return <IconCircleCheck className="w-4 h-4" />;
       case "En attente":
         return <IconClock className="w-4 h-4" />;
       case "Rejeté":
-        return <IconXCircle className="w-4 h-4" />;
+        return <IconCircleX className="w-4 h-4" />;
       case "Annulé":
         return <IconX className="w-4 h-4" />;
       default:

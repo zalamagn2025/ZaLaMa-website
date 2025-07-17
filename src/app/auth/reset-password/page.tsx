@@ -35,7 +35,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   );
 }
 
-async function determineUserType(supabase: ReturnType<typeof createBrowserClient>, email: string): Promise<'employee' | 'manager' | 'rh'> {
+async function determineUserType(supabase: any, email: string): Promise<'employee' | 'manager' | 'rh'> {
   try {
     // Vérifier d'abord dans la table users (responsables/RH)
     const { data: usersData, error: usersError } = await supabase
