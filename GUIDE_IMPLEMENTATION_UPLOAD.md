@@ -20,7 +20,7 @@
 
 Vérifiez que vous avez ces variables dans votre `.env.local` :
 ```env
-NEXT_PRIVATE_SUPABASE_URL=votre_url_supabase
+NEXT_PUBLIC_SUPABASE_URL=votre_url_supabase
 NEXT_PRIVATE_SUPABASE_ANON_KEY=votre_clé_anon_supabase
 SUPABASE_SERVICE_ROLE_KEY=votre_clé_service_role
 ```

@@ -26,7 +26,7 @@ Le script teste les aspects suivants :
 npm install @supabase/supabase-js dotenv
 
 # Vérifier les variables d'environnement
-NEXT_PRIVATE_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PRIVATE_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PRIVATE_APP_URL=http://localhost:3000  # Optionnel
 ```
@@ -35,7 +35,7 @@ NEXT_PRIVATE_APP_URL=http://localhost:3000  # Optionnel
 
 ```env
 # Supabase (requis)
-NEXT_PRIVATE_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PRIVATE_SUPABASE_ANON_KEY=your_anon_key
 
 # Application (optionnel, pour tests API)
@@ -208,7 +208,7 @@ await testMultipleRequests(employee, partnerId)
 cat .env
 
 # Ou définir directement
-export NEXT_PRIVATE_SUPABASE_URL=your_url
+export NEXT_PUBLIC_SUPABASE_URL=your_url
 export NEXT_PRIVATE_SUPABASE_ANON_KEY=your_key
 ```
 

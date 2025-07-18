@@ -6,7 +6,7 @@ require('dotenv').config({ path: '.env.local' });
 console.log('🔍 Vérification des variables d\'environnement Supabase...\n');
 
 const requiredVars = [
-  'NEXT_PRIVATE_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PRIVATE_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY'
 ];
@@ -45,7 +45,7 @@ async function testSupabaseConnection() {
     const { createClient } = require('@supabase/supabase-js');
     
     const supabase = createClient(
-      process.env.NEXT_PRIVATE_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY
     );
     

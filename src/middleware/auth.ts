@@ -5,7 +5,7 @@ import { UserWithEmployeData } from '@/types/employe'
 export async function getUserFromRequest(request: NextRequest): Promise<UserWithEmployeData | null> {
   try {
     const supabase = createServerClient(
-      process.env.NEXT_PRIVATE_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY!,
       {
         cookies: {

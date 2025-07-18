@@ -3,7 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 // Charger les variables d'environnement
 require('dotenv').config({ path: '.env.local' });
 
-const supabaseUrl = process.env.NEXT_PRIVATE_SUPABASE_URL;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {

@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const supabase = createBrowserClient(
-    process.env.NEXT_PRIVATE_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY!
   );
 

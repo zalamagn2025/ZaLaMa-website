@@ -54,15 +54,15 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
 // Créer un client Supabase normal (RLS désactivé)
 function createSupabaseClient() {
   console.log('🔧 Création du client Supabase...')
-  console.log('📡 URL Supabase:', process.env.NEXT_PRIVATE_SUPABASE_URL ? '✅ Définie' : '❌ Non définie')
+  console.log('📡 URL Supabase:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Définie' : '❌ Non définie')
   console.log('🔑 Clé anon Supabase:', process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY ? '✅ Définie' : '❌ Non définie')
   
-  if (!process.env.NEXT_PRIVATE_SUPABASE_URL || !process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY) {
     throw new Error('Variables d\'environnement Supabase manquantes')
   }
 
   return createClient(
-    process.env.NEXT_PRIVATE_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY,
     {
       auth: {
