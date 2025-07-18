@@ -52,13 +52,13 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
 
 // Créer un client Supabase normal (RLS désactivé)
 function createSupabaseClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     throw new Error('Variables d\'environnement Supabase manquantes')
   }
 
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       auth: {
         autoRefreshToken: false,

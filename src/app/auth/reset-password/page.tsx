@@ -86,7 +86,7 @@ export default function ResetPasswordPage() {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   // Détecter si c'est un changement de mot de passe depuis les paramètres

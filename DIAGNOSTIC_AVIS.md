@@ -9,7 +9,7 @@ L'API `/api/avis` retourne une erreur 404 et "fetch failed", empêchant la mise 
 Dans votre fichier `.env.local`, vérifiez que vous avez :
 ```env
 NEXT_PUBLIC_SUPABASE_URL=votre_url_supabase
-NEXT_PRIVATE_SUPABASE_ANON_KEY=votre_clé_anon_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_clé_anon_supabase
 JWT_SECRET=votre_secret_jwt
 ```
 
