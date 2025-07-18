@@ -27,7 +27,7 @@ npm install @supabase/supabase-js dotenv
 
 # Vérifier les variables d'environnement
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PRIVATE_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PRIVATE_APP_URL=http://localhost:3000  # Optionnel
 ```
 
@@ -36,7 +36,7 @@ NEXT_PRIVATE_APP_URL=http://localhost:3000  # Optionnel
 ```env
 # Supabase (requis)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PRIVATE_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 
 # Application (optionnel, pour tests API)
 NEXT_PRIVATE_APP_URL=http://localhost:3000
@@ -209,7 +209,7 @@ cat .env
 
 # Ou définir directement
 export NEXT_PUBLIC_SUPABASE_URL=your_url
-export NEXT_PRIVATE_SUPABASE_ANON_KEY=your_key
+export NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
 ```
 
 #### 2. Erreur de Connexion Supabase

@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js')
 
 // Configuration Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'your_supabase_url'
-const supabaseKey = process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY || 'your_supabase_anon_key'
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your_supabase_anon_key'
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 

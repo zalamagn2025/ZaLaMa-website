@@ -38,7 +38,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
         setError(null)
         console.log("🔍 Récupération des services depuis Supabase...")
         console.log("🔑 URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-        console.log("🔑 Clé anonyme présente:", !!process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY)
+        console.log("🔑 Clé anonyme présente:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
         
         const { data, error } = await supabase
           .from('services')

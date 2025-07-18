@@ -159,7 +159,7 @@ function checkEnvironment() {
   const requiredVars = [
     'RESEND_API_KEY',
     'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PRIVATE_SUPABASE_ANON_KEY'
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY'
   ];
   
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
