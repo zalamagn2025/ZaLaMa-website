@@ -173,7 +173,7 @@ export const Herodemo = ({
       opacity: 1, 
       y: 0,
       transition: {
-        type: 'spring',
+        type: "spring" as const,
         stiffness: 80,
         damping: 12,
         mass: 0.5
@@ -192,7 +192,7 @@ export const Herodemo = ({
       y: 0,
       scale: 1,
       transition: {
-        type: 'spring',
+        type: "spring" as const,
         stiffness: 60,
         damping: 15,
         mass: 0.8,
@@ -202,7 +202,7 @@ export const Herodemo = ({
     hover: {
       y: -5,
       transition: { 
-        type: 'spring',
+        type: "spring" as const,
         stiffness: 300,
         damping: 15
       }
@@ -243,7 +243,7 @@ export const Herodemo = ({
                   transition: { 
                     ...item.show.transition, 
                     delay: 0.2,
-                    type: 'spring',
+                    type: "spring" as const,
                     stiffness: 100,
                     damping: 15
                   } 
@@ -260,7 +260,7 @@ export const Herodemo = ({
                   transition: { 
                     ...item.show.transition, 
                     delay: 0.4,
-                    type: 'spring',
+                    type: "spring" as const,
                     stiffness: 100,
                     damping: 15
                   } 
@@ -279,7 +279,8 @@ export const Herodemo = ({
                   transition: { 
                     ...item.show.transition, 
                     delay: 0.6,
-                    staggerChildren: 0.1
+                    staggerChildren: 0.1,
+                    type: "spring" as const
                   } 
                 }
               }}
@@ -289,7 +290,7 @@ export const Herodemo = ({
                   variants={item}
                   whileHover={{ y: -3, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 10 }}
                 >
                   <CustomButton variant="solid" onClick={primaryButtonAction}>
                     {primaryButtonText}
@@ -301,7 +302,7 @@ export const Herodemo = ({
                   variants={item}
                   whileHover={{ y: -3, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 10 }}
                 >
                   <CustomButton variant="default" onClick={secondaryButtonAction}>
                     {secondaryButtonText}

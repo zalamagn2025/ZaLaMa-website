@@ -1,6 +1,4 @@
 import { useRef } from "react";
-// @ts-ignore
-import domtoimage from "dom-to-image";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 export function useReceiptExport() {
@@ -9,6 +7,7 @@ export function useReceiptExport() {
   const downloadReceipt = async (filename = "recu-zalama.png") => {
     if (!receiptRef.current) return;
     try {
+      const domtoimage = (await import("dom-to-image")).default;
       const dataUrl = await domtoimage.toPng(receiptRef.current, { quality: 1 });
       const link = document.createElement("a");
       link.href = dataUrl;
@@ -22,6 +21,7 @@ export function useReceiptExport() {
   const shareReceipt = async () => {
     if (!receiptRef.current) return;
     try {
+      const domtoimage = (await import("dom-to-image")).default;
       const dataUrl = await domtoimage.toPng(receiptRef.current, { quality: 1 });
       const res = await fetch(dataUrl);
       const blob = await res.blob();
@@ -149,33 +149,35 @@ export async function generateSalaryAdvancePDF({
 }
 
 export const handleDownloadPDF = async (request: { id: string | any[]; amount: any; status: any; date: any; telephone: any; numeroReception: any; }) => {
+  const id = Array.isArray(request.id) ? request.id[0] : request.id;
   const blob = await generateSalaryAdvancePDF({
-    id: Array.isArray(request.id) ? request.id[0] : request.id,
+    id: id,
     montant: request.amount,
     statut: request.status,
     date: request.date,
     telephone: request.telephone,
-    reference: request.numeroReception || `REF-${request.id.slice(-8)}`,
+    reference: request.numeroReception || `REF-${id.slice(-8)}`,
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `recu-zalama-${request.id}.pdf`;
+  a.download = `recu-zalama-${id}.pdf`;
   a.click();
   URL.revokeObjectURL(url);
   alert("PDF téléchargé !");
 };
 
 export const handleSharePDF = async (request: { id: string | any[]; amount: any; status: any; date: any; telephone: any; numeroReception: any; }) => {
+  const id = Array.isArray(request.id) ? request.id[0] : request.id;
   const blob = await generateSalaryAdvancePDF({
-    id: Array.isArray(request.id) ? request.id[0] : request.id,
+    id: id,
     montant: request.amount,
     statut: request.status,
     date: request.date,
     telephone: request.telephone,
-    reference: request.numeroReception || `REF-${request.id.slice(-8)}`,
+    reference: request.numeroReception || `REF-${id.slice(-8)}`,
   });
-  const file = new File([blob], `recu-zalama-${request.id}.pdf`, { type: "application/pdf" });
+  const file = new File([blob], `recu-zalama-${id}.pdf`, { type: "application/pdf" });
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     await navigator.share({
@@ -188,7 +190,7 @@ export const handleSharePDF = async (request: { id: string | any[]; amount: any;
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `recu-zalama-${request.id}.pdf`;
+    a.download = `recu-zalama-${id}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     alert("PDF téléchargé (partage non supporté sur ce navigateur)");

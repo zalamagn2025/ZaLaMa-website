@@ -1,93 +1,84 @@
-// TransactionPDF.tsx
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
-
-// Interface pour les données du PDF, alignée avec SalaryAdvanceRequest
-interface SalaryAdvancePDFProps {
-  id: string;
-  montant: string;
-  statut: 'En attente' | 'Validé' | 'Rejeté';
-  date: string;
-  telephone: string;
-  reference: string;
-  nomEmploye?: string;
-  nomPartenaire?: string;
-  motif?: string;
-  fraisService?: string;
-  dateValidation?: string | null;
-  motifRejet?: string | null;
-}
 
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    padding: 30,
+    padding: 40,
     fontFamily: 'Helvetica',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingBottom: 10,
+    marginBottom: 25,
+    borderBottomWidth: 2,
+    borderBottomColor: '#FF671E',
+    paddingBottom: 15,
+    backgroundColor: '#010D3E',
+    padding: 20,
+    borderRadius: 8,
   },
   logo: {
-    width: 60,
-    height: 60,
-    marginRight: 10,
+    width: 80,
+    height: 80,
+    marginRight: 15,
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#010D3E',
+    color: '#FFFFFF',
   },
   subHeader: {
     fontSize: 12,
-    color: '#6B7280',
-    marginTop: 4,
+    color: '#FF8E53',
+    marginTop: 5,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 25,
+    padding: 15,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   title: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#010D3E',
     marginBottom: 15,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: '#FF671E',
-    paddingBottom: 5,
+    paddingBottom: 8,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
+    paddingHorizontal: 5,
   },
   label: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#6B7280',
     width: '40%',
+    fontWeight: 'medium',
   },
   value: {
     fontSize: 12,
     color: '#111827',
     width: '60%',
-    fontWeight: 'normal',
+    fontWeight: 'bold',
   },
   status: {
-    fontSize: 11,
-    padding: 6,
-    borderRadius: 4,
+    fontSize: 12,
+    padding: 8,
+    borderRadius: 6,
     textAlign: 'center',
-    width: 100,
+    width: 120,
     alignSelf: 'flex-start',
+    fontWeight: 'bold',
   },
   footer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 30,
-    right: 30,
+    marginTop: 20,
     textAlign: 'center',
     fontSize: 10,
     color: '#6B7280',
@@ -97,109 +88,171 @@ const styles = StyleSheet.create({
   },
 });
 
-export const TransactionPDF = ({ 
-  id, 
-  montant, 
-  statut, 
-  date, 
-  telephone, 
-  reference, 
-  nomEmploye = 'N/A', 
-  nomPartenaire = 'N/A', 
-  motif = 'N/A', 
-  fraisService = 'N/A', 
-  dateValidation = 'N/A', 
-  motifRejet = 'N/A' 
-}: SalaryAdvancePDFProps) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      {/* En-tête */}
-      <View style={styles.header}>
-        {/* Placeholder pour le logo (remplacez par une URL d'image réelle si disponible) */}
-        <Image 
-          style={styles.logo} 
-          src="https://via.placeholder.com/60?text=ZaLaMa" 
-        />
-        <View>
-          <Text style={styles.headerText}>Reçu d'Avance sur Salaire - ZaLaMa</Text>
-          <Text style={styles.subHeader}>Généré le {new Date().toLocaleDateString('fr-FR')}</Text>
-        </View>
-      </View>
+interface TransactionPDFProps {
+  montant: string;
+  statut: 'En attente' | 'Validé' | 'Rejeté' | 'Annulé';
+  date: string;
+  typeMotif: string;
+  fraisService?: string;
+  dateValidation?: string;
+  motifRejet?: string;
+}
 
-      {/* Section Détails de la Demande */}
-      <View style={styles.section}>
-        <Text style={styles.title}>Détails de la Demande</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Référence :</Text>
-          <Text style={styles.value}>{reference}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Date de création :</Text>
-          <Text style={styles.value}>{date}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Montant demandé :</Text>
-          <Text style={styles.value}>{montant}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Frais de service :</Text>
-          <Text style={styles.value}>{fraisService}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Motif :</Text>
-          <Text style={styles.value}>{motif}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Statut :</Text>
-          <View style={[styles.status, { 
-            backgroundColor: statut === 'Validé' ? '#E6FFEE' : 
-                            statut === 'En attente' ? '#FFF5E6' : '#FFE6E6',
-            color: statut === 'Validé' ? '#00A651' : 
-                   statut === 'En attente' ? '#FF9900' : '#FF0000'
-          }]}>
-            <Text>{statut}</Text>
+const formatMotifType = (type: string): string => {
+  const motifs: Record<string, string> = {
+    "TRANSPORT": "Transport",
+    "SANTE": "Santé",
+    "EDUCATION": "Éducation",
+    "LOGEMENT": "Logement",
+    "ALIMENTATION": "Alimentation",
+    "URGENCE_FAMILIALE": "Urgence familiale",
+    "FRAIS_MEDICAUX": "Frais médicaux",
+    "FRAIS_SCOLAIRES": "Frais scolaires",
+    "REPARATION_VEHICULE": "Réparation véhicule",
+    "FRAIS_DEUIL": "Frais deuil",
+    "AUTRE": "Autre"
+  };
+  return motifs[type] || type;
+};
+
+export const TransactionPDF = ({
+  montant,
+  statut,
+  date,
+  typeMotif,
+  fraisService = '',
+  dateValidation = '',
+  motifRejet = ''
+}: TransactionPDFProps) => {
+  // Formatage des dates avec barres
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    
+    try {
+      const dateObj = new Date(dateStr);
+      if (isNaN(dateObj.getTime())) return dateStr;
+      
+      const day = dateObj.getDate().toString().padStart(2, '0');
+      const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+      const year = dateObj.getFullYear();
+      const hours = dateObj.getHours().toString().padStart(2, '0');
+      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+      
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Formatage des montants sans barres
+  const formatMontant = (amount: string): string => {
+    if (!amount) return '0 FG';
+    
+    // Nettoyage strict
+    const numericValue = parseInt(amount.replace(/\D/g, ''), 10) || 0;
+    
+    // Formatage avec espaces uniquement
+    const formatted = new Intl.NumberFormat('fr-FR', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(numericValue);
+    
+    return `${formatted} FG`;
+  };
+
+  // Calcul du montant reçu
+  const cleanMontant = parseInt(montant.replace(/\D/g, ''), 10) || 0;
+  const cleanFrais = parseInt(fraisService.replace(/\D/g, ''), 10) || 0;
+  const montantRecu = statut === 'Validé' ? cleanMontant - cleanFrais : 0;
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <Image style={styles.logo} src="/images/zalama-logo.svg" />
+          <View>
+            <Text style={styles.headerText}>Reçu d'Avance sur Salaire - ZaLaMa</Text>
+            <Text style={styles.subHeader}>
+              Généré le {new Date().toLocaleDateString('fr-FR')}
+            </Text>
           </View>
         </View>
-        {statut === 'Rejeté' && (
+
+        <View style={styles.section}>
+          <Text style={styles.title}>Détails de la Demande</Text>
+          
           <View style={styles.row}>
-            <Text style={styles.label}>Motif de rejet :</Text>
-            <Text style={styles.value}>{motifRejet}</Text>
+            <Text style={styles.label}>Date de création :</Text>
+            <Text style={styles.value}>{formatDate(date)}</Text>
           </View>
-        )}
-        {statut === 'Validé' && (
+          
           <View style={styles.row}>
-            <Text style={styles.label}>Date de validation :</Text>
-            <Text style={styles.value}>{dateValidation}</Text>
+            <Text style={styles.label}>Montant demandé :</Text>
+            <Text style={styles.value}>{formatMontant(montant)}</Text>
           </View>
-        )}
-      </View>
-
-      {/* Section Informations de l'Employé */}
-      <View style={styles.section}>
-        <Text style={styles.title}>Informations de l'Employé</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Nom :</Text>
-          <Text style={styles.value}>{nomEmploye}</Text>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Type de motif :</Text>
+            <Text style={styles.value}>{formatMotifType(typeMotif)}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Statut :</Text>
+            <View style={[
+              styles.status, 
+              {
+                backgroundColor: statut === 'Validé' ? '#E6FFEE' :
+                                statut === 'En attente' ? '#FFF5E6' :
+                                statut === 'Rejeté' ? '#FFE6E6' : '#E5E7EB',
+                color: statut === 'Validé' ? '#00A651' :
+                       statut === 'En attente' ? '#FF9900' :
+                       statut === 'Rejeté' ? '#FF0000' : '#6B7280'
+              }
+            ]}>
+              <Text>{statut}</Text>
+            </View>
+          </View>
+          
+          {statut === 'Rejeté' && motifRejet && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Motif de rejet :</Text>
+              <Text style={styles.value}>{motifRejet}</Text>
+            </View>
+          )}
+          
+          {statut === 'Validé' && (
+            <>
+              {fraisService && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Frais de service :</Text>
+                  <Text style={[styles.value, { color: '#FF0000' }]}>
+                    - {formatMontant(fraisService)}
+                  </Text>
+                </View>
+              )}
+              
+              <View style={styles.row}>
+                <Text style={styles.label}>Montant reçu :</Text>
+                <Text style={styles.value}>
+                  {formatMontant(montantRecu.toString())}
+                </Text>
+              </View>
+              
+              {dateValidation && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Date de validation :</Text>
+                  <Text style={styles.value}>{formatDate(dateValidation)}</Text>
+                </View>
+              )}
+            </>
+          )}
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Téléphone :</Text>
-          <Text style={styles.value}>{telephone}</Text>
-        </View>
-      </View>
 
-      {/* Section Informations du Partenaire */}
-      <View style={styles.section}>
-        <Text style={styles.title}>Informations du Partenaire</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Nom :</Text>
-          <Text style={styles.value}>{nomPartenaire}</Text>
+        <View style={styles.footer}>
+          <Text>ZaLaMa - Plateforme de gestion d'avances sur salaire | Contact : support@zalama.com</Text>
         </View>
-      </View>
-
-      {/* Pied de page */}
-      <Text style={styles.footer}>
-        ZaLaMa - Plateforme de gestion d'avances sur salaire | Contact : support@zalama.com
-      </Text>
-    </Page>
-  </Document>
-);
+      </Page>
+    </Document>
+  );
+};

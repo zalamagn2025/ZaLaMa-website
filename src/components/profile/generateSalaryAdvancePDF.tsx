@@ -34,18 +34,13 @@ export async function generateSalaryAdvancePDF({
 }: SalaryAdvancePDFProps): Promise<Blob> {
   const pdfDoc = pdf(
     <TransactionPDF
-      id={id}
       montant={montant}
       statut={statut}
       date={date}
-      telephone={telephone}
-      reference={reference}
-      nomEmploye={nomEmploye}
-      nomPartenaire={nomPartenaire}
-      motif={motif}
+      typeMotif={motif || "AUTRE"}
       fraisService={fraisService}
-      dateValidation={dateValidation}
-      motifRejet={motifRejet}
+      dateValidation={dateValidation || undefined}
+      motifRejet={motifRejet || undefined}
     />
   );
   return await pdfDoc.toBlob();

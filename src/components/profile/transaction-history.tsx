@@ -6,25 +6,20 @@ import {
   IconFilter, 
   IconEye, 
   IconDownload, 
-  IconShare, 
   IconX,
-  IconChevronRight,
   IconClock,
   IconCheck,
-  IconX as IconClose,
-  IconDotsVertical,
-  IconAlertCircle,
   IconCircle,
   IconFileText,
   IconPhone,
   IconCalendar,
   IconCurrency,
-  IconUser
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SalaryAdvanceReceipt } from "./SalaryAdvanceReceipt";
-import { useReceiptExport } from "./useReceiptExport";
-import { generateSalaryAdvancePDF } from "@/utils/generateSalaryAdvancePDF";
+import { pdf } from "@react-pdf/renderer";
+import { saveAs } from "file-saver";
+import { TransactionPDF } from "./TransactionPDF";
+import { ImageRecu } from "./ImageRecu";
 
 // Interface pour les demandes d'avance
 interface SalaryAdvanceRequest {
@@ -39,14 +34,13 @@ interface SalaryAdvanceRequest {
   montant_total: number;
   salaire_disponible?: number;
   avance_disponible?: number;
-  statut: 'En attente' | 'Validé' | 'Rejeté' | 'Annulé';
+  statut: "En attente" | "Validé" | "Rejeté" | "Annulé";
   date_creation: string;
   date_validation?: string;
   date_rejet?: string;
   motif_rejet?: string;
   created_at: string;
   updated_at: string;
-  // Relations avec les tables employes et partenaires
   employe?: {
     id: string;
     nom: string;
@@ -72,20 +66,17 @@ function useSalaryAdvanceRequests() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/salary-advance/request');
+      const response = await fetch("/api/salary-advance/request");
       
       if (!response.ok) {
-        throw new Error('Erreur lors de la récupération des demandes');
+        throw new Error("Erreur lors de la récupération des demandes");
       }
       
       const data = await response.json();
-      console.log('📋 Réponse API:', data);
-      
       setRequests(data.data || []);
-      
     } catch (err) {
-      console.error('Erreur lors de la récupération des demandes:', err);
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      console.error("Erreur lors de la récupération des demandes:", err);
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
@@ -105,55 +96,40 @@ function useSalaryAdvanceRequests() {
 
 // Fonction pour convertir les données API en format d'affichage
 const convertApiRequestToDisplay = (apiRequest: SalaryAdvanceRequest) => {
-  // Formater la date complète
   const formatFullDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).replace(/\//g, ' ');
   };
 
-  // Formater le montant
   const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'GNF',
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "GNF",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
   };
 
-  // Formater le type de motif
   const formatMotifType = (type: string): string => {
     switch (type) {
-      case 'TRANSPORT':
-        return 'Transport';
-      case 'SANTE':
-        return 'Santé';
-      case 'EDUCATION':
-        return 'Éducation';
-      case 'LOGEMENT':
-        return 'Logement';
-      case 'ALIMENTATION':
-        return 'Alimentation';
-      case 'URGENCE_FAMILIALE':
-        return 'Urgence familiale';
-      case 'FRAIS_MEDICAUX':
-        return 'Frais médicaux';
-      case 'FRAIS_SCOLAIRES':
-        return 'Frais scolaires';
-      case 'REPARATION_VEHICULE':
-        return 'Réparation véhicule';
-      case 'FRAIS_DEUIL':
-        return 'Frais deuil';
-      case 'AUTRE':
-        return 'Autre';
-      default:
-        return type;
+      case "TRANSPORT": return "Transport";
+      case "SANTE": return "Santé";
+      case "EDUCATION": return "Éducation";
+      case "LOGEMENT": return "Logement";
+      case "ALIMENTATION": return "Alimentation";
+      case "URGENCE_FAMILIALE": return "Urgence familiale";
+      case "FRAIS_MEDICAUX": return "Frais médicaux";
+      case "FRAIS_SCOLAIRES": return "Frais scolaires";
+      case "REPARATION_VEHICULE": return "Réparation véhicule";
+      case "FRAIS_DEUIL": return "Frais deuil";
+      case "AUTRE": return "Autre";
+      default: return type || "Non précisé";
     }
   };
 
@@ -167,16 +143,14 @@ const convertApiRequestToDisplay = (apiRequest: SalaryAdvanceRequest) => {
     motif: apiRequest.motif,
     numeroReception: apiRequest.numero_reception,
     fraisService: formatAmount(apiRequest.frais_service),
-    salaireDisponible: apiRequest.salaire_disponible ? formatAmount(apiRequest.salaire_disponible) : 'N/A',
-    avanceDisponible: apiRequest.avance_disponible ? formatAmount(apiRequest.avance_disponible) : 'N/A',
+    salaireDisponible: apiRequest.salaire_disponible ? formatAmount(apiRequest.salaire_disponible) : "Non précisé",
+    avanceDisponible: apiRequest.avance_disponible ? formatAmount(apiRequest.avance_disponible) : "Non précisé",
     dateValidation: apiRequest.date_validation ? formatFullDate(apiRequest.date_validation) : null,
     dateRejet: apiRequest.date_rejet ? formatFullDate(apiRequest.date_rejet) : null,
-    motifRejet: apiRequest.motif_rejet,
-    // Informations de l'employé
-    telephone: apiRequest.numero_reception || 'N/A',
-    nomEmploye: apiRequest.employe ? `${apiRequest.employe.prenom} ${apiRequest.employe.nom}` : 'N/A',
-    // Informations du partenaire
-    nomPartenaire: apiRequest.partenaire?.nom || 'N/A',
+    motifRejet: apiRequest.motif_rejet || "Non précisé",
+    telephone: apiRequest.employe?.telephone || "Non précisé",
+    nomEmploye: apiRequest.employe ? `${apiRequest.employe.prenom} ${apiRequest.employe.nom}` : "Non précisé",
+    nomPartenaire: apiRequest.partenaire?.nom || "Non précisé",
   };
 };
 
@@ -188,11 +162,12 @@ const SalaryAdvanceIcon = () => (
     height="32"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="currentColor"
+    stroke="rgb(255, 255, 255)"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-8 w-8 text-white"
+    className="h-10 w-10"
+    style={{ color: 'rgb(255, 255, 255)' }}
   >
     <rect x="2" y="5" width="20" height="14" rx="2" />
     <line x1="2" y1="10" x2="22" y2="10" />
@@ -211,7 +186,7 @@ const cardVariants = {
     transition: {
       delay: i * 0.1,
       duration: 0.4,
-      type: "spring",
+      type: "spring" as const,
       stiffness: 300,
       damping: 30
     }
@@ -231,7 +206,7 @@ const modalVariants = {
     y: 0,
     transition: { 
       duration: 0.3,
-      type: "spring",
+      type: "spring" as const,
       stiffness: 300,
       damping: 30
     }
@@ -244,68 +219,43 @@ const modalVariants = {
   }
 };
 
-const sharePopupVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: { 
-    opacity: 1, 
-    scale: 1,
-    transition: { 
-      duration: 0.3,
-      type: "spring",
-      stiffness: 400,
-      damping: 30
-    }
-  },
-  exit: { 
-    opacity: 0, 
-    scale: 0.8,
-    transition: { duration: 0.2 }
+// Fonction pour générer et télécharger le PDF
+const generateAndDownloadPDF = async (request: ReturnType<typeof convertApiRequestToDisplay>) => {
+  try {
+    const blob = await pdf(
+      <TransactionPDF
+        montant={request.amount}
+        statut={request.status as "En attente" | "Validé" | "Rejeté" | "Annulé"}
+        date={request.date}
+        typeMotif={request.type}
+        fraisService={request.fraisService}
+        dateValidation={request.dateValidation || undefined}
+        motifRejet={request.motifRejet}
+      />
+    ).toBlob();
+    saveAs(blob, `Demande_Avance_Salaire_${request.id}.pdf`);
+  } catch (error) {
+    console.error("Erreur lors de la génération du PDF :", error);
+    alert("Une erreur est survenue lors de la génération du PDF.");
   }
 };
-
-// Utilitaire pour formater le montant
-function formatAmount(amount: number) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'GNF',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-// Utilitaire pour formater la date
-function formatFullDate(dateString: string) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
 
 export function TransactionHistory() {
   const { requests: apiRequests, loading, error } = useSalaryAdvanceRequests();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
-  const [shareRequest, setShareRequest] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     type: "",
     status: "",
-    period: "",
+    period: ""
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const modalRef = useRef<HTMLDivElement>(null);
   const requestsPerPage = 10;
-  const sharePopupRef = useRef<HTMLDivElement>(null);
 
-  // Ajout pour la génération de reçu
-  const { receiptRef, downloadReceipt, shareReceipt } = useReceiptExport();
-
-  // Convertir les demandes API en format d'affichage
   const allRequests = apiRequests.map(convertApiRequestToDisplay);
 
-  // Filtrer les demandes
   const filteredRequests = allRequests.filter((request) => {
     const matchesSearch =
       request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -324,7 +274,6 @@ export function TransactionHistory() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  // Pagination
   const indexOfLastRequest = currentPage * requestsPerPage;
   const indexOfFirstRequest = indexOfLastRequest - requestsPerPage;
   const currentRequests = filteredRequests.slice(
@@ -337,27 +286,6 @@ export function TransactionHistory() {
     setCurrentPage(pageNumber);
   };
 
-  // Gestion du clic en dehors du popup de partage
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        sharePopupRef.current &&
-        !sharePopupRef.current.contains(event.target as Node)
-      ) {
-        setShareRequest(null);
-      }
-    };
-
-    if (shareRequest) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [shareRequest]);
-
-  // Fonctions utilitaires pour les statuts
   const getStatusColor = (status: string | undefined) => {
     if (!status) return "bg-gray-500/20 text-gray-300 border-gray-500/30";
     switch (status.toLowerCase()) {
@@ -406,84 +334,6 @@ export function TransactionHistory() {
     }
   };
 
-  // Fonction de partage
-  const shareRequestDetails = (requestId: string) => {
-    const request = allRequests.find((r) => r.id === requestId);
-    if (!request) return null;
-
-    const text = `Demande d'avance sur salaire - ${request.type} - ${request.amount} - Statut: ${request.status}`;
-    const url = `${window.location.origin}/profile`;
-
-    return {
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`,
-      telegram: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
-      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-    };
-  };
-
-  // Ajout pour la génération de PDF
-  // const handleDownloadPDF = async (request: SalaryAdvanceRequest) => {
-  //   try {
-  //     const montant = formatAmount(request.montant_demande);
-  //     const date = formatFullDate(request.date_creation);
-  //     // On accepte tous les statuts, mais on mappe "Annulé" en "Rejeté" pour le PDF
-  //     const statut = request.statut === 'Annulé' ? 'Rejeté' : request.statut;
-  //     const blob = await generateSalaryAdvancePDF({
-  //       id: request.id,
-  //       montant,
-  //       statut,
-  //       date,
-  //       telephone: request.numero_reception || 'N/A',
-  //       reference: request.numero_reception || `REF-${request.id.slice(-8)}`,
-  //     });
-  //     const url = URL.createObjectURL(blob);
-  //     const a = document.createElement("a");
-  //     a.href = url;
-  //     a.download = `recu-zalama-${request.id}.pdf`;
-  //     a.click();
-  //     URL.revokeObjectURL(url);
-  //     alert("PDF téléchargé !");
-  //   } catch (err) {
-  //     alert("Erreur lors de la génération du PDF.");
-  //   }
-  // };
-
-  // const handleSharePDF = async (request: SalaryAdvanceRequest) => {
-  //   try {
-  //     const montant = formatAmount(request.montant_demande);
-  //     const date = formatFullDate(request.date_creation);
-  //     const statut = request.statut === 'Annulé' ? 'Rejeté' : request.statut;
-  //     const blob = await generateSalaryAdvancePDF({
-  //       id: request.id,
-  //       montant,
-  //       statut,
-  //       date,
-  //       telephone: request.numero_reception || 'N/A',
-  //       reference: request.numero_reception || `REF-${request.id.slice(-8)}`,
-  //     });
-  //     const file = new File([blob], `recu-zalama-${request.id}.pdf`, { type: "application/pdf" });
-  //     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-  //       await navigator.share({
-  //         files: [file],
-  //         title: "Reçu ZaLaMa",
-  //         text: "Voici mon reçu d'avance sur salaire généré par ZaLaMa.",
-  //       });
-  //     } else {
-  //       // Fallback : téléchargement
-  //       const url = URL.createObjectURL(blob);
-  //       const a = document.createElement("a");
-  //       a.href = url;
-  //       a.download = `recu-zalama-${request.id}.pdf`;
-  //       a.click();
-  //       URL.revokeObjectURL(url);
-  //       alert("PDF téléchargé (partage non supporté sur ce navigateur)");
-  //     }
-  //   } catch (err) {
-  //     alert("Erreur lors du partage du PDF.");
-  //   }
-  // };
-
   if (loading) {
     return (
       <motion.div
@@ -494,7 +344,7 @@ export function TransactionHistory() {
       >
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF671E] mr-3"></div>
-          <span className="text-white">Chargement des demandes...</span>
+          <span style={{ color: 'rgb(255, 255, 255)' }}>Chargement des demandes...</span>
         </div>
       </motion.div>
     );
@@ -510,13 +360,14 @@ export function TransactionHistory() {
       >
         <div className="text-center py-8">
           <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <IconAlertCircle className="w-6 h-6 text-red-400" />
+            <IconCircle className="w-6 h-6" style={{ color: 'rgb(248, 113, 113)' }} />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Erreur de chargement</h3>
-          <p className="text-gray-400 mb-4">{error}</p>
+          <h3 className="text-lg font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>Erreur de chargement</h3>
+          <p style={{ color: 'rgb(156, 163, 175)' }} className="mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[#FF671E] text-white rounded-lg hover:bg-[#FF8E53] transition-colors"
+            className="px-4 py-2 rounded-lg"
+            style={{ backgroundColor: 'rgb(255, 103, 30)', color: 'rgb(255, 255, 255)' }}
           >
             Réessayer
           </button>
@@ -532,7 +383,6 @@ export function TransactionHistory() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header avec titre et statistiques */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -543,18 +393,17 @@ export function TransactionHistory() {
           <div className="flex items-center gap-3">
             <SalaryAdvanceIcon />
             <div>
-              <h2 className="text-xl font-bold text-white">Demandes d'avance sur salaire</h2>
-              <p className="text-gray-400 text-sm">
-                {filteredRequests.length} demande{filteredRequests.length !== 1 ? 's' : ''} trouvée{filteredRequests.length !== 1 ? 's' : ''}
+              <h2 className="text-xl font-bold" style={{ color: 'rgb(255, 255, 255)' }}>Demandes d'avance sur salaire</h2>
+              <p style={{ color: 'rgb(156, 163, 175)' }} className="text-sm">
+                {filteredRequests.length} demande{filteredRequests.length !== 1 ? "s" : ""} trouvée{filteredRequests.length !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Barre de recherche et filtres */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
             <input
               type="text"
               placeholder="Rechercher une demande..."
@@ -563,7 +412,13 @@ export function TransactionHistory() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF8E53] focus:border-transparent transition-all duration-300"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-300"
+              style={{ 
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'rgb(255, 255, 255)',
+                '--tw-ring-color': 'rgb(255, 142, 83)',
+                '--tw-placeholder-color': 'rgb(156, 163, 175)'
+              } as any}
             />
           </div>
           
@@ -571,14 +426,14 @@ export function TransactionHistory() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setFilterOpen(!filterOpen)}
-            className="px-4 py-3 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white hover:bg-[#010D3E]/70 transition-all duration-300 flex items-center gap-2"
+            className="px-4 py-3 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white hover:bg-[#010D3E]/70 transition-all duration-300 flex items-center gap-2"
+            style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
           >
             <IconFilter className="w-4 h-4" />
             <span className="hidden sm:inline">Filtres</span>
           </motion.button>
         </div>
 
-        {/* Filtres avancés */}
         <AnimatePresence>
           {filterOpen && (
             <motion.div
@@ -586,7 +441,8 @@ export function TransactionHistory() {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="mt-4 pt-4 border-t border-white/10"
+              className="mt-4 pt-4 border-t"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
@@ -631,11 +487,16 @@ export function TransactionHistory() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <label className="block text-sm font-medium text-white/80 mb-2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                       {filter.label}
                     </label>
                     <select
-                      className="block w-full pl-3 pr-10 py-2.5 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-[#FF8E53] focus:border-transparent shadow-sm transition-all duration-300"
+                      className="block w-full pl-3 pr-10 py-2.5 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white focus:outline-none focus:ring-2 shadow-sm transition-all duration-300"
+                      style={{ 
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        color: 'rgb(255, 255, 255)',
+                        '--tw-ring-color': 'rgb(255, 142, 83)'
+                      } as any}
                       value={filters[filter.name as keyof typeof filters]}
                       onChange={(e) => {
                         setFilters({
@@ -659,15 +520,14 @@ export function TransactionHistory() {
         </AnimatePresence>
       </motion.div>
 
-      {/* Liste des demandes */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="space-y-4"
       >
-        {apiRequests.slice(indexOfFirstRequest, indexOfLastRequest).length > 0 ? (
-          apiRequests.slice(indexOfFirstRequest, indexOfLastRequest).map((request, index) => (
+        {currentRequests.length > 0 ? (
+          currentRequests.map((request, index) => (
             <motion.div
               key={`${request.id}-${index}`}
               custom={index}
@@ -675,79 +535,56 @@ export function TransactionHistory() {
               initial="hidden"
               animate="visible"
               whileHover="hover"
-              className="bg-[#010D3E]/50 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden shadow-lg"
+              className="bg-[#010D3E]/50 backdrop-blur-md rounded-xl border overflow-hidden shadow-lg"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
             >
-              {/* Contenu principal de la carte */}
               <div className="p-4">
                 <div className="flex items-start gap-4">
-                  {/* Icône du service */}
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(to right, rgb(255, 103, 30), rgb(255, 142, 83))' }}>
                       <SalaryAdvanceIcon />
                     </div>
                   </div>
-                  {/* Informations principales */}
                   <div className="flex-1 min-w-0">
-                    {/* Titre et statut */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-semibold text-lg mb-1">
+                        <h3 className="font-semibold text-lg" style={{ color: 'rgb(255, 255, 255)' }}>
                           Avance sur salaire
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <div className="flex items-center gap-2 text-sm" style={{ color: 'rgb(156, 163, 175)' }}>
                           <IconPhone className="w-3 h-3" />
-                          <span>{request.numero_reception || 'N/A'}</span>
+                          <span>{request.telephone}</span>
                         </div>
                       </div>
-                      {/* Badge de statut */}
                       <span
-                        className={`px-3 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full border ${getStatusColor(request.statut)}`}
+                        className={`px-3 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full border ${getStatusColor(request.status)}`}
                       >
-                        {getStatusIcon(request.statut)}
-                        {getStatusText(request.statut)}
+                        {getStatusIcon(request.status)}
+                        {getStatusText(request.status)}
                       </span>
                     </div>
-                    {/* Montant et date */}
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2">
-                        <IconCurrency className="w-4 h-4 text-gray-400" />
-                        <span className="text-white/80 text-sm">Montant demandé :</span>
-                        <span className="text-white font-semibold">{formatAmount(request.montant_demande)}</span>
+                        <IconCurrency className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
+                        <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Montant demandé :</span>
+                        <span className="font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>{request.amount}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <IconCalendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-white/80 text-sm">Le {formatFullDate(request.date_creation)}</span>
+                        <IconCalendar className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
+                        <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Le {request.date}</span>
                       </div>
                     </div>
-                    {/* Boutons d'action */}
                     <div className="flex items-center gap-2 mt-2">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setSelectedRequest(request.id)}
-                        className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium flex items-center gap-2"
+                        className="px-3 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
                       >
                         <IconEye className="w-4 h-4" />
                         Voir détail
                       </motion.button>
-                      {/* <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        // onClick={() => handleDownloadPDF(request)}
-                        className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium flex items-center gap-2"
-                      >
-                        <IconDownload className="w-4 h-4" />
-                        Télécharger PDF
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        // onClick={() => handleSharePDF(request)}
-                        className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium flex items-center gap-2"
-                      >
-                        <IconShare className="w-4 h-4" />
-                        Partager PDF
-                      </motion.button> */}
                     </div>
                   </div>
                 </div>
@@ -759,18 +596,18 @@ export function TransactionHistory() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="text-center py-12 bg-[#010D3E]/30 backdrop-blur-md rounded-xl border border-[#1A3A8F]"
+            className="text-center py-12 bg-[#010D3E]/30 backdrop-blur-md rounded-xl border"
+            style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
           >
-            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <IconFileText className="w-8 h-8 text-white/40" />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <IconFileText className="w-8 h-8" style={{ color: 'rgba(255, 255, 255, 0.4)' }} />
             </div>
-            <p className="text-white/60 text-lg">Aucune demande d'avance trouvée</p>
-            <p className="text-white/40 text-sm mt-2">Vous n'avez pas encore soumis de demande d'avance</p>
+            <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Aucune demande d'avance trouvée</p>
+            <p className="text-sm mt-2" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Vous n'avez pas encore soumis de demande d'avance</p>
           </motion.div>
         )}
       </motion.div>
 
-      {/* Pagination - Mobile Optimized */}
       {filteredRequests.length > requestsPerPage && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -778,12 +615,10 @@ export function TransactionHistory() {
           transition={{ delay: 0.4 }}
           className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4"
         >
-          <div className="text-sm text-white/60 text-center sm:text-left">
-            Affichage de <span className="font-medium text-white">{indexOfFirstRequest + 1}</span> à{" "}
-            <span className="font-medium text-white">
-              {Math.min(indexOfLastRequest, filteredRequests.length)}
-            </span>{" "}
-            sur <span className="font-medium text-white">{filteredRequests.length}</span> demandes
+          <div className="text-sm text-center sm:text-left" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+            Affichage de <span className="font-medium" style={{ color: 'rgb(255, 255, 255)' }}>{indexOfFirstRequest + 1}</span> à{" "}
+            <span className="font-medium" style={{ color: 'rgb(255, 255, 255)' }}>{Math.min(indexOfLastRequest, filteredRequests.length)}</span>{" "}
+            sur <span className="font-medium" style={{ color: 'rgb(255, 255, 255)' }}>{filteredRequests.length}</span> demandes
           </div>
           
           <div className="flex items-center gap-2">
@@ -792,9 +627,10 @@ export function TransactionHistory() {
               whileTap={{ scale: 0.95 }}
               onClick={() => paginate(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
+              className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
                 currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
               }`}
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
             >
               Précédent
             </motion.button>
@@ -812,9 +648,12 @@ export function TransactionHistory() {
                     onClick={() => paginate(page)}
                     className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-300 ${
                       currentPage === page
-                        ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white"
-                        : "bg-[#010D3E]/50 border border-white/10 text-white/60 hover:bg-[#010D3E]/70 hover:text-white"
+                        ? "text-white"
+                        : "bg-[#010D3E]/50 border text-white/60 hover:bg-[#010D3E]/70 hover:text-white"
                     }`}
+                    style={currentPage === page 
+                      ? { background: 'linear-gradient(to right, rgb(255, 103, 30), rgb(255, 142, 83))' }
+                      : { borderColor: 'rgba(255, 255, 255, 0.1)' }}
                   >
                     {page}
                   </motion.button>
@@ -827,9 +666,10 @@ export function TransactionHistory() {
               whileTap={{ scale: 0.95 }}
               onClick={() => paginate(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
+              className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
                 currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
               }`}
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
             >
               Suivant
             </motion.button>
@@ -837,7 +677,6 @@ export function TransactionHistory() {
         </motion.div>
       )}
 
-      {/* Modale de détails - Scrollable et responsive */}
       <AnimatePresence>
         {selectedRequest && (
           <motion.div
@@ -852,62 +691,118 @@ export function TransactionHistory() {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="relative mx-auto w-full max-w-lg max-h-[90vh] bg-[#010D3E] rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+              className="relative mx-auto w-full max-w-lg max-h-[90vh] bg-[#010D3E] rounded-2xl shadow-2xl border overflow-hidden"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header de la modale */}
-              <div className="flex justify-between items-center p-6 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <SalaryAdvanceIcon />
-                  <h3 className="text-xl font-bold text-white">Demande d'Avance sur salaire</h3>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.2, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setSelectedRequest(null)}
-                  className="text-white/50 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <IconX className="w-6 h-6" />
-                </motion.button>
-              </div>
-
-              {/* Contenu scrollable */}
-              <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
-                {selectedRequest && (
-                  <div className="space-y-4">
-                    {(() => {
-                      const request = allRequests.find((r) => r.id === selectedRequest)!;
-                      return (
-                        <>
-                          {[
-                            { label: "Type de motif", value: request.type },
-                            { label: "Statut", value: request.status },
-                            { label: "Montant demandé", value: request.amount },
-                            { label: "Frais de service", value: `-${request.fraisService}` },
-                            { label: "Montant reçu", value: `${(parseInt((request.amount || "0").toString().replace(/\s/g, ""), 10) -parseInt((request.fraisService || "0").toString().replace(/\s/g, ""), 10)).toLocaleString('fr-FR')} GNF`},
-                            { label: "Expéditeur", value: "LengoPay" },
-                            { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
-                            // { label: "Motif", value: request.motif },
-                            // { label: "Salaire disponible", value: request.salaireDisponible },
-                            // { label: "Avance disponible", value: request.avanceDisponible },
-                            // { label: "Date de création", value: request.date },
-                            { label: "Date", value: request.dateValidation || "N/A" },
-                            // { label: "Date de rejet", value: request.dateRejet || "N/A" },
-                            // { label: "Motif de rejet", value: request.motifRejet || "N/A" },
-                            // { label: "Nom de l'employé", value: request.nomEmploye },
-                            // { label: "Téléphone de l'employé", value: request.telephone },
-                            // { label: "Nom du partenaire", value: request.nomPartenaire },
-                          ].map((item, subIndex) => (
-                            <div key={subIndex} className="flex justify-between items-center">
-                              <span className="text-white/60 text-sm">{item.label} :</span>
-                              <span className="text-white font-medium">{item.value}</span>
-                            </div>
-                          ))}
-                        </>
-                      );
-                    })()}
+              <motion.button
+                whileHover={{ scale: 1.2, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setSelectedRequest(null)}
+                className="absolute top-6 right-6 p-2 rounded-lg transition-colors"
+                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+              >
+                <IconX className="w-7 h-7" />
+              </motion.button>
+              <div ref={modalRef}>
+                <div className="flex flex-col w-full items-center mb-4">
+                  <div className="w-32 h-32 mb-2 flex items-center justify-center">
+                    <img src="/images/zalama-logo.svg" alt="ZaLaMa Logo" className="w-full h-full object-contain" crossOrigin="anonymous" />
                   </div>
-                )}
+                  <div className="flex items-center gap-3 mb-2">
+                    <IconFileText className="w-8 h-8" style={{ color: 'rgb(251, 146, 60)' }} />
+                    <h3 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'rgb(255, 255, 255)' }}>Détails de la demande</h3>
+                  </div>
+                </div>
+
+                {selectedRequest && (() => {
+                  const request = allRequests.find((r) => r.id === selectedRequest)!;
+                  let fieldsToShow: Array<{ label: string; value: string; type?: string }> = [];
+                  if (request.status === "Rejeté") {
+                    fieldsToShow = [
+                      { label: "Statut", value: request.status, type: "status" },
+                      { label: "Type de motif", value: request.type },
+                      { label: "Montant demandé", value: request.amount, type: "amount" },
+                      { label: "Motif de rejet", value: request.motifRejet },
+                      { label: "Expéditeur", value: "LengoPay" },
+                      { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
+                      { label: "Date", value: request.date, type: "date" },
+                    ];
+                  } else if (request.status === "En attente" || request.status === "Annulé") {
+                    fieldsToShow = [
+                      { label: "Statut", value: request.status, type: "status" },
+                      { label: "Type de motif", value: request.type },
+                      { label: "Montant demandé", value: request.amount, type: "amount" },
+                      { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
+                      { label: "Date", value: request.date, type: "date" },
+                    ];
+                  } else {
+                    fieldsToShow = [
+                      { label: "Statut", value: request.status, type: "status" },
+                      { label: "Type de motif", value: request.type },
+                      { label: "Montant demandé", value: request.amount, type: "amount" },
+                      { label: "Frais de service", value: `-${request.fraisService}`, type: "fees" },
+                      { label: "Montant reçu", value: `${(parseInt((request.amount || "0").replace(/[^0-9]/g, ""), 10) - parseInt((request.fraisService || "0").replace(/[^0-9]/g, ""), 10)).toLocaleString("fr-FR")} GNF`, type: "total" },
+                      { label: "Expéditeur", value: "LengoPay" },
+                      { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
+                      { label: "Date", value: request.date, type: "date" },
+                      { label: "Date de validation", value: request.dateValidation || request.date, type: "date" },
+                      { label: "Référence", value: request.numeroReception || `REF-${request.id.slice(-8)}`, type: "ref" },
+                    ];
+                  }
+                  return (
+                    <div className="w-full max-w-2xl mx-auto rounded-2xl p-0 md:p-0 flex flex-col" style={{ minHeight: "320px" }}>
+                      <div className={`${request.status === "Validé" ? "overflow-y-auto max-h-[60vh]" : ""} flex-1 flex flex-col divide-y`} style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+                        {fieldsToShow.map((item, subIndex) => (
+                          <div key={subIndex} className="flex items-center justify-between py-4 px-2 md:px-4">
+                            <span className="text-base md:text-lg font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                              {item.label}
+                            </span>
+                            <span className={`text-right text-base md:text-lg font-bold ${
+                              item.type === "amount" || item.type === "total"
+                                ? "text-orange-400"
+                                : item.type === "fees"
+                                  ? "text-red-400"
+                                  : item.type === "ref" || item.type === "date"
+                                    ? "text-white"
+                                    : item.type === "status"
+                                      ? "text-blue-300"
+                                      : "text-white"
+                            }`} style={{
+                              color: item.type === "amount" || item.type === "total"
+                                ? 'rgb(251, 146, 60)'
+                                : item.type === "fees"
+                                  ? 'rgb(248, 113, 113)'
+                                  : item.type === "ref" || item.type === "date"
+                                    ? 'rgb(255, 255, 255)'
+                                    : item.type === "status"
+                                      ? 'rgb(147, 197, 253)'
+                                      : 'rgb(255, 255, 255)'
+                            }}>
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-center gap-8 pt-8 pb-2 sticky bottom-0" style={{ backgroundColor: 'rgb(1, 13, 62)' }}>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => generateAndDownloadPDF(request)}
+                          className="w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition-all duration-300"
+                          style={{ background: 'linear-gradient(to bottom right, rgb(59, 130, 246), rgb(29, 78, 216))' }}
+                        >
+                          <IconDownload className="w-7 h-7" style={{ color: 'rgb(255, 255, 255)' }} />
+                        </motion.button>
+                        <ImageRecu 
+                          request={request}
+                          modalRef={modalRef}
+                          onClose={() => setSelectedRequest(null)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </motion.div>
           </motion.div>
