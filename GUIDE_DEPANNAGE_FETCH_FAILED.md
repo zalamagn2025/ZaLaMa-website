@@ -17,7 +17,7 @@ POST /api/partnership 500 in 22287ms
 
 2. **Vérifier votre fichier `.env.local`**
    ```env
-   NEXT_PRIVATE_SUPABASE_URL=https://votre-projet.supabase.co
+   NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
    NEXT_PRIVATE_SUPABASE_ANON_KEY=votre_clé_anon
    SUPABASE_SERVICE_ROLE_KEY=votre_clé_service_role
    ```

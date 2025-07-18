@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Créer le client Supabase
     const cookieStore = await cookies();
     const supabase = createServerClient(
-      process.env.NEXT_PRIVATE_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY!,
       {
         cookies: {
