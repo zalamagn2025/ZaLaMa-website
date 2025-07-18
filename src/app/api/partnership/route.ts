@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     
     // Utiliser le client Supabase avec la clé anon pour l'insertion publique
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PRIVATE_SUPABASE_URL!,
+      process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY!,
       {
         cookies: {
           get(name: string) {
@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('📤 Tentative d\'insertion des données:', partnershipData)
-    console.log('🔗 URL Supabase:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('🔑 Clé Supabase configurée:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    console.log('🔗 URL Supabase:', process.env.NEXT_PRIVATE_SUPABASE_URL)
+    console.log('🔑 Clé Supabase configurée:', !!process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY)
     console.log('📄 Lettre de motivation URL:', body.motivationLetterUrl || body.motivation_letter_url)
     console.log('📝 Lettre de motivation texte:', body.motivationLetterText || body.motivation_letter_text ? 'Présente' : 'Absente')
 
@@ -294,7 +294,7 @@ export async function GET() {
     
     // Pour la lecture, utiliser le client avec authentification
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PRIVATE_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!, // Utiliser la clé service pour les admins
       {
         cookies: {

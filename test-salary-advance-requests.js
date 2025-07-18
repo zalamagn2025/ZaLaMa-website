@@ -2,8 +2,8 @@ const { createClient } = require('@supabase/supabase-js')
 require('dotenv').config()
 
 // Configuration Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PRIVATE_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Variables d\'environnement Supabase manquantes')
@@ -239,7 +239,7 @@ async function testAuthentication(employee) {
 async function testSalaryAdvanceAPI(employee, partnerId) {
   logSubSection('Test de l\'API de demandes d\'avance')
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PRIVATE_APP_URL || 'http://localhost:3000'
   
   // Test 1: Demande valide
   log('Test 1: Demande d\'avance valide')
@@ -385,7 +385,7 @@ async function testDatabaseQueries(employee, partnerId) {
 async function testValidationRules(employee, partnerId) {
   logSubSection('Test des règles de validation')
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PRIVATE_APP_URL || 'http://localhost:3000'
   
   // Test 1: Mot de passe incorrect
   log('Test 1: Mot de passe incorrect')
@@ -490,7 +490,7 @@ async function testValidationRules(employee, partnerId) {
 async function testMultipleRequests(employee, partnerId) {
   logSubSection('Test de demandes multiples')
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PRIVATE_APP_URL || 'http://localhost:3000'
   
   for (let i = 0; i < TEST_CONFIG.testAdvanceRequests.length; i++) {
     const request = TEST_CONFIG.testAdvanceRequests[i]

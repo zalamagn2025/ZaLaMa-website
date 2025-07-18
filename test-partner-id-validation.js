@@ -1,12 +1,12 @@
 const { createClient } = require('@supabase/supabase-js')
 
 // Configuration Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseUrl = process.env.NEXT_PRIVATE_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('❌ Variables d\'environnement manquantes')
-  console.log('NEXT_PUBLIC_SUPABASE_URL:', !!supabaseUrl)
+  console.log('NEXT_PRIVATE_SUPABASE_URL:', !!supabaseUrl)
   console.log('SUPABASE_SERVICE_ROLE_KEY:', !!supabaseServiceKey)
   process.exit(1)
 }

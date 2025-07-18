@@ -206,7 +206,7 @@ Le script `test-partner-id-validation.js` vérifie :
 
 ```bash
 # Avec les variables d'environnement
-NEXT_PUBLIC_SUPABASE_URL=your_url SUPABASE_SERVICE_ROLE_KEY=your_key node test-partner-id-validation.js
+NEXT_PRIVATE_SUPABASE_URL=your_url SUPABASE_SERVICE_ROLE_KEY=your_key node test-partner-id-validation.js
 
 # Ou depuis un fichier .env
 node test-partner-id-validation.js

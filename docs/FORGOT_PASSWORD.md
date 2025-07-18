@@ -119,7 +119,7 @@ Le nouveau mot de passe doit respecter les critères suivants :
 ## Configuration requise
 
 ### Variables d'environnement
-- `NEXT_PUBLIC_BASE_URL`: URL de base de l'application (pour les liens de redirection)
+- `NEXT_PRIVATE_BASE_URL`: URL de base de l'application (pour les liens de redirection)
 - Configuration Firebase (déjà existante)
 
 ### Firebase Configuration
