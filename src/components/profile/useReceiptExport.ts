@@ -149,33 +149,35 @@ export async function generateSalaryAdvancePDF({
 }
 
 export const handleDownloadPDF = async (request: { id: string | any[]; amount: any; status: any; date: any; telephone: any; numeroReception: any; }) => {
+  const id = Array.isArray(request.id) ? request.id[0] : request.id;
   const blob = await generateSalaryAdvancePDF({
-    id: request.id,
+    id: id,
     montant: request.amount,
     statut: request.status,
     date: request.date,
     telephone: request.telephone,
-    reference: request.numeroReception || `REF-${request.id.slice(-8)}`,
+    reference: request.numeroReception || `REF-${id.slice(-8)}`,
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `recu-zalama-${request.id}.pdf`;
+  a.download = `recu-zalama-${id}.pdf`;
   a.click();
   URL.revokeObjectURL(url);
   alert("PDF téléchargé !");
 };
 
-export const handleSharePDF = async (request) => {
+export const handleSharePDF = async (request: { id: string | any[]; amount: any; status: any; date: any; telephone: any; numeroReception: any; }) => {
+  const id = Array.isArray(request.id) ? request.id[0] : request.id;
   const blob = await generateSalaryAdvancePDF({
-    id: request.id,
+    id: id,
     montant: request.amount,
     statut: request.status,
     date: request.date,
     telephone: request.telephone,
-    reference: request.numeroReception || `REF-${request.id.slice(-8)}`,
+    reference: request.numeroReception || `REF-${id.slice(-8)}`,
   });
-  const file = new File([blob], `recu-zalama-${request.id}.pdf`, { type: "application/pdf" });
+  const file = new File([blob], `recu-zalama-${id}.pdf`, { type: "application/pdf" });
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     await navigator.share({
@@ -188,7 +190,7 @@ export const handleSharePDF = async (request) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `recu-zalama-${request.id}.pdf`;
+    a.download = `recu-zalama-${id}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     alert("PDF téléchargé (partage non supporté sur ce navigateur)");

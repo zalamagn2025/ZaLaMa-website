@@ -300,7 +300,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
     const userData = verifyAuthToken(request)
     if (!userData) {
       return NextResponse.json(
-        { success: false, error: 'Non autorisé' },
+        { success: false, data: [], error: 'Non autorisé' },
         { status: 401 }
       )
     }
@@ -331,7 +331,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
     if (employeeError || !employee) {
       console.error('❌ Employé non trouvé:', employeeError)
       return NextResponse.json(
-        { success: false, error: 'Employé non trouvé' },
+        { success: false, data: [], error: 'Employé non trouvé' },
         { status: 404 }
       )
     }
@@ -346,7 +346,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
     if (fetchError) {
       console.error('Erreur lors de la récupération des avis:', fetchError)
       return NextResponse.json(
-        { success: false, error: 'Erreur lors de la récupération des avis' },
+        { success: false, data: [], error: 'Erreur lors de la récupération des avis' },
         { status: 500 }
       )
     }
@@ -360,7 +360,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
   } catch (error) {
     console.error('Erreur serveur:', error)
     return NextResponse.json(
-      { success: false, error: 'Erreur serveur interne' },
+      { success: false, data: [], error: 'Erreur serveur interne' },
       { status: 500 }
     )
   }

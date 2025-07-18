@@ -1,5 +1,26 @@
 // app/api/partnership-requests/route.ts
-import { smsService } from '@/services/smsService';
+import { smsService } from '../../../../services/smsServices';
+import { createClient } from '@supabase/supabase-js';
+
+// Fonction pour sauvegarder la demande de partenariat
+async function savePartnershipRequest(partnershipData: any) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data, error } = await supabase
+    .from('partnership_requests')
+    .insert(partnershipData)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Erreur lors de la sauvegarde: ${error.message}`);
+  }
+
+  return data;
+}
 
 export async function POST(request: Request) {
   try {
