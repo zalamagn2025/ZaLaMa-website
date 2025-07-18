@@ -1,11 +1,23 @@
 import { Resend } from 'resend';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+interface ContactData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    console.log('📧 Nouveau message de contact...');
+    
+    const body: ContactData = await request.json();
     const { firstName, lastName, email, subject, message } = body;
 
     // Validation des données
@@ -25,7 +37,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('✅ Validation réussie pour:', email);
+
+    // Créer le client Supabase
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
+    // Stocker le message dans Supabase
+    console.log('💾 Stockage du message dans Supabase...');
+    const contactData = {
+      nom: firstName,
+      prenom: lastName,
+      email,
+      sujet: subject,
+      message,
+      date_creation: new Date().toISOString(),
+      statut: 'nouveau' // nouveau, lu, repondu, archive
+    };
+
+    const { data: savedContact, error: saveError } = await supabase
+      .from('contacts')
+      .insert(contactData)
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('❌ Erreur lors du stockage dans Supabase:', saveError);
+      // On continue quand même pour envoyer l'email
+    } else {
+      console.log('✅ Message stocké dans Supabase avec ID:', savedContact.id);
+    }
+
     // Envoi de l'email
+    console.log('📤 Envoi de l\'email...');
     const { data, error } = await resend.emails.send({
       from: 'contact@zalamagn.com',
       to: ['contact@zalamagn.com'], // Email de destination
@@ -41,6 +101,7 @@ export async function POST(request: NextRequest) {
             <p><strong>Nom:</strong> ${firstName} ${lastName}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Sujet:</strong> ${subject}</p>
+            ${savedContact ? `<p><strong>ID Contact:</strong> ${savedContact.id}</p>` : ''}
           </div>
           
           <div style="background-color: #fff; padding: 20px; border-left: 4px solid #007bff; margin: 20px 0;">
@@ -57,20 +118,26 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('Erreur Resend:', error);
+      console.error('❌ Erreur Resend:', error);
       return NextResponse.json(
         { error: 'Erreur lors de l\'envoi de l\'email' },
         { status: 500 }
       );
     }
 
+    console.log('✅ Email envoyé avec succès, ID:', data?.id);
+
     return NextResponse.json(
-      { message: 'Message envoyé avec succès', id: data?.id },
+      { 
+        message: 'Message envoyé avec succès', 
+        id: data?.id,
+        contactId: savedContact?.id
+      },
       { status: 200 }
     );
 
   } catch (error) {
-    console.error('Erreur serveur:', error);
+    console.error('💥 Erreur serveur:', error);
     return NextResponse.json(
       { error: 'Erreur interne du serveur' },
       { status: 500 }

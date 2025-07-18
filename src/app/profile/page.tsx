@@ -5,6 +5,7 @@ import { FinancialServices } from "@/components/profile/financial-services"
 // import { TransactionHistory } from "@/components/profile/transaction-history"
 import { ProfileStats } from "@/components/profile/profile-stats"
 import { FeedbackSection } from "@/components/profile/feedback-section"
+import { AvisHistory } from '@/components/profile/avis-history'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
@@ -14,6 +15,7 @@ import { ProfileSettings } from "@/components/profile/profile-settings"
 import { UserWithEmployeData } from "@/types/employe"
 import { Partenaire } from "@/types/partenaire"
 import { useRouter } from "next/navigation"
+import { TransactionHistory } from "@/components/profile/transaction-history"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -28,7 +30,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserWithEmployeData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [entreprise, setEntreprise] = useState<Partenaire | null>(null)
+  const [entreprise, setEntreprise] = useState<Partenaire | undefined>(undefined)
 
   // Fonction pour récupérer les informations de l'entreprise
   const fetchEntrepriseInfo = async (partenaireId: string) => {
@@ -144,7 +146,7 @@ export default function ProfilePage() {
         <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div>
-              {entreprise && <ProfileHeader user={user} entreprise={entreprise} />}
+              <ProfileHeader user={user} entreprise={entreprise} />
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -264,10 +266,13 @@ export default function ProfilePage() {
                         <FinancialServices user={user} />
                       </TabsContent>
                       <TabsContent value="history" className="mt-2">
-                        {/* <TransactionHistory user={user} entreprise={entreprise} /> */}
+                        <TransactionHistory />
                       </TabsContent>
                       <TabsContent value="feedback" className="mt-2">
-                        <FeedbackSection />
+                        <div className="space-y-6">
+                          <FeedbackSection />
+                          <AvisHistory />
+                        </div>
                       </TabsContent>
                     </motion.div>
                   </AnimatePresence>
@@ -306,7 +311,7 @@ export default function ProfilePage() {
 
       {/* Paramètres utilisateur */}
       {showSettings && (
-        <ProfileSettings onClose={() => setShowSettings(false)} />
+        <ProfileSettings onClose={() => setShowSettings(false)} userData={user} />
       )}
     </div>
   )

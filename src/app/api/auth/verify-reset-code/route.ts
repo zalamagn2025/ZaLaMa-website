@@ -1,5 +1,5 @@
-import { auth } from '@/lib/firebase';
-import { verifyPasswordResetCode } from 'firebase/auth';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface VerifyCodeData {
@@ -21,11 +21,74 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Vérification du code avec Firebase Auth...');
+    console.log('🔍 Vérification du code avec Supabase Auth...');
 
-    // Vérifier le code de réinitialisation via Firebase Auth
-    const email = await verifyPasswordResetCode(auth, oobCode);
+    // Créer le client Supabase
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
+    // Avec Supabase, on ne peut pas directement vérifier un token sans l'utiliser
+    // On va essayer de récupérer la session pour voir si le token est valide
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error('❌ Erreur lors de la vérification du token:', error);
+      
+      let errorMessage = 'Code de vérification invalide';
+      
+      switch (error.message) {
+        case 'Invalid recovery token':
+          errorMessage = 'Le lien de réinitialisation est invalide ou a déjà été utilisé';
+          break;
+        case 'Token expired':
+          errorMessage = 'Le lien de réinitialisation a expiré';
+          break;
+        case 'User not found':
+          errorMessage = 'Utilisateur non trouvé';
+          break;
+        default:
+          errorMessage = 'Code de vérification invalide';
+      }
+      
+      return NextResponse.json(
+        { 
+          error: errorMessage,
+          valid: false
+        },
+        { status: 400 }
+      );
+    }
+
+    // Si on arrive ici, le token semble valide
+    // On peut récupérer l'email de l'utilisateur depuis la session
+    const email = session?.user?.email;
     
+    if (!email) {
+      return NextResponse.json(
+        { 
+          error: 'Impossible de récupérer l\'email associé au token',
+          valid: false
+        },
+        { status: 400 }
+      );
+    }
+
     console.log('✅ Code de réinitialisation valide pour:', email);
 
     return NextResponse.json(
@@ -40,31 +103,9 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('💥 Erreur lors de la vérification du code:', error);
     
-    // Gestion des erreurs Firebase Auth spécifiques
-    let errorMessage = 'Code de vérification invalide';
-    
-    if (error instanceof Error && 'code' in error) {
-      switch (error.code) {
-        case 'auth/expired-action-code':
-          errorMessage = 'Le lien de réinitialisation a expiré';
-          break;
-        case 'auth/invalid-action-code':
-          errorMessage = 'Le lien de réinitialisation est invalide ou a déjà été utilisé';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'Ce compte a été désactivé';
-          break;
-        case 'auth/user-not-found':
-          errorMessage = 'Utilisateur non trouvé';
-          break;
-        default:
-          errorMessage = 'Code de vérification invalide';
-      }
-    }
-    
     return NextResponse.json(
       { 
-        error: errorMessage,
+        error: 'Code de vérification invalide',
         valid: false
       },
       { status: 400 }

@@ -1,4 +1,3 @@
-
 export const getAdminEmailTemplate = (data: {
   companyName: string;
   legalStatus: string;
@@ -14,6 +13,14 @@ export const getAdminEmailTemplate = (data: {
   cdiCount: string;
   cddCount: string;
   docId: string;
+  activityDomain: string;
+  paymentDate: string;
+  repEmail: string;
+  repPhone: string;
+  repPosition: string;
+  hrFullName: string;
+  hrEmail: string;
+  hrPhone: string;
 }) => `
 <!DOCTYPE html>
 <html lang="fr">
@@ -32,6 +39,8 @@ export const getAdminEmailTemplate = (data: {
     <tr>
       <td style="padding: 40px; background-color: #f9fafb;">
         <h2 style="color: #1e3a8a; font-size: 30px; font-weight: 700; margin: 0 0 25px 0; border-bottom: 6px solid #3b82f6; padding-bottom: 12px; text-align: center; letter-spacing: 1px;">Nouvelle Demande de Partenariat</h2>
+        
+        <h3 style="color: #1e3a8a; font-size: 20px; font-weight: 600; margin: 20px 0 15px 0; border-left: 4px solid #3b82f6; padding-left: 15px;">Informations de l'entreprise</h3>
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
@@ -40,27 +49,12 @@ export const getAdminEmailTemplate = (data: {
           </tr>
           <tr>
             <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
-              <span style="font-weight: bold; color: #1e40af;">Contact :</span> ${data.legalRepresentative} (${data.position})
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
-              <span style="font-weight: bold; color: #1e40af;">Email :</span> <a href="mailto:${data.email}" style="color: #3b82f6; text-decoration: none;">${data.email}</a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
-              <span style="font-weight: bold; color: #1e40af;">Téléphone :</span> ${data.phone}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
-              <span style="font-weight: bold; color: #1e40af;">Adresse :</span> ${data.headquartersAddress}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
               <span style="font-weight: bold; color: #1e40af;">Raison sociale :</span> ${data.legalStatus}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Domaine d'activité :</span> ${data.activityDomain}
             </td>
           </tr>
           <tr>
@@ -73,6 +67,25 @@ export const getAdminEmailTemplate = (data: {
               <span style="font-weight: bold; color: #1e40af;">NIF :</span> ${data.nif}
             </td>
           </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Adresse :</span> ${data.headquartersAddress}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Téléphone :</span> ${data.phone}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Email :</span> <a href="mailto:${data.email}" style="color: #3b82f6; text-decoration: none;">${data.email}</a>
+            </td>
+          </tr>
+        </table>
+
+        <h3 style="color: #1e3a8a; font-size: 20px; font-weight: 600; margin: 20px 0 15px 0; border-left: 4px solid #3b82f6; padding-left: 15px;">Informations RH</h3>
+        <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
               <span style="font-weight: bold; color: #1e40af;">Nombre d'employés :</span> ${data.employeesCount}
@@ -93,16 +106,61 @@ export const getAdminEmailTemplate = (data: {
               <span style="font-weight: bold; color: #1e40af;">Employés CDD :</span> ${data.cddCount}
             </td>
           </tr>
-          
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Date de paiement :</span> ${data.paymentDate}
+            </td>
+          </tr>
+        </table>
+
+        <h3 style="color: #1e3a8a; font-size: 20px; font-weight: 600; margin: 20px 0 15px 0; border-left: 4px solid #3b82f6; padding-left: 15px;">Représentant légal</h3>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Nom :</span> ${data.legalRepresentative}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Fonction :</span> ${data.position}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Email :</span> <a href="mailto:${data.repEmail}" style="color: #3b82f6; text-decoration: none;">${data.repEmail}</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Téléphone :</span> ${data.repPhone}
+            </td>
+          </tr>
+        </table>
+
+        <h3 style="color: #1e3a8a; font-size: 20px; font-weight: 600; margin: 20px 0 15px 0; border-left: 4px solid #3b82f6; padding-left: 15px;">Responsable RH</h3>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Nom :</span> ${data.hrFullName}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Email :</span> <a href="mailto:${data.hrEmail}" style="color: #3b82f6; text-decoration: none;">${data.hrEmail}</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 15px; color: #1f2937; font-size: 16px; line-height: 1.6; background-color: #ffffff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #dbeafe;">
+              <span style="font-weight: bold; color: #1e40af;">Téléphone :</span> ${data.hrPhone}
+            </td>
+          </tr>
         </table>
       </td>
     </tr>
     <tr>
       <td style="background-color: #1e40af; padding: 25px; text-align: center; font-size: 14px; color: #ffffff; border-radius: 0 0 12px 12px;">
         <p style="margin: 0 0 15px 0; font-weight: 500;">Zalama SAS - Demande de partenariat</p>
-        <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-          
-        </table>
+        <p style="margin: 0; font-size: 12px;">ID: ${data.docId}</p>
       </td>
     </tr>
   </table>
@@ -174,8 +232,8 @@ export const getUserEmailTemplate = (data: {
         <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
           <tr>
             <td style="background-color: #ffffff; padding: 12px 30px; border-radius: 10px; border: 1px solid #dbeafe; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-              <a href="https://www.zalamasas.com" style="color: #1e40af; text-decoration: none; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center;">
-                www.zalamasas.com
+              <a href="https://www.zalamagn.com" style="color: #1e40af; text-decoration: none; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center;">
+                www.zalamagn.com
               </a>
             </td>
           </tr>
@@ -185,4 +243,4 @@ export const getUserEmailTemplate = (data: {
   </table>
 </body>
 </html>
-;`
+`;

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 
 interface LoginData {
@@ -11,7 +10,7 @@ interface LoginData {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔐 Tentative de connexion avec Firebase Auth...');
+    console.log('🔐 Tentative de connexion avec Supabase Auth...');
     
     const body: LoginData = await request.json();
     const { email, password } = body;
@@ -33,56 +32,105 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Authentification Firebase pour:', email);
+    console.log('🔍 Authentification Supabase pour:', email);
 
-    // Authentification avec Firebase Auth
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-    
-    console.log('✅ Authentification Firebase réussie pour UID:', firebaseUser.uid);
+    // Créer le client Supabase
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
 
-    // Récupérer les informations complémentaires depuis la collection employes par UID
-    console.log('📋 Recherche des informations employé par UID...');
-    const employesRef = collection(db, 'employes');
-    const q = query(employesRef, where('userId', '==', firebaseUser.uid));
-    const querySnapshot = await getDocs(q);
+    // Authentification avec Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    let employeData = null;
-    let employeDocRef = null;
-    let employeDocId = null;
+    if (authError) {
+      console.error('❌ Erreur d\'authentification Supabase:', authError);
+      
+      // Gestion des erreurs Supabase Auth spécifiques
+      let errorMessage = 'Identifiants invalides';
+      
+      switch (authError.message) {
+        case 'Invalid login credentials':
+          errorMessage = 'Email ou mot de passe incorrect';
+          break;
+        case 'Email not confirmed':
+          errorMessage = 'Veuillez confirmer votre email avant de vous connecter';
+          break;
+        case 'User not found':
+          errorMessage = 'Aucun compte trouvé avec cet email';
+          break;
+        case 'Too many requests':
+          errorMessage = 'Trop de tentatives. Réessayez plus tard';
+          break;
+        default:
+          errorMessage = 'Identifiants invalides';
+      }
+      
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 401 }
+      );
+    }
 
-    if (!querySnapshot.empty) {
-      const employeDoc = querySnapshot.docs[0];
-      employeData = employeDoc.data();
-      employeDocRef = employeDoc.ref;
-      employeDocId = employeDoc.id;
-      console.log('👤 Informations employé trouvées:', employeData.nomComplet || `${employeData.prenom} ${employeData.nom}`);
+    const supabaseUser = authData.user;
+    console.log('✅ Authentification Supabase réussie pour UID:', supabaseUser.id);
+
+    // Récupérer les informations complémentaires depuis la table employees par user_id
+    console.log('📋 Recherche des informations employé par user_id...');
+    const { data: employeeData, error: employeeError } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('user_id', supabaseUser.id)
+      .single();
+
+    if (employeeError && employeeError.code !== 'PGRST116') {
+      console.error('❌ Erreur lors de la récupération des données employé:', employeeError);
+    }
+
+    if (employeeData) {
+      console.log('👤 Informations employé trouvées:', employeeData.nom_complet || `${employeeData.prenom} ${employeeData.nom}`);
     } else {
-      console.log('⚠️ Aucune information employé trouvée pour UID:', firebaseUser.uid);
-      console.log('💡 Vérifiez que le champ userId dans la collection employes correspond à l\'UID Firebase');
+      console.log('⚠️ Aucune information employé trouvée pour user_id:', supabaseUser.id);
     }
 
     // Créer un token JWT avec toutes les informations disponibles
     const tokenPayload = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      emailVerified: firebaseUser.emailVerified,
-      // Informations depuis la collection employes (si disponibles)
-      ...(employeData && {
-        employeId: employeDocId,
-        prenom: employeData.prenom,
-        nom: employeData.nom,
-        nomComplet: employeData.nomComplet,
-        telephone: employeData.telephone,
-        poste: employeData.poste,
-        role: employeData.role,
-        genre: employeData.genre,
-        adresse: employeData.adresse,
-        salaireNet: employeData.salaireNet,
-        typeContrat: employeData.typeContrat,
-        dateEmbauche: employeData.dateEmbauche,
-        partenaireId: employeData.partenaireId,
-        userId: employeData.userId
+      uid: supabaseUser.id,
+      email: supabaseUser.email,
+      emailVerified: supabaseUser.email_confirmed_at ? true : false,
+      // Informations depuis la table employees (si disponibles)
+      ...(employeeData && {
+        employeeId: employeeData.id,
+        prenom: employeeData.prenom,
+        nom: employeeData.nom,
+        nomComplet: employeeData.nom_complet,
+        telephone: employeeData.telephone,
+        poste: employeeData.poste,
+        role: employeeData.role,
+        genre: employeeData.genre,
+        adresse: employeeData.adresse,
+        salaireNet: employeeData.salaire_net,
+        typeContrat: employeeData.type_contrat,
+        dateEmbauche: employeeData.date_embauche,
+        partenaireId: employeeData.partenaire_id,
+        userId: employeeData.user_id
       })
     };
 
@@ -96,38 +144,47 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Mettre à jour la dernière connexion dans la collection employes (si elle existe)
-    if (employeDocRef) {
-      await updateDoc(employeDocRef, {
-        lastLogin: new Date(),
-        dateModification: new Date()
-      });
+    // Mettre à jour la dernière connexion dans la table employees (si elle existe)
+    if (employeeData) {
+      const { error: updateError } = await supabase
+        .from('employees')
+        .update({
+          last_login: new Date().toISOString(),
+          date_modification: new Date().toISOString()
+        })
+        .eq('id', employeeData.id);
+
+      if (updateError) {
+        console.error('⚠️ Erreur lors de la mise à jour last_login:', updateError);
+      } else {
+        console.log('✅ Dernière connexion mise à jour');
+      }
     }
 
     const response = NextResponse.json(
       { 
         message: 'Connexion réussie',
         user: {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          emailVerified: firebaseUser.emailVerified,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
+          uid: supabaseUser.id,
+          email: supabaseUser.email,
+          emailVerified: supabaseUser.email_confirmed_at ? true : false,
+          displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name,
+          photoURL: supabaseUser.user_metadata?.avatar_url,
           // Informations employé (si disponibles)
-          ...(employeData && {
-            employeId: employeDocId,
-            prenom: employeData.prenom,
-            nom: employeData.nom,
-            nomComplet: employeData.nomComplet,
-            telephone: employeData.telephone,
-            poste: employeData.poste,
-            role: employeData.role,
-            genre: employeData.genre,
-            adresse: employeData.adresse,
-            salaireNet: employeData.salaireNet,
-            typeContrat: employeData.typeContrat,
-            dateEmbauche: employeData.dateEmbauche,
-            partenaireId: employeData.partenaireId
+          ...(employeeData && {
+            employeeId: employeeData.id,
+            prenom: employeeData.prenom,
+            nom: employeeData.nom,
+            nomComplet: employeeData.nom_complet,
+            telephone: employeeData.telephone,
+            poste: employeeData.poste,
+            role: employeeData.role,
+            genre: employeeData.genre,
+            adresse: employeeData.adresse,
+            salaireNet: employeeData.salaire_net,
+            typeContrat: employeeData.type_contrat,
+            dateEmbauche: employeeData.date_embauche,
+            partenaireId: employeeData.partenaire_id
           })
         }
       },
@@ -147,37 +204,9 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('💥 Erreur lors de la connexion:', error);
     
-    // Gestion des erreurs Firebase Auth spécifiques
-    let errorMessage = 'Erreur interne du serveur';
-    
-    if (error instanceof Error && 'code' in error) {
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'Aucun compte trouvé avec cet email';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'Mot de passe incorrect';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Format d\'email invalide';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'Ce compte a été désactivé';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Trop de tentatives. Réessayez plus tard';
-          break;
-        case 'auth/invalid-credential':
-          errorMessage = 'Identifiants invalides';
-          break;
-        default:
-          errorMessage = 'Identifiants invalides';
-      }
-    }
-    
     return NextResponse.json(
-      { error: errorMessage },
-      { status: 401 }
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
     );
   }
 } 

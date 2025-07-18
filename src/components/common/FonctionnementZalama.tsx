@@ -35,8 +35,7 @@ const FonctionnementZalama = () => {
       y: 0,
       opacity: 1,
       transition: {
-        duration: 0.5,
-        ease: [0.16, 0.77, 0.47, 0.97]
+        duration: 0.5
       }
     }
   };
@@ -47,8 +46,7 @@ const FonctionnementZalama = () => {
       y: 0, 
       opacity: 1,
       transition: { 
-        duration: 0.6, 
-        ease: [0.16, 0.77, 0.47, 0.97] 
+        duration: 0.6
       }
     }
   };

@@ -1,6 +1,5 @@
-import { auth } from '@/lib/firebase';
-import { FirebaseError } from 'firebase/app';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface ForgotPasswordData {
@@ -33,69 +32,85 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 Envoi d\'email de réinitialisation pour:', email);
 
+    // Créer le client Supabase
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
     // Construire l'URL de réinitialisation
     const resetUrl = new URL(`/auth/reset-password`, request.nextUrl.origin);
 
-    // Envoyer l'email de réinitialisation via Firebase Auth
-    await sendPasswordResetEmail(auth, email, {
-      url: resetUrl.toString(),
-      handleCodeInApp: false,
+    // Envoyer l'email de réinitialisation via Supabase Auth
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: resetUrl.toString(),
     });
+
+    if (error) {
+      console.error('❌ Erreur Supabase lors de l\'envoi de l\'email:', error);
+      
+      // Gestion des erreurs Supabase Auth spécifiques
+      let errorMessage = 'Une erreur est survenue lors de l\'envoi de l\'email';
+      
+      switch (error.message) {
+        case 'User not found':
+          // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
+          errorMessage = 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé';
+          break;
+        case 'Invalid email':
+          errorMessage = 'Format d\'email invalide';
+          break;
+        case 'Too many requests':
+          errorMessage = 'Trop de tentatives. Veuillez réessayer plus tard';
+          break;
+        case 'User not found':
+          // Pour des raisons de sécurité, on retourne toujours un message de succès
+          return NextResponse.json(
+            { 
+              message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé',
+              success: true
+            },
+            { status: 200 }
+          );
+        default:
+          errorMessage = 'Une erreur est survenue lors de l\'envoi de l\'email';
+      }
+      
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 500 }
+      );
+    }
     
     console.log('✅ Email de réinitialisation envoyé avec succès');
 
     return NextResponse.json(
       { 
-        message: 'Email de réinitialisation envoyé avec succès',
+        message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé',
         success: true
       },
       { status: 200 }
     );
 
   } catch (error: unknown) {
-    console.error('💥 Erreur lors de l\'envoi de l\'email de réinitialisation:', {
-      message: error instanceof Error ? error.message : 'Erreur inconnue',
-      code: error instanceof FirebaseError ? error.code : 'N/A',
-      stack: error instanceof Error ? error.stack : 'N/A',
-    });
-    
-    // Gestion des erreurs Firebase Auth spécifiques
-    let errorMessage = 'Erreur interne du serveur';
-    
-    if (error instanceof Error && 'code' in error) {
-      switch (error.code) {
-        case 'auth/user-not-found':
-          // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
-          errorMessage = 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Format d\'email invalide';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Trop de tentatives. Veuillez réessayer plus tard';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'Ce compte a été désactivé';
-          break;
-        default:
-          errorMessage = 'Une erreur est survenue lors de l\'envoi de l\'email';
-      }
-    }
-    
-    // Pour des raisons de sécurité, on retourne toujours un message de succès
-    // même si l'email n'existe pas
-    if (error instanceof FirebaseError && error.code === 'auth/user-not-found') {
-      return NextResponse.json(
-        { 
-          message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé',
-          success: true
-        },
-        { status: 200 }
-      );
-    }
+    console.error('💥 Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
     
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Une erreur est survenue lors de l\'envoi de l\'email' },
       { status: 500 }
     );
   }

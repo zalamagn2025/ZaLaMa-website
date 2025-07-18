@@ -66,16 +66,14 @@ const fadeInUp = {
     opacity: 1,
     scale: 1,
     transition: {
-      duration: 0.5,
-      ease: [0.16, 0.77, 0.47, 0.97],
+      duration: 0.5
     },
   },
   hover: {
     y: -2,
     boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
     transition: {
-      duration: 0.2,
-      ease: 'easeOut'
+      duration: 0.2
     }
   }
 };
@@ -153,8 +151,7 @@ const FAQItem = ({ item, isOpen, onClick, index, type }: FAQItemProps) => (
               transition: { 
                 opacity: { duration: 0.2, delay: 0.1 },
                 height: { 
-                  duration: 0.4, 
-                  ease: [0.16, 0.77, 0.47, 0.97] 
+                  duration: 0.4
                 }
               }
             },
@@ -164,8 +161,7 @@ const FAQItem = ({ item, isOpen, onClick, index, type }: FAQItemProps) => (
               transition: { 
                 opacity: { duration: 0.1 },
                 height: { 
-                  duration: 0.3, 
-                  ease: [0.16, 0.77, 0.47, 0.97] 
+                  duration: 0.3
                 }
               }
             },
@@ -189,7 +185,7 @@ const FAQItem = ({ item, isOpen, onClick, index, type }: FAQItemProps) => (
               initial={{ scaleX: 0 }}
               animate={{ 
                 scaleX: 1,
-                transition: { delay: 0.15, duration: 0.4, ease: [0.6, 0.01, 0, 0.9] }
+                transition: { delay: 0.15, duration: 0.4 }
               }}
               exit={{ 
                 scaleX: 0,
