@@ -84,14 +84,14 @@ Le schéma Supabase comprend :
 
 ```env
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PRIVATE_SUPABASE_URL=your_supabase_project_url
+NEXT_PRIVATE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Resend (emails)
 RESEND_API_KEY=your_resend_api_key
 
 # Base URL
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
+NEXT_PRIVATE_BASE_URL=http://localhost:3000
 ```
 
 ### Installation

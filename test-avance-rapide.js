@@ -2,8 +2,8 @@ const { createClient } = require('@supabase/supabase-js')
 require('dotenv').config()
 
 // Configuration Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PRIVATE_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PRIVATE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Variables d\'environnement Supabase manquantes')
@@ -38,7 +38,7 @@ async function testConnexionRapide() {
 async function testDemandeAvanceRapide() {
   console.log('\n🧪 Test rapide de demande d\'avance...')
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PRIVATE_APP_URL || 'http://localhost:3000'
   
   // Données de test
   const testRequest = {
@@ -82,7 +82,7 @@ async function testDemandeAvanceRapide() {
 async function testRecuperationDemandes() {
   console.log('\n📋 Test de récupération des demandes...')
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PRIVATE_APP_URL || 'http://localhost:3000'
   
   try {
     const response = await fetch(`${baseUrl}/api/salary-advance/request`)
@@ -105,7 +105,7 @@ async function testRecuperationDemandes() {
 async function testValidationLimites() {
   console.log('\n🚫 Test de validation des limites...')
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PRIVATE_APP_URL || 'http://localhost:3000'
   
   // Demande qui dépasse la limite (25% du salaire)
   const invalidRequest = {

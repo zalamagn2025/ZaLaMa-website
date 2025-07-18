@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 // Configuration
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PRIVATE_BASE_URL || 'http://localhost:3000';
 
 // Données de test pour une demande de partenariat
 const testPartnershipData = {
@@ -158,8 +158,8 @@ function checkEnvironment() {
   
   const requiredVars = [
     'RESEND_API_KEY',
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    'NEXT_PRIVATE_SUPABASE_URL',
+    'NEXT_PRIVATE_SUPABASE_ANON_KEY'
   ];
   
   const missingVars = requiredVars.filter(varName => !process.env[varName]);

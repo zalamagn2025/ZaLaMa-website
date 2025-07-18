@@ -26,20 +26,20 @@ Le script teste les aspects suivants :
 npm install @supabase/supabase-js dotenv
 
 # Vérifier les variables d'environnement
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_APP_URL=http://localhost:3000  # Optionnel
+NEXT_PRIVATE_SUPABASE_URL=your_supabase_url
+NEXT_PRIVATE_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PRIVATE_APP_URL=http://localhost:3000  # Optionnel
 ```
 
 ### Structure des Variables d'Environnement
 
 ```env
 # Supabase (requis)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PRIVATE_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PRIVATE_SUPABASE_ANON_KEY=your_anon_key
 
 # Application (optionnel, pour tests API)
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PRIVATE_APP_URL=http://localhost:3000
 ```
 
 ## 🧪 Exécution des Tests
@@ -208,8 +208,8 @@ await testMultipleRequests(employee, partnerId)
 cat .env
 
 # Ou définir directement
-export NEXT_PUBLIC_SUPABASE_URL=your_url
-export NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+export NEXT_PRIVATE_SUPABASE_URL=your_url
+export NEXT_PRIVATE_SUPABASE_ANON_KEY=your_key
 ```
 
 #### 2. Erreur de Connexion Supabase
@@ -242,7 +242,7 @@ export NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
 
 **Solution :**
 - Vérifier que l'app Next.js est démarrée
-- Vérifier `NEXT_PUBLIC_APP_URL`
+- Vérifier `NEXT_PRIVATE_APP_URL`
 - Tester l'URL manuellement
 
 ### Vérifications Manuelles

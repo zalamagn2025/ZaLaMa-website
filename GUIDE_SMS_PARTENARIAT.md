@@ -18,7 +18,7 @@ NIMBA_SMS_SERVICE_ID=votre_service_id
 NIMBA_SMS_SECRET_TOKEN=votre_secret_token
 
 # URL de l'application
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PRIVATE_APP_URL=http://localhost:3000
 ```
 
 ### Installation
@@ -177,7 +177,7 @@ console.log('📱 SMS Partnership Results:', {
 # Production
 NIMBA_SMS_SERVICE_ID=prod_service_id
 NIMBA_SMS_SECRET_TOKEN=prod_secret_token
-NEXT_PUBLIC_APP_URL=https://zalama.com
+NEXT_PRIVATE_APP_URL=https://zalama.com
 ```
 
 ## 📱 Validation des Numéros
