@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "../../contexts/AuthContext";
 import { 
   IconSettings, 
@@ -14,26 +15,43 @@ import {
   IconMail,
   IconShieldCheck,
   IconRefreshAlert,
-  IconCheck
+  IconCheck,
+  IconEdit,
+  IconLogout,
+  IconUser
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Image from "next/image";
+import { useProfileImageUpload } from "@/hooks/useProfileImageUpload";
 
-// Interface pour le type User
-interface User {
-  uid: string;
+// Interface pour les données utilisateur
+interface UserData {
+  uid?: string;
+  id?: string;
+  user_id?: string;
   email?: string | null;
   displayName?: string | null;
   photoURL?: string | null;
-}
-
-// Interface pour le contexte d'authentification
-interface AuthContextType {
-  currentUser: User | null;
-  // Ajoutez ici les autres méthodes de votre contexte si nécessaire
+  nom?: string;
+  prenom?: string;
+  nomComplet?: string;
+  poste?: string;
+  telephone?: string | null;
+  adresse?: string | null;
+  dateEmbauche?: string;
+  date_embauche?: string;
+  role?: string | null;
+  genre?: string;
+  type_contrat?: string;
+  salaire_net?: number;
+  actif?: boolean;
+  partner_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Types pour les paramètres de notification
@@ -56,9 +74,9 @@ interface SecurityAlertPreference {
   icon: React.ReactNode;
 }
 
-export function ProfileSettings({ onClose }: { onClose: () => void }) {
+export function ProfileSettings({ onClose, userData }: { onClose: () => void; userData?: UserData }) {
   const router = useRouter();
-  const { currentUser } = useAuth() as AuthContextType;
+  const { logout, userData: authUserData } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveButton, setShowSaveButton] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -66,6 +84,21 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
     language: 'fr',
     darkMode: theme === 'dark',
   });
+
+  // États pour la modification de l'image de profil
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  
+  // Utiliser le hook personnalisé pour l'upload d'image
+  const initialPhotoURL = authUserData?.photo_url || userData?.photoURL || undefined;
+  const {
+    avatarFile,
+    avatarPreview,
+    imageError,
+    isUploading,
+    handleAvatarChange,
+    handleImageUpload,
+    resetUpload
+  } = useProfileImageUpload(initialPhotoURL);
 
   const [settings, setSettings] = useState({
     darkMode: theme === 'dark',
@@ -121,6 +154,54 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
       icon: <IconShieldCheck className="w-5 h-5 text-blue-400" />
     }
   ]);
+
+  // Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
+  const employeeData = (authUserData || userData) as any;
+  
+  // Construire le nom complet de l'employé connecté (même logique que ProfileHeader)
+  const getDisplayName = () => {
+    if (employeeData?.nom || employeeData?.nomComplet || employeeData?.displayName) {
+      return employeeData.nom || employeeData.nomComplet || `${employeeData.prenom} ${employeeData.nom}` || employeeData.displayName || "Utilisateur";
+    }
+    return 'Employé ZaLaMa';
+  };
+  
+  const displayName = getDisplayName();
+  const displayEmail = employeeData?.email || 'Email non disponible';
+  const displayInitial = displayName.charAt(0).toUpperCase();
+
+  // Debug: Afficher les données de l'employé connecté
+  useEffect(() => {
+    console.log('🔍 ProfileSettings - Données employé connecté:');
+    console.log('userData reçu:', userData);
+    console.log('authUserData:', authUserData);
+    console.log('employeeData:', employeeData);
+    console.log('displayName:', displayName);
+    console.log('displayEmail:', displayEmail);
+    console.log('poste:', employeeData?.poste);
+    console.log('role:', employeeData?.role);
+    console.log('user_id:', employeeData?.user_id);
+    console.log('uid:', userData?.uid);
+    console.log('id:', userData?.id);
+  }, [userData, authUserData, employeeData, displayName, displayEmail]);
+
+  // Mettre à jour l'aperçu quand les données du contexte changent
+  useEffect(() => {
+    const newPhotoURL = authUserData?.photo_url || userData?.photoURL;
+    if (newPhotoURL && newPhotoURL !== avatarPreview) {
+      console.log('🔄 Mise à jour de l\'aperçu avec la nouvelle photo:', newPhotoURL);
+      // resetUpload(); // This will reset the file input, which is not ideal for preview
+    }
+  }, [authUserData?.photo_url, userData?.photoURL, avatarPreview]);
+
+  // Nettoyer l'URL de l'aperçu lors du démontage du composant
+  useEffect(() => {
+    return () => {
+      if (avatarPreview && avatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   // Charger les préférences utilisateur
   useEffect(() => {
@@ -214,9 +295,26 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
     router.push('/auth/reset-password');
   };
 
-  // const handleCardClick = (e: React.MouseEvent) => {
-  //   e.stopPropagation();
-  // };
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/login");
+      onClose();
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Erreur lors de la déconnexion");
+    }
+  };
+
+  // Fonctions pour la modification de l'image de profil
+  // handleAvatarChange and handleImageUpload are now managed by useProfileImageUpload
+
+  const handleImageUploadWithClose = async () => {
+    await handleImageUpload();
+    if (!imageError) {
+      setShowImageUpload(false);
+    }
+  };
 
   const handleModalClick = (e: React.MouseEvent) => {
     // Empêcher la propagation uniquement si on clique sur le contenu de la modale
@@ -274,9 +372,9 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
                 </motion.div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Paramètres</h2>
-                  {currentUser?.displayName && (
+                  {displayName && displayName !== 'Utilisateur' && (
                     <p className="text-sm text-blue-200 mt-1">
-                      Connecté en tant que <span className="font-medium text-white">{currentUser.displayName}</span>
+                      Connecté en tant que <span className="font-medium text-white">{displayName}</span>
                     </p>
                   )}
                 </div>
@@ -298,14 +396,72 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
               
               <div className="bg-[#0A1A5A]/50 p-4 rounded-lg space-y-4">
                 <div className="flex items-center gap-3 p-3 bg-[#0A1A5A] rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-white font-bold">
-                    {currentUser?.displayName?.charAt(0) || currentUser?.email?.charAt(0).toUpperCase() || 'U'}
+                  <div className="relative group">
+                    {avatarPreview ? (
+                      <Image
+                        key={avatarPreview}
+                        width={40}
+                        height={40}
+                        src={avatarPreview}
+                        alt="Avatar"
+                        className="w-10 h-10 rounded-full object-cover border-2 border-[#FF671E]/30"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-white font-bold">
+                        {displayInitial}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <IconEdit className="w-4 h-4 text-white" />
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-white">{currentUser?.displayName || 'Utilisateur'}</p>
-                    <p className="text-xs text-gray-400">{currentUser?.email}</p>
+                  <div className="flex-1">
+                    <p className="font-medium text-white">{displayName}</p>
+                    <p className="text-xs text-gray-400">{displayEmail}</p>
+                    {employeeData?.poste && (
+                      <p className="text-xs text-[#FF671E] mt-1 font-medium">
+                        {employeeData.poste}
+                      </p>
+                    )}
+                    {employeeData?.role && (
+                      <p className="text-xs text-blue-300 mt-1">
+                        Rôle: {employeeData.role}
+                      </p>
+                    )}
                   </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowImageUpload(true)}
+                    className="px-3 py-1.5 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-lg text-xs font-medium text-white hover:shadow-[#FF671E]/40 transition-all"
+                  >
+                    Modifier
+                  </motion.button>
                 </div>
+                
+                {/* Informations supplémentaires de l'employé connecté */}
+                {employeeData && (
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    {employeeData.telephone && (
+                      <div className="flex items-center gap-2 p-2 bg-[#0A1A5A] rounded-lg">
+                        <span className="text-gray-400">📞</span>
+                        <span className="text-white">{employeeData.telephone}</span>
+                      </div>
+                    )}
+                    {employeeData.adresse && (
+                      <div className="flex items-center gap-2 p-2 bg-[#0A1A5A] rounded-lg">
+                        <span className="text-gray-400">📍</span>
+                        <span className="text-white">{employeeData.adresse}</span>
+                      </div>
+                    )}
+                    {employeeData.date_embauche && (
+                      <div className="flex items-center gap-2 p-2 bg-[#0A1A5A] rounded-lg">
+                        <span className="text-gray-400">📅</span>
+                        <span className="text-white">Embauché le {new Date(employeeData.date_embauche).toLocaleDateString('fr-FR')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -358,34 +514,17 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
               <div className="bg-[#0A1A5A]/50 p-4 rounded-lg space-y-4">
                 <div 
                   className="flex items-center justify-between p-3 bg-[#0A1A5A] rounded-lg"
-
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-[#1A2B6B]' : 'bg-blue-100'} text-[#FF8E53]`}>
                       <IconMoon className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Mode sombre</p>
-                      <p className="text-xs text-gray-400">Activer/désactiver le mode sombre</p>
+                      <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Thème</p>
+                      <p className="text-xs text-gray-400">Choisir entre mode clair, sombre ou système</p>
                     </div>
                   </div>
-                  <div className="relative inline-block w-12 h-6">
-                    <input
-                      type="checkbox"
-                      checked={settings.darkMode}
-                      onChange={() => handleSettingChange('darkMode', !settings.darkMode)}
-                      className="sr-only"
-                      id="dark-mode-switch"
-                    />
-                    <label
-                      htmlFor="dark-mode-switch"
-                      className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${settings.darkMode ? 'bg-[#FF671E]' : 'bg-gray-600'}`}
-                    >
-                      <span 
-                        className={`block h-5 w-5 mt-0.5 rounded-full bg-white shadow-md transform transition-transform ${settings.darkMode ? 'translate-x-6' : 'translate-x-1'}`}
-                      />
-                    </label>
-                  </div>
+                  <ThemeToggle variant="switch" size="sm" />
                 </div>
                 
                 <div className={`p-3 ${theme === 'dark' ? 'bg-[#0A1A5A]' : 'bg-white shadow-sm'} rounded-lg`}>
@@ -472,6 +611,15 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
                   <IconLock className="w-4 h-4 mr-2" />
                   Changer le mot de passe
                 </Button>
+
+                <Button 
+                  variant="outline" 
+                  className={`w-full ${theme === 'dark' ? 'border-red-500 text-red-400 hover:bg-red-500/10' : 'border-red-300 text-red-600 hover:bg-red-50'} mt-2`}
+                  onClick={handleLogout}
+                >
+                  <IconLogout className="w-4 h-4 mr-2" />
+                  Se déconnecter
+                </Button>
               </div>
             </div>
 
@@ -519,6 +667,126 @@ export function ProfileSettings({ onClose }: { onClose: () => void }) {
             </AnimatePresence>
           </div>
         </motion.div>
+
+        {/* Modal de modification de l'image de profil */}
+        <AnimatePresence>
+          {showImageUpload && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            >
+              <div className="absolute inset-0 bg-black/50" onClick={() => setShowImageUpload(false)} />
+              <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md shadow-xl max-h-[80vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">
+                    Modifier la photo de profil
+                  </h2>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowImageUpload(false)}
+                    className="text-gray-300 hover:text-[#FFFFFF]"
+                    aria-label="Fermer le formulaire"
+                  >
+                    <IconX size={24} />
+                  </motion.button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-200 mb-2">Photo de profil</label>
+                    <div className="flex flex-col items-center gap-6 py-4">
+                      <motion.div 
+                        initial={{ scale: 1 }} 
+                        whileHover={{ scale: 1.02 }}
+                        className="relative group"
+                      >
+                        {avatarPreview ? (
+                          <Image
+                            key={avatarPreview}
+                            width={128}
+                            height={128}
+                            src={avatarPreview}
+                            alt="Aperçu de l'avatar"
+                            className="h-32 w-32 rounded-full object-cover border-4 border-[#FF671E]/30 shadow-lg"
+                          />
+                        ) : (
+                          <div className="h-32 w-32 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8E53] flex items-center justify-center text-4xl font-bold text-[#FFFFFF] border-4 border-[#FF671E]/30 shadow-lg">
+                            {displayInitial}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                          <IconEdit className="w-8 h-8 text-white" />
+                        </div>
+                      </motion.div>
+                      
+                      <motion.label
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-6 py-3 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-lg text-sm font-medium text-white cursor-pointer shadow-lg hover:shadow-[#FF671E]/40 transition-all"
+                      >
+                        {avatarPreview ? "Changer la photo" : "Ajouter une photo"}
+                        <input 
+                          type="file" 
+                          accept="image/png,image/jpeg,image/jpg,image/webp" 
+                          onChange={handleAvatarChange} 
+                          className="hidden" 
+                        />
+                      </motion.label>
+                      
+                      {imageError && (
+                        <div className="mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                          <p className="text-red-400 text-sm text-center">{imageError}</p>
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-gray-400 text-center mt-2">
+                        Formats acceptés : JPG, PNG, WebP (max. 5MB)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4 justify-center pt-6">
+                    <motion.button
+                      type="button"
+                      onClick={() => setShowImageUpload(false)}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      disabled={isUploading}
+                      className="px-8 py-3 rounded-lg bg-white/10 border border-white/20 text-[#FFFFFF] hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Annuler
+                    </motion.button>
+                    <motion.button
+                      type="button"
+                      onClick={handleImageUploadWithClose}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      disabled={isUploading || !avatarFile}
+                      className={`px-8 py-3 rounded-lg text-white shadow-lg transition-all ${
+                        isUploading || !avatarFile 
+                          ? 'bg-gray-500/50 cursor-not-allowed' 
+                          : 'bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:shadow-[#FF671E]/40'
+                      }`}
+                    >
+                      {isUploading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Enregistrement...</span>
+                        </div>
+                      ) : (
+                        'Enregistrer la photo'
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </AnimatePresence>
   );

@@ -232,8 +232,8 @@ export const getUserEmailTemplate = (data: {
         <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
           <tr>
             <td style="background-color: #ffffff; padding: 12px 30px; border-radius: 10px; border: 1px solid #dbeafe; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-              <a href="https://www.zalamasas.com" style="color: #1e40af; text-decoration: none; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center;">
-                www.zalamasas.com
+              <a href="https://www.zalamagn.com" style="color: #1e40af; text-decoration: none; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center;">
+                www.zalamagn.com
               </a>
             </td>
           </tr>

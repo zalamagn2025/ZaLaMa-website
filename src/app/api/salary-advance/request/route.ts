@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { advanceNotificationService } from '@/services/advanceNotificationService'
 
 // Configuration de sécurité
 const MAX_PASSWORD_ATTEMPTS = 3
@@ -222,32 +223,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Créer une transaction financière
-    const transactionData = {
-      montant: parseFloat(montantDemande),
-      type: 'Débloqué' as const,
-      description: `Demande d'avance: ${motif.trim()}`,
-      utilisateur_id: employeId,
-      partenaire_id: entrepriseId,
-      statut: 'En attente' as const,
-      date_transaction: new Date().toISOString(),
-      reference: numeroReception || `REF-${Date.now()}`
-    }
-
-    const { data: transactionDataResult, error: transactionError } = await supabase
-      .from('financial_transactions')
-      .insert(transactionData)
-      .select()
-      .single()
-
-    if (transactionError) {
-      console.error('❌ Erreur lors de la création de la transaction:', transactionError)
-      return NextResponse.json(
-        { success: false, message: 'Erreur lors de la création de la demande' },
-        { status: 500 }
-      )
-    }
-
     // Créer une demande d'avance dans la table salary_advance_requests
     const demandeAvanceData = {
       employe_id: employeId,
@@ -272,6 +247,38 @@ export async function POST(request: NextRequest) {
 
     if (demandeAvanceError) {
       console.error('❌ Erreur lors de la création de la demande d\'avance:', demandeAvanceError)
+      return NextResponse.json(
+        { success: false, message: 'Erreur lors de la création de la demande d\'avance' },
+        { status: 500 }
+      )
+    }
+
+    // Créer une entrée dans la table transactions
+    const transactionData = {
+      demande_avance_id: demandeAvanceResult.id,
+      employe_id: employeId,
+      entreprise_id: entrepriseId,
+      montant: parseFloat(montantDemande),
+      numero_transaction: numeroReception || `TXN-${Date.now()}`,
+      methode_paiement: 'MOBILE_MONEY' as const, // Par défaut, sera mis à jour lors du paiement
+      numero_reception: numeroReception || `REF-${Date.now()}`,
+      date_transaction: new Date().toISOString(),
+      statut: 'EN_COURS' as const,
+      description: `Demande d'avance sur salaire: ${motif.trim()}`,
+      date_creation: new Date().toISOString()
+    }
+
+    const { data: transactionResult, error: transactionError } = await supabase
+      .from('transactions')
+      .insert(transactionData)
+      .select()
+      .single()
+
+    if (transactionError) {
+      console.error('❌ Erreur lors de la création de la transaction:', transactionError)
+      // Ne pas faire échouer la demande pour cette raison, mais logger l'erreur
+    } else {
+      console.log('✅ Transaction créée:', transactionResult.id)
     }
 
     // Enregistrer l'activité de l'utilisateur (optionnel - commenté pour éviter les erreurs)
@@ -284,7 +291,7 @@ export async function POST(request: NextRequest) {
           details: {
             montant: montantDemande,
             motif: motif,
-            transaction_id: transactionDataResult.id
+            transaction_id: demandeAvanceResult.id
           },
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
         })
@@ -293,20 +300,63 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ Demande d\'avance créée:', {
-      id: transactionDataResult.id,
+      id: demandeAvanceResult.id,
       montant: montantDemande,
       employe: employeId,
       entreprise: entrepriseId
     })
 
+    // Envoi des notifications (email + SMS) en arrière-plan
+    try {
+      // Récupérer les données de l'employé pour les notifications
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select('nom, prenom, email, telephone')
+        .eq('id', employeId)
+        .single()
+
+      if (!employeeError && employeeData) {
+        const notificationData = {
+          employeeName: `${employeeData.prenom} ${employeeData.nom}`,
+          employeeEmail: employeeData.email,
+          employeePhone: employeeData.telephone,
+          amount: parseFloat(montantDemande),
+          reason: motif.trim(),
+          requestDate: new Date().toISOString(),
+          requestId: demandeAvanceResult.id,
+          availableSalary: salaireDisponible ? parseFloat(salaireDisponible) : 0,
+          availableAdvance: avanceDisponible ? parseFloat(avanceDisponible) : 0,
+          requestType: typeMotif
+        }
+
+        // Envoi non-bloquant des notifications
+        advanceNotificationService.sendAdvanceNotifications(notificationData)
+          .then(result => {
+            console.log('📧 Notifications avance envoyées:', {
+              employee: notificationData.employeeName,
+              requestId: notificationData.requestId,
+              emailSuccess: result.email.success,
+              smsSuccess: result.sms.success,
+              summary: result.summary
+            })
+          })
+          .catch(error => {
+            console.error('❌ Erreur envoi notifications avance:', error)
+          })
+      }
+    } catch (notificationError) {
+      // Ne pas faire échouer la demande pour les erreurs de notification
+      console.error('❌ Erreur lors de l\'envoi des notifications:', notificationError)
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Demande d\'avance créée avec succès',
       data: {
-        id: transactionDataResult.id,
+        id: demandeAvanceResult.id,
         montant: montantDemande,
         statut: 'En attente',
-        reference: transactionData.reference
+        reference: demandeAvanceData.numero_reception
       }
     })
 

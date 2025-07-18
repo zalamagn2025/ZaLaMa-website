@@ -27,7 +27,7 @@ interface AvanceData {
 type FormStep = 'form' | 'verification' | 'confirmation' | 'success';
 
 // Fonction pour calculer l'avance disponible pour les demandes d'avance sur salaire
-function calculateAvailableAdvance(salaireNet: number): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number; limiteAvance: number } {
+function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number; limiteAvance: number } {
   const today = new Date()
   const currentMonth = today.getMonth()
   const currentYear = today.getFullYear()
@@ -37,9 +37,10 @@ function calculateAvailableAdvance(salaireNet: number): { avanceDisponible: numb
   const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
   const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
   
-  // L'avance disponible pour les demandes d'avance sur salaire est limitée à 25% du salaire net
-  const avanceDisponible = Math.floor(salaireNet * 0.25)
-  const limiteAvance = avanceDisponible // Même valeur que l'avance disponible
+  // L'avance disponible = 25% du salaire net - avance active
+  const limiteAvanceBase = Math.floor(salaireNet * 0.25)
+  const avanceDisponible = Math.max(0, limiteAvanceBase - avanceActive)
+  const limiteAvance = avanceDisponible
   
   return {
     avanceDisponible,
@@ -88,7 +89,7 @@ function getTotalWorkingDaysInMonth(year: number, month: number): number {
 export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { user: UserWithEmployeData }) {
   // États du formulaire
   const [amount, setAmount] = useState("")
-  const [requestType, setRequestType] = useState<RequestType>('transport')
+  const [requestType, setRequestType] = useState<RequestType>('aucune')
   const [reason, setReason] = useState("")
   const [receivePhone, setReceivePhone] = useState(user.telephone)
   const [useDefaultPhone, setUseDefaultPhone] = useState(true)
@@ -117,6 +118,30 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     prenom: user.prenom
   })
 
+  // États pour les avances actives
+  const [advanceRequests, setAdvanceRequests] = useState<any[]>([])
+  const [loadingAdvanceRequests, setLoadingAdvanceRequests] = useState(true)
+
+  // Récupérer les avances actives
+  const fetchAdvanceRequests = useCallback(async () => {
+    if (!user.employeId) {
+      setLoadingAdvanceRequests(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAdvanceRequests(data.data || [])
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des avances:', error)
+    } finally {
+      setLoadingAdvanceRequests(false)
+    }
+  }, [user.employeId])
+
   // Calculer l'avance disponible en temps réel
   const calculateAdvanceData = useCallback(() => {
     if (!user.salaireNet) {
@@ -126,14 +151,22 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     }
 
     try {
-      const calculation = calculateAvailableAdvance(user.salaireNet)
+      // Calculer le total des avances actives (validées) - même logique que profile-stats
+      const totalActiveAdvances = advanceRequests
+        .filter(request => request.statut === 'Validé')
+        .reduce((acc, request) => acc + (request.montant_demande as number), 0)
       
-          setAvanceData({
+      const calculation = calculateAvailableAdvance(user.salaireNet, totalActiveAdvances)
+      
+      // Calculer le salaire restant - même logique que profile-stats
+      const remainingSalary = user.salaireNet - totalActiveAdvances
+      
+      setAvanceData({
         salaireNet: user.salaireNet,
-        avanceActive: 0, // Sera mis à jour par l'API
-        salaireRestant: user.salaireNet - calculation.avanceDisponible,
+        avanceActive: totalActiveAdvances, // Total des avances actives
+        salaireRestant: remainingSalary, // Salaire net - avances actives
         maxAvanceMonthly: Math.floor(user.salaireNet * 0.25), // 25% max
-        totalAvancesApprouveesMonthly: 0, // Sera mis à jour par l'API
+        totalAvancesApprouveesMonthly: totalActiveAdvances, // Total des avances approuvées
         avanceDisponible: calculation.avanceDisponible,
         workingDaysElapsed: calculation.workingDaysElapsed,
         totalWorkingDays: calculation.totalWorkingDays,
@@ -141,14 +174,25 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         limiteAvance: calculation.limiteAvance
       })
       
-      console.log('🔍 Données d\'avance calculées:', calculation)
+      console.log('🔍 Données d\'avance calculées:', {
+        salaireNet: user.salaireNet,
+        totalActiveAdvances,
+        remainingSalary,
+        calculation
+      })
     } catch (error) {
       console.error('Erreur lors du calcul de l\'avance disponible:', error)
     } finally {
       setLoadingAvance(false)
     }
-  }, [user.salaireNet])
+  }, [user.salaireNet, advanceRequests])
 
+  // Récupérer les avances actives au chargement
+  useEffect(() => {
+    fetchAdvanceRequests()
+  }, [fetchAdvanceRequests])
+
+  // Recalculer quand les avances changent
   useEffect(() => {
     calculateAdvanceData()
   }, [calculateAdvanceData])
@@ -157,13 +201,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
+        fetchAdvanceRequests()
         calculateAdvanceData()
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [calculateAdvanceData])
+  }, [fetchAdvanceRequests, calculateAdvanceData])
 
   // Validation du formulaire
   const validateForm = () => {
@@ -178,7 +223,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         throw new Error(`Le montant demandé dépasse votre limite d'avance sur salaire ce mois-ci (${limiteAvance.toLocaleString()} GNF)`)
       }
 
-      if (!requestType) {
+      if (!requestType || requestType === "aucune") {
         throw new Error("Veuillez sélectionner un type de motif")
       }
 
@@ -407,7 +452,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     className="space-y-6"
                   >
                     {/* Affichage des informations d'avance */}
-                {loadingAvance ? (
+                {(loadingAvance || loadingAdvanceRequests) ? (
                   <div className="mb-4 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
                     <div className="animate-pulse">
                       <div className="h-4 bg-[#1A2B6B] rounded w-3/4 mb-2"></div>
@@ -427,7 +472,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53]">
                               <IconCalculator className="h-4 w-4 text-white" />
                             </div>
-                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible (25%)</h4>
+                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible</h4>
                           </div>
                        <button
                             type="button"
@@ -439,18 +484,21 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                        </button>
                      </div>
 
-                        {/* Montant principal */}
-                        <div className="text-center mb-3">
-                          <div className="text-2xl font-bold text-white">
-                            {avanceData.avanceDisponible.toLocaleString()} GNF
-                          </div>
+                       {/* Montant principal */}
+                       <div className="text-center mb-3">
+                         <div className="text-2xl font-bold text-white">
+                           {avanceData.avanceDisponible.toLocaleString()} GNF
+                         </div>
                           <div className="text-xs text-gray-400 mt-1">
-                            Avance disponible (25% du salaire net)
+                            Disponible après déduction des avances actives
                           </div>
+                          {/* <div className="text-xs text-blue-400 mt-1">
+                            Salaire restant: {avanceData.salaireRestant.toLocaleString()} GNF (Salaire net - Avances actives)
+                          </div> */}
                           <div className="text-xs text-blue-400 mt-1">
                             Progression du mois: {avanceData.workingDaysElapsed}/{avanceData.totalWorkingDays} jours ({avanceData.workingDaysPercentage}%)
                           </div>
-                        </div>
+                       </div>
 
                         {/* Détails dépliables */}
                         <AnimatePresence>
@@ -480,34 +528,34 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
                               {/* Informations détaillées */}
                               <div className="grid grid-cols-2 gap-3 text-xs">
-                                <div className="space-y-1">
+                               <div className="space-y-1">
                        <div className="flex justify-between">
-                                    <span className="text-gray-400">Salaire net:</span>
-                                    <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
-                       </div>
+                                   <span className="text-gray-400">Salaire net:</span>
+                                   <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
+                      </div>
                        <div className="flex justify-between">
-                                    <span className="text-gray-400">Jours écoulés:</span>
-                                    <span className="text-blue-400">{avanceData.workingDaysElapsed} jours</span>
+                                    <span className="text-gray-400">Limite base (25%):</span>
+                                    <span className="text-blue-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
                        </div>
-                       <div className="flex justify-between">
-                                    <span className="text-gray-400">Total jours:</span>
-                                    <span className="text-blue-400">{avanceData.totalWorkingDays} jours</span>
-                                  </div>
-                       </div>
-                                <div className="space-y-1">
-                         <div className="flex justify-between">
-                                    <span className="text-gray-400">Limite d'avance:</span>
-                                    <span className="text-orange-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
-                         </div>
-                         <div className="flex justify-between">
-                                    <span className="text-gray-400">Salaire restant:</span>
-                                    <span className="text-green-400 font-medium">{avanceData.salaireRestant.toLocaleString()} GNF</span>
-                         </div>
+                      <div className="flex justify-between">
+                                   <span className="text-gray-400">Jours écoulés:</span>
+                                   <span className="text-blue-400">{avanceData.workingDaysElapsed} jours</span>
+                      </div>
+                      </div>
+                               <div className="space-y-1">
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Avances actives:</span>
-                                    <span className="text-red-400">{avanceData.avanceActive.toLocaleString()} GNF</span>
+                                    <span className="text-red-400">-{avanceData.avanceActive.toLocaleString()} GNF</span>
                          </div>
-                       </div>
+                         <div className="flex justify-between border-t border-[#1A2B6B] pt-1">
+                            <span className="text-gray-400 font-medium">Disponible:</span>
+                            <span className="text-green-400 font-bold">{avanceData.avanceDisponible.toLocaleString()} GNF</span>
+                         </div>
+                        <div className="flex justify-between">
+                                   <span className="text-gray-400">Salaire restant:</span>
+                                   <span className="text-green-400 font-medium">{avanceData.salaireRestant.toLocaleString()} GNF</span>
+                        </div>
+                      </div>
                      </div>
 
                               {/* Indicateur de statut */}
@@ -536,7 +584,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     className="space-y-1"
                   >
                     <label htmlFor="amount" className="text-sm font-medium text-gray-300">
-                      Montant demandé (GNF)
+                      Montant demandé
                     </label>
                     <div className="relative">
                       <input
@@ -573,15 +621,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           </span>
                         )}
                       </div>
-                    {error && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-xs text-red-400"
-                      >
-                        {error}
-                      </motion.p>
-                    )}
+                    
                   </motion.div>
 
                     {/* Type de motif et détails */}
@@ -609,6 +649,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         ))}
                       </select>
                       <p className="mt-1 text-xs text-gray-400 ml-1">Sélectionnez la catégorie de votre demande</p>
+                      {error && (
+                        <motion.p 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-xs text-red-400"
+                        >
+                          {error}
+                        </motion.p>
+                      )}
                     </div>
 
                     <div>
@@ -634,7 +683,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     transition={{ delay: 0.2, duration: 0.3 }}
                     className="space-y-3"
                   >
-                      <div className="flex items-start space-x-3">
+                      {/* <div className="flex items-start space-x-3">
                         <input
                           id="useDefaultPhone"
                           type="checkbox"
@@ -645,18 +694,16 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <label htmlFor="useDefaultPhone" className="text-sm text-gray-300">
                           Utiliser mon numéro de téléphone par défaut ({user.telephone})
                         </label>
-                      </div>
-
-                      {!useDefaultPhone && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="space-y-1"
-                        >
-                          <label htmlFor="receivePhone" className="text-sm font-medium text-gray-300">
-                            Numéro de téléphone pour réception
-                          </label>
+                      </div> */}
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-1"
+                  >
+                    <label htmlFor="receivePhone" className="text-sm font-medium text-gray-300">
+                      Numéro de téléphone pour réception
+                    </label>
                     <input
                       type="tel"
                             id="receivePhone"
@@ -668,7 +715,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     />
                           <p className="text-xs text-gray-400">Format: +224 6/7 XX XX XX XX</p>
                   </motion.div>
-                      )}
+                  
                   </motion.div>
 
                     {/* Conditions */}
@@ -733,7 +780,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       >
                         <IconShieldCheck className="h-8 w-8 text-white" />
                       </motion.div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Vérifiez vos informations</h3>
+                      <h3 className="text-xl font-semibold text-white mb-2">Détails de la demande</h3>
                       <p className="text-sm text-gray-300">Assurez-vous que toutes les informations sont correctes avant de continuer</p>
                     </div>
 
@@ -745,11 +792,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         </div>
                         <div>
                           <span className="text-gray-400">Frais de service (6.5%):</span>
-                          <p className="text-orange-400">{serviceFee.toLocaleString()} GNF</p>
+                          <p className="text-red-400">-{serviceFee.toLocaleString()} GNF</p>
                         </div>
                         <div className="col-span-2">
-                          <span className="text-gray-400">Total à déduire:</span>
-                          <p className="text-red-400 font-bold text-lg">{totalDeduction.toLocaleString()} GNF</p>
+                          <span className="text-gray-400">Total à recevoir:</span>
+                          <p className="text-green-400 font-bold text-lg">{(Number(requestedAmount || 0) - Number(serviceFee || 0)).toLocaleString('fr-FR')} GNF</p>
                         </div>
                       </div>
                       
@@ -758,10 +805,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           <span className="text-gray-400">Type de motif:</span>
                           <p className="text-white">{REQUEST_TYPES.find(t => t.value === requestType)?.label}</p>
                         </div>
-                        <div>
+                        {/* <div>
                           <span className="text-gray-400">Détails:</span>
                           <p className="text-white">{reason}</p>
-                        </div>
+                        </div> */}
                         <div>
                           <span className="text-gray-400">Numéro de réception:</span>
                           <p className="text-white">{useDefaultPhone ? user.telephone : receivePhone}</p>
@@ -797,6 +844,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     onSubmit={handlePasswordSubmit}
+                    autoComplete="off" // désactive l'autocomplétion au niveau du formulaire
                     className="space-y-6"
                   >
                     <div className="text-center mb-6">
@@ -820,6 +868,8 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           <input
                             type={showPassword ? "text" : "password"}
                             id="password"
+                            name="confirmPassword" // nom modifié pour ne pas déclencher l'autoremplissage
+                            autoComplete="new-password" // empêche le navigateur de proposer un mot de passe enregistré
                             value={password}
                             onChange={(e) => {
                               setPassword(e.target.value)
@@ -853,7 +903,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           <IconInfoCircle className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
                           <div className="text-sm text-yellow-200">
                             <p className="font-medium mb-1">⚠️ Attention</p>
-                            <p>En confirmant, vous acceptez que {totalDeduction.toLocaleString()} GNF soit déduit de votre prochain salaire.</p>
+                            <p>En confirmant, vous acceptez que {requestedAmount.toLocaleString()} GNF soit déduit de votre prochain salaire.</p>
                           </div>
                         </div>
                       </div>
@@ -869,30 +919,31 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       >
                         Retour
                       </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      type="submit"
-                      disabled={loading}
-                      className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 disabled:opacity-70 transition-all duration-200 relative overflow-hidden"
-                    >
-                      {loading ? (
-                        <>
-                          <span className="absolute inset-0 flex items-center justify-center">
-                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          </span>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="submit"
+                        disabled={loading}
+                        className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 disabled:opacity-70 transition-all duration-200 relative overflow-hidden"
+                      >
+                        {loading ? (
+                          <>
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            </span>
                             <span className="opacity-0">Confirmation...</span>
-                        </>
-                      ) : (
+                          </>
+                        ) : (
                           "Confirmer la demande"
-                      )}
-                    </motion.button>
+                        )}
+                      </motion.button>
                     </div>
                   </motion.form>
                 )}
+
               </motion.div>
             )}
           </AnimatePresence>

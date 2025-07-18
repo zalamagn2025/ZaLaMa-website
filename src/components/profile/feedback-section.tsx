@@ -1,9 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Star, StarHalf, ThumbsUp, ThumbsDown } from 'lucide-react'
-import { useState } from 'react'
+import { Star, StarHalf, ThumbsUp, ThumbsDown, AlertCircle, CheckCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
+import { useAvisSWR, useAvisLimit } from '@/hooks/use-avis-swr'
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 // type Service = {
@@ -23,39 +24,59 @@ export function FeedbackSection() {
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [comment, setComment] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [feedbackType, setFeedbackType] = useState<'positive' | 'negative' | null>(null)
+  const [feedbackType, setFeedbackType] = useState<'positif' | 'negatif' | null>(null)
+  
+  const { createAvis, error: avisError } = useAvisSWR()
+  const { limitInfo, loading: limitLoading } = useAvisLimit()
+
+  // Automatiser le type de retour selon le nombre d'étoiles
+  useEffect(() => {
+    if (rating >= 3) {
+      setFeedbackType('positif')
+    } else if (rating > 0) {
+      setFeedbackType('negatif')
+    } else {
+      setFeedbackType(null)
+    }
+  }, [rating])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
-    if (!rating || !comment) {
+    if (!rating || !comment || !feedbackType) {
       return
     }
 
-    setIsSubmitting(true)
+    // Vérifier la limite avant l'envoi
+    if (limitInfo && !limitInfo.canPost) {
+      return
+    }
 
     try {
-      // Simuler un appel API
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const success = await createAvis({
+        note: rating,
+        commentaire: comment,
+        type_retour: feedbackType
+      })
       
-      // Réinitialiser le formulaire
-      // setSelectedService('')
-      setRating(0)
-      setHoverRating(0)
-      setComment('')
-      setFeedbackType(null)
-      setIsSubmitted(true)
-      
-      // Réinitialiser le message de succès après 3 secondes
-      setTimeout(() => {
-        setIsSubmitted(false)
-      }, 3000)
+      if (success) {
+        // Réinitialiser le formulaire
+        setRating(0)
+        setHoverRating(0)
+        setComment('')
+        setFeedbackType(null)
+        setIsSubmitted(true)
+        
+        console.log('✅ Avis créé avec SWR, mise à jour optimiste en cours...')
+        
+        // Réinitialiser le message de succès après 3 secondes
+        setTimeout(() => {
+          setIsSubmitted(false)
+        }, 3000)
+      }
     } catch (error) {
       console.error('Erreur lors de l\'envoi de l\'avis:', error)
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -64,10 +85,11 @@ export function FeedbackSection() {
       <button
         key={star}
         type="button"
-        className="focus:outline-none"
+        className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={() => setRating(star)}
         onMouseEnter={() => setHoverRating(star)}
         onMouseLeave={() => setHoverRating(0)}
+        disabled={limitInfo && !limitInfo.canPost}
       >
         {star <= (hoverRating || rating) ? (
           <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
@@ -79,6 +101,27 @@ export function FeedbackSection() {
       </button>
     ))
   }
+
+  const getFeedbackTypeText = () => {
+    if (rating >= 3) {
+      return 'Positif (automatique)'
+    } else if (rating > 0) {
+      return 'Négatif (automatique)'
+    }
+    return 'Sélectionnez une note'
+  }
+
+  const getFeedbackTypeColor = () => {
+    if (rating >= 3) {
+      return 'text-green-300'
+    } else if (rating > 0) {
+      return 'text-red-300'
+    }
+    return 'text-gray-400'
+  }
+
+  // Vérifier si le formulaire doit être désactivé
+  const isFormDisabled = limitInfo && !limitInfo.canPost
 
   return (
     <motion.div 
@@ -99,11 +142,59 @@ export function FeedbackSection() {
             strokeLinecap="round" 
             strokeLinejoin="round" 
             strokeWidth={2} 
-            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" 
+            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" 
           />
         </svg>
         Donnez votre avis
       </h3>
+      
+      {/* Affichage des informations de limite */}
+      {!limitLoading && limitInfo && (
+        <motion.div 
+          className={`mb-6 p-4 rounded-lg border flex items-center gap-3 ${
+            limitInfo.canPost 
+              ? 'bg-green-500/10 border-green-500/30 text-green-300' 
+              : 'bg-red-500/10 border-red-500/30 text-red-300'
+          }`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {limitInfo.canPost ? (
+            <CheckCircle className="w-5 h-5 text-green-400" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-400" />
+          )}
+          <div className="flex-1">
+            <div className="font-medium">
+              {limitInfo.canPost 
+                ? `Vous pouvez encore poster ${limitInfo.remaining} avis aujourd'hui`
+                : 'Limite d\'avis quotidienne atteinte'
+              }
+            </div>
+            <div className="text-sm opacity-80">
+              {limitInfo.currentCount}/{limitInfo.limit} avis utilisés aujourd'hui
+            </div>
+          </div>
+          {limitInfo.canPost && (
+            <div className="text-xs bg-green-500/20 px-2 py-1 rounded-full">
+              {limitInfo.remaining} restant{limitInfo.remaining > 1 ? 's' : ''}
+            </div>
+          )}
+        </motion.div>
+      )}
+      
+      {avisError && (
+        <motion.div 
+          className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg mb-6 flex items-center gap-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {avisError}
+        </motion.div>
+      )}
       
       {isSubmitted ? (
         <motion.div 
@@ -148,31 +239,34 @@ export function FeedbackSection() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-300">Type de retour</label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  feedbackType === 'positive'
-                    ? 'bg-green-500/20 border border-green-500/50 text-green-300'
-                    : 'bg-[#0A1A4F] border border-[#1A3A8F] text-gray-300 hover:bg-[#0f225f]'
-                }`}
-                onClick={() => setFeedbackType('positive')}
-              >
-                <ThumbsUp className="w-5 h-5" />
-                <span>Positif</span>
-              </button>
-              <button
-                type="button"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  feedbackType === 'negative'
-                    ? 'bg-red-500/20 border border-red-500/50 text-red-300'
-                    : 'bg-[#0A1A4F] border border-[#1A3A8F] text-gray-300 hover:bg-[#0f225f]'
-                }`}
-                onClick={() => setFeedbackType('negative')}
-              >
-                <ThumbsDown className="w-5 h-5" />
-                <span>Négatif</span>
-              </button>
+            <div className="flex items-center gap-4">
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                rating >= 3
+                  ? 'bg-green-500/20 border border-green-500/50 text-green-300'
+                  : rating > 0
+                  ? 'bg-red-500/20 border border-red-500/50 text-red-300'
+                  : 'bg-[#0A1A4F] border border-[#1A3A8F] text-gray-400'
+              }`}>
+                {rating >= 3 ? (
+                  <ThumbsUp className="w-5 h-5" />
+                ) : rating > 0 ? (
+                  <ThumbsDown className="w-5 h-5" />
+                ) : (
+                  <div className="w-5 h-5" />
+                )}
+                <span className={getFeedbackTypeColor()}>
+                  {getFeedbackTypeText()}
+                </span>
+              </div>
+              
+              {rating > 0 && (
+                <span className="text-xs text-gray-500">
+                  {rating >= 3 
+                    ? '≥ 3 étoiles = Positif' 
+                    : '< 3 étoiles = Négatif'
+                  }
+                </span>
+              )}
             </div>
           </div>
 
@@ -180,27 +274,20 @@ export function FeedbackSection() {
             <label className="text-sm font-medium text-gray-300">Votre avis</label>
             <textarea
               className="flex w-full min-h-[120px] rounded-md border border-[#1A3A8F] bg-[#0A1A4F] px-3 py-2 text-sm text-white placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A3A8F] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Dites-nous ce que vous avez pensé de ce service..."
+              placeholder={isFormDisabled ? "Limite d'avis quotidienne atteinte" : "Dites-nous ce que vous avez pensé de ce service..."}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
+              disabled={isFormDisabled}
             />
           </div>
 
           <div className="flex justify-end">
             <Button 
               type="submit" 
-              disabled={!rating || !comment || isSubmitting}
-              className="bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF8E53] hover:to-[#FF671E] text-white font-medium transition-all duration-300 transform hover:scale-105"
+              disabled={!rating || !comment || !feedbackType || isFormDisabled}
+              className="bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF8E53] hover:to-[#FF671E] text-white font-medium transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Envoi en cours...
-                </>
-              ) : 'Envoyer mon avis'}
+              {isFormDisabled ? 'Limite atteinte' : 'Envoyer mon avis'}
             </Button>
           </div>
         </form>

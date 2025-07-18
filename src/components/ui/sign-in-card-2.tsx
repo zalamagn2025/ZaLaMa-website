@@ -1,6 +1,6 @@
 'use client'
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Lock, Eye, EyeClosed, ArrowRight, Mail, CheckCircle, AlertCircle, User } from 'lucide-react';
@@ -28,6 +28,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 
 export function Component() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,6 +37,19 @@ export function Component() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginStatus, setLoginStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Vérifier si l'utilisateur arrive après un changement de mot de passe
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message === 'password_changed') {
+      setShowSuccessMessage(true);
+      // Masquer le message après 5 secondes
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
+    }
+  }, [searchParams]);
 
   // For 3D card effect - increased rotation range for more pronounced 3D effect
   const mouseX = useMotionValue(0);
@@ -442,6 +456,18 @@ export function Component() {
 
                 {/* Messages de statut */}
                 <AnimatePresence>
+                  {showSuccessMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-4 p-3 bg-green-900/20 border border-green-700 rounded-lg flex items-center"
+                    >
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                      <p className="text-green-200 text-sm">Votre mot de passe a été mis à jour avec succès. Veuillez vous reconnecter.</p>
+                    </motion.div>
+                  )}
+
                   {loginStatus === 'success' && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}

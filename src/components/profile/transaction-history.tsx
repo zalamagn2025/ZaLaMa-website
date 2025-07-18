@@ -1,820 +1,808 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { IconSearch, IconFilter, IconEye, IconDownload, IconShare, IconX } from "@tabler/icons-react";
+import { 
+  IconSearch, 
+  IconFilter, 
+  IconEye, 
+  IconDownload, 
+  IconX,
+  IconClock,
+  IconCheck,
+  IconCircle,
+  IconFileText,
+  IconPhone,
+  IconCalendar,
+  IconCurrency,
+} from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
+import { saveAs } from "file-saver";
 import { TransactionPDF } from "./TransactionPDF";
+import { ImageRecu } from "./ImageRecu";
 
-// Définition du type Transaction pour correspondre à TransactionPDF.tsx
-interface Transaction {
+// Interface pour les demandes d'avance
+interface SalaryAdvanceRequest {
   id: string;
-  date: string;
-  type: string;
-  amount: string;
-  status: "Approuvé" | "En attente" | "Rejeté";
-  paymentStatus: "Remboursé" | "En cours" | "Échoué";
-  description: string;
+  employe_id: string;
+  partenaire_id: string;
+  montant_demande: number;
+  type_motif: string;
+  motif: string;
+  numero_reception?: string;
+  frais_service: number;
+  montant_total: number;
+  salaire_disponible?: number;
+  avance_disponible?: number;
+  statut: "En attente" | "Validé" | "Rejeté" | "Annulé";
+  date_creation: string;
+  date_validation?: string;
+  date_rejet?: string;
+  motif_rejet?: string;
+  created_at: string;
+  updated_at: string;
+  employe?: {
+    id: string;
+    nom: string;
+    prenom: string;
+    telephone: string;
+    email: string;
+  };
+  partenaire?: {
+    id: string;
+    nom: string;
+    adresse: string;
+  };
 }
 
-// Données fictives corrigées
-const allTransactions: Transaction[] = [
-  {
-    id: "TX123456",
-    date: "15/05/2023",
-    type: "Avance sur salaire",
-    amount: "500,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "Remboursé",
-    description: "Avance sur salaire de mai 2023",
-  },
-  {
-    id: "TX123457",
-    date: "02/06/2023",
-    type: "Prêt personnel",
-    amount: "1,200,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "En cours",
-    description: "Prêt pour rénovation domicile",
-  },
-  {
-    id: "TX123458",
-    date: "10/07/2023",
-    type: "Avance sur salaire",
-    amount: "300,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "Remboursé",
-    description: "Avance sur salaire de juillet 2023",
-  },
-  {
-    id: "TX123459",
-    date: "25/07/2023",
-    type: "Prêt entre particuliers",
-    amount: "800,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "En cours",
-    description: "Prêt pour frais médicaux",
-  },
-  {
-    id: "TX123460",
-    date: "05/08/2023",
-    type: "Avance sur salaire",
-    amount: "450,000 GNF",
-    status: "En attente",
-    paymentStatus: "En cours",
-    description: "Avance sur salaire d'août 2023",
-  },
-  {
-    id: "TX123461",
-    date: "15/08/2023",
-    type: "Prêt personnel",
-    amount: "750,000 GNF",
-    status: "Rejeté",
-    paymentStatus: "Échoué",
-    description: "Prêt pour vacances",
-  },
-  {
-    id: "TX123462",
-    date: "20/08/2023",
-    type: "Prêt entre particuliers",
-    amount: "1,500,000 GNF",
-    status: "Approuvé",
-    paymentStatus: "En cours",
-    description: "Prêt pour frais scolaires",
-  },
-];
+// Hook pour récupérer les demandes d'avance
+function useSalaryAdvanceRequests() {
+  const [requests, setRequests] = useState<SalaryAdvanceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export function TransactionHistory() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
-  const [shareTransaction, setShareTransaction] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
-    type: "",
-    status: "",
-    period: "",
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const transactionsPerPage = 5;
-  const sharePopupRef = useRef<HTMLDivElement>(null);
-
-  // Filtrer les transactions
-  const filteredTransactions = allTransactions.filter((transaction) => {
-    const matchesSearch =
-      transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesType =
-      filters.type === "" ||
-      (filters.type === "advance" && transaction.type === "Avance sur salaire") ||
-      (filters.type === "loan" && transaction.type === "Prêt personnel") ||
-      (filters.type === "p2p" && transaction.type === "Prêt entre particuliers");
-
-    const matchesStatus =
-      filters.status === "" ||
-      (filters.status === "approved" && transaction.status === "Approuvé") ||
-      (filters.status === "pending" && transaction.status === "En attente") ||
-      (filters.status === "rejected" && transaction.status === "Rejeté");
-
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  // Pagination
-  const indexOfLastTransaction = currentPage * transactionsPerPage;
-  const indexOfFirstTransaction = indexOfLastTransaction - transactionsPerPage;
-  const currentTransactions = filteredTransactions.slice(
-    indexOfFirstTransaction,
-    indexOfLastTransaction
-  );
-  const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
-
-  const paginate = (pageNumber: number) => {
-    if (pageNumber !== currentPage && pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-    }
-  };
-
-  // Gestion du clic en dehors du popup de partage
-  const handleClickOutside = (event: MouseEvent) => {
-    if (sharePopupRef.current && !sharePopupRef.current.contains(event.target as Node)) {
-      setShareTransaction(null);
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch("/api/salary-advance/request");
+      
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des demandes");
+      }
+      
+      const data = await response.json();
+      setRequests(data.data || []);
+    } catch (err) {
+      console.error("Erreur lors de la récupération des demandes:", err);
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    fetchRequests();
   }, []);
 
-  // Styles et animations
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Approuvé":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "En attente":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-      case "Rejeté":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
-      default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+  return {
+    requests,
+    loading,
+    error,
+    refetch: fetchRequests
+  };
+}
+
+// Fonction pour convertir les données API en format d'affichage
+const convertApiRequestToDisplay = (apiRequest: SalaryAdvanceRequest) => {
+  const formatFullDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).replace(/\//g, ' ');
+  };
+
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "GNF",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatMotifType = (type: string): string => {
+    switch (type) {
+      case "TRANSPORT": return "Transport";
+      case "SANTE": return "Santé";
+      case "EDUCATION": return "Éducation";
+      case "LOGEMENT": return "Logement";
+      case "ALIMENTATION": return "Alimentation";
+      case "URGENCE_FAMILIALE": return "Urgence familiale";
+      case "FRAIS_MEDICAUX": return "Frais médicaux";
+      case "FRAIS_SCOLAIRES": return "Frais scolaires";
+      case "REPARATION_VEHICULE": return "Réparation véhicule";
+      case "FRAIS_DEUIL": return "Frais deuil";
+      case "AUTRE": return "Autre";
+      default: return type || "Non précisé";
     }
   };
 
-  const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case "Remboursé":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "En cours":
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-      case "Échoué":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
+  return {
+    id: apiRequest.id,
+    date: formatFullDate(apiRequest.date_creation),
+    type: formatMotifType(apiRequest.type_motif),
+    amount: formatAmount(apiRequest.montant_demande),
+    totalAmount: formatAmount(apiRequest.montant_total),
+    status: apiRequest.statut,
+    motif: apiRequest.motif,
+    numeroReception: apiRequest.numero_reception,
+    fraisService: formatAmount(apiRequest.frais_service),
+    salaireDisponible: apiRequest.salaire_disponible ? formatAmount(apiRequest.salaire_disponible) : "Non précisé",
+    avanceDisponible: apiRequest.avance_disponible ? formatAmount(apiRequest.avance_disponible) : "Non précisé",
+    dateValidation: apiRequest.date_validation ? formatFullDate(apiRequest.date_validation) : null,
+    dateRejet: apiRequest.date_rejet ? formatFullDate(apiRequest.date_rejet) : null,
+    motifRejet: apiRequest.motif_rejet || "Non précisé",
+    telephone: apiRequest.employe?.telephone || "Non précisé",
+    nomEmploye: apiRequest.employe ? `${apiRequest.employe.prenom} ${apiRequest.employe.nom}` : "Non précisé",
+    nomPartenaire: apiRequest.partenaire?.nom || "Non précisé",
+  };
+};
+
+// Icône du service d'avance sur salaire
+const SalaryAdvanceIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="rgb(255, 255, 255)"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-10 w-10"
+    style={{ color: 'rgb(255, 255, 255)' }}
+  >
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+    <line x1="7" y1="15" x2="9" y2="15" />
+    <line x1="11" y1="15" x2="13" y2="15" />
+  </svg>
+);
+
+// Animations
+const cardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.4,
+      type: "spring" as const,
+      stiffness: 300,
+      damping: 30
+    }
+  }),
+  hover: {
+    scale: 1.02,
+    y: -2,
+    transition: { duration: 0.2 }
+  }
+};
+
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.9, y: 20 },
+  visible: { 
+    opacity: 1, 
+    scale: 1, 
+    y: 0,
+    transition: { 
+      duration: 0.3,
+      type: "spring" as const,
+      stiffness: 300,
+      damping: 30
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.9, 
+    y: 20,
+    transition: { duration: 0.2 }
+  }
+};
+
+// Fonction pour générer et télécharger le PDF
+const generateAndDownloadPDF = async (request: ReturnType<typeof convertApiRequestToDisplay>) => {
+  try {
+    const blob = await pdf(
+      <TransactionPDF
+        montant={request.amount}
+        statut={request.status as "En attente" | "Validé" | "Rejeté" | "Annulé"}
+        date={request.date}
+        typeMotif={request.type}
+        fraisService={request.fraisService}
+        dateValidation={request.dateValidation || undefined}
+        motifRejet={request.motifRejet}
+      />
+    ).toBlob();
+    saveAs(blob, `Demande_Avance_Salaire_${request.id}.pdf`);
+  } catch (error) {
+    console.error("Erreur lors de la génération du PDF :", error);
+    alert("Une erreur est survenue lors de la génération du PDF.");
+  }
+};
+
+export function TransactionHistory() {
+  const { requests: apiRequests, loading, error } = useSalaryAdvanceRequests();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    type: "",
+    status: "",
+    period: ""
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const requestsPerPage = 10;
+
+  const allRequests = apiRequests.map(convertApiRequestToDisplay);
+
+  const filteredRequests = allRequests.filter((request) => {
+    const matchesSearch =
+      request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.motif.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (request.numeroReception && request.numeroReception.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesType =
+      filters.type === "" ||
+      request.type.toLowerCase().includes(filters.type.toLowerCase());
+
+    const matchesStatus =
+      filters.status === "" ||
+      request.status.toLowerCase() === filters.status.toLowerCase();
+
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  const indexOfLastRequest = currentPage * requestsPerPage;
+  const indexOfFirstRequest = indexOfLastRequest - requestsPerPage;
+  const currentRequests = filteredRequests.slice(
+    indexOfFirstRequest,
+    indexOfLastRequest
+  );
+  const totalPages = Math.ceil(filteredRequests.length / requestsPerPage);
+
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return "bg-gray-500/20 text-gray-300 border-gray-500/30";
+    switch (status.toLowerCase()) {
+      case "en attente":
+        return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
+      case "validé":
+        return "bg-green-500/20 text-green-300 border-green-500/30";
+      case "rejeté":
+        return "bg-red-500/20 text-red-300 border-red-500/30";
+      case "annulé":
+        return "bg-gray-500/20 text-gray-300 border-gray-500/30";
       default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+        return "bg-gray-500/20 text-gray-300 border-gray-500/30";
     }
   };
 
-  const rowVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.3, delay: i * 0.05 },
-    }),
-    hover: {
-      scale: 1.02,
-      backgroundColor: "rgba(1, 13, 62, 0.7)",
-      transition: { duration: 0.2 },
-    },
+  const getStatusIcon = (status: string | undefined) => {
+    if (!status) return <IconClock className="w-3 h-3" />;
+    switch (status.toLowerCase()) {
+      case "en attente":
+        return <IconClock className="w-3 h-3" />;
+      case "validé":
+        return <IconCheck className="w-3 h-3" />;
+      case "rejeté":
+        return <IconX className="w-3 h-3" />;
+      case "annulé":
+        return <IconCircle className="w-3 h-3" />;
+      default:
+        return <IconClock className="w-3 h-3" />;
+    }
   };
 
-  const modalVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: "easeOut" } },
-    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } },
+  const getStatusText = (status: string | undefined) => {
+    if (!status) return "Inconnu";
+    switch (status.toLowerCase()) {
+      case "en attente":
+        return "En attente";
+      case "validé":
+        return "Validé";
+      case "rejeté":
+        return "Rejeté";
+      case "annulé":
+        return "Annulé";
+      default:
+        return status;
+    }
   };
 
-  const sharePopupVariants = {
-    hidden: { opacity: 0, y: 10, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1 },
-    exit: { opacity: 0, y: -10, scale: 0.95 },
-  };
+  if (loading) {
+    return (
+      <motion.div
+        className="bg-[#010D3E]/30 backdrop-blur-md rounded-xl p-6 border border-[#1A3A8F] shadow-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF671E] mr-3"></div>
+          <span style={{ color: 'rgb(255, 255, 255)' }}>Chargement des demandes...</span>
+        </div>
+      </motion.div>
+    );
+  }
 
-  // Partager une transaction
-  const shareTransactionDetails = (transactionId: string) => {
-    const transaction = allTransactions.find((t) => t.id === transactionId);
-    if (!transaction) return;
-
-    const shareText =
-      `Détails de ma transaction ${transaction.id}:\n\n` +
-      `Type: ${transaction.type}\n` +
-      `Montant: ${transaction.amount}\n` +
-      `Statut: ${transaction.status}\n` +
-      `Date: ${transaction.date}`;
-
-    const shareUrl = `https://monapp.com/transactions/${transaction.id}`;
-
-    return {
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText)}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&e=${encodeURIComponent(shareText)}`,
-      telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
-      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
-    };
-  };
+  if (error) {
+    return (
+      <motion.div
+        className="bg-[#010D3E]/30 backdrop-blur-md rounded-xl p-6 border border-[#1A3A8F] shadow-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-center py-8">
+          <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <IconCircle className="w-6 h-6" style={{ color: 'rgb(248, 113, 113)' }} />
+          </div>
+          <h3 className="text-lg font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>Erreur de chargement</h3>
+          <p style={{ color: 'rgb(156, 163, 175)' }} className="mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg"
+            style={{ backgroundColor: 'rgb(255, 103, 30)', color: 'rgb(255, 255, 255)' }}
+          >
+            Réessayer
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
+      className="space-y-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="bg-[#010D3E] p-6 rounded-2xl shadow-xl overflow-hidden"
     >
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <motion.h2
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-2xl font-bold text-white"
-        >
-          Historique des Transactions
-        </motion.h2>
-
-        <div className="flex gap-3 w-full sm:w-auto">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="relative w-full sm:w-64"
-          >
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IconSearch className="h-5 w-5 text-white/50" />
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="bg-[#010D3E]/30 backdrop-blur-md rounded-xl p-6 border border-[#1A3A8F] shadow-lg"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <SalaryAdvanceIcon />
+            <div>
+              <h2 className="text-xl font-bold" style={{ color: 'rgb(255, 255, 255)' }}>Demandes d'avance sur salaire</h2>
+              <p style={{ color: 'rgb(156, 163, 175)' }} className="text-sm">
+                {filteredRequests.length} demande{filteredRequests.length !== 1 ? "s" : ""} trouvée{filteredRequests.length !== 1 ? "s" : ""}
+              </p>
             </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FF8E53] focus:border-transparent shadow-sm transition-all duration-300"
-              placeholder="Rechercher une transaction..."
+              placeholder="Rechercher une demande..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-300"
+              style={{ 
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                color: 'rgb(255, 255, 255)',
+                '--tw-ring-color': 'rgb(255, 142, 83)',
+                '--tw-placeholder-color': 'rgb(156, 163, 175)'
+              } as any}
             />
-          </motion.div>
-
+          </div>
+          
           <motion.button
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            whileHover={{ scale: 1.05, boxShadow: "0 4px 14px rgba(255, 103, 30, 0.3)" }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setFilterOpen(!filterOpen)}
-            className="inline-flex items-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white shadow-md hover:shadow-lg transition-all duration-300"
+            className="px-4 py-3 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white hover:bg-[#010D3E]/70 transition-all duration-300 flex items-center gap-2"
+            style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
           >
-            <IconFilter className="h-4 w-4 mr-2" />
-            Filtres
+            <IconFilter className="w-4 h-4" />
+            <span className="hidden sm:inline">Filtres</span>
           </motion.button>
         </div>
-      </div>
 
-      {/* Filter Section */}
-      <AnimatePresence>
-        {filterOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="mb-6 bg-[#010D3E]/70 backdrop-blur-md p-6 rounded-xl shadow-md border border-white/10"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  label: "Type",
-                  name: "type",
-                  options: [
-                    { value: "", label: "Tous" },
-                    { value: "advance", label: "Avance sur salaire" },
-                    { value: "loan", label: "Prêt personnel" },
-                    { value: "p2p", label: "Prêt entre particuliers" },
-                  ],
-                },
-                {
-                  label: "Statut",
-                  name: "status",
-                  options: [
-                    { value: "", label: "Tous" },
-                    { value: "approved", label: "Approuvé" },
-                    { value: "pending", label: "En attente" },
-                    { value: "rejected", label: "Rejeté" },
-                  ],
-                },
-                {
-                  label: "Période",
-                  name: "period",
-                  options: [
-                    { value: "", label: "Toutes les dates" },
-                    { value: "month", label: "Ce mois" },
-                    { value: "quarter", label: "Ce trimestre" },
-                    { value: "year", label: "Cette année" },
-                  ],
-                },
-              ].map((filter, index) => (
-                <motion.div
-                  key={filter.label}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    {filter.label}
-                  </label>
-                  <select
-                    className="block w-full pl-3 pr-10 py-2.5 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-[#FF8E53] focus:border-transparent shadow-sm transition-all duration-300"
-                    value={filters[filter.name as keyof typeof filters]}
-                    onChange={(e) => {
-                      setFilters({
-                        ...filters,
-                        [filter.name]: e.target.value,
-                      });
-                      setCurrentPage(1);
-                    }}
+        <AnimatePresence>
+          {filterOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-4 pt-4 border-t"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  {
+                    label: "Type de motif",
+                    name: "type",
+                    options: [
+                      { value: "", label: "Tous" },
+                      { value: "transport", label: "Transport" },
+                      { value: "sante", label: "Santé" },
+                      { value: "education", label: "Éducation" },
+                      { value: "logement", label: "Logement" },
+                      { value: "alimentation", label: "Alimentation" },
+                      { value: "urgence", label: "Urgence" },
+                    ],
+                  },
+                  {
+                    label: "Statut",
+                    name: "status",
+                    options: [
+                      { value: "", label: "Tous" },
+                      { value: "en attente", label: "En attente" },
+                      { value: "validé", label: "Validée" },
+                      { value: "rejeté", label: "Rejetée" },
+                      { value: "annulé", label: "Annulée" },
+                    ],
+                  },
+                  {
+                    label: "Période",
+                    name: "period",
+                    options: [
+                      { value: "", label: "Toutes les dates" },
+                      { value: "month", label: "Ce mois" },
+                      { value: "quarter", label: "Ce trimestre" },
+                      { value: "year", label: "Cette année" },
+                    ],
+                  },
+                ].map((filter, index) => (
+                  <motion.div
+                    key={filter.label}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
                   >
-                    {filter.options.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setFilters({
-                    type: "",
-                    status: "",
-                    period: "",
-                  });
-                  setCurrentPage(1);
-                }}
-                className="px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white hover:bg-[#010D3E]/70 transition-all duration-300"
-              >
-                Réinitialiser
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setFilterOpen(false)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                Appliquer
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                      {filter.label}
+                    </label>
+                    <select
+                      className="block w-full pl-3 pr-10 py-2.5 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white focus:outline-none focus:ring-2 shadow-sm transition-all duration-300"
+                      style={{ 
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        color: 'rgb(255, 255, 255)',
+                        '--tw-ring-color': 'rgb(255, 142, 83)'
+                      } as any}
+                      value={filters[filter.name as keyof typeof filters]}
+                      onChange={(e) => {
+                        setFilters({
+                          ...filters,
+                          [filter.name]: e.target.value,
+                        });
+                        setCurrentPage(1);
+                      }}
+                    >
+                      {filter.options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
-      {/* Table Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-[#010D3E]/50 backdrop-blur-md rounded-xl shadow-lg border border-white/10 overflow-hidden"
+        className="space-y-4"
       >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-white/10">
-            <thead className="bg-[#010D3E]/70">
-              <tr>
-                {["ID Transaction", "Date", "Type", "Montant", "Statut", "Paiement", "Actions"].map(
-                  (header, index) => (
-                    <motion.th
-                      key={header}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      scope="col"
-                      className={`px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider ${
-                        header === "Actions" ? "text-right" : ""
-                      }`}
-                    >
-                      {header}
-                    </motion.th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {currentTransactions.length > 0 ? (
-                currentTransactions.map((transaction, index) => (
-                  <motion.tr
-                    key={transaction.id}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    whileHover="hover"
-                    variants={rowVariants}
-                    className="transition-all duration-300"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                      {transaction.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">
-                      {transaction.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">
-                      {transaction.type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                      {transaction.amount}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full border ${getStatusColor(
-                          transaction.status
-                        )}`}
-                      >
-                        {transaction.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full border ${getPaymentStatusColor(
-                          transaction.paymentStatus
-                        )}`}
-                      >
-                        {transaction.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        <motion.button
-                          whileHover={{ scale: 1.2, rotate: 10 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => setSelectedTransaction(transaction.id)}
-                          className="text-[#FF8E53] hover:text-[#FF671E]"
-                        >
-                          <IconEye className="h-5 w-5" />
-                        </motion.button>
-
-                        <PDFDownloadLink
-                          document={<TransactionPDF transaction={transaction} />}
-                          fileName={`transaction_${transaction.id}.pdf`}
-                        >
-                          {({ loading }) => (
-                            <motion.button
-                              whileHover={{ scale: 1.2, rotate: -10 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="text-white/50 hover:text-white/80"
-                              disabled={loading}
-                            >
-                              <IconDownload className="h-5 w-5" />
-                            </motion.button>
-                          )}
-                        </PDFDownloadLink>
-
-                        <motion.button
-                          whileHover={{ scale: 1.2 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => setShareTransaction(transaction.id)}
-                          className="text-white/50 hover:text-white/80"
-                        >
-                          <IconShare className="h-5 w-5" />
-                        </motion.button>
+        {currentRequests.length > 0 ? (
+          currentRequests.map((request, index) => (
+            <motion.div
+              key={`${request.id}-${index}`}
+              custom={index}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
+              className="bg-[#010D3E]/50 backdrop-blur-md rounded-xl border overflow-hidden shadow-lg"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            >
+              <div className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(to right, rgb(255, 103, 30), rgb(255, 142, 83))' }}>
+                      <SalaryAdvanceIcon />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg" style={{ color: 'rgb(255, 255, 255)' }}>
+                          Avance sur salaire
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm" style={{ color: 'rgb(156, 163, 175)' }}>
+                          <IconPhone className="w-3 h-3" />
+                          <span>{request.telephone}</span>
+                        </div>
                       </div>
-                    </td>
-                  </motion.tr>
-                ))
-              ) : (
-                <motion.tr
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <td colSpan={7} className="px-6 py-4 text-center text-white/80">
-                    Aucune transaction trouvée
-                  </td>
-                </motion.tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {filteredTransactions.length > 0 && (
+                      <span
+                        className={`px-3 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full border ${getStatusColor(request.status)}`}
+                      >
+                        {getStatusIcon(request.status)}
+                        {getStatusText(request.status)}
+                      </span>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2">
+                        <IconCurrency className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
+                        <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Montant demandé :</span>
+                        <span className="font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>{request.amount}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <IconCalendar className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
+                        <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Le {request.date}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedRequest(request.id)}
+                        className="px-3 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
+                      >
+                        <IconEye className="w-4 h-4" />
+                        Voir détail
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))
+        ) : (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="bg-[#010D3E]/50 backdrop-blur-md px-4 py-3 flex items-center justify-between border-t border-white/10 sm:px-6"
+            transition={{ duration: 0.3 }}
+            className="text-center py-12 bg-[#010D3E]/30 backdrop-blur-md rounded-xl border"
+            style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
           >
-            <div className="flex-1 flex justify-between sm:hidden">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
-                  currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                Précédent
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border border-white/10 text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
-                  currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                Suivant
-              </motion.button>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <IconFileText className="w-8 h-8" style={{ color: 'rgba(255, 255, 255, 0.4)' }} />
             </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <p className="text-sm text-white/80">
-                Affichage de <span className="font-medium">{indexOfFirstTransaction + 1}</span> à{" "}
-                <span className="font-medium">
-                  {Math.min(indexOfLastTransaction, filteredTransactions.length)}
-                </span>{" "}
-                sur <span className="font-medium">{filteredTransactions.length}</span> transactions
-              </p>
-              <div className="relative z-0 inline-flex rounded-xl shadow-sm -space-x-px" aria-label="Pagination">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-2 py-2 rounded-l-xl border border-white/10 bg-[#010D3E]/50 text-sm font-medium text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
-                    currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                >
-                  <span className="sr-only">Précédent</span>
-                  ‹
-                </motion.button>
-
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <motion.button
-                      key={pageNum}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => paginate(pageNum)}
-                      className={`px-4 py-2 border border-white/10 text-sm font-medium transition-all duration-300 ${
-                        currentPage === pageNum
-                          ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white"
-                          : "bg-[#010D3E]/50 text-white hover:bg-[#010D3E]/70"
-                      }`}
-                    >
-                      {pageNum}
-                    </motion.button>
-                  );
-                })}
-
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-2 py-2 rounded-r-xl border border-white/10 bg-[#010D3E]/50 text-sm font-medium text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
-                    currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                >
-                  <span className="sr-only">Suivant</span>
-                  ›
-                </motion.button>
-              </div>
-            </div>
+            <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Aucune demande d'avance trouvée</p>
+            <p className="text-sm mt-2" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Vous n'avez pas encore soumis de demande d'avance</p>
           </motion.div>
         )}
       </motion.div>
 
-      {/* Modal for Transaction Details */}
+      {filteredRequests.length > requestsPerPage && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+          <div className="text-sm text-center sm:text-left" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+            Affichage de <span className="font-medium" style={{ color: 'rgb(255, 255, 255)' }}>{indexOfFirstRequest + 1}</span> à{" "}
+            <span className="font-medium" style={{ color: 'rgb(255, 255, 255)' }}>{Math.min(indexOfLastRequest, filteredRequests.length)}</span>{" "}
+            sur <span className="font-medium" style={{ color: 'rgb(255, 255, 255)' }}>{filteredRequests.length}</span> demandes
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
+                currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
+            >
+              Précédent
+            </motion.button>
+            
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                if (page > totalPages) return null;
+                
+                return (
+                  <motion.button
+                    key={page}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => paginate(page)}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      currentPage === page
+                        ? "text-white"
+                        : "bg-[#010D3E]/50 border text-white/60 hover:bg-[#010D3E]/70 hover:text-white"
+                    }`}
+                    style={currentPage === page 
+                      ? { background: 'linear-gradient(to right, rgb(255, 103, 30), rgb(255, 142, 83))' }
+                      : { borderColor: 'rgba(255, 255, 255, 0.1)' }}
+                  >
+                    {page}
+                  </motion.button>
+                );
+              })}
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-xl bg-[#010D3E]/50 backdrop-blur-md border text-white hover:bg-[#010D3E]/70 transition-all duration-300 ${
+                currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
+            >
+              Suivant
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
+
       <AnimatePresence>
-        {selectedTransaction && (
+        {selectedRequest && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-[#010D3E]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedRequest(null)}
           >
             <motion.div
               variants={modalVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="relative mx-auto p-6 w-full max-w-lg bg-[#010D3E] rounded-2xl shadow-2xl border border-white/10"
+              className="relative mx-auto w-full max-w-lg max-h-[90vh] bg-[#010D3E] rounded-2xl shadow-2xl border overflow-hidden"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white">Détails de la Transaction</h3>
-                <motion.button
-                  whileHover={{ scale: 1.2, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setSelectedTransaction(null)}
-                  className="text-white/50 hover:text-white"
-                >
-                  ×
-                </motion.button>
-              </div>
-
-              {allTransactions.find((t) => t.id === selectedTransaction) && (
-                <div className="space-y-4">
-                  {(() => {
-                    const transaction = allTransactions.find((t) => t.id === selectedTransaction)!;
-                    return (
-                      <>
-                        {[
-                          { label: "ID Transaction", value: transaction.id },
-                          { label: "Date", value: transaction.date },
-                          { label: "Type", value: transaction.type },
-                          { label: "Montant", value: transaction.amount },
-                          { label: "Description", value: transaction.description },
-                          {
-                            label: "Statut",
-                            value: (
-                              <span
-                                className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full border ${getStatusColor(
-                                  transaction.status
-                                )}`}
-                              >
-                                {transaction.status}
-                              </span>
-                            ),
-                          },
-                          {
-                            label: "Statut de paiement",
-                            value: (
-                              <span
-                                className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full border ${getPaymentStatusColor(
-                                  transaction.paymentStatus
-                                )}`}
-                              >
-                                {transaction.paymentStatus}
-                              </span>
-                            ),
-                          },
-                        ].map((item, index) => (
-                          <motion.div
-                            key={item.label}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                          >
-                            <p className="text-sm text-white/80">{item.label}</p>
-                            <p className="font-medium text-white">{item.value}</p>
-                          </motion.div>
-                        ))}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-6 flex justify-end gap-3"
+              <motion.button
+                whileHover={{ scale: 1.2, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setSelectedRequest(null)}
+                className="absolute top-6 right-6 p-2 rounded-lg transition-colors"
+                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
               >
-                <PDFDownloadLink
-                  document={<TransactionPDF transaction={allTransactions.find((t) => t.id === selectedTransaction)!} />}
-                  fileName={`transaction_${selectedTransaction}.pdf`}
-                >
-                  {({ loading }) => (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-4 py-2 rounded-xl bg-[#010D3E]/50 border border-white/10 text-white hover:bg-[#010D3E]/70 transition-all duration-300"
-                      disabled={loading}
-                    >
-                      {loading ? "Génération..." : "Télécharger PDF"}
-                    </motion.button>
-                  )}
-                </PDFDownloadLink>
-
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 4px 14px rgba(255, 103, 30, 0.3)" }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setSelectedTransaction(null)}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-white shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  Fermer
-                </motion.button>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Share Popup Modale */}
-      <AnimatePresence>
-        {shareTransaction && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#010D3E]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              ref={sharePopupRef}
-              variants={sharePopupVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="relative mx-auto p-6 w-full max-w-md bg-[#010D3E] rounded-2xl shadow-2xl border border-white/10"
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-white">Partager la transaction</h3>
-                <motion.button
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShareTransaction(null)}
-                  className="text-white/50 hover:text-white"
-                >
-                  <IconX className="h-5 w-5" />
-                </motion.button>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-white/80 text-sm">
-                  Partagez les détails de cette transaction sur les plateformes suivantes :
-                </p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    {
-                      name: "WhatsApp",
-                      icon: (
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                        </svg>
-                      ),
-                      color: "bg-green-500 hover:bg-green-600",
-                    },
-                    {
-                      name: "Facebook",
-                      icon: (
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z" />
-                        </svg>
-                      ),
-                      color: "bg-blue-600 hover:bg-blue-700",
-                    },
-                    {
-                      name: "Telegram",
-                      icon: (
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
-                        </svg>
-                      ),
-                      color: "bg-blue-400 hover:bg-blue-500",
-                    },
-                    {
-                      name: "Twitter",
-                      icon: (
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                        </svg>
-                      ),
-                      color: "bg-blue-300 hover:bg-blue-400",
-                    },
-                  ].map((platform) => {
-                    const shareUrl = shareTransactionDetails(shareTransaction)?.[
-                      platform.name.toLowerCase() as keyof ReturnType<typeof shareTransactionDetails>
-                    ];
-                    return (
-                      <motion.a
-                        key={platform.name}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        href={shareUrl || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`${platform.color} text-white rounded-lg p-3 flex flex-col items-center justify-center text-sm transition-colors duration-300`}
-                      >
-                        <div className="mb-1">{platform.icon}</div>
-                        <span>{platform.name}</span>
-                      </motion.a>
-                    );
-                  })}
+                <IconX className="w-7 h-7" />
+              </motion.button>
+              <div ref={modalRef}>
+                <div className="flex flex-col w-full items-center mb-4">
+                  <div className="w-32 h-32 mb-2 flex items-center justify-center">
+                    <img src="/images/zalama-logo.svg" alt="ZaLaMa Logo" className="w-full h-full object-contain" crossOrigin="anonymous" />
+                  </div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <IconFileText className="w-8 h-8" style={{ color: 'rgb(251, 146, 60)' }} />
+                    <h3 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'rgb(255, 255, 255)' }}>Détails de la demande</h3>
+                  </div>
                 </div>
+
+                {selectedRequest && (() => {
+                  const request = allRequests.find((r) => r.id === selectedRequest)!;
+                  let fieldsToShow: Array<{ label: string; value: string; type?: string }> = [];
+                  if (request.status === "Rejeté") {
+                    fieldsToShow = [
+                      { label: "Statut", value: request.status, type: "status" },
+                      { label: "Type de motif", value: request.type },
+                      { label: "Montant demandé", value: request.amount, type: "amount" },
+                      { label: "Motif de rejet", value: request.motifRejet },
+                      { label: "Expéditeur", value: "LengoPay" },
+                      { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
+                      { label: "Date", value: request.date, type: "date" },
+                    ];
+                  } else if (request.status === "En attente" || request.status === "Annulé") {
+                    fieldsToShow = [
+                      { label: "Statut", value: request.status, type: "status" },
+                      { label: "Type de motif", value: request.type },
+                      { label: "Montant demandé", value: request.amount, type: "amount" },
+                      { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
+                      { label: "Date", value: request.date, type: "date" },
+                    ];
+                  } else {
+                    fieldsToShow = [
+                      { label: "Statut", value: request.status, type: "status" },
+                      { label: "Type de motif", value: request.type },
+                      { label: "Montant demandé", value: request.amount, type: "amount" },
+                      { label: "Frais de service", value: `-${request.fraisService}`, type: "fees" },
+                      { label: "Montant reçu", value: `${(parseInt((request.amount || "0").replace(/[^0-9]/g, ""), 10) - parseInt((request.fraisService || "0").replace(/[^0-9]/g, ""), 10)).toLocaleString("fr-FR")} GNF`, type: "total" },
+                      { label: "Expéditeur", value: "LengoPay" },
+                      { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
+                      { label: "Date", value: request.date, type: "date" },
+                      { label: "Date de validation", value: request.dateValidation || request.date, type: "date" },
+                      { label: "Référence", value: request.numeroReception || `REF-${request.id.slice(-8)}`, type: "ref" },
+                    ];
+                  }
+                  return (
+                    <div className="w-full max-w-2xl mx-auto rounded-2xl p-0 md:p-0 flex flex-col" style={{ minHeight: "320px" }}>
+                      <div className={`${request.status === "Validé" ? "overflow-y-auto max-h-[60vh]" : ""} flex-1 flex flex-col divide-y`} style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+                        {fieldsToShow.map((item, subIndex) => (
+                          <div key={subIndex} className="flex items-center justify-between py-4 px-2 md:px-4">
+                            <span className="text-base md:text-lg font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                              {item.label}
+                            </span>
+                            <span className={`text-right text-base md:text-lg font-bold ${
+                              item.type === "amount" || item.type === "total"
+                                ? "text-orange-400"
+                                : item.type === "fees"
+                                  ? "text-red-400"
+                                  : item.type === "ref" || item.type === "date"
+                                    ? "text-white"
+                                    : item.type === "status"
+                                      ? "text-blue-300"
+                                      : "text-white"
+                            }`} style={{
+                              color: item.type === "amount" || item.type === "total"
+                                ? 'rgb(251, 146, 60)'
+                                : item.type === "fees"
+                                  ? 'rgb(248, 113, 113)'
+                                  : item.type === "ref" || item.type === "date"
+                                    ? 'rgb(255, 255, 255)'
+                                    : item.type === "status"
+                                      ? 'rgb(147, 197, 253)'
+                                      : 'rgb(255, 255, 255)'
+                            }}>
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-center gap-8 pt-8 pb-2 sticky bottom-0" style={{ backgroundColor: 'rgb(1, 13, 62)' }}>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => generateAndDownloadPDF(request)}
+                          className="w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition-all duration-300"
+                          style={{ background: 'linear-gradient(to bottom right, rgb(59, 130, 246), rgb(29, 78, 216))' }}
+                        >
+                          <IconDownload className="w-7 h-7" style={{ color: 'rgb(255, 255, 255)' }} />
+                        </motion.button>
+                        <ImageRecu 
+                          request={request}
+                          modalRef={modalRef}
+                          onClose={() => setSelectedRequest(null)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </motion.div>
           </motion.div>
