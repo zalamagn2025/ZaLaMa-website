@@ -4,6 +4,7 @@ import { twMerge } from "tailwind-merge";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider } from "@/components/providers";
+import { AutocompleteDisabler } from "@/components/auth/AutocompleteDisabler";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -65,6 +66,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
         />
+        {/* Désactiver l'auto-complétion et les suggestions de mots de passe */}
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="autocomplete" content="off" />
+        <meta name="data-form-type" content="other" />
+        <meta name="data-lpignore" content="true" />
       </head>
       <body
         className={twMerge(
@@ -73,7 +79,10 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <AutocompleteDisabler />
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -57,7 +57,12 @@ export default function LoginForm() {
         <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         Retour
       </button>
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+      <form 
+        className="mt-8 space-y-6" 
+        onSubmit={handleSubmit}
+        autoComplete="off"
+        data-form-type="other"
+      >
       {error && (
         <div className="bg-red-50 p-4 rounded-md">
           <div className="text-sm text-red-700">{error}</div>
@@ -73,6 +78,9 @@ export default function LoginForm() {
             id="phone-number"
             name="phone"
             type="tel"
+            autoComplete="off"
+            data-lpignore="true"
+            data-form-type="other"
             required
             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             placeholder="Ex: +224 625 21 21 15"
@@ -91,7 +99,9 @@ export default function LoginForm() {
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-form-type="other"
               required
               className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Votre mot de passe"
@@ -119,6 +129,8 @@ export default function LoginForm() {
             id="remember-me"
             name="remember-me"
             type="checkbox"
+            autoComplete="off"
+            data-lpignore="true"
             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
           />
           <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
