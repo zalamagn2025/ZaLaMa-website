@@ -19,35 +19,35 @@ const steps = [
     title: "Étape 1 : Prise de contact",
     content: (
       <ul className="list-disc list-inside">
-        <li>L&apos;entreprise manifeste son intérêt via le site web, un appel ou une rencontre physique.</li>
-        <li>ZaLaMa présente la solution, ses avantages et son impact social.</li>
+        <li>L&apos;entreprise manifeste son intérêt via le site web, un appel ou une rencontre physique</li>
+        <li>L&apos;entreprise remplit le formulaire de demande de partenariat via le site.</li>
       </ul>
     ),
   },
-  {
-    color: "success",
-    icon: <FileText className="w-6 h-6 text-success" />,
-    title: "Étape 2 : Dossier de candidature",
-    content: (
-      <ul className="list-disc list-inside">
-        <li>RCCM (Registre de Commerce)</li>
-        <li>NIF (Numéro d&apos;identification fiscale)</li>
-        <li>Attestation de non-redevance (si disponible)</li>
-        <li>Lettre d&apos;engagement à coopérer</li>
-        <li>Information sur les employés (Nombre, masse salariale, nombre de contrat CDI & CDD)</li>
-      </ul>
-    ),
-  },
+  // {
+  //   color: "success",
+  //   icon: <FileText className="w-6 h-6 text-success" />,
+  //   title: "Étape 2 : Dossier de candidature",
+  //   content: (
+  //     <ul className="list-disc list-inside">
+  //       <li>RCCM (Registre de Commerce)</li>
+  //       <li>NIF (Numéro d&apos;identification fiscale)</li>
+  //       <li>Attestation de non-redevance (si disponible)</li>
+  //       <li>Lettre d&apos;engagement à coopérer</li>
+  //       <li>Information sur les employés (Nombre, masse salariale, nombre de contrat CDI & CDD)</li>
+  //     </ul>
+  //   ),
+  // },
   {
     color: "warning",
     icon: <ShieldCheck className="w-6 h-6 text-warning" />,
-    title: "Étape 3 : Analyse et validation",
+    title: "Étape 2 : Analyse et validation",
     content: <p>ZaLaMa analyse la viabilité de l&apos;entreprise. En cas de validation, un contrat est proposé.</p>,
   },
   {
     color: "destructive",
     icon: <Signature className="w-6 h-6 text-destructive" />,
-    title: "Étape 4 : Partenariat",
+    title: "Étape 3 : Partenariat",
     content: (
       <ul className="list-disc list-inside">
         <li>Signature du contrat</li>
@@ -58,7 +58,7 @@ const steps = [
   {
     color: "blue",
     icon: <Users className="w-6 h-6 text-blue" />,
-    title: "Étape 5 : Intégration et formation",
+    title: "Étape 4 : Intégration et formation",
     content: (
       <ul className="list-disc list-inside">
         <li>Transmission des bénéficiaires</li>

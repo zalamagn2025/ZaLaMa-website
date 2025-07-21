@@ -79,8 +79,8 @@ const FonctionnementZalama = () => {
       id: 2,
       title: "Mise en place de la plateforme",
       description: [
-        "ZaLaMa fournit une application mobile ou web aux salariés",
-        "Chaque salarié reçoit un lien d'accès pour activer son compte.",
+        "ZaLaMa fournit une application aux salariés et un tableau de bord au RH.",
+        "Le RH et Chaque salarié reçoivent un lien d'accès pour activer leurs comptes",
       ],
       image: "/images/etape2.jpg",
       reverse: true,
@@ -90,7 +90,7 @@ const FonctionnementZalama = () => {
       title: "Activation du compte salarié",
       description: [
         "Le salarié télécharge l'application ou se connecte au site web",
-        "Il modifie son mot de passe et accède à son compte",
+        "Ils modifient leurs mots de passe et accèdent à leurs comptes",
       ],
       image: "/images/etape3.jpg"
     },
@@ -123,7 +123,7 @@ const FonctionnementZalama = () => {
       id: 5,
       title: "Remboursement automatique",
       description: [
-        "Avances : Déduction automatique du salaire mensuel",
+        "L’entreprise retient à la source le montant avancé par ZaLaMa, puis reverse intégralement à la date de remboursement prévus.",
         "Gestion & Conseils financiers : Service 100% gratuit"
       ],
       image: "/images/etape5.jpg",

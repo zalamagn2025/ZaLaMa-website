@@ -12,7 +12,7 @@ const FAQS = {
     },
     {
       question: "Quels sont les avantages de ZaLaMa pour un utilisateur ?",
-      answer: "•Réduction du stress financier en cas d'urgence.\n• Augmentation du pouvoir d'achat sans recourir à l'endettement.\n• Amélioration de la gestion budgétaire personnelle.\n• Réduction des inégalités en matière d'accès au financement, notamment pour les plus modestes.\n• Diminution des risques de surendettement en limitant les prêts informels et usuriers.",
+      answer: "•Réduction du stress financier en cas d'urgence.\n• Augmentation du pouvoir d'achat sans recourir à l'endettement.\n• Amélioration de la gestion budgétaire personnelle.\n• Réduction des inégalités en matière d'accès au financement, notamment pour les plus modestes.\n• Diminution des risques de surendettement en limitant les prêts informels et usuriers.",
     },
     {
       question: "Quel est le montant maximum que je peux demander ?",
@@ -168,51 +168,86 @@ const FAQItem = ({ item, isOpen, onClick, index, type }: FAQItemProps) => (
           }}
           className="overflow-hidden"
         >
+          {/* Effet Glassmorphism pour le bloc de réponse */}
           <motion.div 
-            className="px-5 pb-5 pt-0 text-sm text-zalama-text-secondary"
-            initial={{ opacity: 0 }}
+            className="relative mx-4 mb-4 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ 
-              opacity: 1,
-              transition: { delay: 0.2, duration: 0.3 }
+              opacity: 1, 
+              y: 0,
+              transition: { delay: 0.2, duration: 0.4 }
             }}
             exit={{ 
-              opacity: 0,
-              transition: { duration: 0.1 }
+              opacity: 0, 
+              y: 10,
+              transition: { duration: 0.2 }
             }}
           >
-            <motion.div 
-              className="h-px w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent my-3"
-              initial={{ scaleX: 0 }}
-              animate={{ 
-                scaleX: 1,
-                transition: { delay: 0.15, duration: 0.4 }
-              }}
-              exit={{ 
-                scaleX: 0,
-                transition: { duration: 0.2 }
-              }}
-            />
-            <motion.div
-              className={`mt-4 text-zalama-text-secondary space-y-2 ${
-                isOpen ? 'block' : 'hidden'
-              }`}
-              variants={{
-                hidden: { opacity: 0, height: 0 },
-                visible: {
-                  opacity: 1,
-                  height: 'auto',
-                  transition: { duration: 0.3, ease: 'easeOut' },
-                },
-              }}
-              initial="hidden"
-              animate={isOpen ? 'visible' : 'hidden'}
-            >
-              {item.answer.split('\n').map((paragraph, i) => (
-                <p key={i} className={i > 0 ? 'mt-2' : ''}>
-                  {paragraph}
-                </p>
-              ))}
-            </motion.div>
+            {/* Overlay de fond pour renforcer l'effet glassmorphism */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5 rounded-xl" />
+            
+            {/* Contenu de la réponse */}
+            <div className="relative px-5 py-4">
+              {/* Séparateur avec effet glassmorphism */}
+              <motion.div 
+                className="h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent mb-4"
+                initial={{ scaleX: 0 }}
+                animate={{ 
+                  scaleX: 1,
+                  transition: { delay: 0.3, duration: 0.5 }
+                }}
+                exit={{ 
+                  scaleX: 0,
+                  transition: { duration: 0.2 }
+                }}
+              />
+              
+              {/* Texte de la réponse */}
+              <motion.div
+                className="text-sm text-zalama-text-secondary space-y-3 leading-relaxed"
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    transition: { 
+                      duration: 0.4, 
+                      ease: 'easeOut',
+                      staggerChildren: 0.1
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+              >
+                {item.answer.split('\n').map((paragraph, i) => (
+                  <motion.p 
+                    key={i} 
+                    className={`${
+                      paragraph.startsWith('•') 
+                        ? 'flex items-start gap-2' 
+                        : ''
+                    }`}
+                    variants={{
+                      hidden: { opacity: 0, x: -10 },
+                      visible: { 
+                        opacity: 1, 
+                        x: 0,
+                        transition: { duration: 0.3 }
+                      }
+                    }}
+                  >
+                    {paragraph.startsWith('•') && (
+                      <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-primary mt-2" />
+                    )}
+                    <span className={paragraph.startsWith('•') ? 'flex-1' : ''}>
+                      {paragraph.startsWith('•') ? paragraph.substring(1).trim() : paragraph}
+                    </span>
+                  </motion.p>
+                ))}
+              </motion.div>
+            </div>
           </motion.div>
         </motion.div>
       )}
@@ -230,7 +265,13 @@ export function FAQSection() {
 
   return (
     <section className="relative overflow-hidden pt-16 md:pt-24 lg:pt-32">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Background decorative elements pour renforcer l'effet glassmorphism */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -249,8 +290,8 @@ export function FAQSection() {
               Consultez nos réponses aux questions les plus fréquemment posées par les utilisateurs et les entreprises partenaires
             </p>
 
-            {/* Onglets */}
-            <div className="mt-8 inline-flex p-1 bg-zalama-bg-darker rounded-lg">
+            {/* Onglets avec effet glassmorphism */}
+            <div className="mt-8 inline-flex p-1 bg-zalama-bg-darker/80 backdrop-blur-sm rounded-lg border border-white/10 shadow-lg">
               {(['salarie', 'employeur'] as const).map((tab) => (
                 <button
                   key={tab}
@@ -258,14 +299,14 @@ export function FAQSection() {
                     setActiveTab(tab);
                     setOpenIndex(0);
                   }}
-                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-300 ${
                     activeTab === tab
                       ? `${
                           tab === 'salarie' 
-                            ? 'bg-primary text-white' 
-                            : 'bg-blue-600 text-white'
-                        } shadow-sm`
-                      : 'text-muted-foreground hover:text-foreground'
+                            ? 'bg-gradient-to-r from-primary to-orange-500 text-white shadow-lg' 
+                            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
+                        }`
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                   }`}
                 >
                   {tab === 'salarie' ? 'Employés' : 'Employeurs'}
