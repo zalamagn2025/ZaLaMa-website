@@ -118,6 +118,22 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Mot de passe changé avec succès');
 
+    // Marquer que le mot de passe a été changé dans admin_users
+    const { error: markError } = await supabase
+      .from('admin_users')
+      .update({ 
+        require_password_change: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('email', user.email);
+
+    if (markError) {
+      console.error('⚠️ Erreur lors du marquage du changement de mot de passe:', markError);
+      // On ne retourne pas d'erreur car le mot de passe a été changé avec succès
+    } else {
+      console.log('✅ Statut de mot de passe marqué comme changé');
+    }
+
     return NextResponse.json(
       { 
         message: 'Mot de passe changé avec succès',
