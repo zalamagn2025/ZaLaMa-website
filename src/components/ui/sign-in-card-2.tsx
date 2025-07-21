@@ -535,7 +535,7 @@ export function Component() {
                   </div>
 
                   {/* Bouton de test temporaire */}
-                  <div className="mt-2 text-center relative z-50">
+                  {/* <div className="mt-2 text-center relative z-50">
                     <button
                       type="button"
                       onClick={() => {
@@ -547,7 +547,7 @@ export function Component() {
                     >
                       TEST: Mot de passe oublié
                     </button>
-                  </div>
+                  </div> */}
 
                   {/* Sign in button */}
                   <motion.button
