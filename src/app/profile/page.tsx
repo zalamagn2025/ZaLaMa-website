@@ -16,6 +16,7 @@ import { UserWithEmployeData } from "@/types/employe"
 import { Partenaire } from "@/types/partenaire"
 import { useRouter } from "next/navigation"
 import { TransactionHistory } from "@/components/profile/transaction-history"
+import { FirstLoginPasswordModal } from "@/components/auth/FirstLoginPasswordModal"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -31,6 +32,10 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [entreprise, setEntreprise] = useState<Partenaire | undefined>(undefined)
+  
+  // États pour la première connexion
+  const [showFirstLoginModal, setShowFirstLoginModal] = useState(false)
+  const [hasCheckedFirstLogin, setHasCheckedFirstLogin] = useState(false)
 
   // Fonction pour récupérer les informations de l'entreprise
   const fetchEntrepriseInfo = async (partenaireId: string) => {
@@ -96,6 +101,46 @@ export default function ProfilePage() {
     checkAuthAndFetchUser()
   }, [router])
 
+  // Vérifier si c'est la première connexion
+  useEffect(() => {
+    const checkFirstLogin = async () => {
+      if (!isAuthenticated || hasCheckedFirstLogin) return;
+      
+      try {
+        console.log('🔍 Vérification de la première connexion...')
+        
+        const response = await fetch('/api/auth/check-first-login', {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log('✅ Statut première connexion:', data.requirePasswordChange)
+          
+          if (data.requirePasswordChange) {
+            console.log('🔑 Première connexion détectée, affichage du modal')
+            setShowFirstLoginModal(true)
+          }
+        } else {
+          console.error('❌ Erreur lors de la vérification de la première connexion')
+        }
+      } catch (error) {
+        console.error('💥 Erreur lors de la vérification de la première connexion:', error)
+      } finally {
+        setHasCheckedFirstLogin(true)
+      }
+    }
+
+    checkFirstLogin()
+  }, [isAuthenticated, hasCheckedFirstLogin])
+
+  const handleFirstLoginSuccess = () => {
+    setShowFirstLoginModal(false)
+    // Recharger la page pour mettre à jour l'état
+    window.location.reload()
+  }
+
   useEffect(() => {
     setIsMounted(true)
   }, [])
@@ -136,12 +181,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-screen">
+    <div className={`flex flex-1 flex-col min-h-screen ${showFirstLoginModal ? 'pointer-events-none' : ''}`}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-1 flex-col w-full"
+        className={`flex flex-1 flex-col w-full ${showFirstLoginModal ? 'blur-sm' : ''}`}
       >
         <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -313,6 +358,13 @@ export default function ProfilePage() {
       {showSettings && (
         <ProfileSettings onClose={() => setShowSettings(false)} userData={user} />
       )}
+
+      {/* Modal de première connexion */}
+      <FirstLoginPasswordModal
+        isOpen={showFirstLoginModal}
+        onClose={() => setShowFirstLoginModal(false)}
+        onSuccess={handleFirstLoginSuccess}
+      />
     </div>
   )
 }
