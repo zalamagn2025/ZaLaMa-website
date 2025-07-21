@@ -16,11 +16,11 @@ const FAQS = {
     },
     {
       question: "Quel est le montant maximum que je peux demander ?",
-      answer: "Avance sur salaire : Jusqu'à 25% de votre revenu mensuel.\nPrêt P2P : 25 000 000 GNF",
+      answer: "Avance sur salaire : Jusqu'à 25% de votre revenu mensuel.",
     },
     {
       question: "En combien de temps puis-je recevoir l'argent ?",
-      answer: "Avance sur salaire : En moins de 30 minutes après validation de votre demande.\nPrêt P2P : en 7 jours après validation de votre demande",
+      answer: "En moins de 10 minutes après validation de votre demande.",
     },
     {
       question: "Est-ce que je peux faire plusieurs demandes par mois ?",
@@ -268,7 +268,7 @@ export function FAQSection() {
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {tab === 'salarie' ? 'Utilisateurs' : 'Employeurs'}
+                  {tab === 'salarie' ? 'Employés' : 'Employeurs'}
                 </button>
               ))}
             </div>

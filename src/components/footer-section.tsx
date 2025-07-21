@@ -40,19 +40,19 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Services',
 		links: [
-			{ title: 'Avance', href: '/services' },
-			{ title: 'Prêt P2P', href: '/services' },
+			{ title: 'Avance sur salaire', href: '/services' },
+			// { title: 'Prêt P2P', href: '/services' },
 			{ title: 'Conseil & Gestion', href: '/services' },
 			{ title: 'Marketing', href: '/services' },
-			{ title: 'Payement salaire & pension', href: '/services' },
+			// { title: 'Payement salaire & pension', href: '/services' },
 		],
 	},
 	{
 		label: 'Réseaux Sociaux',
 		links: [
 			{ title: 'Facebook', href: '#', icon: FacebookIcon },
-			{ title: 'Instagram', href: '#', icon: InstagramIcon },
-			{ title: 'Youtube', href: '#', icon: YoutubeIcon },
+			// { title: 'Instagram', href: '#', icon: InstagramIcon },
+			// { title: 'Youtube', href: '#', icon: YoutubeIcon },
 			{ title: 'LinkedIn', href: '#', icon: LinkedinIcon },
 		],
 	},
