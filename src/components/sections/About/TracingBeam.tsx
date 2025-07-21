@@ -74,6 +74,6 @@ const dummyContent = [
     ),
     badge: "Mission",
     image:
-      "/images/aboutimg2.jpeg",
+      "/images/zalamaAppDesigner.png",
   },
 ];

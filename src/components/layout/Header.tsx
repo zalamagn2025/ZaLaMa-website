@@ -35,7 +35,7 @@ export const Header = () => {
     <>
       {/* Header sticky */}
       <motion.header 
-        className={`sticky top-0 z-50 transition-all duration-300 ${
+        className={`sticky top-0 z-50 transition-all duration-300${
           isScrolled ? 'bg-gray-900/80 backdrop-blur-md py-3' : 'bg-transparent py-3'
         }`}
         initial={{ y: -100, opacity: 0 }}

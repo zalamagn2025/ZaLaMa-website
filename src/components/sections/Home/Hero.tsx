@@ -25,7 +25,7 @@ export function HeroSection() {
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Augmentez leur pouvoir d&apos;achat</span>
+                              <span>Augmentez leur motivation</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
