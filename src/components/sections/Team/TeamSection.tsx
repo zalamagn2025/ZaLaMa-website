@@ -24,7 +24,7 @@ type TeamMember = {
 const teamMembers: TeamMember[] = [
   {
     name: "Fassou Gbagan HABA",
-    role: "Cofondateur & Président",
+    role: "Co-fondateur & Gérant",
     description:
       "Fort d'une expertise solide, il dirige la vision stratégique de ZaLaMa. Visionnaire et engagé, il incarne un leadership audacieux et représente une nouvelle génération d'entrepreneurs Guinéens.",
     image: "/images/fassou.webp",

@@ -253,8 +253,8 @@ export default function Contact() {
                     </div>
                     <div className="ml-4">
                       <h4 className="text-lg font-medium text-foreground">Email</h4>
-                      <p className="mt-1 text-muted-foreground">contact@zalamasas.com</p>
-                      <p className="text-muted-foreground">support@zalamasas.com</p>
+                      <p className="mt-1 text-muted-foreground">contact@zalamasgn.com</p>
+                      <p className="text-muted-foreground">support@zalamasgn.com</p>
                     </div>
                   </div>
 
