@@ -253,7 +253,12 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form 
+          onSubmit={handleSubmit} 
+          style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+          autoComplete="off"
+          data-form-type="other"
+        >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {/* Current password input */}
             <div style={{ position: 'relative' }}>
@@ -272,6 +277,9 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 onMouseDown={handleInputClick}
+                autoComplete="current-password"
+                data-lpignore="true"
+                data-form-type="other"
                 required
                 style={{
                   width: '100%',
@@ -343,6 +351,9 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 onMouseDown={handleInputClick}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
                 required
                 style={{
                   width: '100%',
@@ -373,9 +384,7 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
                   position: 'absolute',
                   right: '0.75rem',
                   top: '50%',
-                 
-
- transform: 'translateY(-50%)',
+                  transform: 'translateY(-50%)',
                   padding: '0.25rem',
                   borderRadius: '0.25rem',
                   background: 'none',
@@ -416,6 +425,9 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onMouseDown={handleInputClick}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
                 required
                 style={{
                   width: '100%',
