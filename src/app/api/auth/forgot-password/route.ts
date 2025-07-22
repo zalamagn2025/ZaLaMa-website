@@ -1,93 +1,58 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-interface ForgotPasswordData {
-  email: string;
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📧 Demande de réinitialisation de mot de passe...');
-    
-    const body: ForgotPasswordData = await request.json();
-    const { email } = body;
+    const { email } = await request.json();
 
-    // Validation des données
-    if (!email) {
+    // Validation de l'email
+    if (!email || !email.includes('@')) {
       return NextResponse.json(
-        { error: 'Email requis' },
+        { error: 'Adresse email invalide' },
         { status: 400 }
       );
     }
 
-    // Validation du format email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Format d\'email invalide' },
-        { status: 400 }
-      );
-    }
+    console.log('🔐 Demande de réinitialisation pour:', email);
 
-    console.log('🔍 Envoi d\'email de réinitialisation pour:', email);
+    // URL de redirection pour la réinitialisation
+    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`;
 
-    // Créer le client Supabase
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
-
-    // Construire l'URL de réinitialisation
-    const resetUrl = new URL(`/auth/reset-password`, request.nextUrl.origin);
-
-    // Envoyer l'email de réinitialisation via Supabase Auth
+    // Utiliser Supabase Auth pour envoyer l'email de réinitialisation
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: resetUrl.toString(),
+      redirectTo: redirectUrl,
     });
 
     if (error) {
-      console.error('❌ Erreur Supabase lors de l\'envoi de l\'email:', error);
+      console.error('❌ Erreur Supabase Auth:', error);
       
-      // Gestion des erreurs Supabase Auth spécifiques
+      // Gestion des erreurs spécifiques
       let errorMessage = 'Une erreur est survenue lors de l\'envoi de l\'email';
       
       switch (error.message) {
         case 'User not found':
           // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
-          errorMessage = 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé';
-          break;
+          console.log('📧 Utilisateur non trouvé:', email);
+          return NextResponse.json({
+            message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.'
+          });
         case 'Invalid email':
-          errorMessage = 'Format d\'email invalide';
-          break;
-        case 'Too many requests':
-          errorMessage = 'Trop de tentatives. Veuillez réessayer plus tard';
-          break;
-        case 'User not found':
-          // Pour des raisons de sécurité, on retourne toujours un message de succès
           return NextResponse.json(
-            { 
-              message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé',
-              success: true
-            },
-            { status: 200 }
+            { error: 'Format d\'email invalide' },
+            { status: 400 }
+          );
+        case 'Too many requests':
+          return NextResponse.json(
+            { error: 'Trop de tentatives. Veuillez réessayer plus tard.' },
+            { status: 429 }
           );
         default:
-          errorMessage = 'Une erreur est survenue lors de l\'envoi de l\'email';
+          errorMessage = 'Erreur lors de l\'envoi de l\'email de réinitialisation';
       }
       
       return NextResponse.json(
@@ -95,22 +60,25 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    
-    console.log('✅ Email de réinitialisation envoyé avec succès');
 
-    return NextResponse.json(
-      { 
-        message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé',
-        success: true
-      },
-      { status: 200 }
-    );
+    console.log('✅ Email de réinitialisation envoyé avec succès pour:', email);
 
-  } catch (error: unknown) {
-    console.error('💥 Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
-    
+    // Log de sécurité
+    console.log('🔒 Demande de réinitialisation traitée:', {
+      email: email,
+      redirectUrl: redirectUrl,
+      timestamp: new Date().toISOString()
+    });
+
+    return NextResponse.json({
+      message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.',
+      success: true
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur API forgot-password:', error);
     return NextResponse.json(
-      { error: 'Une erreur est survenue lors de l\'envoi de l\'email' },
+      { error: 'Erreur interne du serveur' },
       { status: 500 }
     );
   }
