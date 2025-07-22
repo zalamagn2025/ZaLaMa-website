@@ -78,25 +78,25 @@ export function Connect() {
                       id="next-js"
                       className="absolute bottom-12 left-14 rounded-3xl border  px-2 py-1.5 text-xs opacity-50 border-slate-600 bg-slate-800"
                     >
-                      Avance sur salaire
+                      Inclusion
                     </div>
                     <div
                       id="react-js"
                       className="absolute left-2 top-20 rounded-3xl border  px-2 py-1.5 text-xs opacity-50 border-slate-600 bg-slate-800"
                     >
-                      Prêt P2P
+                      Simplicité
                     </div>
                     <div
                       id="typescript"
                       className="absolute bottom-20 right-1 rounded-3xl border  px-2 py-1.5 text-xs opacity-50 border-slate-600 bg-slate-800"
                     >
-                      Conseil & Gestion
+                      Inpact social
                     </div>
                     <div
                       id="javascript"
                       className="absolute right-12 top-10 rounded-3xl border  px-2 py-1.5 text-xs opacity-50 border-slate-600 bg-slate-800"
                     >
-                      Payement salaire & pension
+                      Innovation locale 
                     </div>
 
                     <div id="pointer" className="absolute">
@@ -116,7 +116,7 @@ export function Connect() {
                         />
                       </svg>
                       <span className="bg-ali relative -top-1 left-3 rounded-3xl px-2 py-1 text-xs text-white">
-                        ZaLaMa
+                        Nos Valeurs
                       </span>
                     </div>
                   </div>

@@ -472,7 +472,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53]">
                               <IconCalculator className="h-4 w-4 text-white" />
                             </div>
-                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible</h4>
+                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible (25%)</h4>
                           </div>
                        <button
                             type="button"
@@ -487,7 +487,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                        {/* Montant principal */}
                        <div className="text-center mb-3">
                          <div className="text-2xl font-bold text-white">
-                           {avanceData.avanceDisponible.toLocaleString()} GNF
+                            {avanceData.avanceDisponible.toLocaleString('de-DE')} GNF
                          </div>
                           <div className="text-xs text-gray-400 mt-1">
                             Disponible après déduction des avances actives

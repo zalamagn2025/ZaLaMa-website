@@ -1,146 +1,202 @@
 "use client";
 import Image from "next/image";
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React from "react";
+import { motion } from "framer-motion";
 
 export function AboutHeroCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % dummyContent.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + dummyContent.length) % dummyContent.length);
-  };
-
   return (
-    <div className="relative w-full py-4 sm:py-6 -mt-12">
+    <div className="relative w-full py-6 sm:py-8 lg:py-10">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         .zalama-font {
           font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
       `}</style>
-      {/* Hero Section */}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            className="flex flex-col lg:flex-row items-center gap-6 lg:gap-12"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="w-full lg:w-1/2 overflow-visible">
-              <motion.h2
-                className="zalama-font text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mt-3 mb-6 tracking-tight"
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+        {/* Section Présentation de ZaLaMa */}
+        <motion.section
+          className="mb-10 lg:mb-16"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Contenu textuel */}
+            <motion.div
+              className="space-y-8"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <motion.div
+                className="space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
               >
-                {dummyContent[currentIndex].title}
-              </motion.h2>
+                <h2 className="zalama-font text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                  Présentation de ZaLaMa
+                </h2>
+                <div className="w-20 h-1 bg-gradient-to-r from-primary to-orange-500 rounded-full" />
+              </motion.div>
+              
+              <motion.div
+                className="prose prose-lg zalama-font text-gray-300 space-y-6"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <p className="text-lg leading-relaxed">
+                  ZaLaMa est une startup guinéenne innovante, à fort impact, au service du bien-être financier.
+                </p>
+                <p className="text-lg leading-relaxed">
+                  Elle propose aux salariés un service d'avance sur salaire, ainsi qu'un accompagnement en gestion et conseil financier, grâce à une intelligence artificielle locale et personnalisée.
+                </p>
+                <p className="text-lg leading-relaxed">
+                  ZaLaMa répond aux besoins urgents de trésorerie tout en encourageant une meilleure gestion des finances personnelles.
+                </p>
+              </motion.div>
+            </motion.div>
+
+            {/* Image d'équipe avec gestion professionnelle */}
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
               <motion.div
                 animate={{
-                  y: [0, -4, 0],
-                  scale: [1, 1.02, 1],
-                  rotate: [0, 1, -1, 0],
+                  y: [0, -8, 0],
                 }}
                 transition={{
                   repeat: Infinity,
-                  duration: 3,
+                  duration: 4,
                   ease: "easeInOut",
                 }}
+                className="relative bg-gradient-to-br from-zalama-bg-dark to-zalama-bg-darker rounded-2xl p-6 shadow-2xl border border-border/30"
               >
-                <Image
-                  src={dummyContent[currentIndex].image}
-                  alt={dummyContent[currentIndex].title}
-                  width={800}
-                  height={604}
-                  className="w-full h-[354px] sm:h-[454px] lg:h-[504px] object-contain max-h-full"
-                  priority={currentIndex === 0}
-                />
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden">
+                  <Image
+                    src="/images/team.jpg"
+                    alt="L'équipe ZaLaMa"
+                    width={800}
+                    height={600}
+                    className="w-full h-full object-contain"
+                    priority
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent rounded-2xl pointer-events-none" />
+                
+                {/* Badge "Notre équipe" */}
+                <motion.div
+                  className="absolute -top-3 -right-3 bg-gradient-to-r from-primary to-orange-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.8 }}
+                >
+                  Notre équipe
+                </motion.div>
               </motion.div>
-            </div>
-            <motion.div
-              className="w-full lg:w-1/2 prose prose-md zalama-font text-gray-300"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <h3 className="text-lg sm:text-xl font-semibold text-[#3B82F6] mb-4">
-                {dummyContent[currentIndex].badge}
-              </h3>
-              {dummyContent[currentIndex].description}
-              <div className="flex justify-center gap-6 mt-4">
-                <motion.button
-                  onClick={prevSlide}
-                  className="p-4 rounded-full bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white shadow-lg hover:shadow-2xl"
-                  whileHover={{ scale: 1.15, rotate: -5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronLeft size={28} />
-                </motion.button>
-                <motion.button
-                  onClick={nextSlide}
-                  className="p-4 rounded-full bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white shadow-lg hover:shadow-2xl"
-                  whileHover={{ scale: 1.15, rotate: 5 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronRight size={28} />
-                </motion.button>
-              </div>
             </motion.div>
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        </motion.section>
+
+        {/* Section Notre mission */}
+        <motion.section
+          className="mb-16 lg:mb-24"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Image */}
+            <motion.div
+              className="relative order-2 lg:order-1"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <motion.div
+                animate={{
+                  y: [0, -8, 0],
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 4,
+                  ease: "easeInOut",
+                }}
+                className="relative bg-gradient-to-br from-zalama-bg-dark to-zalama-bg-darker rounded-2xl p-6 shadow-2xl border border-border/30"
+              >
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden">
+                  <Image
+                    src="/images/zalamaHeroImg1.png"
+                    alt="Notre mission"
+                    width={800}
+                    height={600}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent rounded-2xl pointer-events-none" />
+                
+                {/* Badge "Notre mission" */}
+                <motion.div
+                  className="absolute -top-3 -right-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.8 }}
+                >
+                  Notre mission
+                </motion.div>
+              </motion.div>
+            </motion.div>
+
+            {/* Contenu textuel */}
+            <motion.div
+              className="space-y-8 order-1 lg:order-2"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <motion.div
+                className="space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <h2 className="zalama-font text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                  Notre mission
+                </h2>
+                <div className="w-20 h-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full" />
+              </motion.div>
+              
+              <motion.div
+                className="prose prose-lg zalama-font text-gray-300"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <p className="text-xl leading-relaxed font-medium">
+                  Offrir à chaque salarié guinéen une solution fiable, simple, rapide et humaine, adaptée à ses besoins financiers, grâce à une technologie locale, accessible et inclusive, qui soulage aujourd'hui et construit demain.
+                </p>
+              </motion.div>
+            </motion.div>
+          </div>
+        </motion.section>
       </div>
     </div>
   );
 }
-
-const dummyContent = [
-  {
-    title: "Présentation de ZaLaMa",
-    description: (
-      <>
-        <p>
-          ZaLaMa est une fintech guinéenne innovante au service du bien-être financier. 
-          Elle offre aux salariés, pensionnés et étudiants un accès rapide à l&apos;avance 
-          sur salaire, ainsi qu&apos;un accompagnement personnalisé en gestion financière 
-          grâce à une intelligence artificielle locale.
-        </p>
-        <p>
-          ZaLaMa répond aux besoins urgents de trésorerie tout en encourageant une 
-          meilleure gestion des finances personnelles.
-        </p>
-      </>
-    ),
-    badge: "",
-    image: "/images/team.jpg",
-  },
-  {
-    title: "Notre mission sociale",
-    description: (
-      <>
-        <p>
-          ZaLaMa vise à renforcer l&apos;inclusion financière et l&apos;autonomie économique en Guinée, en
-          offrant aux étudiants, salariés et pensionnaires un accès simple, rapide et sécurisé à des
-          services financiers adaptés à leurs besoins
-        </p>
-        <p>
-          ZaLaMa lutte contre le surendettement, encourage
-          la gestion responsable des revenus et soutient l&apos;éducation financière. Notre mission est de
-          permettre à chacun de mieux vivre le quotidien et de construire un avenir financier plus stable
-          et digne
-        </p>
-      </>
-    ),
-    badge: "",
-    image: "/images/zalamaHeroImg1.png",
-  },
-];

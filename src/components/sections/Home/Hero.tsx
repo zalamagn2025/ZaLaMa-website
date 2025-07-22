@@ -25,7 +25,7 @@ export function HeroSection() {
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
-                              <span>Augmentez leur pouvoir d&apos;achat</span>
+                              <span>Augmentez leur motivation</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 text-xs">•</span>
@@ -45,7 +45,7 @@ export function HeroSection() {
                         primaryButtonAction={handlePrimaryButtonClick}
                         secondaryButtonText="Nous contacter"
                         secondaryButtonAction={handleSecondaryButtonClick}
-                        imageSrc="/images/zalamaHeroImg1.png" // Example image
+                        imageSrc="/images/ZaLaMawebappMockup.png" // Example image
                         waveColor1="rgba(255, 103, 30, 0.30)"
                         waveColor2="rgba(255, 103, 30, 0.50)"
                         waveAmplitude={30}
