@@ -34,7 +34,7 @@ const steps = [
         <li>NIF (Numéro d&apos;identification fiscale)</li>
         <li>Attestation de non-redevance (si disponible)</li>
         <li>Lettre d&apos;engagement à coopérer</li>
-        <li>Information sur les employés (Nombre, masse salariale, nombre de contrat CDI & CDD)</li>
+        <li>Information sur les employés (Nombre, masse salariale, nombre de contrats CDI & CDD)</li>
       </ul>
     ),
   },
@@ -61,7 +61,7 @@ const steps = [
     title: "Étape 5 : Intégration et formation",
     content: (
       <ul className="list-disc list-inside">
-        <li>Transmission des bénéficiaires</li>
+        <li>Transmission des informations des bénéficiaires</li>
         <li>Création de comptes utilisateurs</li>
         <li>Formation RH et accompagnement</li>
       </ul>
