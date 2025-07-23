@@ -65,8 +65,8 @@ class ResendEmailService {
         from: `${this.fromName} <${this.fromEmail}>`,
         to: [emailData.to],
         subject: emailData.subject,
-        html: emailData.html,
-        text: emailData.text,
+        html: emailData.html || '<p>Email de ZaLaMa</p>',
+        text: emailData.text || 'Email de ZaLaMa',
         headers: {
           'X-ZaLaMa-Email-Type': 'password-reset',
           'X-ZaLaMa-User': emailData.userName || 'unknown'
