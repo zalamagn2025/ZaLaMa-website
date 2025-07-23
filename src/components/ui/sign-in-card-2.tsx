@@ -124,38 +124,38 @@ export function Component() {
   };
 
   // Fonction pour gérer la demande de mot de passe oublié
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsForgotPasswordLoading(true);
-    setForgotPasswordStatus('idle');
-    setForgotPasswordMessage('');
+      const handleForgotPassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsForgotPasswordLoading(true);
+      setForgotPasswordStatus('idle');
+      setForgotPasswordMessage('');
 
-    try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: forgotPasswordEmail }),
-      });
+      try {
+        const response = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: forgotPasswordEmail }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        setForgotPasswordStatus('success');
-        setForgotPasswordMessage('Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.');
-      } else {
+        if (response.ok && data.success) {
+          setForgotPasswordStatus('success');
+          setForgotPasswordMessage('Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.');
+        } else {
+          setForgotPasswordStatus('error');
+          setForgotPasswordMessage(data.error || 'Une erreur est survenue');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
         setForgotPasswordStatus('error');
-        setForgotPasswordMessage(data.error || 'Une erreur est survenue');
+        setForgotPasswordMessage('Erreur de connexion. Veuillez réessayer.');
+      } finally {
+        setIsForgotPasswordLoading(false);
       }
-    } catch (error) {
-      console.error('Erreur:', error);
-      setForgotPasswordStatus('error');
-      setForgotPasswordMessage('Erreur de connexion. Veuillez réessayer.');
-    } finally {
-      setIsForgotPasswordLoading(false);
-    }
-  };
+    };
 
   // Fonction pour basculer vers le mode mot de passe oublié
   const switchToForgotPassword = () => {

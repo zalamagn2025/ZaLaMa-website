@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { resendEmailService } from '@/services/resendEmailService';
+import crypto from 'crypto';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email } = await request.json();
+
+    // Validation de l'email
+    if (!email || !email.includes('@')) {
+      return NextResponse.json(
+        { error: 'Adresse email invalide' },
+        { status: 400 }
+      );
+    }
+
+    console.log('🔐 Demande de réinitialisation pour:', email);
+
+    // Vérifier si l'utilisateur existe
+    const { data: user, error: userError } = await supabase
+      .from('employees')
+      .select('id, email, first_name, last_name')
+      .eq('email', email.toLowerCase())
+      .single();
+
+    if (userError || !user) {
+      // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
+      console.log('📧 Email non trouvé ou erreur:', email);
+      return NextResponse.json({
+        message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.'
+      });
+    }
+
+    // Générer un token sécurisé (UUID + timestamp pour unicité)
+    const tokenId = crypto.randomUUID();
+    const timestamp = Date.now().toString();
+    const resetToken = `${tokenId}-${timestamp}`;
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
+    // Date d'expiration (1 heure)
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    // Nettoyer les anciens tokens pour cet utilisateur
+    await supabase
+      .from('password_reset_tokens')
+      .delete()
+      .eq('user_id', user.id);
+
+    // Sauvegarder le nouveau token en base de données
+    const { error: tokenError } = await supabase
+      .from('password_reset_tokens')
+      .insert({
+        user_id: user.id,
+        token_hash: resetTokenHash,
+        expires_at: expiresAt.toISOString(),
+        used: false
+      });
+
+    if (tokenError) {
+      console.error('❌ Erreur sauvegarde token:', tokenError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la génération du lien de réinitialisation' },
+        { status: 500 }
+      );
+    }
+
+    // Construire le lien de réinitialisation
+    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    
+    // Nom de l'utilisateur pour personnalisation
+    const userName = user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : undefined;
+
+    // Envoyer l'email via Resend
+    const emailResult = await resendEmailService.sendForgotPasswordEmail(
+      email,
+      resetLink,
+      userName
+    );
+
+    if (!emailResult.success) {
+      console.error('❌ Erreur envoi email pour:', email, emailResult.error);
+      
+      // Supprimer le token si l'email n'a pas pu être envoyé
+      await supabase
+        .from('password_reset_tokens')
+        .delete()
+        .eq('token_hash', resetTokenHash);
+
+      return NextResponse.json(
+        { error: 'Erreur lors de l\'envoi de l\'email' },
+        { status: 500 }
+      );
+    }
+
+    console.log('✅ Email de réinitialisation envoyé avec succès pour:', email);
+
+    // Log de sécurité
+    console.log('🔒 Token de réinitialisation généré:', {
+      userId: user.id,
+      email: email,
+      expiresAt: expiresAt,
+      tokenHash: resetTokenHash.substring(0, 10) + '...',
+      messageId: emailResult.messageId
+    });
+
+    return NextResponse.json({
+      message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.',
+      success: true
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur API send-reset-email:', error);
+    return NextResponse.json(
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
+    );
+  }
+} 

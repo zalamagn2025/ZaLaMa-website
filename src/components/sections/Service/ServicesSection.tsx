@@ -33,7 +33,7 @@ export function ServicesSection() {
     // },
     {
       title: "Gestion & Conseil financier",
-      description: "IA sur-mesure intégrer pour accompagner les utilisateurs dans la gestion de leurs dépenses, leurs comptabilités et la planification de leurs avenir financière.",
+      description: "IA sur-mesure intégrer pour accompagner les utilisateurs dans la gestion de leurs dépenses, leurs comptabilités et la planification de leurs avenir financier.",
       icon: <LineChart className="w-6 h-6" />,
       features: [
         "Gestion des dépenses",
@@ -50,10 +50,10 @@ export function ServicesSection() {
       description: "Un espace publicitaire intégrée permettant aux entreprises locales et internationales de promouvoir leurs produits et services auprès de notre communauté d'utilisateurs.",
       icon: <Megaphone className="w-6 h-6" />,
       features: [
-        "ciblage intelligente",
-        "interfaces de gestion et statistiques à temps réel",
-       "visibilité location forte",
-        "soutien technologique et accompagnement"
+        "Ciblage intelligent",
+        "Interfaces de gestion et statistiques à temps réel",
+       "Forte visibilité locale",
+        "Soutien technologique et accompagnement"
 
       ],
       // ctaText: "Découvrir l'épargne",

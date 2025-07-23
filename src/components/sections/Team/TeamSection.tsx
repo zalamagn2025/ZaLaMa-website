@@ -57,9 +57,9 @@ const teamMembers: TeamMember[] = [
     role: "Co-Fontdateur & Directeur des Opérations",
     description:
       "Designer, stratège opérationnel et créateur de solutions, il transforme les idées en produits concrets. À la croisée du design, de la tech et de l’organisation, il pilote les opérations avec une vision claire : construire des projets utiles, agiles et profondément ancrés dans la réalité Guinéenne.",
-    image: "/images/Karfalla.webp",
+    image: "/images/karfalla.webp",
     phone: "+224 628 77 45 73",
-    email: "diabykarfalla2@gmailcom",
+    email: "diabykarfalla2@gmail.com",
     socials: [
       { name: 'GitHub', url: 'https://github.com/KarfallaDiaby', icon: 'Github' },
       { name: 'LinkedIn', url: 'https://www.linkedin.com/in/karfalla-diaby-75bb66217/', icon: 'Linkedin' },

@@ -1,23 +1,20 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
-interface ResetPasswordData {
-  oobCode: string;
-  newPassword: string;
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔑 Demande de réinitialisation de mot de passe...');
-    
-    const body: ResetPasswordData = await request.json();
-    const { oobCode, newPassword } = body;
+    const { token, email, newPassword } = await request.json();
 
     // Validation des données
-    if (!oobCode || !newPassword) {
+    if (!token || !email || !newPassword) {
       return NextResponse.json(
-        { error: 'Code et nouveau mot de passe requis' },
+        { error: 'Toutes les données sont requises' },
         { status: 400 }
       );
     }
@@ -30,80 +27,112 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Réinitialisation du mot de passe avec Supabase Auth...');
+    console.log('🔐 Tentative de réinitialisation pour:', email);
 
-    // Créer le client Supabase
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+    // Vérifier si l'utilisateur existe
+    const { data: user, error: userError } = await supabase
+      .from('employees')
+      .select('id, email')
+      .eq('email', email.toLowerCase())
+      .single();
 
-    // Confirmer la réinitialisation du mot de passe via Supabase Auth
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-
-    if (error) {
-      console.error('❌ Erreur Supabase lors de la réinitialisation:', error);
-      
-      // Gestion des erreurs Supabase Auth spécifiques
-      let errorMessage = 'Erreur lors de la réinitialisation du mot de passe';
-      
-      switch (error.message) {
-        case 'Password should be at least 6 characters':
-          errorMessage = 'Le mot de passe doit contenir au moins 6 caractères';
-          break;
-        case 'Invalid recovery token':
-          errorMessage = 'Le lien de réinitialisation est invalide ou a déjà été utilisé';
-          break;
-        case 'Token expired':
-          errorMessage = 'Le lien de réinitialisation a expiré. Demandez un nouveau lien';
-          break;
-        case 'User not found':
-          errorMessage = 'Utilisateur non trouvé';
-          break;
-        case 'Password is too weak':
-          errorMessage = 'Le mot de passe est trop faible';
-          break;
-        default:
-          errorMessage = 'Erreur lors de la réinitialisation du mot de passe';
-      }
-      
+    if (userError || !user) {
+      console.log('❌ Utilisateur non trouvé:', email);
       return NextResponse.json(
-        { error: errorMessage },
+        { error: 'Lien de réinitialisation invalide' },
         { status: 400 }
       );
     }
-    
-    console.log('✅ Mot de passe réinitialisé avec succès');
 
-    return NextResponse.json(
-      { 
-        message: 'Mot de passe réinitialisé avec succès',
-        success: true
-      },
-      { status: 200 }
-    );
+    // Hasher le token pour comparaison
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-  } catch (error: unknown) {
-    console.error('💥 Erreur lors de la réinitialisation du mot de passe:', error);
-    
+    // Vérifier le token en base de données
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('password_reset_tokens')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('token_hash', tokenHash)
+      .eq('used', false)
+      .single();
+
+    if (tokenError || !tokenData) {
+      console.log('❌ Token invalide ou déjà utilisé pour:', email);
+      return NextResponse.json(
+        { error: 'Lien de réinitialisation invalide ou expiré' },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier l'expiration
+    const expiresAt = new Date(tokenData.expires_at);
+    if (expiresAt < new Date()) {
+      console.log('❌ Token expiré pour:', email);
+      
+      // Nettoyer le token expiré
+      await supabase
+        .from('password_reset_tokens')
+        .delete()
+        .eq('id', tokenData.id);
+      
+      return NextResponse.json(
+        { error: 'Le lien de réinitialisation a expiré' },
+        { status: 400 }
+      );
+    }
+
+    // Hasher le nouveau mot de passe avec salt
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hashedPassword = crypto.pbkdf2Sync(newPassword, salt, 1000, 64, 'sha512').toString('hex');
+    const finalPassword = `${salt}:${hashedPassword}`;
+
+    // Mettre à jour le mot de passe
+    const { error: updateError } = await supabase
+      .from('employees')
+      .update({ 
+        password: finalPassword,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('❌ Erreur mise à jour mot de passe:', updateError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la mise à jour du mot de passe' },
+        { status: 500 }
+      );
+    }
+
+    // Marquer le token comme utilisé
+    const { error: markUsedError } = await supabase
+      .from('password_reset_tokens')
+      .update({ used: true })
+      .eq('id', tokenData.id);
+
+    if (markUsedError) {
+      console.error('❌ Erreur marquage token utilisé:', markUsedError);
+      // On continue même si ça échoue, le mot de passe a été changé
+    }
+
+    console.log('✅ Mot de passe réinitialisé avec succès pour:', email);
+
+    // Log de sécurité
+    console.log('🔒 Réinitialisation réussie:', {
+      userId: user.id,
+      email: email,
+      tokenId: tokenData.id,
+      timestamp: new Date().toISOString()
+    });
+
+    return NextResponse.json({
+      message: 'Mot de passe réinitialisé avec succès',
+      success: true
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur API reset-password:', error);
     return NextResponse.json(
-      { error: 'Erreur lors de la réinitialisation du mot de passe' },
+      { error: 'Erreur interne du serveur' },
       { status: 500 }
     );
   }

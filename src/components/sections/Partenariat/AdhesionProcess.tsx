@@ -61,7 +61,7 @@ const steps = [
     title: "Étape 4 : Intégration et formation",
     content: (
       <ul className="list-disc list-inside">
-        <li>Transmission des bénéficiaires</li>
+        <li>Transmission des informations des bénéficiaires</li>
         <li>Création de comptes utilisateurs</li>
         <li>Formation RH et accompagnement</li>
       </ul>
