@@ -423,7 +423,7 @@ export const PartnershipForm = () => {
     });
     setErrors({});
     setTouched({});
-    router.push('https://www.zalamasas.com');
+    router.push('https://www.zalamagn.com');
   }, [router]);
 
   const handleSubmitStep = useCallback(async (e: React.FormEvent<HTMLFormElement>, nextStep: number | null) => {
@@ -621,7 +621,7 @@ export const PartnershipForm = () => {
         transition={{ type: 'spring', stiffness: 300 }}
         className="mb-8"
       >
-        <Link href="https://www.zalamasas.com/partnership" passHref>
+        <Link href="https://www.zalamagn.com/partnership" passHref>
           <Button variant="ghost" className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors">
             <ArrowLeft className="h-5 w-5" />
             <span className="text-sm font-medium">Retour aux partenariats</span>

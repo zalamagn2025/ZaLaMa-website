@@ -10,7 +10,7 @@ export default function AboutPage() {
     <div className="min-h-screen ">
       <BackgroundEffects />
       <Header />
-      <main className="pt-20 pb-16">
+      <main className="pt-8 pb-16">
         <AboutHeroCarousel />
         <TeamSection />
       </main>

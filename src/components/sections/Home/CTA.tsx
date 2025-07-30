@@ -53,8 +53,15 @@ export function Connect() {
     );
   }, [animate]);
   return (
-    <section className="relative mx-auto mb-20 mt-6 max-w-7xl  ">
-      <HighlightGroup className="group h-full">
+    <section className="relative w-full py-16 sm:py-20 md:py-24 lg:py-32 bg-gradient-to-br from-zalama-bg-darker via-zalama-bg-dark to-zalama-bg-darker overflow-hidden">
+      {/* Background decorative elements pour renforcer l'effet glassmorphism */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
+        <HighlightGroup className="group h-full">
         <div
           className="group/item h-full md:col-span-6 lg:col-span-12"
           data-aos="fade-down"
@@ -134,13 +141,13 @@ export function Connect() {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <Link
-                        href={"https://cal.com/aliimam/designali"}
+                        href={"/contact"}
                         target="_blank"
                       >
                         <Button>Nous contacter</Button>
                       </Link>
                       <Link
-                        href="mailto:contact@designali.in"
+                        href="mailto:support@zalamagn.com"
                         target="_blank"
                         className={cn(
                           buttonVariants({
@@ -154,7 +161,7 @@ export function Connect() {
                         </span>
                       </Link>
                       <Link
-                        href="https://wa.me/917678432186"
+                        href="https://wa.me/224625607878"
                         target="_blank"
                         className={cn(
                           buttonVariants({
@@ -178,6 +185,7 @@ export function Connect() {
           </HighlighterItem>
         </div>
       </HighlightGroup>
+      </div>
     </section>
   );
 };

@@ -5,6 +5,7 @@ import { motion, useInView, useAnimation } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, Smartphone, UserCheck, CreditCard, BarChart, Mail, ArrowRight, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "../ui/button";
 
 const FonctionnementZalama = () => {
@@ -285,10 +286,12 @@ const FonctionnementZalama = () => {
                     )}
                     
                     {etape.id === 4 && (
-                      <Button className="mt-8 group bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200">
-                        En savoir plus
-                        <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+                      <Link href="/services">
+                        <Button className="mt-8 group bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200">
+                          En savoir plus
+                          <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -413,13 +416,15 @@ const FonctionnementZalama = () => {
                   )}
                   
                   {etape.id === 4 && (
-                    <Button 
-                      className="mt-6 w-full group bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200" 
-                      size="sm"
-                    >
-                      En savoir plus
-                      <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Button>
+                    <Link href="/services">
+                      <Button 
+                        className="mt-6 w-full group bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200" 
+                        size="sm"
+                      >
+                        En savoir plus
+                        <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
                   )}
                 </div>
                 

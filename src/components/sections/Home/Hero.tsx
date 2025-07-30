@@ -1,15 +1,17 @@
 'use client'
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Herodemo } from '../../common/wavey-hero-header'
 
 export function HeroSection() {
+    const router = useRouter()
     
   const handlePrimaryButtonClick = () => {
-    alert("Start Building clicked!");
+    router.push('/login')
   };
 
   const handleSecondaryButtonClick = () => {
-    alert("Request a demo clicked!");
+    router.push('/contact');
   };
     return (
         <>

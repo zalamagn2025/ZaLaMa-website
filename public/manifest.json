@@ -1,0 +1,54 @@
+{
+  "name": "ZaLaMa - La Fintech des Avances sur Salaire",
+  "short_name": "ZaLaMa",
+  "description": "Solution fintech innovante pour les avances sur salaire en Guinée",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#FF671E",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Avance sur salaire",
+      "short_name": "Avance",
+      "description": "Demander une avance sur salaire",
+      "url": "/avance-sur-salaire"
+    },
+    {
+      "name": "Conseil financier",
+      "short_name": "Conseil",
+      "description": "Accéder au conseil financier IA",
+      "url": "/conseil-financier"
+    },
+    {
+      "name": "Mon Profil",
+      "short_name": "Profil",
+      "description": "Accéder à mon espace personnel",
+      "url": "/profile"
+    }
+  ]
+} 

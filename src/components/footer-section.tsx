@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { FacebookIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface FooterLink {
 	title: string;
@@ -31,26 +32,26 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Politique & Confidentialité',
 		links: [
-			{ title: 'FAQs', href: '/faqs' },
-			{ title: 'Politique de Confidentialité', href: '/privacy' },
-			{ title: "Conditions d'utilisation", href: '/terms' },
-			{ title: "Politique de Cookies", href: '/cookies' },
+			{ title: 'FAQs', href: '/#faqs' },
+			{ title: 'Politique de Confidentialité', href: '/privacy-policy' },
+			{ title: "Conditions d'utilisation", href: '/terms-of-service' },
+			{ title: "Politique de Cookies", href: '/cookie-policy' },
 		],
 	},
 	{
 		label: 'Services',
 		links: [
-			{ title: 'Avance sur salaire', href: '/services' },
+			{ title: 'Avance sur salaire', href: '/avance-sur-salaire' },
 			// { title: 'Prêt P2P', href: '/services' },
-			{ title: 'Conseil & Gestion', href: '/services' },
-			{ title: 'Marketing', href: '/services' },
+			{ title: 'Conseil & Gestion', href: '/conseil-financier' },
+			{ title: 'Marketing', href: '/marketing' },
 			// { title: 'Payement salaire & pension', href: '/services' },
 		],
 	},
 	{
 		label: 'Réseaux Sociaux',
 		links: [
-			{ title: 'Facebook', href: '#', icon: FacebookIcon },
+			{ title: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61578697800477', icon: FacebookIcon },
 			// { title: 'Instagram', href: '#', icon: InstagramIcon },
 			// { title: 'Youtube', href: '#', icon: YoutubeIcon },
 			{ title: 'LinkedIn', href: '#', icon: LinkedinIcon },
@@ -59,6 +60,24 @@ const footerLinks: FooterSection[] = [
 ];
 
 export function Footer() {
+	const router = useRouter();
+
+	const handleFaqsClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		// Naviguer vers la page d'accueil avec l'ancre FAQs
+		router.push('/#faqs');
+		// Attendre un peu que la navigation soit terminée puis faire le scroll
+		setTimeout(() => {
+			const targetElement = document.getElementById('faqs');
+			if (targetElement) {
+				targetElement.scrollIntoView({
+					behavior: 'smooth',
+					block: 'start'
+				});
+			}
+		}, 100);
+	};
+
 	return (
 		<footer className="md:rounded-t-6xl relative w-full w mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-6 py-12 lg:py-16">
 			<div className="bg-foreground/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
@@ -87,13 +106,43 @@ export function Footer() {
 								<ul className="text-muted-foreground mt-4 space-y-2 text-sm">
 									{section.links.map((link) => (
 										<li key={link.title}>
-											<a
-												href={link.href}
-												className="hover:text-foreground inline-flex items-center transition-all duration-300"
-											>
-												{link.icon && <link.icon className="me-1 size-4" />}
-												{link.title}
-											</a>
+											{link.href.includes('#') && link.title === 'FAQs' ? (
+												<a
+													href={link.href}
+													className="hover:text-foreground inline-flex items-center transition-all duration-300"
+													onClick={handleFaqsClick}
+												>
+													{link.icon && <link.icon className="me-1 size-4" />}
+													{link.title}
+												</a>
+											) : (
+												<a
+													href={link.href}
+													target={link.href.includes('#') ? undefined : "_blank"}
+													className="hover:text-foreground inline-flex items-center transition-all duration-300"
+													onClick={(e) => {
+														// Pour les liens internes avec #, on fait un scroll fluide
+														if (link.href.includes('#')) {
+															e.preventDefault();
+															const targetId = link.href.split('#')[1];
+															const targetElement = document.getElementById(targetId);
+															if (targetElement) {
+																targetElement.scrollIntoView({
+																	behavior: 'smooth',
+																	block: 'start'
+																});
+															}
+														}
+														// Pour les liens externes, on garde le comportement normal
+														else if (link.href.startsWith('http')) {
+															// Pas de preventDefault pour les liens externes
+														}
+													}}
+												>
+													{link.icon && <link.icon className="me-1 size-4" />}
+													{link.title}
+												</a>
+											)}
 										</li>
 									))}
 								</ul>
