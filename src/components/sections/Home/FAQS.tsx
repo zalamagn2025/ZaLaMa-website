@@ -264,7 +264,7 @@ export function FAQSection() {
   };
 
   return (
-    <section className="relative overflow-hidden pt-16 md:pt-24 lg:pt-32">
+    <section id="faqs" className="relative overflow-hidden pt-16 md:pt-24 lg:pt-32">
       {/* Background decorative elements pour renforcer l'effet glassmorphism */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>

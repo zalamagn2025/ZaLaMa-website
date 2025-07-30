@@ -31,10 +31,10 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Politique & Confidentialité',
 		links: [
-			{ title: 'FAQs', href: '/faqs' },
-			{ title: 'Politique de Confidentialité', href: '/privacy' },
-			{ title: "Conditions d'utilisation", href: '/terms' },
-			{ title: "Politique de Cookies", href: '/cookies' },
+			{ title: 'FAQs', href: '/#faqs' },
+			{ title: 'Politique de Confidentialité', href: '/privacy-policy' },
+			{ title: "Conditions d'utilisation", href: '/terms-of-service' },
+			{ title: "Politique de Cookies", href: '/cookie-policy' },
 		],
 	},
 	{
@@ -50,7 +50,7 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Réseaux Sociaux',
 		links: [
-			{ title: 'Facebook', href: '#', icon: FacebookIcon },
+			{ title: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61578697800477', icon: FacebookIcon },
 			// { title: 'Instagram', href: '#', icon: InstagramIcon },
 			// { title: 'Youtube', href: '#', icon: YoutubeIcon },
 			{ title: 'LinkedIn', href: '#', icon: LinkedinIcon },
@@ -89,7 +89,26 @@ export function Footer() {
 										<li key={link.title}>
 											<a
 												href={link.href}
+												target={link.href.includes('#') ? undefined : "_blank"}
 												className="hover:text-foreground inline-flex items-center transition-all duration-300"
+												onClick={(e) => {
+													// Pour les liens internes avec #, on fait un scroll fluide
+													if (link.href.includes('#')) {
+														e.preventDefault();
+														const targetId = link.href.split('#')[1];
+														const targetElement = document.getElementById(targetId);
+														if (targetElement) {
+															targetElement.scrollIntoView({
+																behavior: 'smooth',
+																block: 'start'
+															});
+														}
+													}
+													// Pour les liens externes, on garde le comportement normal
+													else if (link.href.startsWith('http')) {
+														// Pas de preventDefault pour les liens externes
+													}
+												}}
 											>
 												{link.icon && <link.icon className="me-1 size-4" />}
 												{link.title}

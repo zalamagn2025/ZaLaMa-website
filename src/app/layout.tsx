@@ -9,7 +9,7 @@ import { AutocompleteDisabler } from "@/components/auth/AutocompleteDisabler";
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ZaLaMa SAS",
+  title: "ZaLaMa",
   description: "La fintech des avances sur salaire.",
   icons: {
     icon: '/favicon.ico',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ZaLaMa SAS",
+    title: "ZaLaMa",
     description: "La fintech des avances sur salaire.",
     images: ["/images/zalamaOGimg.png"],
     creator: "@zalama",
