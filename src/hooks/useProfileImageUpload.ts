@@ -16,8 +16,14 @@ export interface UseProfileImageUploadReturn {
   resetUpload: () => void;
 }
 
-export function useProfileImageUpload(initialPhotoURL?: string): UseProfileImageUploadReturn {
-  const { updateUserData, userData, loading, refreshUserData } = useAuth();
+export function useProfileImageUpload(
+  initialPhotoURL?: string, 
+  userDataOverride?: any
+): UseProfileImageUploadReturn {
+  const { updateUserData, userData: contextUserData, loading, refreshUserData } = useAuth();
+  
+  // ✅ Utiliser les données passées en paramètre en priorité, sinon le contexte
+  const userData = userDataOverride || contextUserData;
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>(initialPhotoURL || '');
   const [imageError, setImageError] = useState<string | null>(null);
@@ -29,17 +35,21 @@ export function useProfileImageUpload(initialPhotoURL?: string): UseProfileImage
       loading,
       userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée',
       userDataValues: userData ? {
-        employeId: userData.employeId,
+        employeId: userData.employeId || userData.id,
         nom: userData.nom,
         prenom: userData.prenom,
         user_id: userData.user_id,
+        id: userData.id
       } : 'Aucune donnée',
     });
 
-    // Forcer le rechargement des données si userData est null
+    // Forcer le rechargement des données si userData est null et qu'on n'est pas en cours de chargement
     if (!userData && !loading) {
-      console.log('🔄 Forcer le rechargement des données utilisateur...');
-      refreshUserData();
+      console.log('🔄 Tentative de rechargement des données utilisateur...');
+      // Seulement si on a un currentUser dans le contexte
+      refreshUserData().catch(error => {
+        console.warn('⚠️ Impossible de recharger les données utilisateur:', error.message);
+      });
     }
   }, [userData, loading, refreshUserData]);
 
@@ -93,11 +103,12 @@ export function useProfileImageUpload(initialPhotoURL?: string): UseProfileImage
 
     if (!userData) {
       console.error('❌ Aucune donnée utilisateur disponible');
-      setImageError('Veuillez vous reconnecter pour continuer.');
+      setImageError('Vous devez être connecté pour modifier votre photo de profil. Veuillez vous connecter.');
       return;
     }
 
-    const employeeId = userData.employeId;
+    // ✅ Support pour différentes structures de données
+    const employeeId = userData.employeId || userData.id;
 
     console.log('🔍 Debug handleImageUpload:', {
       avatarFile: avatarFile ? 'Fichier sélectionné' : 'Aucun fichier',
@@ -106,10 +117,11 @@ export function useProfileImageUpload(initialPhotoURL?: string): UseProfileImage
       employeeId,
       userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée',
       userDataValues: userData ? {
-        employeId: userData.employeId,
+        employeId: userData.employeId || userData.id,
         nom: userData.nom,
         prenom: userData.prenom,
         user_id: userData.user_id,
+        id: userData.id
       } : 'Aucune donnée',
     });
 
@@ -136,16 +148,26 @@ export function useProfileImageUpload(initialPhotoURL?: string): UseProfileImage
       if (result.success && result.url) {
         console.log('✅ Upload réussi, mise à jour du contexte...');
 
-        await updateUserData({ photo_url: result.url });
+        // ✅ Mettre à jour l'aperçu immédiatement
         setAvatarPreview(result.url);
 
-        const oldPhotoURL = userData?.photo_url;
-        if (oldPhotoURL && oldPhotoURL !== result.url) {
+        // ✅ Forcer le rechargement des données depuis la base
+        try {
+          await refreshUserData();
+          console.log('✅ Données utilisateur rechargées depuis la base');
+        } catch (error) {
+          console.warn('⚠️ Erreur rechargement données:', error);
+          // Fallback : essayer updateUserData si refreshUserData échoue
           try {
-            await ImageUploadService.deleteProfileImage(oldPhotoURL);
-            console.log('🗑️ Ancienne image supprimée');
-          } catch (error) {
-            console.warn('⚠️ Erreur lors de la suppression de l\'ancienne image:', error);
+            await updateUserData({ photo_url: result.url });
+            console.log('✅ Données mises à jour via updateUserData');
+          } catch (updateError) {
+            console.warn('⚠️ Erreur updateUserData aussi:', updateError);
+            console.log('🔄 Forcement d\'un rechargement de page dans 2 secondes...');
+            // Dernier recours : recharger la page pour voir la nouvelle photo
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           }
         }
 

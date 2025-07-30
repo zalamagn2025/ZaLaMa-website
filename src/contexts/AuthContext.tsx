@@ -60,6 +60,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     console.log('🔍 AuthContext Debug - État actuel:', {
       currentUser: currentUser ? 'Présent' : 'Absent',
+      currentUserEmail: currentUser?.email,
+      currentUserId: currentUser?.id,
       userData: userData ? 'Présent' : 'Absent',
       loading,
       userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée',
@@ -67,7 +69,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         employeId: userData.employeId,
         nom: userData.nom,
         prenom: userData.prenom,
-        user_id: userData.user_id
+        user_id: userData.user_id,
+        email: userData.email
       } : 'Aucune donnée'
     });
   }, [currentUser, userData, loading]);
@@ -98,13 +101,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
               console.error('❌ Erreur lors de la récupération des données utilisateur:', error.message || error)
               setUserData(null)
             } else if (userData) {
+              // ✅ Mapper les données de la base (id) vers l'interface (employeId)
+              const mappedUserData = {
+                ...userData,
+                employeId: userData.id // Mapper id vers employeId
+              } as UserData;
+              
               console.log('✅ Données employé récupérées:', {
-                employeId: userData.employeId,
-                nom: userData.nom,
-                prenom: userData.prenom,
-                user_id: userData.user_id
+                employeId: mappedUserData.employeId,
+                nom: mappedUserData.nom,
+                prenom: mappedUserData.prenom,
+                user_id: mappedUserData.user_id
               })
-              setUserData(userData as UserData)
+              setUserData(mappedUserData)
             } else {
               console.warn('⚠️ Aucune donnée employé trouvée pour l\'utilisateur:', session.user.id)
               setUserData(null)
@@ -127,7 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   async function login(email: string, password: string) {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -218,17 +227,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   async function updateUserData(updates: Partial<UserData>) {
+    // ✅ Essayer d'abord avec les données du contexte
     if (!userData?.employeId) {
-      console.warn('Tentative de mise à jour des données employee sans employeId')
-      return
+      console.warn('Tentative de mise à jour des données employee sans employeId dans le contexte')
+      console.log('🔄 Tentative de rechargement des données avant mise à jour...')
+      
+      // Essayer de recharger les données d'abord
+      try {
+        await refreshUserData();
+        if (!userData?.employeId) {
+          console.error('❌ Impossible de récupérer employeId même après refresh')
+          return
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors du refresh avant mise à jour:', error)
+        return
+      }
     }
 
     try {
+      // ✅ Nettoyer les updates pour enlever employeId qui n'existe pas en base
+      const { employeId: _, ...cleanUpdates } = updates;
+      
       // Mettre à jour dans Supabase en utilisant l'ID de l'employee
       const { data, error } = await supabase
         .from('employees')
-        .update(updates)
-        .eq('employeId', userData.employeId) // ✅ Utiliser employeId dans la requête
+        .update(cleanUpdates)
+        .eq('id', userData.employeId) // ✅ Utiliser la colonne 'id' de la table avec la valeur employeId
         .select()
         .single()
 
@@ -239,7 +264,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Mettre à jour le state local
       if (data) {
-        setUserData(prev => prev ? { ...prev, ...data } : data)
+        // ✅ Mapper les données de la base (id) vers l'interface (employeId)
+        const mappedData = {
+          ...data,
+          employeId: data.id // Mapper id vers employeId
+        } as UserData;
+        
+        setUserData(prev => prev ? { ...prev, ...mappedData } : mappedData)
         console.log('✅ Données employee mises à jour dans le contexte')
       }
     } catch (error) {
@@ -269,13 +300,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Erreur lors du rafraîchissement des données utilisateur:', error.message || error)
         throw error
       } else if (userData) {
+        // ✅ Mapper les données de la base (id) vers l'interface (employeId)
+        const mappedUserData = {
+          ...userData,
+          employeId: userData.id // Mapper id vers employeId
+        } as UserData;
+        
         console.log('✅ Données employé rafraîchies:', {
-          employeId: userData.employeId,
-          nom: userData.nom,
-          prenom: userData.prenom,
-          user_id: userData.user_id
+          employeId: mappedUserData.employeId,
+          nom: mappedUserData.nom,
+          prenom: mappedUserData.prenom,
+          user_id: mappedUserData.user_id
         })
-        setUserData(userData as UserData)
+        setUserData(mappedUserData)
       } else {
         console.warn('⚠️ Aucune donnée employé trouvée lors du rafraîchissement')
         setUserData(null)

@@ -90,6 +90,10 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   
   // Utiliser le hook personnalisé pour l'upload d'image
   const initialPhotoURL = authUserData?.photo_url || userData?.photoURL || undefined;
+  
+  // ✅ Passer les données utilisateur au hook (priorité props puis contexte)
+  const userDataForHook = userData || authUserData;
+  
   const {
     avatarFile,
     avatarPreview,
@@ -98,7 +102,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     handleAvatarChange,
     handleImageUpload,
     resetUpload
-  } = useProfileImageUpload(initialPhotoURL);
+  } = useProfileImageUpload(initialPhotoURL, userDataForHook);
 
   const [settings, setSettings] = useState({
     darkMode: theme === 'dark',
@@ -313,6 +317,12 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     await handleImageUpload();
     if (!imageError) {
       setShowImageUpload(false);
+      
+      // ✅ Forcer un rafraîchissement de la page après fermeture de la modale
+      console.log('🔄 Rafraîchissement de la page pour afficher la nouvelle photo...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 500); // Petit délai pour que l'utilisateur voie la modale se fermer
     }
   };
 
