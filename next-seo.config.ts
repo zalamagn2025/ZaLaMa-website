@@ -1,13 +1,13 @@
 // next-seo.config.js
 const SEO = {
-  title: "Zalama SAS – La Fintech des Avances sur Salaire",
+  title: "Zalama – La Fintech des Avances sur Salaire",
   description:
     "Zalama SAS est une solution fintech innovante qui permet aux salariés d’accéder facilement à une avance sur salaire, sans stress, en toute sécurité.",
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: "https://zalamagn.com", // Remplacez par votre URL
-    site_name: "Zalama SAS",
+    site_name: "Zalama",
     images: [
       {
         url: "/images/zalamaOGimg.png", // Assurez-vous que cette image existe dans /public

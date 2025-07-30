@@ -1,12 +1,11 @@
+import { Metadata } from 'next';
 import Link from "next/link";
 import { ArrowLeft, Shield, Lock, Eye, Users, Mail, Calendar, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BackgroundEffects } from "@/components/ui/background-effects";
+import { generateMetadata } from '@/lib/metadata';
 
-export const metadata = {
-  title: "Politique de confidentialité - ZaLaMa",
-  description: "Découvrez comment ZaLaMa protège vos données personnelles et respecte votre vie privée.",
-};
+export const metadata: Metadata = generateMetadata('privacyPolicy');
 
 export default function PrivacyPolicyPage() {
   return (

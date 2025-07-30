@@ -1,12 +1,11 @@
+import { Metadata } from 'next';
 import Link from "next/link";
 import { ArrowLeft, FileText, Shield, Users, CreditCard, AlertTriangle, CheckCircle, Mail, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BackgroundEffects } from "@/components/ui/background-effects";
+import { generateMetadata } from '@/lib/metadata';
 
-export const metadata = {
-  title: "Conditions d'utilisation - ZaLaMa",
-  description: "Découvrez les conditions d'utilisation de la plateforme ZaLaMa pour les avances sur salaire.",
-};
+export const metadata: Metadata = generateMetadata('termsOfService');
 
 export default function TermsOfServicePage() {
   return (

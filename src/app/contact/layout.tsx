@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
 import { generateMetadata } from '@/lib/metadata';
 
-export const metadata: Metadata = generateMetadata('avanceSurSalaire');
+export const metadata: Metadata = generateMetadata('contact');
 
-export default function AvanceSurSalaireLayout({
+export default function ContactLayout({
   children,
 }: {
   children: React.ReactNode;

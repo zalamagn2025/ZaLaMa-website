@@ -1,12 +1,11 @@
+import { Metadata } from 'next';
 import Link from "next/link";
 import { ArrowLeft, Cookie, Shield, Settings, Eye, Clock, Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BackgroundEffects } from "@/components/ui/background-effects";
+import { generateMetadata } from '@/lib/metadata';
 
-export const metadata = {
-  title: "Politique de Cookies - ZaLaMa",
-  description: "Découvrez comment ZaLaMa utilise les cookies pour améliorer votre expérience sur notre plateforme d'avances sur salaire.",
-};
+export const metadata: Metadata = generateMetadata('cookiePolicy');
 
 export default function CookiePolicyPage() {
   return (
