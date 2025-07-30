@@ -14,7 +14,7 @@ function HeroDemo() {
         },
         {
           label: "En savoir plus",
-          href: "/partenariat#avantages",
+          href: "#processus-adhesion",
           variant: "outline"
         }
       ]}
