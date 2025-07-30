@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export function AboutHeroCarousel() {
   return (
-    <div className="relative w-full py-6 sm:py-8 lg:py-10">
+    <div className="relative w-full sm:py-6 lg:py-10">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         .zalama-font {
@@ -38,7 +38,7 @@ export function AboutHeroCarousel() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <h2 className="zalama-font text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                <h2 className="zalama-font text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-primary via-orange-500 to-blue-600 bg-clip-text text-transparent tracking-tight leading-tight">
                   Présentation de ZaLaMa
                 </h2>
                 <div className="w-20 h-1 bg-gradient-to-r from-primary to-orange-500 rounded-full" />
@@ -150,7 +150,7 @@ export function AboutHeroCarousel() {
                 
                 {/* Badge "Notre mission" */}
                 <motion.div
-                  className="absolute -top-3 -right-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg"
+                  className="absolute -top-3 -right-3 bg-gradient-to-r from-primary via-orange-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg"
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
@@ -176,10 +176,10 @@ export function AboutHeroCarousel() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
-                <h2 className="zalama-font text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                <h2 className="zalama-font text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-primary via-orange-500 to-blue-600 bg-clip-text text-transparent tracking-tight leading-tight">
                   Notre mission
                 </h2>
-                <div className="w-20 h-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full" />
+                <div className="w-20 h-1 bg-gradient-to-r from-primary to-orange-500 rounded-full" />
               </motion.div>
               
               <motion.div
