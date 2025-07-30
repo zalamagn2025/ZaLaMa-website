@@ -139,7 +139,7 @@ export function AboutHeroCarousel() {
               >
                 <div className="relative aspect-[4/3] rounded-xl overflow-hidden">
                   <Image
-                    src="/images/zalamaHeroImg1.png"
+                    src="/images/zalamaAppDesigner.png"
                     alt="Notre mission"
                     width={800}
                     height={600}

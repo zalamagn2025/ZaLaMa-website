@@ -40,10 +40,10 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Services',
 		links: [
-			{ title: 'Avance sur salaire', href: '/services' },
+			{ title: 'Avance sur salaire', href: '/avance-sur-salaire' },
 			// { title: 'Prêt P2P', href: '/services' },
-			{ title: 'Conseil & Gestion', href: '/services' },
-			{ title: 'Marketing', href: '/services' },
+			{ title: 'Conseil & Gestion', href: '/conseil-financier' },
+			{ title: 'Marketing', href: '/marketing' },
 			// { title: 'Payement salaire & pension', href: '/services' },
 		],
 	},
