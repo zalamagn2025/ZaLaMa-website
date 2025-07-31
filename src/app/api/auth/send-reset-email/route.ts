@@ -22,11 +22,11 @@ export async function POST(request: NextRequest) {
 
     console.log('🔐 Demande de réinitialisation pour:', email);
 
-    // Vérifier si l'utilisateur existe
+    // Vérifier si l'utilisateur existe (plus robuste)
     const { data: user, error: userError } = await supabase
       .from('employees')
-      .select('id, email, first_name, last_name')
-      .eq('email', email.toLowerCase())
+      .select('id, email, prenom, nom')
+      .ilike('email', email.toLowerCase())
       .single();
 
     if (userError || !user) {
@@ -71,10 +71,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Construire le lien de réinitialisation
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PRIVATE_BASE_URL || 'http://localhost:3001';
+    // S'assurer que le port est correct (3001 au lieu de 3000)
+    const finalBaseUrl = baseUrl.replace(':3000', ':3001');
+    const resetLink = `${finalBaseUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
     
-    // Nom de l'utilisateur pour personnalisation
-    const userName = user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : undefined;
+    // Nom de l'utilisateur pour personnalisation (utiliser prenom et nom)
+    const userName = user.prenom ? `${user.prenom} ${user.nom || ''}`.trim() : undefined;
 
     // Envoyer l'email via Resend
     const emailResult = await resendEmailService.sendForgotPasswordEmail(
