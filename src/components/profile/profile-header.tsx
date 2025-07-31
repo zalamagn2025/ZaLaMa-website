@@ -67,9 +67,17 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
 
   const displayName = getDisplayName();
   const displayEmail = displayUser?.email || 'Email non disponible';
-  // ✅ Utiliser directement photo_url du contexte AuthContext
-  const displayPhotoURL = userData?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
+  // ✅ Utiliser photo_url avec priorité : contexte AuthContext > user props
+  const displayPhotoURL = userData?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
   const displayInitial = displayName.charAt(0).toUpperCase();
+  
+  // 🔍 Debug pour voir quelle photo est utilisée
+  console.log('🖼️ ProfileHeader Debug Photo:', {
+    userDataPhotoUrl: userData?.photo_url,
+    displayUserPhotoUrl: displayUser?.photo_url,
+    userPhotoURL: user && 'photoURL' in user ? user.photoURL : 'N/A',
+    finalDisplayPhotoURL: displayPhotoURL
+  });
 
   // ✅ Debug pour vérifier les données
   useEffect(() => {
@@ -317,7 +325,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
 
               {displayPhotoURL ? (
                 <Image
-                  key={displayPhotoURL} // ✅ Key pour forcer le re-render
+                  key={`${displayPhotoURL}-${Date.now()}`} // ✅ Key avec timestamp pour forcer le re-render
                   width={96}
                   height={96}
                   src={displayPhotoURL}
@@ -327,6 +335,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                   quality={85} // ✅ Qualité optimisée
                   placeholder="blur" // ✅ Placeholder pour améliorer l'UX
                   blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                  unoptimized={displayPhotoURL?.includes('?t=')} // ✅ Désactiver l'optimisation Next.js pour les URLs avec cache buster
                   onError={(e) => {
                     console.warn('⚠️ Erreur chargement image:', displayPhotoURL);
                     // Fallback vers l'avatar par défaut en cas d'erreur

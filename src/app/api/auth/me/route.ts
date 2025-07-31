@@ -128,7 +128,9 @@ export async function GET(request: NextRequest) {
         salaireNet: employeeData.salaire_net,
         typeContrat: employeeData.type_contrat,
         dateEmbauche: employeeData.date_embauche,
-        partenaireId: employeeData.partner_id
+        partenaireId: employeeData.partner_id,
+        // ✅ Photo de profil depuis la table employees
+        photo_url: employeeData.photo_url
       }
 
       console.log('✅ Informations employé complètes récupérées')

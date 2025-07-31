@@ -73,6 +73,7 @@ export default function ProfilePage() {
           const data = await response.json()
           console.log('✅ Utilisateur authentifié:', data.user.email)
           console.log('🔍 partenaireId:', data.user.partenaireId)
+          console.log('🖼️ Photo URL chargée:', data.user.photo_url)
           setUser(data.user)
           setIsAuthenticated(true)
           

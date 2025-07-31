@@ -9,6 +9,7 @@ export interface ImageUploadResult {
 export class ImageUploadService {
   /**
    * Upload une image vers Supabase Storage et met à jour la photo_url dans la table employees
+   * S'assure qu'il n'y ait qu'une seule photo par employé
    */
   static async uploadProfileImage(
     file: File, 
@@ -30,25 +31,43 @@ export class ImageUploadService {
         };
       }
 
-      // 2. Générer un nom de fichier unique
+      // 2. Récupérer l'ancienne photo pour la supprimer plus tard
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select('photo_url')
+        .eq('id', employeeId)
+        .single();
+
+      if (employeeError) {
+        console.error('❌ Erreur récupération employé:', employeeError);
+        return {
+          success: false,
+          error: 'Erreur lors de la récupération des données employé'
+        };
+      }
+
+      const oldPhotoUrl = employeeData?.photo_url;
+
+      // 3. Générer un nom de fichier unique par employé (écrase l'ancien)
       const fileExt = file.name.split('.').pop();
-      const fileName = `${employeeId}-${Date.now()}.${fileExt}`;
-      const filePath = `profile-images/${fileName}`;
+      const fileName = `${employeeId}.${fileExt}`;
+      const filePath = fileName; // Directement à la racine du bucket
 
       console.log('📤 Upload vers Supabase Storage:', {
-        bucket: 'employee-photos',
+        bucket: 'profiles-images',
         filePath,
         fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         fileType: file.type,
-        employeeId
+        employeeId,
+        oldPhotoUrl: oldPhotoUrl ? 'Existante' : 'Aucune'
       });
 
-      // 3. Upload vers Supabase Storage
+      // 4. Upload vers le bucket profiles-images avec upsert pour remplacer l'ancienne
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('employee-photos')
+        .from('profiles-images')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true // ✅ Remplace automatiquement si existe déjà
         });
 
       if (uploadError) {
@@ -61,17 +80,18 @@ export class ImageUploadService {
 
       console.log('✅ Upload réussi:', uploadData);
 
-      // 4. Obtenir l'URL publique
+      // 5. Obtenir l'URL publique avec cache buster
       const { data: urlData } = supabase.storage
-        .from('employee-photos')
+        .from('profiles-images')
         .getPublicUrl(filePath);
 
-      const publicUrl = urlData.publicUrl;
+      // ✅ Ajouter un timestamp pour forcer le refresh du cache navigateur
+      const timestamp = Date.now();
+      const publicUrl = `${urlData.publicUrl}?t=${timestamp}`;
 
-      console.log('🔗 URL publique générée:', publicUrl);
+      console.log('🔗 URL publique avec cache buster générée:', publicUrl);
 
-      // 5. Mettre à jour la photo_url dans la table employees
-      // Utiliser l'ID de l'employee directement
+      // 6. Mettre à jour la photo_url dans la table employees
       const { error: updateError } = await supabase
         .from('employees')
         .update({ 
@@ -84,7 +104,7 @@ export class ImageUploadService {
         console.error('❌ Erreur mise à jour photo_url:', updateError);
         // Supprimer le fichier uploadé en cas d'erreur
         await supabase.storage
-          .from('employee-photos')
+          .from('profiles-images')
           .remove([filePath]);
         
         return {
@@ -110,28 +130,32 @@ export class ImageUploadService {
   }
 
   /**
-   * Supprime une ancienne image de profil
+   * Supprime une ancienne image de profil du bucket profiles-images
    */
   static async deleteProfileImage(imageUrl: string): Promise<boolean> {
     try {
-      // Extraire le chemin du fichier depuis l'URL
+      // Extraire le nom du fichier depuis l'URL
       const urlParts = imageUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
-      const filePath = `profile-images/${fileName}`;
+      // Le fichier est directement à la racine du bucket profiles-images
+      const filePath = fileName;
 
-      // Supprimer le fichier
+      console.log('🗑️ Suppression de l\'ancienne image:', { imageUrl, fileName, filePath });
+
+      // Supprimer le fichier du bucket profiles-images
       const { error } = await supabase.storage
-        .from('employee-photos')
+        .from('profiles-images')
         .remove([filePath]);
 
       if (error) {
-        console.error('Erreur suppression image:', error);
+        console.error('❌ Erreur suppression image:', error);
         return false;
       }
 
+      console.log('✅ Ancienne image supprimée avec succès');
       return true;
     } catch (error) {
-      console.error('Erreur suppression image:', error);
+      console.error('💥 Erreur suppression image:', error);
       return false;
     }
   }
