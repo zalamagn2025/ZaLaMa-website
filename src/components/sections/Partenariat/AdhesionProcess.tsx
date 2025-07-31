@@ -70,7 +70,7 @@ const steps = [
   {
     color: "primary",
     icon: <Rocket className="w-6 h-6 text-primary" />,
-    title: "Étape 6 : Activation des services",
+    title: "Étape 5 : Activation des services",
     content: (
       <ul className="list-disc list-inside">
         <li>Demandes via l&apos;application ou site web ZaLaMa</li>
@@ -81,7 +81,7 @@ const steps = [
   {
     color: "success",
     icon: <BarChart2 className="w-6 h-6 text-success" />,
-    title: "Étape 7 : Suivi et évaluation continue",
+    title: "Étape 6 : Suivi et évaluation continue",
     content: (
       <ul className="list-disc list-inside">
         <li>Suivi mensuel</li>
