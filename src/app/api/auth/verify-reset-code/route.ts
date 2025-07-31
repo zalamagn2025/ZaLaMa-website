@@ -1,114 +1,94 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
-interface VerifyCodeData {
-  oobCode: string;
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Vérification du code de réinitialisation...');
+    console.log('🔍 Vérification du token de réinitialisation...');
     
-    const body: VerifyCodeData = await request.json();
-    const { oobCode } = body;
+    const { token, email } = await request.json();
 
     // Validation des données
-    if (!oobCode) {
+    if (!token || !email) {
+      console.log('❌ Token ou email manquant');
       return NextResponse.json(
-        { error: 'Code de vérification requis' },
+        { error: 'Token et email requis', valid: false },
         { status: 400 }
       );
     }
 
-    console.log('🔍 Vérification du code avec Supabase Auth...');
+    console.log('🔍 Vérification du token pour:', email);
 
-    // Créer le client Supabase
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+    // Vérifier si l'utilisateur existe
+    const { data: user, error: userError } = await supabase
+      .from('employees')
+      .select('id, email')
+      .ilike('email', email.toLowerCase())
+      .single();
 
-    // Avec Supabase, on ne peut pas directement vérifier un token sans l'utiliser
-    // On va essayer de récupérer la session pour voir si le token est valide
-    const { data: { session }, error } = await supabase.auth.getSession();
-
-    if (error) {
-      console.error('❌ Erreur lors de la vérification du token:', error);
-      
-      let errorMessage = 'Code de vérification invalide';
-      
-      switch (error.message) {
-        case 'Invalid recovery token':
-          errorMessage = 'Le lien de réinitialisation est invalide ou a déjà été utilisé';
-          break;
-        case 'Token expired':
-          errorMessage = 'Le lien de réinitialisation a expiré';
-          break;
-        case 'User not found':
-          errorMessage = 'Utilisateur non trouvé';
-          break;
-        default:
-          errorMessage = 'Code de vérification invalide';
-      }
-      
+    if (userError || !user) {
+      console.log('❌ Utilisateur non trouvé:', email);
       return NextResponse.json(
-        { 
-          error: errorMessage,
-          valid: false
-        },
+        { error: 'Lien de réinitialisation invalide', valid: false },
         { status: 400 }
       );
     }
 
-    // Si on arrive ici, le token semble valide
-    // On peut récupérer l'email de l'utilisateur depuis la session
-    const email = session?.user?.email;
-    
-    if (!email) {
+    // Hasher le token pour comparaison
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Vérifier le token en base de données
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('password_reset_tokens')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('token_hash', tokenHash)
+      .eq('used', false)
+      .single();
+
+    if (tokenError || !tokenData) {
+      console.log('❌ Token invalide ou déjà utilisé pour:', email);
       return NextResponse.json(
-        { 
-          error: 'Impossible de récupérer l\'email associé au token',
-          valid: false
-        },
+        { error: 'Lien de réinitialisation invalide ou expiré', valid: false },
         { status: 400 }
       );
     }
 
-    console.log('✅ Code de réinitialisation valide pour:', email);
+    // Vérifier l'expiration
+    const expiresAt = new Date(tokenData.expires_at);
+    if (expiresAt < new Date()) {
+      console.log('❌ Token expiré pour:', email);
+      
+      // Nettoyer le token expiré
+      await supabase
+        .from('password_reset_tokens')
+        .delete()
+        .eq('id', tokenData.id);
+      
+      return NextResponse.json(
+        { error: 'Le lien de réinitialisation a expiré', valid: false },
+        { status: 400 }
+      );
+    }
 
+    console.log('✅ Token de réinitialisation valide pour:', email);
+
+    return NextResponse.json({
+      message: 'Token de réinitialisation valide',
+      valid: true,
+      email: email
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur API verify-reset-code:', error);
     return NextResponse.json(
-      { 
-        message: 'Code de réinitialisation valide',
-        email: email,
-        valid: true
-      },
-      { status: 200 }
-    );
-
-  } catch (error: unknown) {
-    console.error('💥 Erreur lors de la vérification du code:', error);
-    
-    return NextResponse.json(
-      { 
-        error: 'Code de vérification invalide',
-        valid: false
-      },
-      { status: 400 }
+      { error: 'Erreur interne du serveur', valid: false },
+      { status: 500 }
     );
   }
 } 
