@@ -1,63 +1,62 @@
--- Création de la table pour les tokens de réinitialisation de mot de passe
-CREATE TABLE IF NOT EXISTS password_reset_tokens (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-    token_hash TEXT NOT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    used BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Script pour créer la table password_reset_tokens
+-- Exécuter dans l'éditeur SQL de Supabase
+
+-- 1. Créer la table password_reset_tokens
+CREATE TABLE IF NOT EXISTS public.password_reset_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index pour optimiser les requêtes
-CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
-CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token_hash ON password_reset_tokens(token_hash);
-CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at ON password_reset_tokens(expires_at);
-CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_used ON password_reset_tokens(used);
+-- 2. Créer les index pour optimiser les performances
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id 
+ON public.password_reset_tokens(user_id);
 
--- Contrainte pour s'assurer qu'un utilisateur n'a qu'un seul token actif à la fois
-CREATE UNIQUE INDEX IF NOT EXISTS idx_password_reset_tokens_active_user 
-ON password_reset_tokens(user_id) 
-WHERE used = FALSE;
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash 
+ON public.password_reset_tokens(token_hash);
 
--- Fonction pour nettoyer automatiquement les tokens expirés
-CREATE OR REPLACE FUNCTION cleanup_expired_tokens()
-RETURNS void AS $$
-BEGIN
-    DELETE FROM password_reset_tokens 
-    WHERE expires_at < NOW() OR used = TRUE;
-END;
-$$ LANGUAGE plpgsql;
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires 
+ON public.password_reset_tokens(expires_at);
 
--- Trigger pour mettre à jour updated_at automatiquement
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_used 
+ON public.password_reset_tokens(used);
 
-CREATE TRIGGER update_password_reset_tokens_updated_at
-    BEFORE UPDATE ON password_reset_tokens
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+-- 3. Vérifier que la table existe
+SELECT 
+  table_name,
+  table_schema
+FROM information_schema.tables 
+WHERE table_name = 'password_reset_tokens'
+AND table_schema = 'public';
 
--- Politique RLS pour la sécurité
-ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
+-- 4. Vérifier la structure de la table
+SELECT 
+  column_name,
+  data_type,
+  is_nullable,
+  column_default
+FROM information_schema.columns 
+WHERE table_schema = 'public' 
+AND table_name = 'password_reset_tokens'
+ORDER BY ordinal_position;
 
--- Politique pour permettre l'accès aux administrateurs uniquement
-CREATE POLICY "password_reset_tokens_admin_policy" ON password_reset_tokens
-    FOR ALL USING (auth.role() = 'service_role');
-
--- Commentaires pour la documentation
-COMMENT ON TABLE password_reset_tokens IS 'Table pour stocker les tokens de réinitialisation de mot de passe';
-COMMENT ON COLUMN password_reset_tokens.token_hash IS 'Hash SHA256 du token de réinitialisation';
-COMMENT ON COLUMN password_reset_tokens.expires_at IS 'Date d''expiration du token (1 heure par défaut)';
-COMMENT ON COLUMN password_reset_tokens.used IS 'Indique si le token a déjà été utilisé';
-
--- Nettoyage initial des tokens expirés
-SELECT cleanup_expired_tokens();
-
--- Affichage de la structure créée
-\d password_reset_tokens; 
+-- 5. Vérifier les contraintes de clé étrangère
+SELECT 
+  tc.constraint_name,
+  tc.table_name,
+  kcu.column_name,
+  ccu.table_name AS foreign_table_name,
+  ccu.column_name AS foreign_column_name
+FROM information_schema.table_constraints AS tc 
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+  AND tc.table_schema = kcu.table_schema
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+  AND ccu.table_schema = tc.table_schema
+WHERE tc.constraint_type = 'FOREIGN KEY' 
+AND tc.table_name = 'password_reset_tokens'; 

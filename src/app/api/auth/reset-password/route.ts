@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Vérifier si l'utilisateur existe
     const { data: user, error: userError } = await supabase
       .from('employees')
-      .select('id, email')
+      .select('id, email, user_id')
       .eq('email', email.toLowerCase())
       .single();
 
@@ -81,19 +81,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hasher le nouveau mot de passe avec salt
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hashedPassword = crypto.pbkdf2Sync(newPassword, salt, 1000, 64, 'sha512').toString('hex');
-    const finalPassword = `${salt}:${hashedPassword}`;
-
-    // Mettre à jour le mot de passe
-    const { error: updateError } = await supabase
-      .from('employees')
-      .update({ 
-        password: finalPassword,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id);
+    // Mettre à jour le mot de passe via Supabase Auth
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      user.user_id || user.id, // Utiliser user_id si disponible, sinon id
+      { password: newPassword }
+    );
 
     if (updateError) {
       console.error('❌ Erreur mise à jour mot de passe:', updateError);

@@ -131,7 +131,7 @@ export function Component() {
       setForgotPasswordMessage('');
 
       try {
-        const response = await fetch('/api/auth/forgot-password', {
+        const response = await fetch('/api/auth/send-reset-email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
