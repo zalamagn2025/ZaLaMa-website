@@ -64,7 +64,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 RESEND_API_KEY=your_resend_api_key
 
 # Base URL de l'application
-NEXT_PUBLIC_APP_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=https://zalamagn.com
 
 # JWT Secret
 JWT_SECRET=your_jwt_secret
@@ -118,7 +118,7 @@ npm run dev
 
 1. **Accéder à la page de connexion**
    ```
-   http://localhost:3001/login
+   https://zalamagn.com/login
    ```
 
 2. **Cliquer sur "Mot de passe oublié ?"**

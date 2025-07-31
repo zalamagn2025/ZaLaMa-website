@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
         const data = await response.json();
 
         if (response.ok && data.valid) {
-          setStatus('ready');
+        setStatus('ready');
           setMessage('');
         } else {
           setStatus('error');
@@ -91,31 +91,31 @@ export default function ResetPasswordPage() {
     // Validation des mots de passe
     if (password.length < 8) {
       setMessage('Le mot de passe doit contenir au moins 8 caractères.');
-      return;
-    }
+        return;
+      }
 
-    if (password !== confirmPassword) {
+      if (password !== confirmPassword) {
       setMessage('Les mots de passe ne correspondent pas.');
-      return;
-    }
+        return;
+      }
 
-    setStatus('loading');
-    setMessage('');
+      setStatus('loading');
+      setMessage('');
 
-    try {
+      try {
       const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
           token,
           email,
           newPassword: password,
-        }),
-      });
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
       if (response.ok && data.success) {
         setStatus('success');
@@ -218,7 +218,7 @@ export default function ResetPasswordPage() {
             </div>
           )}
 
-          {status === 'error' && (
+              {status === 'error' && (
             <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
               <div className="flex items-center gap-3">
                 <XCircle className="h-5 w-5 text-red-400" />
@@ -232,7 +232,7 @@ export default function ResetPasswordPage() {
                   Demander un nouveau lien
                 </button>
               )}
-            </div>
+                  </div>
           )}
 
           {status === 'success' && (
@@ -240,8 +240,8 @@ export default function ResetPasswordPage() {
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5 text-green-400" />
                 <span className="text-white text-sm">{message}</span>
-              </div>
-            </div>
+                  </div>
+                      </div>
           )}
 
           {/* Reset Password Form */}
@@ -256,19 +256,19 @@ export default function ResetPasswordPage() {
                   Nouveau mot de passe
                 </label>
                 <div className="relative">
-                  <Input
+                      <Input
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                     placeholder="Entrez votre nouveau mot de passe"
                     className="pr-10"
                     onFocus={() => setFocusedInput('password')}
-                    onBlur={() => setFocusedInput(null)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                        onBlur={() => setFocusedInput(null)}
+                        required
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)} 
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -282,33 +282,33 @@ export default function ResetPasswordPage() {
                   Confirmer le mot de passe
                 </label>
                 <div className="relative">
-                  <Input
+                      <Input
                     type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirmez votre nouveau mot de passe"
                     className="pr-10"
                     onFocus={() => setFocusedInput('confirmPassword')}
-                    onBlur={() => setFocusedInput(null)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onBlur={() => setFocusedInput(null)}
+                        required
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                      </button>
+                    </div>
               </div>
 
               {/* Submit Button */}
               <button
-                type="submit"
+                    type="submit"
                 disabled={status === 'loading'}
                 className="w-full bg-white text-[#FF671E] font-semibold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {status === 'loading' ? (
+                  >
+                        {status === 'loading' ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FF671E]"></div>
                     Réinitialisation...
@@ -320,17 +320,17 @@ export default function ResetPasswordPage() {
                   </>
                 )}
               </button>
-            </form>
-          )}
+                </form>
+              )}
 
           {/* Back to Login */}
           <div className="mt-6 text-center">
-            <Link
-              href="/login"
+              <Link
+                href="/login"
               className="text-white/80 hover:text-white text-sm underline"
-            >
-              Retour à la connexion
-            </Link>
+              >
+                Retour à la connexion
+              </Link>
           </div>
         </div>
       </div>

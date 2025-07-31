@@ -70,11 +70,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Construire le lien de réinitialisation
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PRIVATE_BASE_URL || 'http://localhost:3001';
-    // S'assurer que le port est correct (3001 au lieu de 3000)
-    const finalBaseUrl = baseUrl.replace(':3000', ':3001');
-    const resetLink = `${finalBaseUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    // Construire le lien de réinitialisation avec le domaine de production
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zalamagn.com';
+    const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
     
     // Nom de l'utilisateur pour personnalisation (utiliser prenom et nom)
     const userName = user.prenom ? `${user.prenom} ${user.nom || ''}`.trim() : undefined;

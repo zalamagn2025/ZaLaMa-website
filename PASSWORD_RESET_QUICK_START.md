@@ -8,7 +8,7 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 RESEND_API_KEY=your_resend_key
-NEXT_PUBLIC_APP_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=https://zalamagn.com
 ```
 
 ### 2. Base de Données
@@ -70,7 +70,7 @@ VALUES ('Test', 'User', 'test@example.com', 'Employé', 'Homme', 'CDI', true);
 ```
 
 ### 2. Tester le flux
-1. Aller sur `http://localhost:3001/login`
+1. Aller sur `https://zalamagn.com/login`
 2. Cliquer "Mot de passe oublié"
 3. Saisir `test@example.com`
 4. Vérifier l'email
