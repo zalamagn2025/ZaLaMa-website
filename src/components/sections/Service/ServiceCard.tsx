@@ -1,12 +1,14 @@
+import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
 
 interface ServiceCardProps {
   title: string;
   description: string;
   features: string[];
-  // ctaText: string;
-  // ctaLink: string;
+  ctaText: string;
+  ctaLink: string;
   icon: React.ReactNode;
   delay?: number;
 }
@@ -15,8 +17,8 @@ export function ServiceCard({
   title,
   description,
   features,
-  // ctaText,
-  // ctaLink,
+  ctaText,
+  ctaLink,
   icon,
   delay = 0
 }: ServiceCardProps) {
@@ -43,13 +45,13 @@ export function ServiceCard({
         ))}
       </ul>
       
-      {/* <div className="mt-auto">
+      <div className="mt-auto">
         <Button asChild className="w-full">
           <Link href={ctaLink}>
             {ctaText}
           </Link>
         </Button>
-      </div> */}
+      </div>
     </motion.div>
   );
 }

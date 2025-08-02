@@ -15,8 +15,8 @@ export function ServicesSection() {
         "Traitement en moins de 30 minutes",
         "Frais fixes transparents et minimes",
       ],
-      // ctaText: "Demander une avance",
-      // ctaLink: "/contact"
+      ctaText: "En savoir plus",
+      ctaLink: "/avance-sur-salaire"
     },
     // {
     //   title: "Prêt P2P (Peer-to-Peer)",
@@ -42,8 +42,8 @@ export function ServicesSection() {
         "Chat avec l'IA",
         "Alertes intelligentes"
       ],
-      // ctaText: "Prendre rendez-vous",
-      // ctaLink: "/contact"
+      ctaText: "En savoir plus",
+      ctaLink: "/conseil-financier"
     },
     {
       title: "Marketing",
@@ -56,8 +56,8 @@ export function ServicesSection() {
         "Soutien technologique et accompagnement"
 
       ],
-      // ctaText: "Découvrir l'épargne",
-      // ctaLink: "/contact"
+      ctaText: "En savoir plus",
+      ctaLink: "/marketing"
     },
     // {
     //   title: "Paiement de salaire & pension",
@@ -75,7 +75,7 @@ export function ServicesSection() {
   ];
 
   return (
-    <section className="w-full py-16 md:py-24 lg:py-32 ">
+    <section className="w-full py-8 md:py-12 lg:py-18 ">
       <div className="container mx-auto px-4 md:px-6 max-w-7xl">
         <motion.div 
           className="text-center mb-12 md:mb-16"
@@ -99,8 +99,8 @@ export function ServicesSection() {
               title={service.title}
               description={service.description}
               features={service.features}
-              // ctaText={service.ctaText}
-              // ctaLink={service.ctaLink}
+              ctaText={service.ctaText}
+              ctaLink={service.ctaLink}
               icon={service.icon}
               delay={index}
             />
