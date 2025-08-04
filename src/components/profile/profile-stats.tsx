@@ -532,6 +532,50 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
       setIsVisible(isVerified)
     }
   }, [isVerified, hideable])
+
+  // Fermeture automatique après 5 minutes d'inactivité
+  useEffect(() => {
+    if (hideable && isVerified && isVisible) {
+      console.log('⏰ Démarrage du timer de fermeture automatique (5 minutes)');
+      
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Fermeture automatique après 5 minutes d\'inactivité');
+        setIsVisible(false);
+        onResetVerification?.();
+      }, 5 * 60 * 1000); // 5 minutes
+
+      // Réinitialiser le timer sur les interactions utilisateur
+      const resetTimer = () => {
+        console.log('🔄 Réinitialisation du timer d\'inactivité');
+        clearTimeout(timeoutId);
+        const newTimeoutId = setTimeout(() => {
+          console.log('⏰ Fermeture automatique après 5 minutes d\'inactivité');
+          setIsVisible(false);
+          onResetVerification?.();
+        }, 5 * 60 * 1000);
+        return newTimeoutId;
+      };
+
+      // Écouter les événements d'interaction utilisateur
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+      let currentTimeoutId = timeoutId;
+
+      const handleUserActivity = () => {
+        currentTimeoutId = resetTimer();
+      };
+
+      events.forEach(event => {
+        document.addEventListener(event, handleUserActivity, true);
+      });
+
+      return () => {
+        clearTimeout(currentTimeoutId);
+        events.forEach(event => {
+          document.removeEventListener(event, handleUserActivity, true);
+        });
+      };
+    }
+  }, [hideable, isVerified, isVisible, onResetVerification]);
   const trendConfig = {
     up: { 
       color: "text-emerald-500", 

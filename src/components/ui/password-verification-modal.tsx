@@ -29,18 +29,20 @@ export function PasswordVerificationModal({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('🔐 Début du handleSubmit dans le modal');
     
     if (!password.trim()) {
-      toast.error('Veuillez entrer votre mot de passe');
+      setError('Veuillez entrer votre mot de passe');
       return;
     }
 
     console.log('🔐 Mot de passe saisi:', password ? '***' : 'vide');
     setIsLoading(true);
+    setError(''); // Réinitialiser l'erreur
 
     try {
       let success = false;
@@ -84,12 +86,13 @@ export function PasswordVerificationModal({
         handleClose();
       } else {
         console.log('❌ Vérification échouée dans le modal');
+        setError('Mot de passe incorrect');
       }
       
     } catch (error) {
       console.log('❌ Erreur dans handleSubmit:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -99,6 +102,7 @@ export function PasswordVerificationModal({
     setPassword('');
     setShowPassword(false);
     setIsLoading(false);
+    setError('');
     onClose();
   };
 
@@ -166,6 +170,17 @@ export function PasswordVerificationModal({
                   </button>
                 </div>
               </div>
+
+              {/* Message d'erreur */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg"
+                >
+                  <p className="text-sm text-red-400 text-center">{error}</p>
+                </motion.div>
+              )}
 
               {/* Buttons */}
               <div className="flex gap-3 pt-4">
