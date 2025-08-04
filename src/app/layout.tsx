@@ -6,6 +6,8 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider } from "@/components/providers";
 import { AutocompleteDisabler } from "@/components/auth/AutocompleteDisabler";
 import { defaultMetadata } from "@/lib/metadata";
+import { generateOrganizationSchema } from "@/lib/structured-data";
+import { SEOProvider } from "@/components/SEO/SEOProvider";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -31,6 +33,18 @@ export default function RootLayout({
         <meta name="autocomplete" content="off" />
         <meta name="data-form-type" content="other" />
         <meta name="data-lpignore" content="true" />
+        
+        {/* Préchargement des ressources critiques */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        <link rel="dns-prefetch" href="https://mspmrzlqhwpdkkburjiw.supabase.co" />
+        
+        {/* Balises structurées globales */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: generateOrganizationSchema() }}
+        />
       </head>
       <body
         className={twMerge(
@@ -41,7 +55,9 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <AutocompleteDisabler />
-            {children}
+            <SEOProvider canonicalUrl="https://www.zalamagn.com">
+              {children}
+            </SEOProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -1,109 +1,108 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { ChevronRight, MoreHorizontal } from "lucide-react"
+'use client';
 
-import { cn } from "@/lib/utils"
+import Link from 'next/link';
+import { ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { cn } from '@/lib/utils';
+import { generateBreadcrumbSchema, createStructuredDataScript } from '@/lib/structured-data';
 
-function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
-  return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />
+interface BreadcrumbItem {
+  name: string;
+  url: string;
+  current?: boolean;
 }
 
-function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
-  return (
-    <ol
-      data-slot="breadcrumb-list"
-      className={cn(
-        "text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5",
-        className
-      )}
-      {...props}
-    />
-  )
+interface BreadcrumbProps {
+  items: BreadcrumbItem[];
+  className?: string;
+  showHome?: boolean;
 }
 
-function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
-  return (
-    <li
-      data-slot="breadcrumb-item"
-      className={cn("inline-flex items-center gap-1.5", className)}
-      {...props}
-    />
-  )
-}
-
-function BreadcrumbLink({
-  asChild,
+export function Breadcrumb({ 
+  items, 
   className,
-  ...props
-}: React.ComponentProps<"a"> & {
-  asChild?: boolean
-}) {
-  const Comp = asChild ? Slot : "a"
+  showHome = true 
+}: BreadcrumbProps) {
+  // Ajouter l'accueil si demandé et s'il n'est pas déjà présent
+  const breadcrumbItems = showHome && items[0]?.url !== '/' 
+    ? [{ name: 'Accueil', url: '/' }, ...items]
+    : items;
+
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
 
   return (
-    <Comp
-      data-slot="breadcrumb-link"
-      className={cn("hover:text-foreground transition-colors", className)}
-      {...props}
-    />
-  )
+    <nav className={cn('flex', className)} aria-label="Breadcrumb">
+      {/* Balises structurées pour le breadcrumb */}
+      <script {...createStructuredDataScript(breadcrumbSchema)} />
+      
+      <ol className="flex items-center space-x-2">
+        {breadcrumbItems.map((item, index) => (
+          <li key={index} className="flex items-center">
+            {index > 0 && (
+              <ChevronRightIcon className="h-4 w-4 text-gray-400 mx-2" />
+            )}
+            
+            {item.current ? (
+              <span
+                className={cn(
+                  'text-sm font-medium',
+                  item.current 
+                    ? 'text-gray-500 dark:text-gray-400' 
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                )}
+                aria-current="page"
+              >
+                {index === 0 && showHome ? (
+                  <HomeIcon className="h-4 w-4" />
+                ) : (
+                  item.name
+                )}
+              </span>
+            ) : (
+              <Link
+                href={item.url}
+                className={cn(
+                  'text-sm font-medium transition-colors duration-200',
+                  'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                )}
+              >
+                {index === 0 && showHome ? (
+                  <HomeIcon className="h-4 w-4" />
+                ) : (
+                  item.name
+                )}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
 }
 
-function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
-  return (
-    <span
-      data-slot="breadcrumb-page"
-      role="link"
-      aria-disabled="true"
-      aria-current="page"
-      className={cn("text-foreground font-normal", className)}
-      {...props}
-    />
-  )
+// Composant pour les pages de services
+export function ServiceBreadcrumb({ serviceName }: { serviceName: string }) {
+  const items: BreadcrumbItem[] = [
+    { name: 'Services', url: '/services' },
+    { name: serviceName, url: '#', current: true }
+  ];
+
+  return <Breadcrumb items={items} className="mb-6" />;
 }
 
-function BreadcrumbSeparator({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"li">) {
-  return (
-    <li
-      data-slot="breadcrumb-separator"
-      role="presentation"
-      aria-hidden="true"
-      className={cn("[&>svg]:size-3.5", className)}
-      {...props}
-    >
-      {children ?? <ChevronRight />}
-    </li>
-  )
+// Composant pour les pages de partenariat
+export function PartnershipBreadcrumb() {
+  const items: BreadcrumbItem[] = [
+    { name: 'Partenariat', url: '/partnership', current: true }
+  ];
+
+  return <Breadcrumb items={items} className="mb-6" />;
 }
 
-function BreadcrumbEllipsis({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
-  return (
-    <span
-      data-slot="breadcrumb-ellipsis"
-      role="presentation"
-      aria-hidden="true"
-      className={cn("flex size-9 items-center justify-center", className)}
-      {...props}
-    >
-      <MoreHorizontal className="size-4" />
-      <span className="sr-only">More</span>
-    </span>
-  )
-}
+// Composant pour les pages de contact
+export function ContactBreadcrumb() {
+  const items: BreadcrumbItem[] = [
+    { name: 'Contact', url: '/contact', current: true }
+  ];
 
-export {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-  BreadcrumbEllipsis,
+  return <Breadcrumb items={items} className="mb-6" />;
 }
