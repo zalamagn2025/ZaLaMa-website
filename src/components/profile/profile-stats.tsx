@@ -1,7 +1,7 @@
 "use client"
 
 import { UserWithEmployeData } from "@/types/employe"
-import { IconArrowUpRight, IconCreditCard, IconReceipt, IconSparkles, IconTrendingUp } from "@tabler/icons-react"
+import { IconArrowUpRight, IconCreditCard, IconReceipt, IconSparkles, IconTrendingUp, IconEye, IconEyeOff } from "@tabler/icons-react"
 import { motion, useAnimation } from "framer-motion"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -390,7 +390,8 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       trend: "neutral" as const,
       color: "from-[#FF671E] to-[#FF8E53]",
       pulse: true,
-      showRemaining: true
+      showRemaining: true,
+      hideable: true
     },
     {
       title: "Acompte disponible",
@@ -451,6 +452,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
               color={stat.color}
               pulse={stat.pulse}
               showRemaining={stat.showRemaining}
+              hideable={stat.hideable}
             />
           </motion.div>
         ))}
@@ -470,10 +472,13 @@ interface StatCardProps {
   color: string
   pulse: boolean
   showRemaining: boolean
+  hideable?: boolean
 }
 
-function StatCard({ title, value, remaining, currency, icon, change, trend, color, pulse, showRemaining }: StatCardProps) {
+function StatCard({ title, value, remaining, currency, icon, change, trend, color, pulse, showRemaining, hideable = false }: StatCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  // Seulement masquer par défaut si hideable est true
+  const [isVisible, setIsVisible] = useState(!hideable)
   const controls = useAnimation()
   const trendConfig = {
     up: { 
@@ -581,16 +586,43 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
         <div className="relative z-10">
           <div className="flex justify-between items-start">
             <div className={showRemaining ? "" : "mb-8"}>
-              <p className="text-sm font-medium text-gray-300 mb-1">{title}</p>
-              <motion.p 
-                className="text-2xl font-bold text-white"
-                animate={{
-                  scale: isHovered ? [1, 1.02, 1] : 1,
-                  transition: { duration: 0.5 }
-                }}
-              >
-                {value} <span className="text-lg font-medium">{currency}</span>
-              </motion.p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-300 mb-1">{title}</p>
+                  <div className="flex items-center space-x-2">
+                    <motion.p 
+                      className="text-2xl font-bold text-white"
+                      animate={{
+                        scale: isHovered ? [1, 1.02, 1] : 1,
+                        transition: { duration: 0.5 }
+                      }}
+                    >
+                      {isVisible ? (
+                        <>{value} <span className="text-lg font-medium">{currency}</span></>
+                      ) : (
+                        <span className="text-xl">••••••</span>
+                      )}
+                    </motion.p>
+                    {hideable && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsVisible(!isVisible);
+                        }}
+                        className="p-1 rounded-full hover:bg-gray-100/10 transition-colors flex items-center justify-center"
+                        aria-label={isVisible ? "Masquer le montant" : "Afficher le montant"}
+                      >
+                        {isVisible ? (
+                          <IconEye className="h-5 w-5 text-gray-300" />
+                        ) : (
+                          <IconEyeOff className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+              </div>
               {showRemaining && remaining && (
                 <motion.div 
                   className="mt-2 bg-[#010D3E]/50 p-2 rounded-lg border border-[#1A3A8F]/50"
@@ -601,7 +633,11 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
                 >
                   <p className="text-xs text-gray-300">Salaire restant</p>
                   <p className="text-lg font-bold text-white">
-                    {remaining} <span className="text-sm font-medium">{currency}</span>
+                    {isVisible ? (
+                      <>{remaining} <span className="text-sm font-medium">{currency}</span></>
+                    ) : (
+                      <span className="text-base">••••••</span>
+                    )}
                   </p>
                 </motion.div>
               )}
