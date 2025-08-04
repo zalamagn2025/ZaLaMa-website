@@ -1,10 +1,12 @@
 "use client"
 
 import { UserWithEmployeData } from "@/types/employe"
-import { IconArrowUpRight, IconCreditCard, IconReceipt, IconSparkles, IconTrendingUp, IconEye, IconEyeOff } from "@tabler/icons-react"
+import { IconArrowUpRight, IconCreditCard, IconReceipt, IconSparkles, IconTrendingUp, IconEye, IconEyeOff, IconShieldLock } from "@tabler/icons-react"
 import { motion, useAnimation } from "framer-motion"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { PasswordVerificationModal } from "@/components/ui/password-verification-modal"
+import { usePasswordVerification } from "@/hooks/usePasswordVerification"
 
 // Type pour les demandes d'avance
 interface AdvanceRequest {
@@ -126,6 +128,24 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   const [loading, setLoading] = useState(true)
   const [debugData, setDebugData] = useState<any>(null)
   const [schemaData, setSchemaData] = useState<any>(null)
+  
+  // Hook pour la vérification par mot de passe
+  const {
+    isModalOpen,
+    isVerified,
+    isLoading: isVerifying,
+    verifyPassword,
+    openVerificationModal,
+    closeVerificationModal,
+    resetVerification
+  } = usePasswordVerification({
+    onSuccess: () => {
+      // La vérification a réussi, on peut afficher les informations
+    },
+    onError: (error) => {
+      // Gérer l'erreur si nécessaire
+    }
+  });
 
   // Fonction de test pour vérifier les données Supabase directement
   const testSupabaseData = async () => {
@@ -335,6 +355,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     fetchAdvanceRequests()
   }, [user.employeId])
 
+  // Réinitialiser la vérification quand l'utilisateur change
+  useEffect(() => {
+    resetVerification();
+  }, [user.id, resetVerification]);
+
   console.log("user", user)
   console.log("user.salaireNet", user.salaireNet)
   //get total working days in month
@@ -441,22 +466,37 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1, duration: 0.5 }}
           >
-            <StatCard 
-              title={stat.title}
-              value={stat.value}
-              remaining={stat.remaining}
-              currency={stat.currency}
-              icon={stat.icon}
-              change={stat.change}
-              trend={stat.trend}
-              color={stat.color}
-              pulse={stat.pulse}
-              showRemaining={stat.showRemaining}
-              hideable={stat.hideable}
-            />
+                         <StatCard 
+               title={stat.title}
+               value={stat.value}
+               remaining={stat.remaining}
+               currency={stat.currency}
+               icon={stat.icon}
+               change={stat.change}
+               trend={stat.trend}
+               color={stat.color}
+               pulse={stat.pulse}
+               showRemaining={stat.showRemaining}
+               hideable={stat.hideable}
+               isVerified={isVerified}
+               onRequestVerification={openVerificationModal}
+               onResetVerification={resetVerification}
+             />
           </motion.div>
         ))}
       </div>
+      
+      {/* Modal de vérification par mot de passe */}
+      <PasswordVerificationModal
+        isOpen={isModalOpen}
+        onClose={closeVerificationModal}
+        onSuccess={() => {
+          // La vérification a réussi
+        }}
+        onVerifyPassword={verifyPassword}
+        title="Vérification du mot de passe"
+        message="Entrez votre mot de passe pour afficher votre salaire et informations financières"
+      />
     </div>
   )
 }
@@ -473,13 +513,25 @@ interface StatCardProps {
   pulse: boolean
   showRemaining: boolean
   hideable?: boolean
+  isVerified?: boolean
+  onRequestVerification?: () => void
+  onResetVerification?: () => void
 }
 
-function StatCard({ title, value, remaining, currency, icon, change, trend, color, pulse, showRemaining, hideable = false }: StatCardProps) {
+function StatCard({ title, value, remaining, currency, icon, change, trend, color, pulse, showRemaining, hideable = false, isVerified = false, onRequestVerification, onResetVerification }: StatCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  // Seulement masquer par défaut si hideable est true
-  const [isVisible, setIsVisible] = useState(!hideable)
+  // Seulement masquer par défaut si hideable est true et que l'utilisateur n'est pas vérifié
+  const [isVisible, setIsVisible] = useState(!hideable || isVerified)
   const controls = useAnimation()
+
+  // Synchroniser isVisible avec isVerified quand isVerified change
+  useEffect(() => {
+    console.log('👁️ useEffect StatCard - isVerified:', isVerified, 'hideable:', hideable);
+    if (hideable) {
+      console.log('🔓 Mise à jour isVisible à:', isVerified);
+      setIsVisible(isVerified)
+    }
+  }, [isVerified, hideable])
   const trendConfig = {
     up: { 
       color: "text-emerald-500", 
@@ -590,36 +642,77 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
                 <div>
                   <p className="text-sm font-medium text-gray-300 mb-1">{title}</p>
                   <div className="flex items-center space-x-2">
-                    <motion.p 
-                      className="text-2xl font-bold text-white"
-                      animate={{
-                        scale: isHovered ? [1, 1.02, 1] : 1,
-                        transition: { duration: 0.5 }
-                      }}
-                    >
-                      {isVisible ? (
-                        <>{value} <span className="text-lg font-medium">{currency}</span></>
-                      ) : (
-                        <span className="text-xl">••••••</span>
-                      )}
-                    </motion.p>
+                                         <motion.p 
+                       className="text-2xl font-bold text-white"
+                       animate={{
+                         scale: isHovered ? [1, 1.02, 1] : 1,
+                         transition: { duration: 0.5 }
+                       }}
+                     >
+                       {(() => {
+                         console.log('🎯 Rendu StatCard - isVisible:', isVisible, 'title:', title);
+                         return isVisible ? (
+                           <>{value} <span className="text-lg font-medium">{currency}</span></>
+                         ) : (
+                           <span className="text-xl">••••••</span>
+                         );
+                       })()}
+                     </motion.p>
                     {hideable && (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsVisible(!isVisible);
-                        }}
+                                             <motion.button 
+                         onClick={(e) => {
+                           console.log('👁️ Clic sur l\'icône œil - isVerified:', isVerified, 'hideable:', hideable);
+                           e.stopPropagation();
+                           if (hideable) {
+                             // Pour les cartes protégées, toujours demander la vérification
+                             if (!isVerified) {
+                               console.log('🔐 Ouverture du modal de vérification...');
+                               onRequestVerification?.();
+                             } else {
+                               // Si déjà vérifié, masquer et réinitialiser la vérification
+                               console.log('🔒 Masquage et réinitialisation de la vérification');
+                               setIsVisible(false);
+                               onResetVerification?.(); // Réinitialiser la vérification
+                             }
+                           } else {
+                             // Pour les cartes non protégées, basculer normalement
+                             console.log('🔄 Basculement de la visibilité');
+                             setIsVisible(!isVisible);
+                           }
+                         }}
+                         onMouseDown={(e) => {
+                           console.log('👁️ MouseDown sur l\'icône œil');
+                         }}
+                         onMouseUp={(e) => {
+                           console.log('👁️ MouseUp sur l\'icône œil');
+                         }}
                         className="p-1 rounded-full hover:bg-gray-100/10 transition-colors flex items-center justify-center"
                         aria-label={isVisible ? "Masquer le montant" : "Afficher le montant"}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         {isVisible ? (
                           <IconEye className="h-5 w-5 text-gray-300" />
                         ) : (
                           <IconEyeOff className="h-5 w-5 text-gray-400" />
                         )}
-                      </button>
+                      </motion.button>
                     )}
                   </div>
+                  
+                  {/* Indicateur de protection */}
+                  {hideable && !isVerified && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 flex items-center gap-2"
+                    >
+                      <div className="flex items-center gap-1">
+                        <IconShieldLock className="h-4 w-4 text-[#FF671E]" />
+                        <span className="text-xs text-gray-400 font-medium">Cliquez pour vérifier</span>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
               </div>
