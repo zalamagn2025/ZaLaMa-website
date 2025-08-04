@@ -39,12 +39,14 @@ export default function ResetPasswordPage() {
   const token = searchParams.get('token');
   const emailParam = searchParams.get('email');
   
+  type StatusType = 'verifying' | 'ready' | 'success' | 'error' | 'loading';
+  
   const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [status, setStatus] = useState<'verifying' | 'ready' | 'success' | 'error' | 'loading'>('verifying');
+  const [status, setStatus] = useState<StatusType>('verifying');
   const [message, setMessage] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
@@ -305,10 +307,10 @@ export default function ResetPasswordPage() {
               {/* Submit Button */}
               <button
                     type="submit"
-                disabled={status === 'loading'}
+                disabled={status === ('loading' as StatusType)}
                 className="w-full bg-white text-[#FF671E] font-semibold py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                        {status === 'loading' ? (
+                        {status === ('loading' as StatusType) ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FF671E]"></div>
                     Réinitialisation...
