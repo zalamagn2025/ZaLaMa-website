@@ -1,8 +1,24 @@
-"use client";
+'use client';
 
-import { DefaultSeo } from "next-seo";
-import SEO from "../../../next-seo.config";
+import { ReactNode } from 'react';
+import { createStructuredDataScript } from '@/lib/structured-data';
 
-export default function SEOProvider() {
-  return <DefaultSeo {...SEO} />;
+interface SEOProviderProps {
+  children: ReactNode;
+  structuredData?: string;
+  canonicalUrl?: string;
+}
+
+export function SEOProvider({ children, structuredData, canonicalUrl }: SEOProviderProps) {
+  return (
+    <>
+      {canonicalUrl && (
+        <link rel="canonical" href={canonicalUrl} />
+      )}
+      {structuredData && (
+        <script {...createStructuredDataScript(structuredData)} />
+      )}
+      {children}
+    </>
+  );
 }

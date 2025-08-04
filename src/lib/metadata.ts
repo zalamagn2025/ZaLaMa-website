@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { generateOrganizationSchema, generateFinancialServiceSchema, generateServiceSchema } from './structured-data';
 
 // Configuration de base pour toutes les métadonnées
 const baseMetadata: Metadata = {
@@ -20,9 +21,9 @@ const baseMetadata: Metadata = {
     'marketing',
     'partenariat'
   ],
-  authors: [{ name: 'ZaLaMa SAS' }],
-  creator: 'ZaLaMa SAS',
-  publisher: 'ZaLaMa SAS',
+  authors: [{ name: 'ZaLaMa' }],
+  creator: 'ZaLaMa',
+  publisher: 'ZaLaMa',
   formatDetection: {
     email: false,
     address: false,
@@ -257,6 +258,46 @@ export const pageMetadata = {
 export function generateMetadata(pageKey: keyof typeof pageMetadata, customData?: Partial<Metadata>): Metadata {
   const pageData = pageMetadata[pageKey];
   
+  // Génération des balises structurées selon le type de page
+  let structuredData = '';
+  
+  switch (pageKey) {
+    case 'home':
+      structuredData = generateOrganizationSchema();
+      break;
+    case 'avanceSurSalaire':
+      structuredData = generateFinancialServiceSchema({
+        name: 'Avance sur salaire',
+        description: 'Accédez rapidement à 25% de votre salaire avant la date de paie officielle',
+        url: 'https://www.zalamagn.com/avance-sur-salaire',
+        provider: 'ZaLaMa',
+        areaServed: 'Guinée',
+        serviceType: 'FinancialService',
+        feesAndCommissionsSpecification: '6,5% de frais de service'
+      });
+      break;
+    case 'conseilFinancier':
+      structuredData = generateServiceSchema({
+        name: 'Conseil financier IA',
+        description: 'Accompagnement personnalisé par IA pour optimiser vos finances',
+        url: 'https://www.zalamagn.com/conseil-financier',
+        provider: 'ZaLaMa',
+        areaServed: 'Guinée',
+        serviceType: 'Conseil financier'
+      });
+      break;
+    case 'marketing':
+      structuredData = generateServiceSchema({
+        name: 'Marketing & Publicité',
+        description: 'Plateforme publicitaire innovante pour connecter les entreprises',
+        url: 'https://www.zalamagn.com/marketing',
+        provider: 'ZaLaMa',
+        areaServed: 'Guinée',
+        serviceType: 'Marketing'
+      });
+      break;
+  }
+  
   return {
     ...baseMetadata,
     title: pageData.title,
@@ -273,6 +314,9 @@ export function generateMetadata(pageKey: keyof typeof pageMetadata, customData?
       description: pageData.openGraph.description,
     },
     robots: 'robots' in pageData ? pageData.robots : baseMetadata.robots,
+    alternates: {
+      canonical: `https://www.zalamagn.com/${pageKey === 'home' ? '' : pageKey}`,
+    },
     ...customData,
   };
 }
