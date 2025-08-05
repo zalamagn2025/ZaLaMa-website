@@ -39,6 +39,8 @@ export default function ResetPasswordPage() {
   const token = searchParams.get('token');
   const emailParam = searchParams.get('email');
   
+  type StatusType = 'verifying' | 'ready' | 'success' | 'error' | 'loading';
+  
   const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

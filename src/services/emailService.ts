@@ -1,16 +1,5 @@
 import { forgotPasswordEmailTemplate, forgotPasswordEmailText } from './emailTemplates/forgotPasswordEmail';
 
-export interface EmailConfig {
-  provider: 'nodemailer' | 'sendgrid' | 'resend' | 'mailgun';
-  apiKey?: string;
-  fromEmail: string;
-  fromName: string;
-  smtpHost?: string;
-  smtpPort?: number;
-  smtpUser?: string;
-  smtpPass?: string;
-}
-
 export interface EmailData {
   to: string;
   subject: string;
@@ -20,10 +9,14 @@ export interface EmailData {
 }
 
 class EmailService {
-  private config: EmailConfig;
+  private apiKey: string;
+  private fromEmail: string;
+  private fromName: string;
 
-  constructor(config: EmailConfig) {
-    this.config = config;
+  constructor() {
+    this.apiKey = process.env.RESEND_API_KEY || '';
+    this.fromEmail = process.env.EMAIL_FROM || 'noreply@zalama.com';
+    this.fromName = 'ZaLaMa';
   }
 
   /**
@@ -144,100 +137,20 @@ class EmailService {
   }
 
   /**
-   * Méthode générique d'envoi d'email
+   * Méthode générique d'envoi d'email avec Resend
    */
   private async sendEmail(emailData: EmailData): Promise<boolean> {
     try {
-      switch (this.config.provider) {
-        case 'nodemailer':
-          return await this.sendWithNodemailer(emailData);
-        case 'sendgrid':
-          return await this.sendWithSendGrid(emailData);
-        case 'resend':
-          return await this.sendWithResend(emailData);
-        case 'mailgun':
-          return await this.sendWithMailgun(emailData);
-        default:
-          throw new Error(`Fournisseur d'email non supporté: ${this.config.provider}`);
+      if (!this.apiKey) {
+        console.error('Clé API Resend manquante. Veuillez configurer RESEND_API_KEY');
+        return false;
       }
-    } catch (error) {
-      console.error('Erreur envoi email:', error);
-      return false;
-    }
-  }
 
-  /**
-   * Envoi avec Nodemailer (SMTP)
-   */
-  private async sendWithNodemailer(emailData: EmailData): Promise<boolean> {
-    try {
-      const nodemailer = require('nodemailer');
-      
-      const transporter = nodemailer.createTransporter({
-        host: this.config.smtpHost,
-        port: this.config.smtpPort,
-        secure: this.config.smtpPort === 465,
-        auth: {
-          user: this.config.smtpUser,
-          pass: this.config.smtpPass,
-        },
-      });
-
-      const mailOptions = {
-        from: `"${this.config.fromName}" <${this.config.fromEmail}>`,
-        to: emailData.to,
-        subject: emailData.subject,
-        html: emailData.html || '<p>Email de ZaLaMa</p>',
-        text: emailData.text || 'Email de ZaLaMa',
-      };
-
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Email envoyé avec succès:', info.messageId);
-      return true;
-    } catch (error) {
-      console.error('Erreur Nodemailer:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Envoi avec SendGrid
-   */
-  private async sendWithSendGrid(emailData: EmailData): Promise<boolean> {
-    try {
-      const sgMail = require('@sendgrid/mail');
-      sgMail.setApiKey(this.config.apiKey);
-
-      const msg = {
-        to: emailData.to,
-        from: {
-          email: this.config.fromEmail,
-          name: this.config.fromName,
-        },
-        subject: emailData.subject,
-        html: emailData.html || '<p>Email de ZaLaMa</p>',
-        text: emailData.text || 'Email de ZaLaMa',
-      };
-
-      await sgMail.send(msg);
-      console.log('Email envoyé avec succès via SendGrid');
-      return true;
-    } catch (error) {
-      console.error('Erreur SendGrid:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Envoi avec Resend
-   */
-  private async sendWithResend(emailData: EmailData): Promise<boolean> {
-    try {
-      const { Resend } = require('resend');
-      const resend = new Resend(this.config.apiKey);
+      const { Resend } = await import('resend');
+      const resend = new Resend(this.apiKey);
 
       const { data, error } = await resend.emails.send({
-        from: `${this.config.fromName} <${this.config.fromEmail}>`,
+        from: `${this.fromName} <${this.fromEmail}>`,
         to: [emailData.to],
         subject: emailData.subject,
         html: emailData.html || '<p>Email de ZaLaMa</p>',
@@ -252,53 +165,10 @@ class EmailService {
       console.log('Email envoyé avec succès via Resend:', data);
       return true;
     } catch (error) {
-      console.error('Erreur Resend:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Envoi avec Mailgun
-   */
-  private async sendWithMailgun(emailData: EmailData): Promise<boolean> {
-    try {
-      const formData = require('form-data');
-      const Mailgun = require('mailgun.js');
-      const mailgun = new Mailgun(formData);
-      const mg = mailgun.client({ username: 'api', key: this.config.apiKey });
-
-      const msg = {
-        from: `${this.config.fromName} <${this.config.fromEmail}>`,
-        to: emailData.to,
-        subject: emailData.subject,
-        html: emailData.html || '<p>Email de ZaLaMa</p>',
-        text: emailData.text || 'Email de ZaLaMa',
-      };
-
-      const response = await mg.messages.create(process.env.MAILGUN_DOMAIN || 'your-domain.com', msg);
-      console.log('Email envoyé avec succès via Mailgun:', response);
-      return true;
-    } catch (error) {
-      console.error('Erreur Mailgun:', error);
+      console.error('Erreur envoi email:', error);
       return false;
     }
   }
 }
 
-// Configuration par défaut
-const defaultEmailConfig: EmailConfig = {
-  provider: 'nodemailer',
-  fromEmail: process.env.EMAIL_FROM || 'noreply@zalama.com',
-  fromName: 'ZaLaMa',
-  smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
-  smtpPort: parseInt(process.env.SMTP_PORT || '587'),
-  smtpUser: process.env.SMTP_USER || '',
-  smtpPass: process.env.SMTP_PASS || '',
-};
-
-export const emailService = new EmailService(defaultEmailConfig);
-
-// Fonction utilitaire pour créer une instance avec une configuration personnalisée
-export const createEmailService = (config: EmailConfig): EmailService => {
-  return new EmailService(config);
-}; 
+export const emailService = new EmailService(); 

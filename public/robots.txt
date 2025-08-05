@@ -1,0 +1,31 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /login
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /update-password
+Disallow: /_next/
+Disallow: /static/
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /login
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /update-password
+
+# Host
+Host: https://www.zalamagn.com
+
+# Sitemaps
+Sitemap: https://www.zalamagn.com/sitemap.xml
