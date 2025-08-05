@@ -7,8 +7,8 @@ interface ServiceCardProps {
   title: string;
   description: string;
   features: string[];
-  ctaText: string;
-  ctaLink: string;
+  ctaText?: string; // Make ctaText optional
+  ctaLink?: string; // Make ctaLink optional
   icon: React.ReactNode;
   delay?: number;
 }
@@ -45,13 +45,15 @@ export function ServiceCard({
         ))}
       </ul>
       
-      <div className="mt-auto">
-        <Button asChild className="w-full">
-          <Link href={ctaLink}>
-            {ctaText}
-          </Link>
-        </Button>
-      </div>
+      {ctaText && ctaLink && (
+        <div className="mt-auto">
+          <Button asChild className="w-full">
+            <Link href={ctaLink}>
+              {ctaText}
+            </Link>
+          </Button>
+        </div>
+      )}
     </motion.div>
   );
 }

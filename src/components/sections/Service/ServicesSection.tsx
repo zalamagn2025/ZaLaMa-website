@@ -18,19 +18,6 @@ export function ServicesSection() {
       ctaText: "En savoir plus",
       ctaLink: "/avance-sur-salaire"
     },
-    // {
-    //   title: "Prêt P2P (Peer-to-Peer)",
-    //   description: "Faciliter l'octroi de prêts entre particuliers en toute sécurité grâce à un système fiable et structuré.",
-    //   icon: <BarChart3 className="w-6 h-6" />,
-    //   features: [
-    //     "Montant de 5.000.000 à 25.000.000 GNF",
-    //     "Durée de 6 à 24 mois",
-    //     "Taux d'intérêt compétitifs",
-    //     "Réponse de principe en 7 jours"
-    //   ],
-    //   // ctaText: "Demander un prêt",
-    //   // ctaLink: "/contact"
-    // },
     {
       title: "Gestion & Conseil financier",
       description: "IA sur-mesure intégrer pour accompagner les utilisateurs dans la gestion de leurs dépenses, leurs comptabilités et la planification de leurs avenir financier.",
@@ -41,9 +28,9 @@ export function ServicesSection() {
         "Stimulateur financier",
         "Chat avec l'IA",
         "Alertes intelligentes"
-      ],
-      ctaText: "En savoir plus",
-      ctaLink: "/conseil-financier"
+      ]
+      // ctaText: "En savoir plus",
+      // ctaLink: "/conseil-financier"
     },
     {
       title: "Marketing",
@@ -52,26 +39,12 @@ export function ServicesSection() {
       features: [
         "Ciblage intelligent",
         "Interfaces de gestion et statistiques à temps réel",
-       "Forte visibilité locale",
+        "Forte visibilité locale",
         "Soutien technologique et accompagnement"
-
-      ],
-      ctaText: "En savoir plus",
-      ctaLink: "/marketing"
-    },
-    // {
-    //   title: "Paiement de salaire & pension",
-    //   description: "Permettre aux employeurs de payer les salaires de leurs employés non bancarisés via l'application ZaLaMa.",
-    //   icon: <Wallet className="w-6 h-6" />,
-    //   features: [
-    //     "paiement 100% digitalisé",
-    //     "Tableau de bord RH",
-    //     "Relevé automatique et exportable ",
-    //     "Accès à une carte santé pour employés"
-    //   ],
-    //   // ctaText: "Découvrir l'épargne",
-    //   // ctaLink: "/contact"
-    // }
+      ]
+      // ctaText: "En savoir plus",
+      // ctaLink: "/marketing"
+    }
   ];
 
   return (
