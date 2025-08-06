@@ -49,8 +49,6 @@ export interface PartnershipRequest {
   hr_email: string
   hr_phone: string
   agreement: boolean
-  motivation_letter_url?: string // URL du fichier uploadé
-  motivation_letter_text?: string // Texte de la lettre rédigée
   status: 'pending' | 'approved' | 'rejected' | 'in_review'
   created_at: string
   updated_at: string
@@ -79,8 +77,6 @@ export interface CreatePartnershipRequest {
   hr_email: string
   hr_phone: string
   agreement: boolean
-  motivation_letter_url?: string // URL du fichier uploadé
-  motivation_letter_text?: string // Texte de la lettre rédigée
 }
 
 export interface FileUploadResponse {

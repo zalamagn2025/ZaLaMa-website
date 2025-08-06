@@ -69,16 +69,7 @@ export async function POST(request: NextRequest) {
       'repEmail', 'repPhone', 'hrFullName', 'hrEmail', 'hrPhone', 'agreement'
     ]
 
-    // Validation de la lettre de motivation (au moins une option)
-    const hasMotivationLetter = (body.motivationLetterUrl || body.motivation_letter_url) || 
-                               (body.motivationLetterText || body.motivation_letter_text)
-    
-    if (!hasMotivationLetter) {
-      return NextResponse.json(
-        { error: 'Vous devez fournir une lettre de motivation (texte ou fichier)' },
-        { status: 400 }
-      )
-    }
+
 
     for (const field of requiredFields) {
       if (!body[field]) {
@@ -131,16 +122,14 @@ export async function POST(request: NextRequest) {
       hr_email: body.hrEmail,
       hr_phone: body.hrPhone,
       agreement: body.agreement,
-      motivation_letter_url: body.motivationLetterUrl || body.motivation_letter_url || null,
-      motivation_letter_text: body.motivationLetterText || body.motivation_letter_text || null,
+
       status: 'pending'
     }
 
     console.log('📤 Tentative d\'insertion des données:', partnershipData)
     console.log('🔗 URL Supabase:', process.env.NEXT_PUBLIC_SUPABASE_URL)
     console.log('🔑 Clé Supabase configurée:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-    console.log('📄 Lettre de motivation URL:', body.motivationLetterUrl || body.motivation_letter_url)
-    console.log('📝 Lettre de motivation texte:', body.motivationLetterText || body.motivation_letter_text ? 'Présente' : 'Absente')
+
 
     // Insertion dans Supabase
     const { data, error } = await supabase
@@ -242,29 +231,50 @@ export async function POST(request: NextRequest) {
     emailPromise.then(emailResult => {
       const emailDuration = Date.now() - emailStartTime;
       
-      console.log('📧 Résultats envoi e-mails partenariat:', {
-        company: data.company_name,
-        adminSuccess: emailResult.adminEmail.success,
-        userSuccess: emailResult.userEmail.success,
-        overallSuccess: emailResult.overallSuccess,
-        duration: `${emailDuration}ms`
-      });
+             console.log('📧 Résultats envoi e-mails partenariat:', {
+         company: data.company_name,
+         companySuccess: emailResult.companyEmail.success,
+         repSuccess: emailResult.repEmail.success,
+         hrSuccess: emailResult.hrEmail.success,
+         contactSuccess: emailResult.contactEmail.success,
+         overallSuccess: emailResult.overallSuccess,
+         duration: `${emailDuration}ms`
+       });
 
-      // Log des erreurs d'e-mail si nécessaire
-      if (!emailResult.adminEmail.success) {
-        console.error('❌ Erreur e-mail admin:', {
+             // Log des erreurs d'e-mail si nécessaire
+       if (!emailResult.contactEmail.success) {
+         console.error('❌ Erreur e-mail contact:', {
+           company: data.company_name,
+           recipient: emailResult.contactEmail.recipient,
+           error: emailResult.contactEmail.error,
+           errorType: emailResult.contactEmail.errorType
+         });
+       }
+
+       if (!emailResult.companyEmail.success) {
+         console.error('❌ Erreur e-mail entreprise:', {
+           company: data.company_name,
+           recipient: emailResult.companyEmail.recipient,
+           error: emailResult.companyEmail.error,
+           errorType: emailResult.companyEmail.errorType
+         });
+       }
+
+      if (!emailResult.repEmail.success) {
+        console.error('❌ Erreur e-mail représentant:', {
           company: data.company_name,
-          error: emailResult.adminEmail.error,
-          errorType: emailResult.adminEmail.errorType
+          recipient: emailResult.repEmail.recipient,
+          error: emailResult.repEmail.error,
+          errorType: emailResult.repEmail.errorType
         });
       }
 
-      if (!emailResult.userEmail.success) {
-        console.error('❌ Erreur e-mail utilisateur:', {
+      if (!emailResult.hrEmail.success) {
+        console.error('❌ Erreur e-mail RH:', {
           company: data.company_name,
-          recipient: emailResult.userEmail.recipient,
-          error: emailResult.userEmail.error,
-          errorType: emailResult.userEmail.errorType
+          recipient: emailResult.hrEmail.recipient,
+          error: emailResult.hrEmail.error,
+          errorType: emailResult.hrEmail.errorType
         });
       }
 
