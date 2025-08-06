@@ -9,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import { useState, useCallback, useMemo, memo } from 'react';
 import { FileUpload } from '@/components/ui/file-upload';
 import { PaymentDaySelector } from '@/components/ui/payment-day-selector';
-import { MotivationLetterInput } from '@/components/ui/motivation-letter-input';
 import { CreatePartnershipRequest } from '@/types/partenaire';
 
 // Composant FormField mémorisé pour éviter les re-renders
@@ -150,13 +149,10 @@ export const PartnershipForm = () => {
     repPosition: '',
     hrFullName: '',
     hrEmail: '',
-    hrPhone: '+224',
-    motivation_letter_url: '', // URL du fichier uploadé
-    motivation_letter_text: '' // Texte de la lettre rédigée
+    hrPhone: '+224'
   });
 
-  // État pour le fichier de lettre de motivation
-  const [motivationLetterFile, setMotivationLetterFile] = useState<File | null>(null);
+
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -279,12 +275,7 @@ export const PartnershipForm = () => {
         if (!value) return 'Vous devez accepter l\'engagement';
         break;
         
-      case 'motivation_letter_url':
-        // Validation supprimée car maintenant gérée par le nouveau composant
-        break;
-      case 'motivation_letter_text':
-        // Validation supprimée car maintenant gérée par le nouveau composant
-        break;
+
     }
     
     return '';
@@ -338,8 +329,7 @@ export const PartnershipForm = () => {
     const stepFields: Record<number, string[]> = {
       1: ['companyName', 'legalStatus', 'rccm', 'nif', 'activityDomain', 'headquartersAddress', 'phone', 'email', 'employeesCount', 'payroll', 'cdiCount', 'cddCount', 'paymentDay'],
       2: ['repFullName', 'repPosition', 'repEmail', 'repPhone'],
-      3: ['hrFullName', 'hrEmail', 'hrPhone', 'agreement'],
-      4: [] // Pas de champs spécifiques, validation spéciale pour la lettre de motivation
+      3: ['hrFullName', 'hrEmail', 'hrPhone', 'agreement']
     };
     
     const fieldsToValidate = stepFields[stepNumber];
@@ -377,13 +367,7 @@ export const PartnershipForm = () => {
     
     setErrors(newErrors);
     
-    // Validation spéciale pour l'étape 4 (lettre de motivation)
-    if (stepNumber === 4) {
-      const motivationError = validateMotivationLetter()
-      if (motivationError) {
-        newErrors.motivation_letter = motivationError
-      }
-    }
+
     
     // Si pas d'erreurs, marquer l'étape comme validée
     if (Object.keys(newErrors).length === 0) {
@@ -417,9 +401,7 @@ export const PartnershipForm = () => {
       repPosition: '',
       hrFullName: '',
       hrEmail: '',
-      hrPhone: '+224',
-      motivation_letter_url: '', // URL du fichier uploadé
-      motivation_letter_text: '' // Texte de la lettre rédigée
+      hrPhone: '+224'
     });
     setErrors({});
     setTouched({});
@@ -438,35 +420,9 @@ export const PartnershipForm = () => {
       }
     } else {
       // Validation finale avant envoi
-      if (!validateStep(4)) {
+      if (!validateStep(3)) {
         setError('Veuillez corriger toutes les erreurs avant de soumettre');
         return;
-      }
-      
-      // Upload du fichier si présent
-      let motivationLetterUrl = formData.motivation_letter_url;
-      
-      if (motivationLetterFile) {
-        try {
-          const formDataFile = new FormData();
-          formDataFile.append('file', motivationLetterFile);
-          formDataFile.append('folder', 'partnership-letters');
-          
-          const uploadResponse = await fetch('/api/partnership/upload', {
-            method: 'POST',
-            body: formDataFile,
-          });
-          
-          if (!uploadResponse.ok) {
-            throw new Error('Erreur lors de l\'upload du fichier');
-          }
-          
-          const uploadResult = await uploadResponse.json();
-          motivationLetterUrl = uploadResult.url;
-        } catch (uploadError) {
-          console.error('❌ Erreur upload:', uploadError);
-          throw new Error('Erreur lors de l\'upload de la lettre de motivation');
-        }
       }
       
       // Envoi réel à l'API
@@ -474,9 +430,7 @@ export const PartnershipForm = () => {
 
     try {
         const finalData = {
-          ...formData,
-          motivation_letter_url: motivationLetterUrl,
-          motivation_letter_text: formData.motivation_letter_text || null
+          ...formData
         };
 
         console.log('📤 Envoi des données de partenariat:', finalData);
@@ -552,61 +506,16 @@ export const PartnershipForm = () => {
     }))
   }
 
-  const handleFileUploaded = (url: string) => {
-    handleInputChange('motivation_letter_url', url)
-    setTouched(prev => ({ ...prev, motivation_letter_url: true }))
-  }
 
-  const handleFileRemoved = () => {
-    handleInputChange('motivation_letter_url', '')
-    setTouched(prev => ({ ...prev, motivation_letter_url: true }))
-  }
 
-  // Nouvelles fonctions pour la lettre de motivation
-  const handleMotivationLetterTextChange = (text: string) => {
-    handleInputChange('motivation_letter_text', text)
-    setTouched(prev => ({ ...prev, motivation_letter_text: true }))
-  }
 
-  const handleMotivationLetterFileChange = (file: File | null) => {
-    setMotivationLetterFile(file)
-    if (file) {
-      handleInputChange('motivation_letter_url', '')
-      setTouched(prev => ({ ...prev, motivation_letter_url: true }))
-    }
-  }
-
-  // Validation personnalisée pour la lettre de motivation
-  const validateMotivationLetter = () => {
-    const hasText = formData.motivation_letter_text.trim().length > 0
-    const hasFile = motivationLetterFile !== null
-    
-    if (!hasText && !hasFile) {
-      return 'Vous devez fournir une lettre de motivation (texte ou fichier)'
-    }
-    
-    if (hasText && hasFile) {
-      return 'Vous ne pouvez pas fournir à la fois un texte et un fichier'
-    }
-    
-    if (hasText && formData.motivation_letter_text.trim().length < 100) {
-      return 'Le texte de la lettre doit contenir au moins 100 caractères'
-    }
-    
-    return null
-  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // onSubmit(formData) // This line was removed as per the new_code, as the onSubmit prop was removed.
   }
 
-  const setMotivationLetterUrl = (url: string) => {
-    setFormData(prev => ({
-      ...prev,
-      motivation_letter_url: url
-    }));
-  };
+
 
   return (
     <motion.div 
@@ -641,7 +550,7 @@ export const PartnershipForm = () => {
           whileHover={{ scale: 1.02 }}
           transition={{ type: 'spring', stiffness: 400 }}
         >
-          Devenez Partenaire - Étape {step}/4
+          Devenez Partenaire - Étape {step}/3
         </motion.h2>
         <motion.p 
           className="text-blue-300/90 text-sm max-w-md mx-auto leading-relaxed"
@@ -992,7 +901,7 @@ export const PartnershipForm = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
-            onSubmit={(e) => handleSubmitStep(e, 4)}
+            onSubmit={(e) => handleSubmitStep(e, null)}
             className="space-y-7"
           >
             <FormField 
@@ -1114,86 +1023,29 @@ export const PartnershipForm = () => {
               disabled={loading}
               className="w-full h-14 rounded-xl text-base font-bold bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Suivant
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Envoi en cours...</span>
+                </>
+              ) : (
+                <>
+                  <span className="drop-shadow-sm">Envoyer la demande</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </>
+              )}
             </Button>
         </motion.div>
             </div>
           </motion.form>
         )}
 
-        {step === 4 && (
-          <motion.form
-            key="step4"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-            onSubmit={(e) => handleSubmitStep(e, null)}
-            className="space-y-7"
-          >
-            <MotivationLetterInput
-              textValue={formData.motivation_letter_text}
-              fileValue={motivationLetterFile}
-              onTextChange={handleMotivationLetterTextChange}
-              onFileChange={handleMotivationLetterFileChange}
-              onBlur={() => setTouched(prev => ({ ...prev, motivation_letter: true }))}
-              hasError={!!(touched.motivation_letter && errors.motivation_letter)}
-              isValid={validatedSteps.has(4) && !!(touched.motivation_letter && !errors.motivation_letter)}
-              errorMessage={errors.motivation_letter || ''}
-              delay={0.4}
-            />
 
-            {/* Boutons de navigation */}
-            <div className="grid grid-cols-2 gap-4 pt-6">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  variant="outline"
-                  className="w-full h-14 rounded-xl text-base font-bold border-blue-700/70 text-blue-200 hover:bg-blue-950/30"
-                >
-                  Précédent
-                </Button>
-              </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.65 }}
-                whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Button
-            type="submit"
-                  disabled={loading}
-            className="w-full h-14 rounded-xl text-base font-bold bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Envoi en cours...</span>
-              </>
-            ) : (
-              <>
-                      <span className="drop-shadow-sm">Suivant</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </>
-            )}
-          </Button>
-        </motion.div>
-            </div>
-          </motion.form>
-        )}
       </AnimatePresence>
 
       {/* Drawer de succès */}

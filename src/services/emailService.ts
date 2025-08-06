@@ -40,96 +40,198 @@ class EmailService {
   }
 
   /**
-   * Envoie les emails de partenariat (admin et utilisateur)
+   * Envoie les emails de partenariat (3 confirmations + 1 notification)
    */
   async sendPartnershipEmails(data: any): Promise<{
-    adminEmail: { success: boolean; error?: string; errorType?: string };
-    userEmail: { success: boolean; error?: string; errorType?: string; recipient?: string };
+    companyEmail: { success: boolean; error?: string; errorType?: string; recipient?: string };
+    repEmail: { success: boolean; error?: string; errorType?: string; recipient?: string };
+    hrEmail: { success: boolean; error?: string; errorType?: string; recipient?: string };
+    contactEmail: { success: boolean; error?: string; errorType?: string; recipient?: string };
     overallSuccess: boolean;
   }> {
     try {
-      const adminEmailData: EmailData = {
-        to: process.env.ADMIN_EMAIL || 'admin@zalamagn.com',
-        subject: `Nouvelle demande de partenariat - ${data.company_name}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #3B82F6;">Nouvelle demande de partenariat</h2>
-            <p><strong>Entreprise:</strong> ${data.company_name}</p>
-            <p><strong>Statut légal:</strong> ${data.legal_status}</p>
-            <p><strong>RCCM:</strong> ${data.rccm}</p>
-            <p><strong>NIF:</strong> ${data.nif}</p>
-            <p><strong>Domaine d'activité:</strong> ${data.activity_domain}</p>
-            <p><strong>Adresse:</strong> ${data.headquarters_address}</p>
-            <p><strong>Téléphone:</strong> ${data.phone}</p>
-            <p><strong>Email:</strong> ${data.email}</p>
-            <p><strong>Nombre d'employés:</strong> ${data.employees_count}</p>
-            <p><strong>Masse salariale:</strong> ${data.payroll}</p>
-            <p><strong>CDI:</strong> ${data.cdi_count}</p>
-            <p><strong>CDD:</strong> ${data.cdd_count}</p>
-            <p><strong>Jour de paiement:</strong> ${data.payment_day}</p>
-            <br>
-            <h3>Représentant légal</h3>
-            <p><strong>Nom:</strong> ${data.rep_full_name}</p>
-            <p><strong>Email:</strong> ${data.rep_email}</p>
-            <p><strong>Téléphone:</strong> ${data.rep_phone}</p>
-            <p><strong>Poste:</strong> ${data.rep_position}</p>
-            <br>
-            <h3>Responsable RH</h3>
-            <p><strong>Nom:</strong> ${data.hr_full_name}</p>
-            <p><strong>Email:</strong> ${data.hr_email}</p>
-            <p><strong>Téléphone:</strong> ${data.hr_phone}</p>
-          </div>
-        `,
-        text: `Nouvelle demande de partenariat de ${data.company_name}`
+      // Importer les templates
+      const { getAdminEmailTemplate, getUserEmailTemplate } = await import('../app/api/partnership/emailTemplates');
+
+      // Préparer les données pour les templates
+      const emailData = {
+        companyName: data.company_name,
+        legalStatus: data.legal_status,
+        rccm: data.rccm,
+        nif: data.nif,
+        legalRepresentative: data.rep_full_name,
+        position: data.rep_position,
+        headquartersAddress: data.headquarters_address,
+        phone: data.phone,
+        email: data.email,
+        employeesCount: data.employees_count,
+        payroll: data.payroll,
+        cdiCount: data.cdi_count,
+        cddCount: data.cdd_count,
+        docId: data.id,
+        activityDomain: data.activity_domain,
+        paymentDate: data.payment_day ? `Jour ${data.payment_day}` : 'Non spécifié',
+        repEmail: data.rep_email,
+        repPhone: data.rep_phone,
+        repPosition: data.rep_position,
+        hrFullName: data.hr_full_name,
+        hrEmail: data.hr_email,
+        hrPhone: data.hr_phone
       };
 
-      const userEmailData: EmailData = {
+      // 1. Email de confirmation à l'entreprise (template utilisateur)
+      const companyEmailData: EmailData = {
         to: data.email,
-        subject: 'Confirmation de votre demande de partenariat - ZaLaMa',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #3B82F6;">Confirmation de demande de partenariat</h2>
-            <p>Bonjour,</p>
-            <p>Nous avons bien reçu votre demande de partenariat pour l'entreprise <strong>${data.company_name}</strong>.</p>
-            <p>Notre équipe va examiner votre dossier et vous contactera dans les plus brefs délais.</p>
-            <p>Merci pour votre confiance en ZaLaMa.</p>
-            <br>
-            <p>Cordialement,<br>L'équipe ZaLaMa</p>
-          </div>
-        `,
-        text: `Confirmation de votre demande de partenariat pour ${data.company_name}`
+        subject: 'Confirmation de reception de votre demande de partenariat - ZaLaMa',
+        html: getUserEmailTemplate({
+          legalRepresentative: data.rep_full_name,
+          companyName: data.company_name,
+          docId: data.id
+        }),
+        text: `Confirmation de reception de votre demande de partenariat pour ${data.company_name} - ID: ${data.id}`
       };
 
-      const adminResult = await this.sendEmail(adminEmailData);
-      const userResult = await this.sendEmail(userEmailData);
+      // 2. Email de confirmation au représentant légal (template utilisateur)
+      const repEmailData: EmailData = {
+        to: data.rep_email,
+        subject: 'Confirmation de reception de votre demande de partenariat - ZaLaMa',
+        html: getUserEmailTemplate({
+          legalRepresentative: data.rep_full_name,
+          companyName: data.company_name,
+          docId: data.id
+        }),
+        text: `Confirmation de reception de votre demande de partenariat pour ${data.company_name} - ID: ${data.id}`
+      };
 
-      return {
-        adminEmail: { 
-          success: adminResult,
-          error: adminResult ? undefined : 'Échec envoi email admin',
-          errorType: adminResult ? undefined : 'SEND_ERROR'
-        },
-        userEmail: { 
-          success: userResult,
-          error: userResult ? undefined : 'Échec envoi email utilisateur',
-          errorType: userResult ? undefined : 'SEND_ERROR',
+      // 3. Email de confirmation au responsable RH (template utilisateur)
+      const hrEmailData: EmailData = {
+        to: data.hr_email,
+        subject: 'Confirmation de reception de votre demande de partenariat - ZaLaMa',
+        html: getUserEmailTemplate({
+          legalRepresentative: data.hr_full_name,
+          companyName: data.company_name,
+          docId: data.id
+        }),
+        text: `Confirmation de reception de votre demande de partenariat pour ${data.company_name} - ID: ${data.id}`
+      };
+
+      // 4. Email de notification à contact@zalamagn.com (template admin détaillé)
+      const contactEmailData: EmailData = {
+        to: 'contact@zalamagn.com',
+        subject: `Nouvelle demande de partenariat - ${data.company_name}`,
+        html: getAdminEmailTemplate(emailData),
+        text: `Nouvelle demande de partenariat de ${data.company_name} - ID: ${data.id}`
+      };
+
+      // Envoi des emails avec délai pour éviter le rate limiting
+      const results = [];
+      
+      // Email 1: Entreprise
+      console.log('📧 Envoi email entreprise...');
+      const companyResult = await this.sendEmail(companyEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: companyResult,
+        recipient: data.email
+      });
+      
+      // Délai de 500ms pour éviter le rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Email 2: Représentant légal
+      console.log('📧 Envoi email représentant...');
+      const repResult = await this.sendEmail(repEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: repResult,
+        recipient: data.rep_email
+      });
+      
+      // Délai de 500ms
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Email 3: RH
+      console.log('📧 Envoi email RH...');
+      const hrResult = await this.sendEmail(hrEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: hrResult,
+        recipient: data.hr_email
+      });
+      
+      // Délai de 500ms
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Email 4: Admin
+      console.log('📧 Envoi email admin...');
+      const contactResult = await this.sendEmail(contactEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: contactResult,
+        recipient: 'contact@zalamagn.com'
+      });
+
+      // Traitement des résultats
+      const emailResults = {
+        companyEmail: {
+          success: companyResult,
+          error: !companyResult ? 'Échec envoi' : undefined,
+          errorType: !companyResult ? 'SEND_ERROR' : undefined,
           recipient: data.email
         },
-        overallSuccess: adminResult && userResult
+        repEmail: {
+          success: repResult,
+          error: !repResult ? 'Échec envoi' : undefined,
+          errorType: !repResult ? 'SEND_ERROR' : undefined,
+          recipient: data.rep_email
+        },
+        hrEmail: {
+          success: hrResult,
+          error: !hrResult ? 'Échec envoi' : undefined,
+          errorType: !hrResult ? 'SEND_ERROR' : undefined,
+          recipient: data.hr_email
+        },
+        contactEmail: {
+          success: contactResult,
+          error: !contactResult ? 'Échec envoi' : undefined,
+          errorType: !contactResult ? 'SEND_ERROR' : undefined,
+          recipient: 'contact@zalamagn.com'
+        }
       };
+
+      const overallSuccess = emailResults.companyEmail.success && emailResults.repEmail.success && emailResults.hrEmail.success && emailResults.contactEmail.success;
+
+      return {
+        ...emailResults,
+        overallSuccess
+      };
+
     } catch (error) {
       console.error('Erreur envoi emails partenariat:', error);
       return {
-        adminEmail: { 
-          success: false,
-          error: error instanceof Error ? error.message : 'Erreur inconnue',
-          errorType: 'EXCEPTION'
-        },
-        userEmail: { 
+        companyEmail: { 
           success: false,
           error: error instanceof Error ? error.message : 'Erreur inconnue',
           errorType: 'EXCEPTION',
           recipient: data.email
+        },
+        repEmail: { 
+          success: false,
+          error: error instanceof Error ? error.message : 'Erreur inconnue',
+          errorType: 'EXCEPTION',
+          recipient: data.rep_email
+        },
+        hrEmail: { 
+          success: false,
+          error: error instanceof Error ? error.message : 'Erreur inconnue',
+          errorType: 'EXCEPTION',
+          recipient: data.hr_email
+        },
+        contactEmail: { 
+          success: false,
+          error: error instanceof Error ? error.message : 'Erreur inconnue',
+          errorType: 'EXCEPTION',
+          recipient: 'contact@zalamagn.com'
         },
         overallSuccess: false
       };
