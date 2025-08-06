@@ -123,46 +123,86 @@ class EmailService {
         text: `Nouvelle demande de partenariat de ${data.company_name} - ID: ${data.id}`
       };
 
-      // Envoi des emails en parallèle
-      const [companyResult, repResult, hrResult, contactResult] = await Promise.allSettled([
-        this.sendEmail(companyEmailData),
-        this.sendEmail(repEmailData),
-        this.sendEmail(hrEmailData),
-        this.sendEmail(contactEmailData)
-      ]);
+      // Envoi des emails avec délai pour éviter le rate limiting
+      const results = [];
+      
+      // Email 1: Entreprise
+      console.log('📧 Envoi email entreprise...');
+      const companyResult = await this.sendEmail(companyEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: companyResult,
+        recipient: data.email
+      });
+      
+      // Délai de 500ms pour éviter le rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Email 2: Représentant légal
+      console.log('📧 Envoi email représentant...');
+      const repResult = await this.sendEmail(repEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: repResult,
+        recipient: data.rep_email
+      });
+      
+      // Délai de 500ms
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Email 3: RH
+      console.log('📧 Envoi email RH...');
+      const hrResult = await this.sendEmail(hrEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: hrResult,
+        recipient: data.hr_email
+      });
+      
+      // Délai de 500ms
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Email 4: Admin
+      console.log('📧 Envoi email admin...');
+      const contactResult = await this.sendEmail(contactEmailData);
+      results.push({
+        status: 'fulfilled',
+        value: contactResult,
+        recipient: 'contact@zalamagn.com'
+      });
 
       // Traitement des résultats
-      const results = {
+      const emailResults = {
         companyEmail: {
-          success: companyResult.status === 'fulfilled' && companyResult.value,
-          error: companyResult.status === 'rejected' ? companyResult.reason?.message : (companyResult.status === 'fulfilled' && !companyResult.value ? 'Échec envoi' : undefined),
-          errorType: companyResult.status === 'rejected' ? 'EXCEPTION' : (companyResult.status === 'fulfilled' && !companyResult.value ? 'SEND_ERROR' : undefined),
+          success: companyResult,
+          error: !companyResult ? 'Échec envoi' : undefined,
+          errorType: !companyResult ? 'SEND_ERROR' : undefined,
           recipient: data.email
         },
         repEmail: {
-          success: repResult.status === 'fulfilled' && repResult.value,
-          error: repResult.status === 'rejected' ? repResult.reason?.message : (repResult.status === 'fulfilled' && !repResult.value ? 'Échec envoi' : undefined),
-          errorType: repResult.status === 'rejected' ? 'EXCEPTION' : (repResult.status === 'fulfilled' && !repResult.value ? 'SEND_ERROR' : undefined),
+          success: repResult,
+          error: !repResult ? 'Échec envoi' : undefined,
+          errorType: !repResult ? 'SEND_ERROR' : undefined,
           recipient: data.rep_email
         },
         hrEmail: {
-          success: hrResult.status === 'fulfilled' && hrResult.value,
-          error: hrResult.status === 'rejected' ? hrResult.reason?.message : (hrResult.status === 'fulfilled' && !hrResult.value ? 'Échec envoi' : undefined),
-          errorType: hrResult.status === 'rejected' ? 'EXCEPTION' : (hrResult.status === 'fulfilled' && !hrResult.value ? 'SEND_ERROR' : undefined),
+          success: hrResult,
+          error: !hrResult ? 'Échec envoi' : undefined,
+          errorType: !hrResult ? 'SEND_ERROR' : undefined,
           recipient: data.hr_email
         },
         contactEmail: {
-          success: contactResult.status === 'fulfilled' && contactResult.value,
-          error: contactResult.status === 'rejected' ? contactResult.reason?.message : (contactResult.status === 'fulfilled' && !contactResult.value ? 'Échec envoi' : undefined),
-          errorType: contactResult.status === 'rejected' ? 'EXCEPTION' : (contactResult.status === 'fulfilled' && !contactResult.value ? 'SEND_ERROR' : undefined),
+          success: contactResult,
+          error: !contactResult ? 'Échec envoi' : undefined,
+          errorType: !contactResult ? 'SEND_ERROR' : undefined,
           recipient: 'contact@zalamagn.com'
         }
       };
 
-      const overallSuccess = results.companyEmail.success && results.repEmail.success && results.hrEmail.success && results.contactEmail.success;
+      const overallSuccess = emailResults.companyEmail.success && emailResults.repEmail.success && emailResults.hrEmail.success && emailResults.contactEmail.success;
 
       return {
-        ...results,
+        ...emailResults,
         overallSuccess
       };
 
