@@ -10,9 +10,9 @@ export function AdCarousel() {
   
   // Déclaré comme constante pour éviter les recréations
   const ADS = [
-    { src: "/images/banner.jpg", alt: "Publicité Zalama" },
-    { src: "/images/ad4.jpg", alt: "Promotion spéciale" },
-    { src: "/images/ad1.jpg", alt: "Nouveaux produits" }
+    { src: "/images/pub1.jpg", alt: "Publicité Zalama" },
+    { src: "/images/pub3.jpg", alt: "Promotion spéciale" },
+    { src: "/images/pub2.jpg", alt: "Nouveaux produits" }
   ];
 
   // Vérification du montage côté client
@@ -38,7 +38,7 @@ export function AdCarousel() {
       <div className="absolute inset-0 z-0 w-full h-full overflow-hidden bg-gray-800/50">
         {/* Placeholder pendant le chargement */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="animate-pulse bg-gray-700 w-full h-full" />
+          <div className="relative w-full h-48 md:h-64 rounded-lg shadow-lg overflow-hidden" />
         </div>
       </div>
     );
@@ -56,15 +56,26 @@ export function AdCarousel() {
             transition: { duration: 1 }
           }}
         >
+          {/* Fond flouté */}
+          <Image
+            src={ad.src}
+            alt=""
+            aria-hidden="true"
+            fill
+            sizes="100vw"
+            className="object-cover scale-110 filter blur-2xl brightness-75"
+            quality={50}
+          />
+          {/* Image principale */}
           <Image
             src={ad.src}
             alt={ad.alt}
             fill
-            sizes="100vw"
-            className="object-cover"
-            priority={true} // ✅ Priority pour toutes les images du carrousel
-            quality={85} // ✅ Qualité optimisée
-            placeholder="blur" // ✅ Placeholder pour améliorer l'UX
+            sizes="50vw"
+            className="object-contain"
+            priority={true}
+            quality={85}
+            placeholder="blur"
             blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             onError={(e) => {
               console.error(`Erreur de chargement: ${ad.src}`);
