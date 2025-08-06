@@ -15,8 +15,8 @@ export function ServicesSection() {
         "Traitement en moins de 30 minutes",
         "Frais fixes transparents et minimes",
       ],
-      ctaText: "En savoir plus",
-      ctaLink: "/avance-sur-salaire"
+      // ctaText: "En savoir plus",
+      // ctaLink: "/avance-sur-salaire"
     },
     {
       title: "Gestion & Conseil financier",
@@ -72,8 +72,8 @@ export function ServicesSection() {
               title={service.title}
               description={service.description}
               features={service.features}
-              ctaText={service.ctaText}
-              ctaLink={service.ctaLink}
+              // ctaText={service.ctaText}
+              // ctaLink={service.ctaLink}
               icon={service.icon}
               delay={index}
             />
