@@ -1,7 +1,7 @@
 "use client";
 
 import { IconBell, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash } from "@tabler/icons-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useEmployeeAuth } from "../../contexts/EmployeeAuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,7 +24,7 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
-  const { userData } = useAuth(); // ✅ Utiliser uniquement userData du contexte
+  const { employee } = useEmployeeAuth(); // ✅ Utiliser employee du nouveau contexte
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -37,8 +37,8 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   ]);
   const [showDetails, setShowDetails] = useState<Notification | null>(null);
 
-  // ✅ Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
-  const displayUser = (userData || user) as any;
+  // ✅ Utiliser les données du contexte EmployeeAuthContext en priorité, sinon fallback sur les props
+  const displayUser = (employee || user) as any;
   
   // Construire le nom complet
   const getDisplayName = () => {
@@ -68,12 +68,12 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   const displayName = getDisplayName();
   const displayEmail = displayUser?.email || 'Email non disponible';
   // ✅ Utiliser photo_url avec priorité : contexte AuthContext > user props
-  const displayPhotoURL = userData?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
+  const displayPhotoURL = employee?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
   const displayInitial = displayName.charAt(0).toUpperCase();
   
   // 🔍 Debug pour voir quelle photo est utilisée
   console.log('🖼️ ProfileHeader Debug Photo:', {
-    userDataPhotoUrl: userData?.photo_url,
+    employeePhotoUrl: employee?.photo_url,
     displayUserPhotoUrl: displayUser?.photo_url,
     userPhotoURL: user && 'photoURL' in user ? user.photoURL : 'N/A',
     finalDisplayPhotoURL: displayPhotoURL
@@ -82,12 +82,12 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   // ✅ Debug pour vérifier les données
   useEffect(() => {
     console.log('🔍 ProfileHeader Debug:', {
-      userData: userData ? 'Présent' : 'Absent',
-      userDataPhoto: userData?.photo_url,
+      employee: employee ? 'Présent' : 'Absent',
+      employeePhoto: employee?.photo_url,
       finalPhotoURL: displayPhotoURL,
-      userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée'
+      employeeKeys: employee ? Object.keys(employee) : 'Aucune donnée'
     });
-  }, [userData, displayPhotoURL]);
+  }, [employee, displayPhotoURL]);
 
   const handleHomeNavigation = () => {
     router.push("/");
