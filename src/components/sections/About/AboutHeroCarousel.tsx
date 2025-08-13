@@ -84,8 +84,8 @@ export function AboutHeroCarousel() {
               >
                 <div className="relative aspect-[4/3] rounded-xl overflow-hidden">
                   <Image
-                    src="/images/team.jpg"
-                    alt="L'équipe ZaLaMa"
+                    src="/images/zlm.jpg"
+                    alt="ZaLaMa"
                     width={800}
                     height={600}
                     className="w-full h-full object-contain"
@@ -102,7 +102,7 @@ export function AboutHeroCarousel() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: 0.8 }}
                 >
-                  Notre équipe
+                  Présentation
                 </motion.div>
               </motion.div>
             </motion.div>

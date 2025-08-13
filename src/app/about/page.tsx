@@ -1,7 +1,7 @@
 import { FooterSection } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { AboutHeroCarousel } from '@/components/sections/About/AboutHeroCarousel';
-import TeamSection from '@/components/sections/Team/TeamSection';
+// import TeamSection from '@/components/sections/Team/TeamSection';
 import { BackgroundEffects } from '@/components/ui/background-effects';
 import React from 'react';
 
@@ -12,7 +12,7 @@ export default function AboutPage() {
       <Header />
       <main className="pt-8 pb-16">
         <AboutHeroCarousel />
-        <TeamSection />
+        {/* <TeamSection /> */}
       </main>
       <FooterSection />
     </div>
