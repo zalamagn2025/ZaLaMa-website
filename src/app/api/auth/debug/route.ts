@@ -1,71 +1,78 @@
-import { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { NextRequest, NextResponse } from 'next/server';
 import { createCorsResponse, handleOptions } from '@/lib/cors';
 
-// Gestion CORS pour les requêtes OPTIONS
 export async function OPTIONS(request: NextRequest) {
   return handleOptions();
 }
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔧 Route de diagnostic appelée...');
+    console.log('🐛 Route de debug pour l\'authentification employé...');
     
-    // Vérifier que JWT_SECRET est défini
-    if (!process.env.JWT_SECRET) {
-      console.error('❌ JWT_SECRET n\'est pas défini');
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return createCorsResponse(
-        { error: 'Configuration serveur manquante' },
+        { success: false, error: 'Token d\'authentification requis' },
+        401
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    
+    if (!supabaseUrl) {
+      return createCorsResponse(
+        { success: false, error: 'Configuration serveur manquante' },
         500
       );
     }
 
-    // Récupérer le token depuis les headers
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Récupérer les paramètres de debug depuis l'URL
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
+    const userId = searchParams.get('user_id');
+    
+    let edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/debug`;
+    
+    // Ajouter les paramètres de debug si fournis
+    if (email || userId) {
+      const params = new URLSearchParams();
+      if (email) params.append('email', email);
+      if (userId) params.append('user_id', userId);
+      edgeFunctionUrl += `?${params.toString()}`;
+    }
+    
+    const response = await fetch(edgeFunctionUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
       return createCorsResponse(
-        { error: 'Token d\'authentification manquant' },
-        401
+        { 
+          success: false, 
+          error: result.error || 'Erreur lors du debug',
+          details: result.message 
+        },
+        response.status
       );
     }
 
-    const token = authHeader.substring(7); // Enlever "Bearer "
-
-    // Vérifier et décoder le token JWT
-    let decodedToken;
-    try {
-      decodedToken = jwt.verify(token, process.env.JWT_SECRET) as any;
-      console.log('✅ Token JWT vérifié pour:', decodedToken.email);
-    } catch (jwtError) {
-      console.error('❌ Erreur de vérification JWT:', jwtError);
-      return createCorsResponse(
-        { error: 'Token invalide ou expiré' },
-        401
-      );
-    }
-
-    // Retourner les informations de diagnostic
     return createCorsResponse({
       success: true,
-      message: 'Route de diagnostic accessible',
-      user: {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        emailVerified: decodedToken.emailVerified,
-        employeeId: decodedToken.employeeId || null,
-        prenom: decodedToken.prenom || null,
-        nom: decodedToken.nom || null,
-        role: decodedToken.role || null
-      },
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development'
+      message: 'Informations de debug récupérées',
+      debug: result.debug
     });
 
   } catch (error: unknown) {
-    console.error('💥 Erreur lors de l\'appel debug:', error);
-    
+    console.error('💥 Erreur lors du debug:', error);
     return createCorsResponse(
-      { error: 'Erreur interne du serveur' },
+      { success: false, error: 'Erreur interne du serveur' },
       500
     );
   }

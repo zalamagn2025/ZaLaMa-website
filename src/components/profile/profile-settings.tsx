@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useAuth } from "../../contexts/AuthContext";
+import { useEmployeeAuth } from "../../contexts/EmployeeAuthContext";
+import { employeeAuthService } from "@/lib/apiEmployeeAuth";
 import { 
   IconSettings, 
   IconX, 
@@ -18,7 +19,8 @@ import {
   IconCheck,
   IconEdit,
   IconLogout,
-  IconUser
+  IconUser,
+  IconCamera
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -76,7 +78,7 @@ interface SecurityAlertPreference {
 
 export function ProfileSettings({ onClose, userData }: { onClose: () => void; userData?: UserData }) {
   const router = useRouter();
-  const { logout, userData: authUserData } = useAuth();
+  const { logout, employee } = useEmployeeAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveButton, setShowSaveButton] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -89,10 +91,10 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   const [showImageUpload, setShowImageUpload] = useState(false);
   
   // Utiliser le hook personnalisé pour l'upload d'image
-  const initialPhotoURL = authUserData?.photo_url || userData?.photoURL || undefined;
+  const initialPhotoURL = employee?.photo_url || userData?.photoURL || undefined;
   
   // ✅ Passer les données utilisateur au hook (priorité props puis contexte)
-  const userDataForHook = userData || authUserData;
+  const userDataForHook = userData || employee;
   
   const {
     avatarFile,
@@ -109,6 +111,14 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     language: 'fr',
     currency: 'XOF',
     notifications: true,
+  });
+
+  // État pour les données du profil en cours de modification
+  const [profileData, setProfileData] = useState({
+    nom: '',
+    prenom: '',
+    telephone: '',
+    adresse: '',
   });
 
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([
@@ -160,7 +170,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   ]);
 
   // Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
-  const employeeData = (authUserData || userData) as any;
+  const employeeData = (employee || userData) as any;
   
   // Construire le nom complet de l'employé connecté (même logique que ProfileHeader)
   const getDisplayName = () => {
@@ -178,7 +188,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   useEffect(() => {
     console.log('🔍 ProfileSettings - Données employé connecté:');
     console.log('userData reçu:', userData);
-    console.log('authUserData:', authUserData);
+    console.log('employee:', employee);
     console.log('employeeData:', employeeData);
     console.log('displayName:', displayName);
     console.log('displayEmail:', displayEmail);
@@ -187,16 +197,16 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     console.log('user_id:', employeeData?.user_id);
     console.log('uid:', userData?.uid);
     console.log('id:', userData?.id);
-  }, [userData, authUserData, employeeData, displayName, displayEmail]);
+  }, [userData, employee, employeeData, displayName, displayEmail]);
 
   // Mettre à jour l'aperçu quand les données du contexte changent
   useEffect(() => {
-    const newPhotoURL = authUserData?.photo_url || userData?.photoURL;
+    const newPhotoURL = employee?.photo_url || userData?.photoURL;
     if (newPhotoURL && newPhotoURL !== avatarPreview) {
       console.log('🔄 Mise à jour de l\'aperçu avec la nouvelle photo:', newPhotoURL);
       // resetUpload(); // This will reset the file input, which is not ideal for preview
     }
-  }, [authUserData?.photo_url, userData?.photoURL, avatarPreview]);
+  }, [employee?.photo_url, userData?.photoURL, avatarPreview]);
 
   // Nettoyer l'URL de l'aperçu lors du démontage du composant
   useEffect(() => {
@@ -269,6 +279,91 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     setShowSaveButton(true);
   };
 
+  // Fonction pour mettre à jour le profil employé via l'Edge Function
+  const handleUpdateProfile = async (profileData: any) => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        toast.error('Token d\'authentification manquant');
+        return false;
+      }
+
+      const result = await employeeAuthService.updateProfile(accessToken, profileData);
+      
+      if (result.success) {
+        toast.success('Profil mis à jour avec succès');
+        return true;
+      } else {
+        toast.error(result.error || 'Erreur lors de la mise à jour du profil');
+        return false;
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil:', error);
+      toast.error('Erreur lors de la mise à jour du profil');
+      return false;
+    }
+  };
+
+  // Fonction pour uploader une photo de profil via l'Edge Function
+  const handleUploadPhoto = async (photoFile: File) => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        toast.error('Token d\'authentification manquant');
+        return false;
+      }
+
+      const result = await employeeAuthService.uploadPhoto(accessToken, photoFile);
+      
+      if (result.success) {
+        toast.success('Photo uploadée avec succès');
+        return true;
+      } else {
+        toast.error(result.error || 'Erreur lors de l\'upload de la photo');
+        return false;
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de la photo:', error);
+      toast.error('Erreur lors de l\'upload de la photo');
+      return false;
+    }
+  };
+
+  // Fonction pour sauvegarder les modifications du profil
+  const handleSaveProfile = async () => {
+    try {
+      // Filtrer les champs vides
+      const dataToUpdate = Object.fromEntries(
+        Object.entries(profileData).filter(([_, value]) => value && value.trim() !== '')
+      );
+
+      if (Object.keys(dataToUpdate).length === 0) {
+        toast.error('Aucune modification à sauvegarder');
+        return;
+      }
+
+      const success = await handleUpdateProfile(dataToUpdate);
+      
+      if (success) {
+        // Réinitialiser les données du formulaire
+        setProfileData({
+          nom: '',
+          prenom: '',
+          telephone: '',
+          adresse: '',
+        });
+        
+        // Recharger la page pour afficher les nouvelles données
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde du profil:', error);
+      toast.error('Erreur lors de la sauvegarde');
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -314,15 +409,24 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   // handleAvatarChange and handleImageUpload are now managed by useProfileImageUpload
 
   const handleImageUploadWithClose = async () => {
-    await handleImageUpload();
-    if (!imageError) {
-      setShowImageUpload(false);
-      
-      // ✅ Forcer un rafraîchissement de la page après fermeture de la modale
-      console.log('🔄 Rafraîchissement de la page pour afficher la nouvelle photo...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 500); // Petit délai pour que l'utilisateur voie la modale se fermer
+    if (avatarFile) {
+      const success = await handleUploadPhoto(avatarFile);
+      if (success) {
+        setShowImageUpload(false);
+        resetUpload();
+        
+        // ✅ Mise à jour immédiate de l'aperçu
+        if (avatarPreview && avatarPreview.startsWith('blob:')) {
+          URL.revokeObjectURL(avatarPreview);
+        }
+        
+        // ✅ Recharger la page après un court délai
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+      }
+    } else {
+      toast.error('Veuillez sélectionner une photo');
     }
   };
 
@@ -472,6 +576,107 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                     )}
                   </div>
                 )}
+
+                {/* Section Modification du Profil */}
+                <div className="mt-4 space-y-3">
+                  <h4 className="text-sm font-medium text-white">Modifier le profil</h4>
+                  
+                  <div className="space-y-3">
+                    {/* Nom et Prénom */}
+                    <div className="p-3 bg-[#0A1A5A] rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-gray-400">📝</span>
+                        <span className="text-white text-sm font-medium">Nom et prénom</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="Nom"
+                          defaultValue={employeeData?.nom || ''}
+                          className="px-3 py-2 bg-[#1A2B6B] border border-gray-600 rounded text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FF671E]"
+                          onChange={(e) => setProfileData(prev => ({ ...prev, nom: e.target.value }))}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Prénom"
+                          defaultValue={employeeData?.prenom || ''}
+                          className="px-3 py-2 bg-[#1A2B6B] border border-gray-600 rounded text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FF671E]"
+                          onChange={(e) => setProfileData(prev => ({ ...prev, prenom: e.target.value }))}
+                        />
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleSaveProfile()}
+                        className="mt-2 px-3 py-1.5 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded text-xs font-medium text-white hover:shadow-[#FF671E]/40 transition-all"
+                      >
+                        Enregistrer
+                      </motion.button>
+                    </div>
+
+                    {/* Téléphone */}
+                    <div className="p-3 bg-[#0A1A5A] rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-gray-400">📞</span>
+                        <span className="text-white text-sm font-medium">Téléphone</span>
+                      </div>
+                      <input
+                        type="tel"
+                        placeholder="+224XXXXXXXXX"
+                        defaultValue={employeeData?.telephone || ''}
+                        className="w-full px-3 py-2 bg-[#1A2B6B] border border-gray-600 rounded text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FF671E]"
+                        onChange={(e) => setProfileData(prev => ({ ...prev, telephone: e.target.value }))}
+                      />
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleSaveProfile()}
+                        className="mt-2 px-3 py-1.5 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded text-xs font-medium text-white hover:shadow-[#FF671E]/40 transition-all"
+                      >
+                        Enregistrer
+                      </motion.button>
+                    </div>
+
+                    {/* Adresse */}
+                    <div className="p-3 bg-[#0A1A5A] rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-gray-400">📍</span>
+                        <span className="text-white text-sm font-medium">Adresse</span>
+                      </div>
+                      <textarea
+                        placeholder="Votre adresse complète"
+                        defaultValue={employeeData?.adresse || ''}
+                        rows={2}
+                        className="w-full px-3 py-2 bg-[#1A2B6B] border border-gray-600 rounded text-white text-sm placeholder-gray-400 focus:outline-none focus:border-[#FF671E] resize-none"
+                        onChange={(e) => setProfileData(prev => ({ ...prev, adresse: e.target.value }))}
+                      />
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleSaveProfile()}
+                        className="mt-2 px-3 py-1.5 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded text-xs font-medium text-white hover:shadow-[#FF671E]/40 transition-all"
+                      >
+                        Enregistrer
+                      </motion.button>
+                    </div>
+
+                    {/* Photo de profil */}
+                    <div className="p-3 bg-[#0A1A5A] rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <IconCamera className="w-4 h-4 text-gray-400" />
+                        <span className="text-white text-sm font-medium">Photo de profil</span>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setShowImageUpload(true)}
+                        className="w-full px-3 py-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded text-sm font-medium text-white hover:shadow-[#FF671E]/40 transition-all"
+                      >
+                        Changer la photo
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -678,7 +883,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
           </div>
         </motion.div>
 
-        {/* Modal de modification de l'image de profil */}
+        {/* Modal de modification de l'image de profil - Optimisée */}
         <AnimatePresence>
           {showImageUpload && (
             <motion.div
@@ -689,10 +894,10 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
               className="fixed inset-0 flex items-center justify-center z-50 p-4"
             >
               <div className="absolute inset-0 bg-black/50" onClick={() => setShowImageUpload(false)} />
-              <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md shadow-xl max-h-[80vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">
-                    Modifier la photo de profil
+              <div className="relative bg-[#010D3E]/95 backdrop-blur-sm rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">
+                    Photo de profil
                   </h2>
                   <motion.button
                     whileHover={{ scale: 1.1 }}

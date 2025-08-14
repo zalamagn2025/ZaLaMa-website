@@ -14,7 +14,7 @@ import { TransactionHistory } from "@/components/profile/transaction-history"
 import { FirstLoginPasswordModal } from "@/components/auth/FirstLoginPasswordModal"
 import { useEmployeeAuth } from "@/contexts/EmployeeAuthContext"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
-import LogoutButton from "@/components/auth/LogoutButton"
+
 
 export default function ProfilePage() {
   const [isMounted, setIsMounted] = useState(false)
@@ -297,10 +297,7 @@ export default function ProfilePage() {
           AI
         </motion.button>
 
-        {/* Bouton de déconnexion */}
-        <div className="fixed top-4 right-4 z-50">
-          <LogoutButton variant="outline" size="sm" />
-        </div>
+
 
         {/* Chatbot Drawer */}
         <AnimatePresence>

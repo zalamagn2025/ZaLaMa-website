@@ -39,26 +39,28 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       setLoading(true);
       setError(null);
       
-      // Vérifier si l'utilisateur est authentifié
-      if (!employeeAuthService.isAuthenticated()) {
+      // Vérifier si un token d'accès existe
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
         setEmployee(null);
         setIsAuthenticated(false);
         return;
       }
 
-      // Récupérer le profil depuis l'API
-      const profile = await employeeAuthService.getProfile();
+      // Récupérer le profil depuis l'Edge Function
+      const response = await employeeAuthService.getProfile(accessToken);
       
-      if (profile) {
-        setEmployee(profile);
+      if (response.success && response.data) {
+        setEmployee(response.data);
         setIsAuthenticated(true);
-        console.log('✅ Profil employé chargé dans le contexte:', profile.nom, profile.prenom);
+        console.log('✅ Profil employé chargé dans le contexte:', response.data.nom, response.data.prenom);
       } else {
         setEmployee(null);
         setIsAuthenticated(false);
-        console.warn('⚠️ Aucun profil trouvé');
-        // Nettoyer les cookies si aucun profil n'est trouvé
-        await employeeAuthService.logout();
+        console.warn('⚠️ Aucun profil trouvé ou erreur:', response.error);
+        // Nettoyer le token si aucun profil n'est trouvé
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
       }
     } catch (err) {
       console.error('❌ Erreur lors du chargement du profil:', err);
@@ -66,7 +68,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       // Ne pas afficher l'erreur si c'est juste un problème de réseau temporaire
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement du profil';
       
-      // Si l'erreur est liée à l'authentification, nettoyer les cookies et l'état
+      // Si l'erreur est liée à l'authentification, nettoyer les tokens et l'état
       if (err instanceof Error && (
         errorMessage.includes('Token') || 
         errorMessage.includes('Session') || 
@@ -77,7 +79,8 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
         setError(null); // Ne pas afficher l'erreur à l'utilisateur
         setEmployee(null);
         setIsAuthenticated(false);
-        await employeeAuthService.logout();
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
       } else {
         // Pour les autres erreurs (réseau, etc.), garder l'état actuel
         setError(errorMessage);
@@ -96,12 +99,19 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       
       console.log('🔐 Tentative de connexion via le contexte...');
       
-      const response = await employeeAuthService.login({ email, password });
+      const response = await employeeAuthService.login(email, password);
       
-      if (response.success && response.employee) {
-        setEmployee(response.employee);
-        setIsAuthenticated(true);
-        console.log('✅ Connexion réussie via le contexte:', response.employee.nom, response.employee.prenom);
+      if (response.success && response.access_token) {
+        // Stocker les tokens
+        localStorage.setItem('access_token', response.access_token);
+        if (response.refresh_token) {
+          localStorage.setItem('refresh_token', response.refresh_token);
+        }
+        
+        // Charger le profil avec le nouveau token
+        await loadProfile();
+        
+        console.log('✅ Connexion réussie via le contexte');
       } else {
         throw new Error(response.error || 'Échec de la connexion');
       }
@@ -120,7 +130,11 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
   const logout = async () => {
     try {
       setLoading(true);
-      await employeeAuthService.logout();
+      
+      // Nettoyer les tokens du localStorage
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      
       setEmployee(null);
       setIsAuthenticated(false);
       setError(null);
