@@ -9,6 +9,10 @@ export interface Avis {
   approuve: boolean
   created_at: string
   updated_at: string
+  
+  // Relations (ajoutées par l'Edge Function)
+  partner_name?: string
+  partner_logo?: string
 }
 
 export interface CreateAvisRequest {
@@ -35,6 +39,18 @@ export interface LimitInfo {
   limit: number
   remaining: number
   canPost?: boolean
+}
+
+export interface AvisStats {
+  total_avis: number
+  moyenne_note: number
+  avis_positifs: number
+  avis_negatifs: number
+  avis_approuves: number
+  avis_en_attente: number
+  par_partenaire: Record<string, number>
+  par_note: Record<string, number>
+  evolution_mensuelle: Record<string, number>
 }
 
 export interface LimitResponse {

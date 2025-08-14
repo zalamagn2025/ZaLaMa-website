@@ -7,7 +7,9 @@
     "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
-    "postbuild": "next-sitemap"
+    "postbuild": "next-sitemap",
+    "edge:deploy-employee-avis": "node scripts/deploy-employee-avis.js",
+    "test:avis-integration": "node test-avis-integration.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
