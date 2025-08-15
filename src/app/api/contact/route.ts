@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
           </div>
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
-            <p>Ce message a été envoyé depuis le formulaire de contact du site web Zalama SAS.</p>
+            <p>Ce message a été envoyé depuis le formulaire de contact du site web ZaLaMa.</p>
             <p><strong>⚠️ IMPORTANT:</strong> Ne répondez pas directement à cet email. Utilisez l'adresse de l'expéditeur pour répondre.</p>
           </div>
         </div>

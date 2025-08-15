@@ -66,7 +66,7 @@ export const getAdminAdvanceEmailTemplate = (data: {
     </tr>
     <tr>
       <td style="background-color: #1e40af; padding: 25px; text-align: center; font-size: 14px; color: #ffffff; border-radius: 0 0 12px 12px;">
-        <p style="margin: 0 0 15px 0; font-weight: 500;">Zalama SAS - Demande d'avance sur salaire</p>
+        <p style="margin: 0 0 15px 0; font-weight: 500;">ZaLaMa - Demande d'avance sur salaire</p>
         <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
           
         </table>
@@ -128,7 +128,7 @@ export const getUserAdvanceEmailTemplate = (data: {
     </tr>
     <tr>
       <td style="background-color: #1e40af; padding: 25px; text-align: center; font-size: 14px; color: #ffffff; border-radius: 0 0 12px 12px;">
-        <p style="margin: 0 0 15px 0; font-weight: 500;">ZaLaMa SAS - Merci pour votre confiance</p>
+        <p style="margin: 0 0 15px 0; font-weight: 500;">ZaLaMa - Merci pour votre confiance</p>
         <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
           <tr>
             <td style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); padding: 12px 30px; border-radius: 10px; border: 1px solid #ffffff;">
