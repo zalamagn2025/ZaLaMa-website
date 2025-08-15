@@ -72,7 +72,7 @@ async function testProductionEmails() {
             <p>Notre équipe étudiera attentivement votre dossier et vous reviendra dans les plus brefs délais.</p>
             <p>ID de votre demande: <strong>${testPartnershipData.id}</strong></p>
             <hr>
-            <p style="font-size: 12px; color: #666;">ZaLaMa SAS - Demande de partenariat</p>
+            <p style="font-size: 12px; color: #666;">ZaLaMa - Demande de partenariat</p>
           </div>
         `,
         text: `Confirmation de reception de votre demande de partenariat pour ${testPartnershipData.company_name} - ID: ${testPartnershipData.id}`
@@ -90,7 +90,7 @@ async function testProductionEmails() {
             <p>Notre équipe étudiera attentivement votre dossier et vous reviendra dans les plus brefs délais.</p>
             <p>ID de votre demande: <strong>${testPartnershipData.id}</strong></p>
             <hr>
-            <p style="font-size: 12px; color: #666;">ZaLaMa SAS - Demande de partenariat</p>
+            <p style="font-size: 12px; color: #666;">ZaLaMa - Demande de partenariat</p>
           </div>
         `,
         text: `Confirmation de reception de votre demande de partenariat pour ${testPartnershipData.company_name} - ID: ${testPartnershipData.id}`
@@ -108,7 +108,7 @@ async function testProductionEmails() {
             <p>Notre équipe étudiera attentivement votre dossier et vous reviendra dans les plus brefs délais.</p>
             <p>ID de votre demande: <strong>${testPartnershipData.id}</strong></p>
             <hr>
-            <p style="font-size: 12px; color: #666;">ZaLaMa SAS - Demande de partenariat</p>
+            <p style="font-size: 12px; color: #666;">ZaLaMa - Demande de partenariat</p>
           </div>
         `,
         text: `Confirmation de reception de votre demande de partenariat pour ${testPartnershipData.company_name} - ID: ${testPartnershipData.id}`

@@ -137,14 +137,39 @@ export default function EmployeeRegisterForm() {
   };
 
   const validateStep2 = () => {
+    // Champs obligatoires de base
     const required = [
       formData.nom, formData.prenom, formData.email, formData.telephone,
-      formData.adresse, formData.poste, formData.matricule, formData.salaire_net,
-      formData.date_embauche, formData.date_expiration
+      formData.poste, formData.salaire_net, formData.date_embauche
     ];
+    
+    // Date d'expiration obligatoire seulement pour CDD
+    if (formData.type_contrat === 'CDD' && !formData.date_expiration) {
+      return false;
+    }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^(\+224|00224)?[6-7][0-9]{8}$/;
+    
+    // Validation des dates
+    const today = new Date();
+    const embaucheDate = new Date(formData.date_embauche);
+    const expirationDate = formData.date_expiration ? new Date(formData.date_expiration) : null;
+    
+    // Vérifier que la date d'embauche n'est pas dans le futur
+    if (embaucheDate > today) {
+      return false;
+    }
+    
+    // Vérifier que la date d'expiration est après l'embauche (si fournie)
+    if (expirationDate && embaucheDate && expirationDate <= embaucheDate) {
+      return false;
+    }
+    
+    // Vérifier le salaire (entre 50,000 et 50,000,000 GNF)
+    if (formData.salaire_net < 50000 || formData.salaire_net > 50000000) {
+      return false;
+    }
     
     return (
       required.every(field => field && field.toString().trim().length > 0) &&
@@ -169,6 +194,61 @@ export default function EmployeeRegisterForm() {
 
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation détaillée avec messages d'erreur
+    const validationErrors = [];
+    
+    // Vérifier les champs obligatoires
+    if (!formData.nom?.trim()) validationErrors.push("Le nom est obligatoire");
+    if (!formData.prenom?.trim()) validationErrors.push("Le prénom est obligatoire");
+    if (!formData.email?.trim()) validationErrors.push("L'email est obligatoire");
+    if (!formData.telephone?.trim()) validationErrors.push("Le téléphone est obligatoire");
+    if (!formData.poste?.trim()) validationErrors.push("Le poste est obligatoire");
+    if (!formData.salaire_net || formData.salaire_net <= 0) validationErrors.push("Le salaire doit être supérieur à 0");
+    if (!formData.date_embauche) validationErrors.push("La date d'embauche est obligatoire");
+    
+    // Vérifier l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      validationErrors.push("Format d'email invalide");
+    }
+    
+    // Vérifier le téléphone
+    const phoneRegex = /^(\+224|00224)?[6-7][0-9]{8}$/;
+    if (formData.telephone && !phoneRegex.test(formData.telephone.replace(/\s+/g, ''))) {
+      validationErrors.push("Format de téléphone invalide (ex: +22461234567)");
+    }
+    
+    // Vérifier les dates
+    const today = new Date();
+    const embaucheDate = new Date(formData.date_embauche);
+    if (embaucheDate > today) {
+      validationErrors.push("La date d'embauche ne peut pas être dans le futur");
+    }
+    
+    if (formData.date_expiration) {
+      const expirationDate = new Date(formData.date_expiration);
+      if (expirationDate <= embaucheDate) {
+        validationErrors.push("La date d'expiration doit être après la date d'embauche");
+      }
+    }
+    
+    // Vérifier le salaire
+    if (formData.salaire_net < 50000 || formData.salaire_net > 50000000) {
+      validationErrors.push("Le salaire doit être entre 50,000 et 50,000,000 GNF");
+    }
+    
+    // Vérifier la date d'expiration pour CDD
+    if (formData.type_contrat === 'CDD' && !formData.date_expiration) {
+      validationErrors.push("La date d'expiration est obligatoire pour un CDD");
+    }
+    
+    if (validationErrors.length > 0) {
+      // Utiliser une alerte temporaire pour les erreurs de validation
+      alert("Erreurs de validation : " + validationErrors.join(", "));
+      return;
+    }
+    
     if (validateStep2()) {
       await registerEmployee(formData);
     }
@@ -225,18 +305,6 @@ export default function EmployeeRegisterForm() {
                 Votre inscription a été validée avec succès.
               </p>
               
-              <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                <p className="text-white/80 text-sm">
-                  <span className="font-semibold">Entreprise :</span> {data.partner_name}
-                </p>
-                <p className="text-white/80 text-sm mt-1">
-                  <span className="font-semibold">ID Employé :</span> {data.employee_id}
-                </p>
-              </div>
-              
-              <p className="text-white/60 text-xs">
-                Vous allez être redirigé vers la page de connexion...
-              </p>
               
               <button
                 onClick={handleSuccess}
@@ -304,9 +372,9 @@ export default function EmployeeRegisterForm() {
         transition={{ duration: 0.8 }}
         className="w-full max-w-lg relative z-10"
       >
-        <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-8 border border-white/[0.05] shadow-2xl">
+        <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           {/* Header */}
-          <div className="text-center space-y-2 mb-6">
+          <div className="text-center space-y-2 mb-4">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -326,7 +394,7 @@ export default function EmployeeRegisterForm() {
           </div>
 
           {/* Progress bar */}
-          <div className="mb-6">
+          <div className="mb-4">
             <div className="flex items-center justify-between text-xs text-white/60 mb-2">
               <span>Progression</span>
               <span>{step}/2</span>
@@ -490,14 +558,24 @@ export default function EmployeeRegisterForm() {
                 data-form-type="other"
                 data-lpignore="true"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Nom */}
+                {/* Section Informations Personnelles */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-[#FF671E]/20 flex items-center justify-center">
+                      <User className="w-4 h-4 text-[#FF671E]" />
+                    </div>
+                    <h3 className="text-white font-semibold text-lg">Informations Personnelles</h3>
+                  </div>
+                  
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Nom */}
                   <motion.div 
                     className={`relative ${focusedInput === "nom" ? 'z-10' : ''}`}
                     whileFocus={{ scale: 1.02 }}
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Nom de Famille <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <User className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "nom" ? 'text-white' : 'text-white/40'
@@ -505,13 +583,13 @@ export default function EmployeeRegisterForm() {
                       
                       <Input
                         type="text"
-                        placeholder="Nom"
+                        placeholder="Ex: Konaté, Diallo..."
                         value={formData.nom}
                         onChange={(e) => handleInputChange('nom', e.target.value)}
                         onFocus={() => setFocusedInput("nom")}
                         onBlur={() => setFocusedInput(null)}
                         required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
+                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
                       />
                     </div>
                   </motion.div>
@@ -523,6 +601,7 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Prénom <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <User className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "prenom" ? 'text-white' : 'text-white/40'
@@ -530,13 +609,13 @@ export default function EmployeeRegisterForm() {
                       
                       <Input
                         type="text"
-                        placeholder="Prénom"
+                        placeholder="Ex: Mamadou, Fatou..."
                         value={formData.prenom}
                         onChange={(e) => handleInputChange('prenom', e.target.value)}
                         onFocus={() => setFocusedInput("prenom")}
                         onBlur={() => setFocusedInput(null)}
                         required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
+                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
                       />
                     </div>
                   </motion.div>
@@ -548,6 +627,7 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Email Professionnel <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Mail className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "email" ? 'text-white' : 'text-white/40'
@@ -555,13 +635,13 @@ export default function EmployeeRegisterForm() {
                       
                       <Input
                         type="email"
-                        placeholder="Email professionnel"
+                        placeholder="Ex: employe@entreprise.com"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         onFocus={() => setFocusedInput("email")}
                         onBlur={() => setFocusedInput(null)}
                         required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
+                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
                       />
                     </div>
                   </motion.div>
@@ -573,6 +653,7 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Numéro de Téléphone <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Phone className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "telephone" ? 'text-white' : 'text-white/40'
@@ -580,13 +661,13 @@ export default function EmployeeRegisterForm() {
                       
                       <Input
                         type="tel"
-                        placeholder="Téléphone (+224...)"
+                        placeholder="Ex: +22461234567"
                         value={formData.telephone}
                         onChange={(e) => handleInputChange('telephone', e.target.value)}
                         onFocus={() => setFocusedInput("telephone")}
                         onBlur={() => setFocusedInput(null)}
                         required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
+                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
                       />
                     </div>
                   </motion.div>
@@ -598,19 +679,28 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Genre <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Users className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "genre" ? 'text-white' : 'text-white/40'
                       }`} />
                       
-                      <Select
-                        value={formData.genre}
-                        onChange={(e) => handleInputChange('genre', e.target.value as 'Homme' | 'Femme' | 'Autre')}
-                        onFocus={() => setFocusedInput("genre")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white h-10 transition-all duration-300 pl-10 focus:bg-white/10"
-                      >
+                                              <Select
+                          value={formData.genre}
+                          onChange={(e) => handleInputChange('genre', e.target.value as 'Homme' | 'Femme' | 'Autre')}
+                          onFocus={() => setFocusedInput("genre")}
+                          onBlur={() => setFocusedInput(null)}
+                          required
+                          className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none appearance-none cursor-pointer"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                            backgroundPosition: 'right 0.5rem center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: '1.5em 1.5em',
+                            paddingRight: '2.5rem'
+                          }}
+                        >
+                        <option value="">Sélectionner le genre</option>
                         <option value="Homme">Homme</option>
                         <option value="Femme">Femme</option>
                         <option value="Autre">Autre</option>
@@ -625,6 +715,7 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Poste / Fonction <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Briefcase className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "poste" ? 'text-white' : 'text-white/40'
@@ -632,13 +723,13 @@ export default function EmployeeRegisterForm() {
                       
                       <Input
                         type="text"
-                        placeholder="Poste"
+                        placeholder="Ex: Développeur, Comptable, Manager..."
                         value={formData.poste}
                         onChange={(e) => handleInputChange('poste', e.target.value)}
                         onFocus={() => setFocusedInput("poste")}
                         onBlur={() => setFocusedInput(null)}
                         required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
+                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
                       />
                     </div>
                   </motion.div>
@@ -650,21 +741,21 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Numéro Matricule</label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Hash className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "matricule" ? 'text-white' : 'text-white/40'
                       }`} />
                       
-                      <Input
-                        type="text"
-                        placeholder="Matricule"
-                        value={formData.matricule}
-                        onChange={(e) => handleInputChange('matricule', e.target.value)}
-                        onFocus={() => setFocusedInput("matricule")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
-                      />
+                                              <Input
+                          type="text"
+                          placeholder="Ex: EMP001, MAT2024... (optionnel)"
+                          value={formData.matricule}
+                          onChange={(e) => handleInputChange('matricule', e.target.value)}
+                          onFocus={() => setFocusedInput("matricule")}
+                          onBlur={() => setFocusedInput(null)}
+                          className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
+                        />
                     </div>
                   </motion.div>
 
@@ -675,21 +766,30 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Type de Contrat <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Briefcase className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "type_contrat" ? 'text-white' : 'text-white/40'
                       }`} />
                       
-                      <Select
-                        value={formData.type_contrat}
-                        onChange={(e) => handleInputChange('type_contrat', e.target.value as 'CDI' | 'CDD' | 'Consultant' | 'Stage' | 'Autre')}
-                        onFocus={() => setFocusedInput("type_contrat")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white h-10 transition-all duration-300 pl-10 focus:bg-white/10"
-                      >
-                        <option value="CDI">CDI</option>
-                        <option value="CDD">CDD</option>
+                                              <Select
+                          value={formData.type_contrat}
+                          onChange={(e) => handleInputChange('type_contrat', e.target.value as 'CDI' | 'CDD' | 'Consultant' | 'Stage' | 'Autre')}
+                          onFocus={() => setFocusedInput("type_contrat")}
+                          onBlur={() => setFocusedInput(null)}
+                          required
+                          className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none appearance-none cursor-pointer"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                            backgroundPosition: 'right 0.5rem center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: '1.5em 1.5em',
+                            paddingRight: '2.5rem'
+                          }}
+                        >
+                        <option value="">Sélectionner le type de contrat</option>
+                        <option value="CDI">CDI (Contrat à Durée Indéterminée)</option>
+                        <option value="CDD">CDD (Contrat à Durée Déterminée)</option>
                         <option value="Consultant">Consultant</option>
                         <option value="Stage">Stage</option>
                         <option value="Autre">Autre</option>
@@ -704,22 +804,25 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Salaire Net Mensuel <span className="text-[#FF671E]">*</span></label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <DollarSign className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "salaire_net" ? 'text-white' : 'text-white/40'
                       }`} />
                       
-                      <Input
-                        type="number"
-                        placeholder="Salaire net (GNF)"
-                        value={formData.salaire_net}
-                        onChange={(e) => handleInputChange('salaire_net', parseFloat(e.target.value) || 0)}
-                        onFocus={() => setFocusedInput("salaire_net")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        min="0"
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
-                      />
+                                              <Input
+                          type="number"
+                          placeholder="Ex: 500000 (entre 50k et 50M GNF)"
+                          value={formData.salaire_net}
+                          onChange={(e) => handleInputChange('salaire_net', parseFloat(e.target.value) || 0)}
+                          onFocus={() => setFocusedInput("salaire_net")}
+                          onBlur={() => setFocusedInput(null)}
+                          required
+                          min="50000"
+                          max="50000000"
+                          step="1000"
+                          className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
+                        />
                     </div>
                   </motion.div>
 
@@ -730,20 +833,23 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Date d'Embauche</label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Calendar className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "date_embauche" ? 'text-white' : 'text-white/40'
                       }`} />
                       
-                      <Input
-                        type="date"
-                        value={formData.date_embauche}
-                        onChange={(e) => handleInputChange('date_embauche', e.target.value)}
-                        onFocus={() => setFocusedInput("date_embauche")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white h-10 transition-all duration-300 pl-10 focus:bg-white/10"
-                      />
+                                              <Input
+                          type="date"
+                          value={formData.date_embauche}
+                          onChange={(e) => handleInputChange('date_embauche', e.target.value)}
+                          onFocus={() => setFocusedInput("date_embauche")}
+                          onBlur={() => setFocusedInput(null)}
+                          required
+                          max={new Date().toISOString().split('T')[0]}
+                          min="1900-01-01"
+                          className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
+                        />
                     </div>
                   </motion.div>
 
@@ -754,48 +860,76 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
+                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Date d'Expiration (obligatoire si CDD<span className="text-[#FF671E]">*</span>)</label>
                     <div className="relative flex items-center overflow-hidden rounded-lg">
                       <Calendar className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
                         focusedInput === "date_expiration" ? 'text-white' : 'text-white/40'
                       }`} />
                       
+                                              <Input
+                          type="date"
+                          value={formData.date_expiration}
+                          onChange={(e) => handleInputChange('date_expiration', e.target.value)}
+                          onFocus={() => setFocusedInput("date_expiration")}
+                          onBlur={() => setFocusedInput(null)}
+                          required={formData.type_contrat === 'CDD'}
+                          min={formData.date_embauche || new Date().toISOString().split('T')[0]}
+                          max="2100-12-31"
+                          className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
+                        />
+                    </div>
+                  </motion.div>
+                  </div>
+                </div>
+
+
+
+                {/* Séparateur */}
+                <div className="border-t border-white/10 my-8"></div>
+
+                {/* Section Adresse */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-[#FF671E]/20 flex items-center justify-center">
+                      <MapPin className="w-4 h-4 text-[#FF671E]" />
+                    </div>
+                    <h3 className="text-white font-semibold text-lg">Adresse</h3>
+                  </div>
+                  
+                  <motion.div 
+                    className={`relative ${focusedInput === "adresse" ? 'z-10' : ''}`}
+                    whileFocus={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  >
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Adresse Complète</label>
+                    <div className="relative flex items-center overflow-hidden rounded-lg">
+                      <MapPin className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                        focusedInput === "adresse" ? 'text-white' : 'text-white/40'
+                      }`} />
+                      
                       <Input
-                        type="date"
-                        value={formData.date_expiration}
-                        onChange={(e) => handleInputChange('date_expiration', e.target.value)}
-                        onFocus={() => setFocusedInput("date_expiration")}
+                        type="text"
+                        placeholder="Ex: 123 Rue de la Paix, Conakry, Guinée (optionnel)"
+                        value={formData.adresse}
+                        onChange={(e) => handleInputChange('adresse', e.target.value)}
+                        onFocus={() => setFocusedInput("adresse")}
                         onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white h-10 transition-all duration-300 pl-10 focus:bg-white/10"
+                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
                       />
                     </div>
                   </motion.div>
                 </div>
 
-                {/* Adresse (pleine largeur) */}
-                <motion.div 
-                  className={`relative ${focusedInput === "adresse" ? 'z-10' : ''}`}
-                  whileFocus={{ scale: 1.02 }}
-                  whileHover={{ scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
-                  <div className="relative flex items-center overflow-hidden rounded-lg">
-                    <MapPin className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                      focusedInput === "adresse" ? 'text-white' : 'text-white/40'
-                    }`} />
-                    
-                    <Input
-                      type="text"
-                      placeholder="Adresse complète"
-                      value={formData.adresse}
-                      onChange={(e) => handleInputChange('adresse', e.target.value)}
-                      onFocus={() => setFocusedInput("adresse")}
-                      onBlur={() => setFocusedInput(null)}
-                      required
-                      className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10"
-                    />
-                  </div>
-                </motion.div>
+                {/* Légende des champs obligatoires */}
+                <div className="mt-4 text-center">
+                  <p className="text-white/60 text-xs">
+                    <span className="text-[#FF671E]">*</span> Champs obligatoires
+                  </p>
+                </div>
+
+                {/* Séparateur */}
+                <div className="border-t border-white/10 my-8"></div>
 
                 {/* Boutons */}
                 <div className="flex gap-3 mt-6">
