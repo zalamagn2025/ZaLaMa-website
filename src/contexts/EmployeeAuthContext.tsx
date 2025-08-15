@@ -39,8 +39,8 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       setLoading(true);
       setError(null);
       
-      // Vérifier si un token d'accès existe
-      const accessToken = localStorage.getItem('access_token');
+      // Vérifier si un token d'accès existe (utiliser la même clé que le service)
+      const accessToken = localStorage.getItem('employee_access_token');
       if (!accessToken) {
         setEmployee(null);
         setIsAuthenticated(false);
@@ -59,8 +59,8 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
         setIsAuthenticated(false);
         console.warn('⚠️ Aucun profil trouvé ou erreur:', response.error);
         // Nettoyer le token si aucun profil n'est trouvé
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('employee_access_token');
+        localStorage.removeItem('employee_refresh_token');
       }
     } catch (err) {
       console.error('❌ Erreur lors du chargement du profil:', err);
@@ -79,8 +79,8 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
         setError(null); // Ne pas afficher l'erreur à l'utilisateur
         setEmployee(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('employee_access_token');
+        localStorage.removeItem('employee_refresh_token');
       } else {
         // Pour les autres erreurs (réseau, etc.), garder l'état actuel
         setError(errorMessage);
@@ -102,10 +102,10 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       const response = await employeeAuthService.login(email, password);
       
       if (response.success && response.access_token) {
-        // Stocker les tokens
-        localStorage.setItem('access_token', response.access_token);
+        // Stocker les tokens (utiliser la même clé que le service)
+        localStorage.setItem('employee_access_token', response.access_token);
         if (response.refresh_token) {
-          localStorage.setItem('refresh_token', response.refresh_token);
+          localStorage.setItem('employee_refresh_token', response.refresh_token);
         }
         
         // Charger le profil avec le nouveau token
@@ -131,9 +131,9 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
     try {
       setLoading(true);
       
-      // Nettoyer les tokens du localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      // Nettoyer les tokens du localStorage (utiliser la même clé que le service)
+      localStorage.removeItem('employee_access_token');
+      localStorage.removeItem('employee_refresh_token');
       
       setEmployee(null);
       setIsAuthenticated(false);

@@ -84,6 +84,64 @@ class EmployeeAuthService {
     return `${this.baseUrl}/functions/v1/employee-auth/${endpoint}`;
   }
 
+  /**
+   * Récupérer le token d'accès depuis le localStorage
+   */
+  getAccessToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('employee_access_token');
+    }
+    return null;
+  }
+
+  /**
+   * Sauvegarder les tokens dans le localStorage
+   */
+  saveTokens(accessToken: string, refreshToken?: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('employee_access_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('employee_refresh_token', refreshToken);
+      }
+    }
+  }
+
+  /**
+   * Effacer les tokens du localStorage
+   */
+  clearTokens(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('employee_access_token');
+      localStorage.removeItem('employee_refresh_token');
+    }
+  }
+
+  /**
+   * Vérifier si l'utilisateur est authentifié
+   */
+  isAuthenticated(): boolean {
+    const token = this.getAccessToken();
+    if (!token) return false;
+    
+    try {
+      const payload = this.parseToken(token);
+      if (!payload) return false;
+      
+      // Vérifier si le token n'est pas expiré
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp > currentTime;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Déconnexion
+   */
+  async logout(): Promise<void> {
+    this.clearTokens();
+  }
+
   private async makeRequest(
     endpoint: string,
     options: RequestInit = {}
@@ -241,6 +299,64 @@ class EmployeeAuthService {
   }
 
   /**
+   * Changer le mot de passe de l'utilisateur
+   */
+  async changePassword(
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+    accessToken?: string
+  ): Promise<EmployeeAuthResponse> {
+    const token = accessToken || this.getAccessToken();
+    
+    if (!token) {
+      return {
+        success: false,
+        error: 'Token d\'authentification requis',
+      };
+    }
+
+    try {
+      const response = await fetch(this.getEdgeFunctionUrl('change-password'), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+          confirm_password: confirmPassword,
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error || 'Erreur lors du changement de mot de passe',
+          details: result.message,
+        };
+      }
+
+      // Si le changement de mot de passe réussit et qu'un nouveau token est retourné
+      if (result.success && result.access_token) {
+        // Sauvegarder le nouveau token
+        this.saveTokens(result.access_token, result.refresh_token);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('💥 Erreur lors du changement de mot de passe:', error);
+      return {
+        success: false,
+        error: 'Erreur de connexion au serveur',
+      };
+    }
+  }
+
+  /**
    * Valider un token d'accès
    */
   async validateToken(accessToken: string): Promise<boolean> {
@@ -283,8 +399,15 @@ export const useEmployeeAuth = () => {
     getProfile: employeeAuthService.getProfile.bind(employeeAuthService),
     updateProfile: employeeAuthService.updateProfile.bind(employeeAuthService),
     uploadPhoto: employeeAuthService.uploadPhoto.bind(employeeAuthService),
+    changePassword: employeeAuthService.changePassword.bind(employeeAuthService),
     debug: employeeAuthService.debug.bind(employeeAuthService),
     validateToken: employeeAuthService.validateToken.bind(employeeAuthService),
     parseToken: employeeAuthService.parseToken.bind(employeeAuthService),
+    // Nouvelles méthodes de gestion des tokens
+    isAuthenticated: employeeAuthService.isAuthenticated.bind(employeeAuthService),
+    getAccessToken: employeeAuthService.getAccessToken.bind(employeeAuthService),
+    saveTokens: employeeAuthService.saveTokens.bind(employeeAuthService),
+    clearTokens: employeeAuthService.clearTokens.bind(employeeAuthService),
+    logout: employeeAuthService.logout.bind(employeeAuthService),
   };
 };

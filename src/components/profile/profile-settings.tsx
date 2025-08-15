@@ -391,7 +391,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
 
   const handlePasswordChange = () => {
     onClose();
-    router.push('/auth/reset-password');
+    router.push('/auth/change-password');
   };
 
   const handleLogout = async () => {

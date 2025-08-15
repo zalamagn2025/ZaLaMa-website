@@ -32,10 +32,8 @@ const nextConfig = {
     ];
   },
   
-  // Autres configurations existantes...
-  experimental: {
-    serverComponentsExternalPackages: ['bcryptjs'],
-  },
+  // Configuration pour les packages externes (corrigé)
+  serverExternalPackages: ['bcryptjs'],
   
   // Configuration pour les images externes
   images: {
