@@ -619,14 +619,21 @@ export function Component() {
                   </div>
 
                   {/* Sign up link */}
-                  <motion.p 
-                    className="text-center text-xs text-white/60 mt-4"
+                  <motion.div 
+                    className="text-center text-xs text-white/60 mt-4 space-y-2"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    Vous n&apos;avez pas de compte ? Contactez votre RH
-                  </motion.p>
+                    <p>Vous n&apos;avez pas de compte ?</p>
+                    <Link 
+                      href="/register" 
+                      className="inline-flex items-center gap-1 text-[#FF671E] hover:text-[#FF671E]/80 transition-colors font-medium"
+                    >
+                      S&apos;inscrire comme employé
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </motion.div>
                 </form>
               ) : (
                 /* Formulaire de mot de passe oublié */
