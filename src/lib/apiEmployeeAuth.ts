@@ -24,12 +24,41 @@ export interface EmployeeData {
   adresse?: string;
   poste: string;
   role?: string;
+  matricule?: string;
   type_contrat: string;
   salaire_net?: number;
   date_embauche?: string;
   photo_url?: string;
   actif: boolean;
   partner_id?: string;
+  partner_info?: {
+    id: string;
+    company_name: string;
+    legal_status: string;
+    rccm?: string;
+    nif?: string;
+    activity_domain: string;
+    phone?: string;
+    email?: string;
+    logo_url?: string;
+    status: string;
+  };
+  financial?: {
+    salaireNet: number;
+    salaireRestant: number;
+    acompteDisponible: number;
+    avanceActif: number;
+    avanceDisponible: number;
+    nombreAvancesValidees?: number;
+    devise: string;
+  };
+  workCalendar?: {
+    moisEnCours: string;
+    joursTravailTotal: number;
+    joursTravailEcoules: number;
+    joursTravailRestants: number;
+    pourcentageMois: number;
+  };
   created_at?: string;
   updated_at?: string;
 }
@@ -147,7 +176,19 @@ class EmployeeAuthService {
     options: RequestInit = {}
   ): Promise<EmployeeAuthResponse> {
     try {
-      const url = this.getEdgeFunctionUrl(endpoint);
+      // Utiliser les API routes Next.js au lieu d'appeler directement l'Edge Function
+      let url: string;
+      
+      if (endpoint === 'login') {
+        url = '/api/auth/login';
+      } else if (endpoint === 'getme') {
+        url = '/api/auth/getme';
+      } else {
+        // Pour les autres endpoints, utiliser l'Edge Function directement
+        url = this.getEdgeFunctionUrl(endpoint);
+      }
+      
+      console.log(`🔗 Appel vers: ${url}`);
       
       const response = await fetch(url, {
         headers: {
@@ -160,10 +201,11 @@ class EmployeeAuthService {
       const result = await response.json();
       
       if (!response.ok) {
+        console.error(`❌ Erreur ${response.status} pour ${endpoint}:`, result);
         return {
           success: false,
-          error: result.error || 'Erreur de requête',
-          details: result.message,
+          error: result.error || `Erreur ${response.status}: ${response.statusText}`,
+          details: result.message || result.details,
         };
       }
 
@@ -173,6 +215,7 @@ class EmployeeAuthService {
       return {
         success: false,
         error: 'Erreur de connexion au serveur',
+        details: error instanceof Error ? error.message : 'Erreur inconnue',
       };
     }
   }

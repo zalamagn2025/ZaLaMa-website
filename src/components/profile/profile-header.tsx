@@ -71,31 +71,25 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   const [displayPhotoURL, setDisplayPhotoURL] = useState<string | undefined>(employee?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined));
   const displayInitial = displayName.charAt(0).toUpperCase();
   
-  // 🔍 Debug pour voir quelle photo est utilisée
-  console.log('🖼️ ProfileHeader Debug Photo:', {
-    employeePhotoUrl: employee?.photo_url,
-    displayUserPhotoUrl: displayUser?.photo_url,
-    userPhotoURL: user && 'photoURL' in user ? user.photoURL : 'N/A',
-    finalDisplayPhotoURL: displayPhotoURL
-  });
+  // Function to format the matricule
+  const formatMatricule = (matricule: string | null | undefined) => {
+    if (!matricule) return ''; // Return empty string if no matricule
+    // If the matricule already contains "Matricule:" or "Mat:", return it as is
+    if (matricule.includes('Matricule:') || matricule.includes('Mat:')) {
+      return matricule;
+    }
+    // Otherwise, add the "Matricule:" prefix
+    return `Matricule: ${matricule}`;
+  };
 
-  // ✅ Debug pour vérifier les données
-  useEffect(() => {
-    console.log('🔍 ProfileHeader Debug:', {
-      employee: employee ? 'Présent' : 'Absent',
-      employeePhoto: employee?.photo_url,
-      finalPhotoURL: displayPhotoURL,
-      employeeKeys: employee ? Object.keys(employee) : 'Aucune donnée'
-    });
-  }, [employee, displayPhotoURL]);
+  const displayMatricule = formatMatricule(displayUser?.matricule);
 
   // ✅ Mettre à jour l'URL de la photo quand les données changent
   useEffect(() => {
-    const newPhotoURL = employee?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
-    if (newPhotoURL !== displayPhotoURL) {
-      setDisplayPhotoURL(newPhotoURL);
+    if (displayUser?.photo_url) {
+      setDisplayPhotoURL(displayUser.photo_url);
     }
-  }, [employee?.photo_url, displayUser?.photo_url, user, displayPhotoURL]);
+  }, [displayUser?.photo_url]);
 
   const handleHomeNavigation = () => {
     router.push("/");
@@ -388,41 +382,37 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Actif
                   </motion.div>
+                  {displayMatricule && (
                   <motion.div
-                    key={displayUser?.role}
+                    key={displayUser?.matricule}
                     className="z-20 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-[#FFFFFF] text-xs font-bold px-3 py-0.5 rounded-full shadow-md flex items-center gap-1"
                     whileHover={{ scale: 1.1 }}
                   >
-                    {/* <IconCrown size={12} /> */}
-                    <p>Mat:</p>
-                    <span>{displayUser?.role}</span>
+                      <span>{displayMatricule}</span>
                   </motion.div>
+                  )}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center text-gray-300">
-                  <Briefcase className="mr-2 text-[#FF671E]" />
-                  <span>{displayUser?.poste}</span>
-                </div>
-                {entreprise && (
-                  <div className="flex items-center text-gray-300">
+                {displayUser?.partner_info?.company_name && (
+                  <div className="flex items-center text-white font-medium bg-white/10 px-3 py-1 rounded-lg">
                     <Building className="mr-2 text-[#FF671E]" />
-                    <span>{entreprise.nom}</span>
+                    <span>{displayUser.partner_info.company_name}</span>
                   </div>
                 )}
                 <div className="flex items-center text-gray-300">
+                  <Briefcase className="mr-2 text-[#FF671E]" />
+                  <span>{displayUser?.poste || ''}</span>
+                </div>
+                <div className="flex items-center text-gray-300">
                   <Phone className="mr-2 text-[#FF671E]" />
-                  <span>{displayUser?.telephone}</span>
+                  <span>{displayUser?.telephone || ''}</span>
                 </div>
                 <div className="flex items-center text-gray-300">
                   <MapPin className="mr-2 text-[#FF671E]" />
-                  <span>{displayUser?.adresse}</span>
+                  <span>{displayUser?.adresse || ''}</span>
                 </div>
-                {/* <div className="flex items-center text-gray-300">
-                  <IconCalendar className="mr-2 text-[#FF671E]" />
-                  <span>crée le  {formatDate(user.dateEmbauche)}</span>
-                </div> */}
               </div>
 
               {/* <div className="flex flex-wrap gap-2 pt-1">
@@ -456,6 +446,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
               <IconBell size={20} className="text-[#FFFFFF]" />
               <span className="sr-only md:not-sr-only text-[#FFFFFF]">Notifications</span>
             </motion.button>
+            
           </motion.div>
         </div>
       </motion.div>

@@ -179,6 +179,8 @@ export default function EmployeeLoginForm() {
     return User;
   };
 
+
+
   const IdentifierIcon = getIdentifierIcon();
 
   return (
@@ -572,6 +574,8 @@ export default function EmployeeLoginForm() {
                       </AnimatePresence>
                     </div>
                   </motion.button>
+
+
 
                   {/* Minimal Divider */}
                   <div className="relative mt-2 mb-5 flex items-center">
