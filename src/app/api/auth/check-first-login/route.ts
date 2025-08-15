@@ -1,86 +1,75 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createCorsResponse, handleOptions } from '@/lib/cors';
+
+export async function OPTIONS(request: NextRequest) {
+  return handleOptions();
+}
 
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Vérification de la première connexion...');
     
-    // Créer le client Supabase
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return createCorsResponse(
+        { error: 'Token d\'authentification requis' },
+        401
+      );
+    }
 
-    // Vérifier que l'utilisateur est connecté
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    if (userError || !user) {
-      console.error('❌ Utilisateur non connecté:', userError);
-      return NextResponse.json(
-        { error: 'Vous devez être connecté pour accéder à cette ressource' },
-        { status: 401 }
+    if (!supabaseUrl) {
+      return createCorsResponse(
+        { error: 'Configuration serveur manquante' },
+        500
       );
     }
 
-    console.log('🔍 Vérification du champ require_password_change pour:', user.email);
-
-    // Vérifier le champ require_password_change dans la table admin_users
-    const { data: adminUser, error: adminError } = await supabase
-      .from('admin_users')
-      .select('require_password_change')
-      .eq('email', user.email)
-      .single();
-
-    if (adminError) {
-      console.error('❌ Erreur lors de la récupération des données admin:', adminError);
-      return NextResponse.json(
-        { error: 'Erreur lors de la vérification du statut de première connexion' },
-        { status: 500 }
-      );
-    }
-
-    if (!adminUser) {
-      console.log('⚠️ Utilisateur non trouvé dans admin_users, considéré comme première connexion');
-      return NextResponse.json(
-        { 
-          requirePasswordChange: true,
-          message: 'Première connexion détectée'
-        },
-        { status: 200 }
-      );
-    }
-
-    console.log('✅ Statut de première connexion récupéré:', adminUser.require_password_change);
-
-    return NextResponse.json(
-      { 
-        requirePasswordChange: adminUser.require_password_change || false,
-        message: adminUser.require_password_change ? 'Changement de mot de passe requis' : 'Connexion normale'
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/check-first-login`;
+    
+    console.log('🔍 Appel Edge Function check-first-login...');
+    console.log('📍 URL:', edgeFunctionUrl);
+    
+    const response = await fetch(edgeFunctionUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey || '',
       },
-      { status: 200 }
-    );
+    });
+
+    const result = await response.json();
+    
+    console.log('📋 Réponse Edge Function check-first-login:', response.status, result);
+    
+    if (!response.ok) {
+      console.error('❌ Erreur Edge Function check-first-login:', response.status, result);
+      return createCorsResponse(
+        { 
+          error: result.error || 'Erreur lors de la vérification de la première connexion',
+          details: result.message || result.details,
+          status: response.status
+        },
+        response.status
+      );
+    }
+
+    console.log('✅ Vérification de première connexion réussie');
+    return createCorsResponse({
+      success: true,
+      requirePasswordChange: result.requirePasswordChange || false,
+      message: result.message || 'Vérification terminée'
+    });
 
   } catch (error: unknown) {
     console.error('💥 Erreur lors de la vérification de la première connexion:', error);
-    
-    return NextResponse.json(
-      { error: 'Erreur lors de la vérification de la première connexion' },
-      { status: 500 }
+    return createCorsResponse(
+      { error: 'Erreur interne du serveur' },
+      500
     );
   }
 } 

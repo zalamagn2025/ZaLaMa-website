@@ -68,9 +68,18 @@ export default function ProfilePage() {
       try {
         console.log('🔍 Vérification de la première connexion...')
         
+        const accessToken = localStorage.getItem('employee_access_token')
+        if (!accessToken) {
+          console.log('⚠️ Aucun token trouvé, skip de la vérification')
+          return
+        }
+        
         const response = await fetch('/api/auth/check-first-login', {
           method: 'GET',
-          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
         })
 
         if (response.ok) {
