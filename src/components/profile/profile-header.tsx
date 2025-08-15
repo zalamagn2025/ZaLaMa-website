@@ -68,7 +68,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   const displayName = getDisplayName();
   const displayEmail = displayUser?.email || 'Email non disponible';
   // ✅ Utiliser photo_url avec priorité : contexte AuthContext > user props
-  const displayPhotoURL = employee?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
+  const [displayPhotoURL, setDisplayPhotoURL] = useState<string | undefined>(employee?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined));
   const displayInitial = displayName.charAt(0).toUpperCase();
   
   // 🔍 Debug pour voir quelle photo est utilisée
@@ -88,6 +88,14 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
       employeeKeys: employee ? Object.keys(employee) : 'Aucune donnée'
     });
   }, [employee, displayPhotoURL]);
+
+  // ✅ Mettre à jour l'URL de la photo quand les données changent
+  useEffect(() => {
+    const newPhotoURL = employee?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
+    if (newPhotoURL !== displayPhotoURL) {
+      setDisplayPhotoURL(newPhotoURL);
+    }
+  }, [employee?.photo_url, displayUser?.photo_url, user, displayPhotoURL]);
 
   const handleHomeNavigation = () => {
     router.push("/");
@@ -335,12 +343,23 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                   quality={85} // ✅ Qualité optimisée
                   placeholder="blur" // ✅ Placeholder pour améliorer l'UX
                   blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                  unoptimized={displayPhotoURL?.includes('?t=')} // ✅ Désactiver l'optimisation Next.js pour les URLs avec cache buster
+                  unoptimized={displayPhotoURL?.includes('?t=') || displayPhotoURL?.includes('supabase.co')} // ✅ Désactiver l'optimisation pour les URLs avec cache buster ou Supabase
                   onError={(e) => {
                     console.warn('⚠️ Erreur chargement image:', displayPhotoURL);
                     // Fallback vers l'avatar par défaut en cas d'erreur
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
+                    // Forcer le re-render pour afficher l'avatar par défaut
+                    setDisplayPhotoURL(null);
+                  }}
+                  onLoad={(e) => {
+                    // Vérifier que l'image s'est bien chargée
+                    const target = e.target as HTMLImageElement;
+                    if (target.naturalWidth === 0 || target.naturalHeight === 0) {
+                      console.warn('⚠️ Image invalide détectée:', displayPhotoURL);
+                      target.style.display = 'none';
+                      setDisplayPhotoURL(null);
+                    }
                   }}
                 />
               ) : (
