@@ -4,11 +4,11 @@ import { Hero } from "@/components/hero";
 function HeroDemo() {
   return (
     <Hero
-      title="Devenez partenaire ZaLaMa"
+      title="Devenez client ZaLaMa"
       subtitle="Rejoignez notre réseau et offrez à vos employés des solutions financières innovantes, simples et sécurisées. Ensemble, faisons évoluer le bien-être financier en entreprise."
       actions={[
         {
-          label: "Devenir partenaire",
+          label: "Devenir client",
           href: "/partnership/formulaire",
           variant: "default"
         },

@@ -25,7 +25,7 @@ const footerLinks: FooterSection[] = [
 			{ title: 'Acceuil', href: '/' },
 			{ title: 'A propos', href: '/about' },
 			{ title: 'Nos Services', href: '/services' },
-			{ title: 'Partenariat', href: '/partnership' },
+			{ title: 'Client', href: '/partnership' },
 			{ title: 'Contact', href: '/contact' },
 		],
 	},
@@ -41,10 +41,10 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Services',
 		links: [
-			{ title: 'Avance sur salaire', href: '/avance-sur-salaire' },
+			{ title: 'Avance sur salaire', href: '/services' },
 			// { title: 'Prêt P2P', href: '/services' },
-			{ title: 'Conseil & Gestion', href: '/conseil-financier' },
-			{ title: 'Marketing', href: '/marketing' },
+			{ title: 'Conseil & Gestion', href: '/services' },
+			{ title: 'Marketing', href: '/services' },
 			// { title: 'Payement salaire & pension', href: '/services' },
 		],
 	},
@@ -118,7 +118,7 @@ export function Footer() {
 											) : (
 												<a
 													href={link.href}
-													target={link.href.includes('#') ? undefined : "_blank"}
+													target={link.href.startsWith('http') ? '_blank' : undefined}
 													className="hover:text-foreground inline-flex items-center transition-all duration-300"
 													onClick={(e) => {
 														// Pour les liens internes avec #, on fait un scroll fluide

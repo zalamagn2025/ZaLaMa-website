@@ -39,7 +39,7 @@ const teamMembers: TeamMember[] = [
   },
   {
     name: "Mory Koulibaly",
-    role: "Co-fondateur & Directeur général",
+    role: "Co-fondateur & Responsable Projet",
     description:
       "Fort d'une expérience technique acquise à travers des projets innovants tels que Kambily et Findaara, il dirige ZaLaMa avec rigueur et vision. Aujourd'hui, il fait partie de cette nouvelle génération qui construit activement l'avenir du digital en Guinée.",
     image: "/images/mory.webp",
@@ -54,7 +54,7 @@ const teamMembers: TeamMember[] = [
   },
   {
     name: "Karfalla Diaby",
-    role: "Co-Fontdateur & Directeur des Opérations",
+    role: "Co-Fontdateur & Responsable des Opérations",
     description:
       "Designer, developpeur, stratège opérationnel et créateur de solutions, il transforme les idées en produits concrets. À la croisée du design, de la tech et de l'organisation, il pilote les opérations avec une vision claire : construire des projets utiles, agiles et profondément ancrés dans la réalité Guinéenne.",
     image: "/images/karfalladiaby.webp",
@@ -70,7 +70,7 @@ const teamMembers: TeamMember[] = [
   },
   {
     name: "Jean Keloua Ouamouno",
-    role: "Cofondateur & Développeur",
+    role: "Cofondateur & Responsable Innovation",
     description:
       "Conçoit des solutions web et mobiles robustes, centrées sur l'impact et la performance. Expert en Symfony, Laravel, Next.js, Django et Expo, il allie maîtrise technique et vision stratégique.Chez Zalama, il contribue activement à l'innovation numérique en Guinée...",
     image: "/images/jeanos.webp",
@@ -86,7 +86,7 @@ const teamMembers: TeamMember[] = [
   },
   {
     name: "Mamadouba Youla",
-    role: "Co-fondateur & Responsable Client",
+    role: "Co-fondateur & Responsable Marketing",
     description:
       "Il garantit une expérience client exceptionnelle, en créant des liens forts avec la communauté Zalama. Expert en développement web et mobile, passionné par l'intelligence artificielle, il incarne la synergie entre la technologie et la relation client au sein de Zalama.",
     image: "/images/youla.webp",
@@ -94,7 +94,7 @@ const teamMembers: TeamMember[] = [
     email: "mryoula@zalamagn.com",
     socials: [
       { name: 'GitHub', url: 'https://github.com/YoulaMamadouba', icon: 'Github' },
-      // { name: 'LinkedIn', url: 'https://www.linkedin.com/in/jeanos-ouamouno-183a09356/', icon: 'Linkedin' },
+      { name: 'LinkedIn', url: 'https://www.linkedin.com/in/mamadouba-youla-3a7aab36a/', icon: 'Linkedin' },
       // { name: 'Behance', url: 'https://behance.net/example', icon: 'Behance' },
       { name: 'Facebook', url: 'https://www.facebook.com/profile.php?id=100086278847241', icon: 'Facebook' },
       { name: 'Mail', url: 'mailto:mryoula@zalamagn.com', icon: 'Mail' },
