@@ -11,7 +11,7 @@ export function HeroSection() {
   };
 
   const handleSecondaryButtonClick = () => {
-    router.push('/contact');
+    router.push('/partnership/formulaire');
   };
     return (
         <>
@@ -43,9 +43,9 @@ export function HeroSection() {
                             </li>
                           </ul>
                         }
-                        primaryButtonText="Commencer maintenant"
+                        primaryButtonText="Se connecter"
                         primaryButtonAction={handlePrimaryButtonClick}
-                        secondaryButtonText="Nous contacter"
+                        secondaryButtonText="Devenir client"
                         secondaryButtonAction={handleSecondaryButtonClick}
                         imageSrc="/images/ZaLaMawebappMockup.png" // Example image
                         waveColor1="rgba(255, 103, 30, 0.30)"
