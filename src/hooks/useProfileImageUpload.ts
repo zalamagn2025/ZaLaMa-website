@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useEmployeeAuth } from '../contexts/EmployeeAuthContext';
 import { ImageUploadService } from '../services/imageUploadService';
 import { toast } from 'sonner';
 
@@ -20,7 +20,7 @@ export function useProfileImageUpload(
   initialPhotoURL?: string, 
   userDataOverride?: any
 ): UseProfileImageUploadReturn {
-  const { updateUserData, userData: contextUserData, loading, refreshUserData } = useAuth();
+  const { employee: contextUserData, loading } = useEmployeeAuth();
   
   // ✅ Utiliser les données passées en paramètre en priorité, sinon le contexte
   const userData = userDataOverride || contextUserData;
@@ -43,15 +43,11 @@ export function useProfileImageUpload(
       } : 'Aucune donnée',
     });
 
-    // Forcer le rechargement des données si userData est null et qu'on n'est pas en cours de chargement
+    // Note: Le nouveau contexte EmployeeAuthContext gère automatiquement le chargement des données
     if (!userData && !loading) {
-      console.log('🔄 Tentative de rechargement des données utilisateur...');
-      // Seulement si on a un currentUser dans le contexte
-      refreshUserData().catch(error => {
-        console.warn('⚠️ Impossible de recharger les données utilisateur:', error.message);
-      });
+      console.log('⚠️ Aucune donnée utilisateur disponible');
     }
-  }, [userData, loading, refreshUserData]);
+  }, [userData, loading]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,42 +94,27 @@ export function useProfileImageUpload(
     if (loading) {
       console.log('⏳ Attente du chargement des données...');
       setImageError('Veuillez patienter pendant le chargement des données...');
-      return;
+      return false;
     }
 
     if (!userData) {
       console.error('❌ Aucune donnée utilisateur disponible');
       setImageError('Vous devez être connecté pour modifier votre photo de profil. Veuillez vous connecter.');
-      return;
+      return false;
+    }
+
+    if (!avatarFile) {
+      setImageError('Veuillez sélectionner une image avant d\'enregistrer');
+      return false;
     }
 
     // ✅ Support pour différentes structures de données
     const employeeId = userData.employeId || userData.id;
 
-    console.log('🔍 Debug handleImageUpload:', {
-      avatarFile: avatarFile ? 'Fichier sélectionné' : 'Aucun fichier',
-      loading,
-      userData: userData ? 'Données employee présentes' : 'Aucune donnée employee',
-      employeeId,
-      userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée',
-      userDataValues: userData ? {
-        employeId: userData.employeId || userData.id,
-        nom: userData.nom,
-        prenom: userData.prenom,
-        user_id: userData.user_id,
-        id: userData.id
-      } : 'Aucune donnée',
-    });
-
-    if (!avatarFile) {
-      setImageError('Veuillez sélectionner une image avant d\'enregistrer');
-      return;
-    }
-
     if (!employeeId) {
       console.error('❌ Aucun employee ID trouvé dans les données employee:', userData);
       setImageError('Impossible de récupérer l\'identifiant employee. Veuillez vous reconnecter.');
-      return;
+      return false;
     }
 
     setIsUploading(true);
@@ -143,44 +124,24 @@ export function useProfileImageUpload(
       console.log('🚀 Début de l\'upload de l\'image de profil...');
       console.log('👤 Employee ID utilisé:', employeeId);
 
+      // Utiliser le service d'upload existant pour l'instant
       const result = await ImageUploadService.uploadProfileImage(avatarFile, employeeId);
 
       if (result.success && result.url) {
-        console.log('✅ Upload réussi, mise à jour du contexte...');
-
-        // ✅ Mettre à jour l'aperçu immédiatement
+        console.log('✅ Upload réussi');
         setAvatarPreview(result.url);
-
-        // ✅ Forcer le rechargement des données depuis la base
-        try {
-          await refreshUserData();
-          console.log('✅ Données utilisateur rechargées depuis la base');
-        } catch (error) {
-          console.warn('⚠️ Erreur rechargement données:', error);
-          // Fallback : essayer updateUserData si refreshUserData échoue
-          try {
-            await updateUserData({ photo_url: result.url });
-            console.log('✅ Données mises à jour via updateUserData');
-          } catch (updateError) {
-            console.warn('⚠️ Erreur updateUserData aussi:', updateError);
-            console.log('🔄 Forcement d\'un rechargement de page dans 2 secondes...');
-            // Dernier recours : recharger la page pour voir la nouvelle photo
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          }
-        }
-
         toast.success('Photo de profil mise à jour avec succès !');
         setAvatarFile(null);
-        console.log('✅ Processus de mise à jour terminé avec succès');
+        return true;
       } else {
         console.error('❌ Erreur lors de l\'upload:', result.error);
         setImageError(result.error || 'Une erreur est survenue lors du téléversement');
+        return false;
       }
     } catch (error) {
       console.error('💥 Erreur lors du téléversement de l\'image:', error);
       setImageError('Une erreur inattendue est survenue');
+      return false;
     } finally {
       setIsUploading(false);
     }

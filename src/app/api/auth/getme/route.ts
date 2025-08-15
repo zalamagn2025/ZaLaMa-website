@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createCorsResponse, handleOptions } from '@/lib/cors';
 
 export async function OPTIONS(request: NextRequest) {
@@ -7,12 +7,12 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Vérification de la première connexion...');
+    console.log('👤 Récupération du profil employé...');
     
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return createCorsResponse(
-        { error: 'Token d\'authentification requis' },
+        { success: false, error: 'Token d\'authentification requis' },
         401
       );
     }
@@ -23,14 +23,14 @@ export async function GET(request: NextRequest) {
     
     if (!supabaseUrl) {
       return createCorsResponse(
-        { error: 'Configuration serveur manquante' },
+        { success: false, error: 'Configuration serveur manquante' },
         500
       );
     }
 
-    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/check-first-login`;
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/getme`;
     
-    console.log('🔍 Appel Edge Function check-first-login...');
+    console.log('🔍 Appel Edge Function getme...');
     console.log('📍 URL:', edgeFunctionUrl);
     
     const response = await fetch(edgeFunctionUrl, {
@@ -44,13 +44,14 @@ export async function GET(request: NextRequest) {
 
     const result = await response.json();
     
-    console.log('📋 Réponse Edge Function check-first-login:', response.status, result);
+    console.log('📋 Réponse Edge Function getme:', response.status, result);
     
     if (!response.ok) {
-      console.error('❌ Erreur Edge Function check-first-login:', response.status, result);
+      console.error('❌ Erreur Edge Function getme:', response.status, result);
       return createCorsResponse(
         { 
-          error: result.error || 'Erreur lors de la vérification de la première connexion',
+          success: false, 
+          error: result.error || 'Erreur lors de la récupération du profil',
           details: result.message || result.details,
           status: response.status
         },
@@ -58,18 +59,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('✅ Vérification de première connexion réussie');
+    console.log('✅ Profil récupéré avec succès');
     return createCorsResponse({
       success: true,
-      requirePasswordChange: result.requirePasswordChange || false,
-      message: result.message || 'Vérification terminée'
+      message: 'Profil employé récupéré avec succès',
+      data: result.data
     });
 
   } catch (error: unknown) {
-    console.error('💥 Erreur lors de la vérification de la première connexion:', error);
+    console.error('💥 Erreur lors de la récupération du profil:', error);
     return createCorsResponse(
-      { error: 'Erreur interne du serveur' },
+      { success: false, error: 'Erreur interne du serveur' },
       500
     );
   }
-} 
+}

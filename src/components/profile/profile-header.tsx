@@ -1,7 +1,7 @@
 "use client";
 
 import { IconBell, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash } from "@tabler/icons-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useEmployeeAuth } from "../../contexts/EmployeeAuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,7 +24,7 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
-  const { userData } = useAuth(); // ✅ Utiliser uniquement userData du contexte
+  const { employee } = useEmployeeAuth(); // ✅ Utiliser employee du nouveau contexte
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -37,8 +37,8 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   ]);
   const [showDetails, setShowDetails] = useState<Notification | null>(null);
 
-  // ✅ Utiliser les données du contexte AuthContext en priorité, sinon fallback sur les props
-  const displayUser = (userData || user) as any;
+  // ✅ Utiliser les données du contexte EmployeeAuthContext en priorité, sinon fallback sur les props
+  const displayUser = (employee || user) as any;
   
   // Construire le nom complet
   const getDisplayName = () => {
@@ -68,26 +68,28 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   const displayName = getDisplayName();
   const displayEmail = displayUser?.email || 'Email non disponible';
   // ✅ Utiliser photo_url avec priorité : contexte AuthContext > user props
-  const displayPhotoURL = userData?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined);
+  const [displayPhotoURL, setDisplayPhotoURL] = useState<string | undefined>(employee?.photo_url || displayUser?.photo_url || (user && 'photoURL' in user ? user.photoURL : undefined));
   const displayInitial = displayName.charAt(0).toUpperCase();
   
-  // 🔍 Debug pour voir quelle photo est utilisée
-  console.log('🖼️ ProfileHeader Debug Photo:', {
-    userDataPhotoUrl: userData?.photo_url,
-    displayUserPhotoUrl: displayUser?.photo_url,
-    userPhotoURL: user && 'photoURL' in user ? user.photoURL : 'N/A',
-    finalDisplayPhotoURL: displayPhotoURL
-  });
+  // Function to format the matricule
+  const formatMatricule = (matricule: string | null | undefined) => {
+    if (!matricule) return ''; // Return empty string if no matricule
+    // If the matricule already contains "Matricule:" or "Mat:", return it as is
+    if (matricule.includes('Matricule:') || matricule.includes('Mat:')) {
+      return matricule;
+    }
+    // Otherwise, add the "Matricule:" prefix
+    return `Matricule: ${matricule}`;
+  };
 
-  // ✅ Debug pour vérifier les données
+  const displayMatricule = formatMatricule(displayUser?.matricule);
+
+  // ✅ Mettre à jour l'URL de la photo quand les données changent
   useEffect(() => {
-    console.log('🔍 ProfileHeader Debug:', {
-      userData: userData ? 'Présent' : 'Absent',
-      userDataPhoto: userData?.photo_url,
-      finalPhotoURL: displayPhotoURL,
-      userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée'
-    });
-  }, [userData, displayPhotoURL]);
+    if (displayUser?.photo_url) {
+      setDisplayPhotoURL(displayUser.photo_url);
+    }
+  }, [displayUser?.photo_url]);
 
   const handleHomeNavigation = () => {
     router.push("/");
@@ -335,12 +337,23 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                   quality={85} // ✅ Qualité optimisée
                   placeholder="blur" // ✅ Placeholder pour améliorer l'UX
                   blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                  unoptimized={displayPhotoURL?.includes('?t=')} // ✅ Désactiver l'optimisation Next.js pour les URLs avec cache buster
+                  unoptimized={displayPhotoURL?.includes('?t=') || displayPhotoURL?.includes('supabase.co')} // ✅ Désactiver l'optimisation pour les URLs avec cache buster ou Supabase
                   onError={(e) => {
                     console.warn('⚠️ Erreur chargement image:', displayPhotoURL);
                     // Fallback vers l'avatar par défaut en cas d'erreur
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
+                    // Forcer le re-render pour afficher l'avatar par défaut
+                    setDisplayPhotoURL(null);
+                  }}
+                  onLoad={(e) => {
+                    // Vérifier que l'image s'est bien chargée
+                    const target = e.target as HTMLImageElement;
+                    if (target.naturalWidth === 0 || target.naturalHeight === 0) {
+                      console.warn('⚠️ Image invalide détectée:', displayPhotoURL);
+                      target.style.display = 'none';
+                      setDisplayPhotoURL(null);
+                    }
                   }}
                 />
               ) : (
@@ -369,41 +382,37 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Actif
                   </motion.div>
+                  {displayMatricule && (
                   <motion.div
-                    key={displayUser?.role}
+                    key={displayUser?.matricule}
                     className="z-20 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] text-[#FFFFFF] text-xs font-bold px-3 py-0.5 rounded-full shadow-md flex items-center gap-1"
                     whileHover={{ scale: 1.1 }}
                   >
-                    {/* <IconCrown size={12} /> */}
-                    <p>Mat:</p>
-                    <span>{displayUser?.role}</span>
+                      <span>{displayMatricule}</span>
                   </motion.div>
+                  )}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center text-gray-300">
-                  <Briefcase className="mr-2 text-[#FF671E]" />
-                  <span>{displayUser?.poste}</span>
-                </div>
-                {entreprise && (
-                  <div className="flex items-center text-gray-300">
+                {displayUser?.partner_info?.company_name && (
+                  <div className="flex items-center text-white font-medium bg-white/10 px-3 py-1 rounded-lg">
                     <Building className="mr-2 text-[#FF671E]" />
-                    <span>{entreprise.nom}</span>
+                    <span>{displayUser.partner_info.company_name}</span>
                   </div>
                 )}
                 <div className="flex items-center text-gray-300">
+                  <Briefcase className="mr-2 text-[#FF671E]" />
+                  <span>{displayUser?.poste || ''}</span>
+                </div>
+                <div className="flex items-center text-gray-300">
                   <Phone className="mr-2 text-[#FF671E]" />
-                  <span>{displayUser?.telephone}</span>
+                  <span>{displayUser?.telephone || ''}</span>
                 </div>
                 <div className="flex items-center text-gray-300">
                   <MapPin className="mr-2 text-[#FF671E]" />
-                  <span>{displayUser?.adresse}</span>
+                  <span>{displayUser?.adresse || ''}</span>
                 </div>
-                {/* <div className="flex items-center text-gray-300">
-                  <IconCalendar className="mr-2 text-[#FF671E]" />
-                  <span>crée le  {formatDate(user.dateEmbauche)}</span>
-                </div> */}
               </div>
 
               {/* <div className="flex flex-wrap gap-2 pt-1">
@@ -437,6 +446,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
               <IconBell size={20} className="text-[#FFFFFF]" />
               <span className="sr-only md:not-sr-only text-[#FFFFFF]">Notifications</span>
             </motion.button>
+            
           </motion.div>
         </div>
       </motion.div>

@@ -5,7 +5,7 @@ export async function OPTIONS(request: NextRequest) {
   return handleOptions(request);
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { current_password, new_password, confirm_password } = body;
+    const { id, note, commentaire, type_retour } = body;
 
-    if (!current_password || !new_password || !confirm_password) {
+    if (!id || !note || !commentaire || !type_retour) {
       return createCorsResponse(
-        { error: 'Ancien mot de passe, nouveau mot de passe et confirmation requis' },
+        { error: 'ID, note, commentaire et type de retour requis' },
         400,
         request
       );
@@ -36,20 +36,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/employee-auth/change-password`, {
-      method: 'POST',
+    const response = await fetch(`${supabaseUrl}/functions/v1/employee-avis/update`, {
+      method: 'PUT',
       headers: {
         'Authorization': authHeader,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ current_password, new_password, confirm_password }),
+      body: JSON.stringify({ id, note, commentaire, type_retour }),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
       return createCorsResponse(
-        { error: result.error || 'Erreur lors du changement de mot de passe' },
+        { error: result.error || 'Erreur lors de la mise à jour de l\'avis' },
         response.status,
         request
       );
@@ -57,11 +57,11 @@ export async function POST(request: NextRequest) {
 
     return createCorsResponse(result, 200, request);
   } catch (error) {
-    console.error('❌ Erreur dans la route /api/auth/change-password:', error);
+    console.error('❌ Erreur dans la route /api/avis/update:', error);
     return createCorsResponse(
       { error: 'Erreur interne du serveur' },
       500,
       request
     );
   }
-} 
+}

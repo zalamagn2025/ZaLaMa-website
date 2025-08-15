@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { current_password, new_password, confirm_password } = body;
+    const { partner_id, note, commentaire, type_retour } = body;
 
-    if (!current_password || !new_password || !confirm_password) {
+    if (!note || !commentaire || !type_retour) {
       return createCorsResponse(
-        { error: 'Ancien mot de passe, nouveau mot de passe et confirmation requis' },
+        { error: 'Note, commentaire et type de retour requis' },
         400,
         request
       );
@@ -36,32 +36,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/employee-auth/change-password`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/employee-avis/create`, {
       method: 'POST',
       headers: {
         'Authorization': authHeader,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ current_password, new_password, confirm_password }),
+      body: JSON.stringify({ partner_id, note, commentaire, type_retour }),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
       return createCorsResponse(
-        { error: result.error || 'Erreur lors du changement de mot de passe' },
+        { error: result.error || 'Erreur lors de la création de l\'avis' },
         response.status,
         request
       );
     }
 
-    return createCorsResponse(result, 200, request);
+    return createCorsResponse(result, 201, request);
   } catch (error) {
-    console.error('❌ Erreur dans la route /api/auth/change-password:', error);
+    console.error('❌ Erreur dans la route /api/avis/create:', error);
     return createCorsResponse(
       { error: 'Erreur interne du serveur' },
       500,
       request
     );
   }
-} 
+}
