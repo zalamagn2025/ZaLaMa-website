@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 const MAX_PASSWORD_ATTEMPTS = 5
@@ -7,16 +7,84 @@ const LOCKOUT_DURATION_MINUTES = 15
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    console.log('🔐 Début de la vérification du mot de passe...');
     
-    // Vérifier que l'utilisateur est connecté
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // Vérifier l'authentification via token Bearer (pour les employés)
+    const authHeader = request.headers.get('authorization')
+    let employeeEmail: string | null = null
     
-    if (sessionError || !session?.user) {
-      return NextResponse.json(
-        { success: false, message: 'Session utilisateur non trouvée' },
-        { status: 401 }
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '')
+      console.log('🔑 Token Bearer détecté, validation en cours...');
+      
+      // Valider le token en appelant l'Edge Function
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        
+        if (!supabaseUrl) {
+          return NextResponse.json(
+            { success: false, message: 'Configuration serveur manquante' },
+            { status: 500 }
+          )
+        }
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/employee-auth/getme`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey || '',
+          },
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            employeeEmail = result.data.email
+            console.log('✅ Email employé récupéré:', employeeEmail);
+          }
+        } else {
+          console.log('❌ Échec de validation du token:', response.status);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la validation du token:', error)
+      }
+    } else {
+      console.log('🔑 Pas de token Bearer, utilisation de l\'authentification Supabase');
+    }
+    
+    // Si pas de token valide, essayer l'authentification Supabase classique
+    let userEmail: string | null = null
+    if (!employeeEmail) {
+      const cookieStore = await cookies()
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value;
+            },
+            set(name: string, value: string, options: any) {
+              cookieStore.set({ name, value, ...options });
+            },
+            remove(name: string, options: any) {
+              cookieStore.set({ name, value: '', ...options });
+            },
+          },
+        }
       )
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session?.user) {
+        return NextResponse.json(
+          { success: false, message: 'Session utilisateur non trouvée' },
+          { status: 401 }
+        )
+      }
+      userEmail = session.user.email || null
     }
 
     const { password } = await request.json()
@@ -28,13 +96,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Utiliser l'email de l'employé ou de l'utilisateur Supabase
+    const emailToVerify = employeeEmail || userEmail
+    
+    console.log('📧 Email à vérifier:', emailToVerify);
+    
+    if (!emailToVerify) {
+      return NextResponse.json(
+        { success: false, message: 'Email utilisateur non trouvé' },
+        { status: 400 }
+      )
+    }
+
+    // Créer une instance Supabase pour la vérification du mot de passe
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    )
+
     // Vérifier le mot de passe de l'utilisateur
+    console.log('🔐 Tentative de vérification du mot de passe pour:', emailToVerify);
+    
     const { data: { user }, error: passwordError } = await supabase.auth.signInWithPassword({
-      email: session.user.email!,
+      email: emailToVerify,
       password: password
     })
 
     if (passwordError || !user) {
+      console.log('❌ Échec de vérification du mot de passe:', passwordError);
       return NextResponse.json(
         { 
           success: false, 
@@ -43,6 +146,8 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    console.log('✅ Vérification du mot de passe réussie pour:', emailToVerify);
 
     // Mot de passe correct
     return NextResponse.json(

@@ -42,6 +42,17 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       // Vérifier si un token d'accès existe (utiliser la même clé que le service)
       const accessToken = localStorage.getItem('employee_access_token');
       if (!accessToken) {
+        console.log('🔍 Aucun token d\'accès trouvé dans le localStorage');
+        setEmployee(null);
+        setIsAuthenticated(false);
+        return;
+      }
+
+      // Vérifier que le token n'est pas vide ou invalide
+      if (accessToken.trim() === '' || accessToken === 'null' || accessToken === 'undefined') {
+        console.log('🔍 Token d\'accès invalide détecté, nettoyage...');
+        localStorage.removeItem('employee_access_token');
+        localStorage.removeItem('employee_refresh_token');
         setEmployee(null);
         setIsAuthenticated(false);
         return;
@@ -51,16 +62,51 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       const response = await employeeAuthService.getProfile(accessToken);
       
       if (response.success && response.data) {
-        setEmployee(response.data);
+        // Adapter les données du profil pour correspondre au type EmployeeData
+        const employeeData: EmployeeData = {
+          id: response.data.id,
+          user_id: response.data.user_id,
+          nom: response.data.nom,
+          prenom: response.data.prenom,
+          nomComplet: `${response.data.prenom} ${response.data.nom}`,
+          telephone: response.data.telephone,
+          email: response.data.email,
+          genre: response.data.genre || '',
+          adresse: response.data.adresse,
+          poste: response.data.poste,
+          role: response.data.role,
+          matricule: response.data.matricule,
+          type_contrat: response.data.type_contrat,
+          salaire_net: response.data.salaire_net,
+          date_embauche: response.data.date_embauche,
+          photo_url: response.data.photo_url,
+          actif: response.data.actif,
+          partner_id: response.data.partner_id,
+          partner_info: response.data.partner_info,
+          financial: response.data.financial,
+          workCalendar: response.data.workCalendar,
+          created_at: response.data.created_at,
+          updated_at: response.data.updated_at,
+        };
+        
+        setEmployee(employeeData);
         setIsAuthenticated(true);
         console.log('✅ Profil employé chargé dans le contexte:', response.data.nom, response.data.prenom);
       } else {
         setEmployee(null);
         setIsAuthenticated(false);
         console.warn('⚠️ Aucun profil trouvé ou erreur:', response.error);
-        // Nettoyer le token si aucun profil n'est trouvé
+        
+        // Si c'est une erreur 401 (token invalide), nettoyer les tokens
+        if (response.error && (
+          response.error.includes('401') || 
+          response.error.includes('Token') || 
+          response.error.includes('Unauthorized')
+        )) {
+          console.log('🔒 Token invalide détecté, nettoyage de la session...');
         localStorage.removeItem('employee_access_token');
         localStorage.removeItem('employee_refresh_token');
+        }
       }
     } catch (err) {
       console.error('❌ Erreur lors du chargement du profil:', err);
@@ -167,9 +213,37 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
         // Seulement vérifier si on n'a pas déjà un employé chargé
         if (!employee && employeeAuthService.isAuthenticated()) {
           console.log('🔄 Vérification périodique du statut d\'authentification...');
-          const profile = await employeeAuthService.getProfile();
-          if (profile) {
-            setEmployee(profile);
+          const accessToken = localStorage.getItem('employee_access_token');
+          if (accessToken) {
+            const response = await employeeAuthService.getProfile(accessToken);
+            if (response.success && response.data) {
+                             // Adapter les données du profil pour correspondre au type EmployeeData
+               const employeeData: EmployeeData = {
+                 id: response.data.id,
+                 user_id: response.data.user_id,
+                 nom: response.data.nom,
+                 prenom: response.data.prenom,
+                 nomComplet: `${response.data.prenom} ${response.data.nom}`,
+                 telephone: response.data.telephone,
+                 email: response.data.email,
+                 genre: response.data.genre || '',
+                 adresse: response.data.adresse,
+                 poste: response.data.poste,
+                 role: response.data.role,
+                 matricule: response.data.matricule,
+                 type_contrat: response.data.type_contrat,
+                 salaire_net: response.data.salaire_net,
+                 date_embauche: response.data.date_embauche,
+                 photo_url: response.data.photo_url,
+                 actif: response.data.actif,
+                 partner_id: response.data.partner_id,
+                 partner_info: response.data.partner_info,
+                 financial: response.data.financial,
+                 workCalendar: response.data.workCalendar,
+                 created_at: response.data.created_at,
+                 updated_at: response.data.updated_at,
+               };
+              setEmployee(employeeData);
             setIsAuthenticated(true);
             console.log('✅ Profil récupéré lors de la vérification périodique');
           } else {
@@ -178,6 +252,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
             setIsAuthenticated(false);
             await employeeAuthService.logout();
             console.log('🔒 Token invalide détecté, session nettoyée');
+            }
           }
         }
       } catch (error) {
@@ -199,6 +274,19 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       employee: employee ? 'Présent' : 'Absent',
       employeeName: employee ? `${employee.prenom} ${employee.nom}` : 'Aucun',
       employeeId: employee?.id,
+      employeeData: employee ? {
+        id: employee.id,
+        user_id: employee.user_id,
+        nom: employee.nom,
+        prenom: employee.prenom,
+        email: employee.email,
+        poste: employee.poste,
+        type_contrat: employee.type_contrat,
+        salaire_net: employee.salaire_net,
+        partner_info: employee.partner_info,
+        financial: employee.financial,
+        workCalendar: employee.workCalendar,
+      } : 'Aucune donnée',
       loading,
       isAuthenticated,
       error: error || 'Aucune erreur'

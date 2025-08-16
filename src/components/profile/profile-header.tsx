@@ -344,7 +344,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                     // Forcer le re-render pour afficher l'avatar par défaut
-                    setDisplayPhotoURL(null);
+                    setDisplayPhotoURL(undefined);
                   }}
                   onLoad={(e) => {
                     // Vérifier que l'image s'est bien chargée
@@ -352,7 +352,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
                     if (target.naturalWidth === 0 || target.naturalHeight === 0) {
                       console.warn('⚠️ Image invalide détectée:', displayPhotoURL);
                       target.style.display = 'none';
-                      setDisplayPhotoURL(null);
+                      setDisplayPhotoURL(undefined);
                     }
                   }}
                 />
