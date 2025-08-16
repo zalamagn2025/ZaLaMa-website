@@ -1,153 +1,67 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { handleOptions, createCorsResponse } from '@/lib/cors';
 
-interface ChangePasswordData {
-  currentPassword: string;
-  newPassword: string;
+export async function OPTIONS(request: NextRequest) {
+  return handleOptions(request);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔑 Demande de changement de mot de passe...');
-    
-    const body: ChangePasswordData = await request.json();
-    const { currentPassword, newPassword } = body;
-
-    // Validation des données
-    if (!currentPassword || !newPassword) {
-      return NextResponse.json(
-        { error: 'Ancien mot de passe et nouveau mot de passe requis' },
-        { status: 400 }
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      return createCorsResponse(
+        { error: 'Token d\'autorisation requis' },
+        401,
+        request
       );
     }
 
-    // Validation du nouveau mot de passe
-    if (newPassword.length < 8) {
-      return NextResponse.json(
-        { error: 'Le nouveau mot de passe doit contenir au moins 8 caractères' },
-        { status: 400 }
+    const body = await request.json();
+    const { current_password, new_password, confirm_password } = body;
+
+    if (!current_password || !new_password || !confirm_password) {
+      return createCorsResponse(
+        { error: 'Ancien mot de passe, nouveau mot de passe et confirmation requis' },
+        400,
+        request
       );
     }
 
-    // Vérifier que le nouveau mot de passe est différent de l'ancien
-    if (currentPassword === newPassword) {
-      return NextResponse.json(
-        { error: 'Le nouveau mot de passe doit être différent de l\'ancien' },
-        { status: 400 }
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      return createCorsResponse(
+        { error: 'Configuration Supabase manquante' },
+        500,
+        request
       );
     }
 
-    console.log('🔍 Changement du mot de passe avec Supabase Auth...');
-
-    // Créer le client Supabase
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
-
-    // Vérifier que l'utilisateur est connecté
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      console.error('❌ Utilisateur non connecté:', userError);
-      return NextResponse.json(
-        { error: 'Vous devez être connecté pour changer votre mot de passe' },
-        { status: 401 }
-      );
-    }
-
-    // Vérifier l'ancien mot de passe en tentant une reconnexion
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email!,
-      password: currentPassword
-    });
-
-    if (signInError) {
-      console.error('❌ Ancien mot de passe incorrect:', signInError);
-      return NextResponse.json(
-        { error: 'L\'ancien mot de passe est incorrect' },
-        { status: 400 }
-      );
-    }
-
-    // Changer le mot de passe
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-
-    if (updateError) {
-      console.error('❌ Erreur Supabase lors du changement:', updateError);
-      
-      // Gestion des erreurs Supabase Auth spécifiques
-      let errorMessage = 'Erreur lors du changement de mot de passe';
-      
-      switch (updateError.message) {
-        case 'Password should be at least 6 characters':
-          errorMessage = 'Le mot de passe doit contenir au moins 6 caractères';
-          break;
-        case 'Password is too weak':
-          errorMessage = 'Le mot de passe est trop faible';
-          break;
-        case 'User not found':
-          errorMessage = 'Utilisateur non trouvé';
-          break;
-        default:
-          errorMessage = 'Erreur lors du changement de mot de passe';
-      }
-      
-      return NextResponse.json(
-        { error: errorMessage },
-        { status: 400 }
-      );
-    }
-    
-    console.log('✅ Mot de passe changé avec succès');
-
-    // Marquer que le mot de passe a été changé dans admin_users
-    const { error: markError } = await supabase
-      .from('admin_users')
-      .update({ 
-        require_password_change: false,
-        updated_at: new Date().toISOString()
-      })
-      .eq('email', user.email);
-
-    if (markError) {
-      console.error('⚠️ Erreur lors du marquage du changement de mot de passe:', markError);
-      // On ne retourne pas d'erreur car le mot de passe a été changé avec succès
-    } else {
-      console.log('✅ Statut de mot de passe marqué comme changé');
-    }
-
-    return NextResponse.json(
-      { 
-        message: 'Mot de passe changé avec succès',
-        success: true
+    const response = await fetch(`${supabaseUrl}/functions/v1/employee-auth/change-password`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
       },
-      { status: 200 }
-    );
+      body: JSON.stringify({ current_password, new_password, confirm_password }),
+    });
 
-  } catch (error: unknown) {
-    console.error('💥 Erreur lors du changement de mot de passe:', error);
-    
-    return NextResponse.json(
-      { error: 'Erreur lors du changement de mot de passe' },
-      { status: 500 }
+    const result = await response.json();
+
+    if (!response.ok) {
+      return createCorsResponse(
+        { error: result.error || 'Erreur lors du changement de mot de passe' },
+        response.status,
+        request
+      );
+    }
+
+    return createCorsResponse(result, 200, request);
+  } catch (error) {
+    console.error('❌ Erreur dans la route /api/auth/change-password:', error);
+    return createCorsResponse(
+      { error: 'Erreur interne du serveur' },
+      500,
+      request
     );
   }
 } 

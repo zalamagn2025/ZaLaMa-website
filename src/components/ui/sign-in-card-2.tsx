@@ -289,7 +289,7 @@ export function Component() {
             />
 
             {/* Glass card background */}
-            <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl overflow-hidden">
+            <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl">
               {/* Subtle card inner patterns */}
               <div className="absolute inset-0 opacity-[0.03]" 
                 style={{
@@ -619,14 +619,22 @@ export function Component() {
                   </div>
 
                   {/* Sign up link */}
-                  <motion.p 
-                    className="text-center text-xs text-white/60 mt-4"
+                  <motion.div 
+                    className="text-center text-xs text-white/60 mt-4 space-y-2 relative z-20"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    Vous n&apos;avez pas de compte ? Contactez votre RH
-                  </motion.p>
+                    <p>Vous n&apos;avez pas de compte ? 
+                      <Link 
+                        href="/register" 
+                        className="inline-flex items-center gap-1 text-[#FF671E] hover:text-[#FF671E]/80 transition-colors font-medium cursor-pointer px-2 py-1 rounded hover:bg-white/5"
+                      >
+                        S&apos;inscrire
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </p>
+                  </motion.div>
                 </form>
               ) : (
                 /* Formulaire de mot de passe oublié */

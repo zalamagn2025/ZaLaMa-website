@@ -83,7 +83,7 @@ class AdvanceNotificationService {
       })
       
       const result = await this.resend.emails.send({
-        from: 'Zalama SAS <noreply@zalamagn.com>',
+        from: 'ZaLaMa <noreply@zalamagn.com>',
         to: [data.employeeEmail],
         subject: `Confirmation de votre demande d'avance - ${data.amount.toLocaleString()} GNF`,
         html: htmlContent,

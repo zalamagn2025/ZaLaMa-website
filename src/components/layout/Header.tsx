@@ -84,15 +84,28 @@ export const Header = () => {
                   </Link>
                 );
               })}
-              <Link href="/login">
-                <motion.button 
-                  className='px-5 py-2.5 rounded-lg bg-[#FF671E] text-white font-medium text-sm hover:bg-[#E55C1A] transition'
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span> Se connecter </span>
-                </motion.button>
-              </Link>
+              
+              {/* Boutons d'authentification */}
+              <div className='flex items-center gap-3'>
+                <Link href="/register">
+                  <motion.button 
+                    className='px-4 py-2.5 rounded-lg border border-[#FF671E] text-[#FF671E] font-medium text-sm hover:bg-[#FF671E] hover:text-white transition-colors'
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span>S'inscrire</span>
+                  </motion.button>
+                </Link>
+                <Link href="/login">
+                  <motion.button 
+                    className='px-5 py-2.5 rounded-lg bg-[#FF671E] text-white font-medium text-sm hover:bg-[#E55C1A] transition'
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span>Se connecter</span>
+                  </motion.button>
+                </Link>
+              </div>
             </nav>
           </div>
         </div>
@@ -133,13 +146,23 @@ export const Header = () => {
                   </Link>
                 );
               })}
-              <Link 
-                href="/login" 
-                className='mt-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FF671E] text-white font-medium text-base hover:bg-[#E55C1A] transition'
-              >
-                <User size={18} />
-                <span>Se connecter</span>
-              </Link>
+              {/* Boutons d'authentification mobile */}
+              <div className='mt-auto space-y-3'>
+                <Link 
+                  href="/register" 
+                  className='flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#FF671E] text-[#FF671E] font-medium text-base hover:bg-[#FF671E] hover:text-white transition-colors'
+                >
+                  <User size={18} />
+                  <span>S'inscrire</span>
+                </Link>
+                <Link 
+                  href="/login" 
+                  className='flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#FF671E] text-white font-medium text-base hover:bg-[#E55C1A] transition'
+                >
+                  <User size={18} />
+                  <span>Se connecter</span>
+                </Link>
+              </div>
             </motion.div>
           </>
         )}

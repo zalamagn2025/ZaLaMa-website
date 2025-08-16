@@ -9,34 +9,78 @@ const LOCKOUT_DURATION_MINUTES = 15
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
+    // Vérifier l'authentification via token Bearer (pour les employés)
+    const authHeader = request.headers.get('authorization')
+    let employeeId: string | null = null
+    let session: any = null
     
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '')
+      
+      // Valider le token en appelant l'Edge Function
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        
+        if (!supabaseUrl) {
+          return NextResponse.json(
+            { success: false, message: 'Configuration serveur manquante' },
+            { status: 500 }
+          )
+        }
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/employee-auth/getme`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey || '',
           },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options })
-          },
-        },
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            employeeId = result.data.id
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la validation du token:', error)
       }
-    )
+    }
     
-    // Vérifier l'authentification
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    
-    if (sessionError || !session) {
-      return NextResponse.json(
-        { success: false, message: 'Non authentifié' },
-        { status: 401 }
+    // Si pas de token valide, essayer l'authentification Supabase classique
+    if (!employeeId) {
+      const cookieStore = await cookies()
+      
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value
+            },
+            set(name: string, value: string, options: any) {
+              cookieStore.set({ name, value, ...options })
+            },
+            remove(name: string, options: any) {
+              cookieStore.set({ name, value: '', ...options })
+            },
+          },
+        }
       )
+      
+      const { data: { session: sessionData }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !sessionData) {
+        return NextResponse.json(
+          { success: false, message: 'Non authentifié' },
+          { status: 401 }
+        )
+      }
+      
+      session = sessionData
     }
 
     // Extraire les données de la requête
@@ -79,7 +123,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Récupérer les cookies pour la gestion des tentatives
+    const cookieStore = await cookies()
+    
     // Vérifier les tentatives de mot de passe (stockage temporaire en session)
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: 'Session utilisateur non trouvée' },
+        { status: 401 }
+      )
+    }
+    
     const attemptKey = `password_attempts_${session.user.id}`
     const currentAttempts = parseInt(cookieStore.get(attemptKey)?.value || '0')
     
@@ -101,6 +155,25 @@ export async function POST(request: NextRequest) {
         cookieStore.set(`lockout_${session.user.id}`, '', { maxAge: 0 })
       }
     }
+
+    // Créer une instance Supabase pour la vérification du mot de passe
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
 
     // Vérifier le mot de passe de l'utilisateur
     const { data: { user }, error: passwordError } = await supabase.auth.signInWithPassword({

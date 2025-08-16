@@ -90,6 +90,131 @@
   --zalama-red: #ef4444;          /* Rouge */          --brand: hsl(27 96% 61%);          --brand-foreground: hsl(31 97% 72%);
 }
 
+/* Scrollbar personnalisée */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Styles pour les selects */
+select {
+  background-color: transparent;
+  color: white;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select option {
+  background-color: #0a1525;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+select option:hover {
+  background-color: #FF671E;
+  color: white;
+  transform: translateX(4px);
+}
+
+select option:checked {
+  background-color: #FF671E;
+  color: white;
+  font-weight: 600;
+}
+
+select option:focus {
+  background-color: #FF671E;
+  color: white;
+  outline: none;
+}
+
+/* Style pour le dropdown des selects */
+select:focus {
+  outline: none;
+  border-color: #FF671E;
+  box-shadow: 0 0 0 2px rgba(255, 103, 30, 0.2);
+}
+
+/* Style pour les options au survol */
+select option:hover,
+select option:focus {
+  background-color: #FF671E;
+  color: white;
+}
+
+/* Style pour le conteneur du select */
+select {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Amélioration du style des options pour Firefox */
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #ffffff;
+}
+
+/* Style pour les options sélectionnées */
+select option[selected] {
+  background-color: #FF671E;
+  color: white;
+  font-weight: 600;
+}
+
+/* Style pour le dropdown lui-même */
+select {
+  background-color: transparent;
+}
+
+/* Amélioration du style des options pour Chrome/Safari */
+select option {
+  background-color: #0a1525;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+select option:last-child {
+  border-bottom: none;
+}
+
+/* Style pour l'option par défaut */
+select option[value=""] {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* Animation pour les options au survol */
+@keyframes optionHover {
+  0% {
+    background-color: #0a1525;
+    transform: translateX(0);
+  }
+  100% {
+    background-color: #FF671E;
+    transform: translateX(4px);
+  }
+}
+
+select option:hover {
+  animation: optionHover 0.2s ease forwards;
+}
+
 /* Thème sombre (par défaut) */
 [data-theme="dark"], :root {
   /* Couleurs principales bleu ZaLaMa (très sombre, presque noir) */
