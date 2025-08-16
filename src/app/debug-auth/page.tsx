@@ -10,7 +10,7 @@ export default function DebugAuthPage() {
 
   useEffect(() => {
     const checkAuthStatus = () => {
-      const info = {
+      const info: any = {
         // État du contexte
         contextEmployee: employee ? 'Présent' : 'Absent',
         contextIsAuthenticated: isAuthenticated,
@@ -38,9 +38,9 @@ export default function DebugAuthPage() {
           info.tokenIssued = new Date(payload.iat * 1000).toLocaleString();
           info.tokenUserId = payload.sub;
           info.tokenEmail = payload.email;
-        } catch (error) {
-          info.tokenError = error.message;
-        }
+                 } catch (error) {
+           info.tokenError = error instanceof Error ? error.message : String(error);
+         }
       }
 
       setDebugInfo(info);

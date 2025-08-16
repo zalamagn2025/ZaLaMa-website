@@ -94,18 +94,18 @@ export function useProfileImageUpload(
     if (loading) {
       console.log('⏳ Attente du chargement des données...');
       setImageError('Veuillez patienter pendant le chargement des données...');
-      return false;
+      return;
     }
 
     if (!userData) {
       console.error('❌ Aucune donnée utilisateur disponible');
       setImageError('Vous devez être connecté pour modifier votre photo de profil. Veuillez vous connecter.');
-      return false;
+      return;
     }
 
     if (!avatarFile) {
       setImageError('Veuillez sélectionner une image avant d\'enregistrer');
-      return false;
+      return;
     }
 
     // ✅ Support pour différentes structures de données
@@ -114,7 +114,7 @@ export function useProfileImageUpload(
     if (!employeeId) {
       console.error('❌ Aucun employee ID trouvé dans les données employee:', userData);
       setImageError('Impossible de récupérer l\'identifiant employee. Veuillez vous reconnecter.');
-      return false;
+      return;
     }
 
     setIsUploading(true);
@@ -132,16 +132,13 @@ export function useProfileImageUpload(
         setAvatarPreview(result.url);
         toast.success('Photo de profil mise à jour avec succès !');
         setAvatarFile(null);
-        return true;
       } else {
         console.error('❌ Erreur lors de l\'upload:', result.error);
         setImageError(result.error || 'Une erreur est survenue lors du téléversement');
-        return false;
       }
     } catch (error) {
       console.error('💥 Erreur lors du téléversement de l\'image:', error);
       setImageError('Une erreur inattendue est survenue');
-      return false;
     } finally {
       setIsUploading(false);
     }

@@ -32,17 +32,46 @@ export function useEmployeeProfile(): UseEmployeeProfileReturn {
         return;
       }
 
+      // Récupérer le token d'accès
+      const accessToken = localStorage.getItem('employee_access_token');
+      if (!accessToken) {
+        setEmployee(null);
+        setIsAuthenticated(false);
+        return;
+      }
+
       // Récupérer le profil depuis l'API
-      const profile = await employeeAuthService.getProfile();
+      const response = await employeeAuthService.getProfile(accessToken);
       
-      if (profile) {
-        setEmployee(profile);
+      if (response.success && response.data) {
+        // Adapter les données du profil pour correspondre au type EmployeeData
+        const employeeData: EmployeeData = {
+          id: response.data.id,
+          user_id: '', // Cette donnée n'est pas disponible dans EmployeeProfileData
+          nom: response.data.nom,
+          prenom: response.data.prenom,
+          email: response.data.email,
+          poste: response.data.poste,
+          type_contrat: 'CDI', // Valeur par défaut
+          actif: true, // Valeur par défaut
+          partner_info: {
+            id: '', // Non disponible dans EmployeeProfileData
+            company_name: response.data.partner_info.company_name,
+            legal_status: response.data.partner_info.legal_status,
+            activity_domain: response.data.partner_info.activity_domain,
+            status: 'Actif', // Valeur par défaut
+          },
+          financial: response.data.financial,
+          workCalendar: response.data.workCalendar,
+        };
+        
+        setEmployee(employeeData);
         setIsAuthenticated(true);
-        console.log('✅ Profil employé chargé:', profile.nom, profile.prenom);
+        console.log('✅ Profil employé chargé:', response.data.nom, response.data.prenom);
       } else {
         setEmployee(null);
         setIsAuthenticated(false);
-        console.warn('⚠️ Aucun profil trouvé');
+        console.warn('⚠️ Aucun profil trouvé ou erreur:', response.error);
       }
     } catch (err) {
       console.error('❌ Erreur lors du chargement du profil:', err);
@@ -71,7 +100,7 @@ export function useEmployeeProfile(): UseEmployeeProfileReturn {
       
       console.log('🔐 Tentative de connexion...');
       
-      const response = await employeeAuthService.login({ email, password });
+      const response = await employeeAuthService.login(email, password);
       
       if (response.success && response.employee) {
         setEmployee(response.employee);

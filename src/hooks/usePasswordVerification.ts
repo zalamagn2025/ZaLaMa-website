@@ -12,17 +12,30 @@ export function usePasswordVerification({ onSuccess, onError }: UsePasswordVerif
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const verifyPassword = useCallback(async (password: string) => {
+    const verifyPassword = useCallback(async (password: string) => {
     console.log('🔐 Début de la vérification du mot de passe...');
     setIsLoading(true);
 
     try {
+      // Récupérer le token d'accès des employés
+      const accessToken = localStorage.getItem('employee_access_token');
+      console.log('🔑 Token d\'accès trouvé:', accessToken ? 'Oui' : 'Non');
+      
+      // Préparer les headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Ajouter le token Bearer si disponible
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        console.log('🔑 Token Bearer ajouté aux headers');
+      }
+      
       // Utiliser l'API route pour la vérification du mot de passe
       const response = await fetch('/api/auth/verify-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ password }),
       });
 

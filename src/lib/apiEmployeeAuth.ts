@@ -65,14 +65,35 @@ export interface EmployeeData {
 
 export interface EmployeeProfileData {
   id: string;
+  user_id: string;
   nom: string;
   prenom: string;
   email: string;
+  telephone: string;
+  adresse: string;
   poste: string;
+  role: string;
+  matricule: string;
+  type_contrat: string;
+  salaire_net: number;
+  date_embauche: string;
+  actif: boolean;
+  photo_url: string;
+  partner_id: string;
+  genre: string;
+  created_at: string;
+  updated_at: string;
   partner_info: {
+    id: string;
     company_name: string;
     legal_status: string;
+    rccm: string;
+    nif: string;
     activity_domain: string;
+    phone: string;
+    email: string;
+    logo_url: string;
+    status: string;
   };
   financial: {
     salaireNet: number;
@@ -80,6 +101,7 @@ export interface EmployeeProfileData {
     acompteDisponible: number;
     avanceActif: number;
     avanceDisponible: number;
+    nombreAvancesValidees: number;
     devise: string;
   };
   workCalendar: {
@@ -204,6 +226,17 @@ class EmployeeAuthService {
 
       if (!response.ok) {
         console.error(`❌ Erreur ${response.status} pour ${endpoint}:`, result);
+        
+        // Gestion spéciale pour les erreurs d'authentification
+        if (response.status === 401) {
+          console.log('🔒 Erreur 401 détectée - Token invalide ou expiré');
+          return {
+            success: false,
+            error: 'Token invalide ou expiré. Veuillez vous reconnecter.',
+            details: result.message || result.details,
+          };
+        }
+        
         return {
           success: false,
           error: result.error || `Erreur ${response.status}: ${response.statusText}`,

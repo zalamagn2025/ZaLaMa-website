@@ -129,20 +129,33 @@ export default function ProfilePage() {
 
   // Adapter les données employé au format attendu par les composants
   const userData = employee ? {
-    uid: employee.user_id,
+    // Propriétés requises par UserWithEmployeData
+    id: employee.user_id,
     email: employee.email,
-    nom: employee.nom,
+    emailVerified: true, // Par défaut, on considère que l'email est vérifié pour les employés
+    // Propriétés optionnelles
+    displayName: employee.nomComplet || `${employee.prenom} ${employee.nom}`,
+    photoURL: employee.photo_url,
+    // Données employé
+    employeId: employee.id,
     prenom: employee.prenom,
+    nom: employee.nom,
     nomComplet: employee.nomComplet || `${employee.prenom} ${employee.nom}`,
     telephone: employee.telephone,
     poste: employee.poste,
     role: employee.role,
     genre: employee.genre,
     adresse: employee.adresse,
+    salaireNet: employee.salaire_net,
+    typeContrat: employee.type_contrat,
+    dateEmbauche: employee.date_embauche,
+    partnerId: employee.partner_id,
+    partenaireId: employee.partner_id,
+    // Propriétés supplémentaires pour compatibilité
+    uid: employee.user_id,
     salaire_net: employee.salaire_net,
     type_contrat: employee.type_contrat,
     date_embauche: employee.date_embauche,
-    partenaireId: employee.partner_id,
     photo_url: employee.photo_url,
     actif: employee.actif,
     created_at: employee.created_at,
@@ -161,16 +174,20 @@ export default function ProfilePage() {
           <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div>
-                <ProfileHeader user={userData} entreprise={entreprise} />
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isMounted ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                  className="mt-6"
-                >
-                  <ProfileStats user={userData} />
-                </motion.div>
+                {userData && (
+                  <>
+                    <ProfileHeader user={userData} entreprise={entreprise} />
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={isMounted ? { opacity: 1, y: 0 } : {}}
+                      transition={{ delay: 0.2, duration: 0.5 }}
+                      className="mt-6"
+                    >
+                      <ProfileStats user={userData} />
+                    </motion.div>
+                  </>
+                )}
                 
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -269,28 +286,28 @@ export default function ProfilePage() {
                       </TabsTrigger>
                     </TabsList>
 
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <TabsContent value="services" className="mt-2">
-                          <FinancialServices user={userData} />
-                        </TabsContent>
-                        <TabsContent value="history" className="mt-2">
-                          <TransactionHistory />
-                        </TabsContent>
-                        <TabsContent value="feedback" className="mt-2">
-                          <div className="space-y-6">
-                            <FeedbackSection />
-                            <AvisHistory />
-                          </div>
-                        </TabsContent>
-                      </motion.div>
-                    </AnimatePresence>
+                                         <AnimatePresence mode="wait">
+                       <motion.div
+                         key={activeTab}
+                         initial={{ opacity: 0, y: 10 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         exit={{ opacity: 0, y: -10 }}
+                         transition={{ duration: 0.2 }}
+                       >
+                         <TabsContent value="services" className="mt-2">
+                           {userData && <FinancialServices user={userData} />}
+                         </TabsContent>
+                         <TabsContent value="history" className="mt-2">
+                           <TransactionHistory />
+                         </TabsContent>
+                         <TabsContent value="feedback" className="mt-2">
+                           <div className="space-y-6">
+                             <FeedbackSection />
+                             <AvisHistory />
+                           </div>
+                         </TabsContent>
+                       </motion.div>
+                     </AnimatePresence>
                   </Tabs>
                 </motion.div>
               </div>
@@ -327,7 +344,7 @@ export default function ProfilePage() {
         </AnimatePresence>
 
         {/* Paramètres utilisateur */}
-        {showSettings && (
+        {showSettings && userData && (
           <ProfileSettings onClose={() => setShowSettings(false)} userData={userData} />
         )}
 
