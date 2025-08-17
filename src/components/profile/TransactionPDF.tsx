@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
 
 interface TransactionPDFProps {
   montant: string;
-  statut: 'En attente' | 'Validé' | 'Rejeté' | 'Annulé';
+  statut: 'En attente' | 'Approuvée' | 'Rejetée';
   date: string;
   typeMotif: string;
   fraisService?: string;

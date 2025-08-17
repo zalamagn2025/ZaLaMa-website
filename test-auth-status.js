@@ -1,61 +1,76 @@
-// Script pour vérifier le statut d'authentification
-console.log('🔍 Vérification du statut d\'authentification...\n');
+// Script de test pour vérifier l'état de l'authentification
+console.log('🔍 Vérification de l\'état de l\'authentification...');
 
-// Vérifier les tokens dans le localStorage
-if (typeof window !== 'undefined') {
-  const accessToken = localStorage.getItem('employee_access_token');
-  const refreshToken = localStorage.getItem('employee_refresh_token');
+// Vérifier les tokens dans localStorage et sessionStorage
+const employeeAccessToken = localStorage.getItem('employee_access_token');
+const employeeRefreshToken = localStorage.getItem('employee_refresh_token');
+const employeeToken = localStorage.getItem('employee_token'); // Ancienne clé
+
+console.log('📋 Tokens trouvés:');
+console.log('- employee_access_token (localStorage):', employeeAccessToken ? '✅ Présent' : '❌ Absent');
+console.log('- employee_refresh_token (localStorage):', employeeRefreshToken ? '✅ Présent' : '❌ Absent');
+console.log('- employee_token (localStorage) - ANCIENNE CLÉ:', employeeToken ? '⚠️ Présent (ancienne clé)' : '❌ Absent');
+
+// Vérifier si l'utilisateur est connecté
+if (employeeAccessToken) {
+  console.log('✅ Utilisateur authentifié avec employee_access_token');
   
-  console.log('📋 Tokens trouvés:');
-  console.log(`   Access Token: ${accessToken ? '✅ Présent' : '❌ Absent'}`);
-  console.log(`   Refresh Token: ${refreshToken ? '✅ Présent' : '❌ Absent'}`);
-  
-  if (accessToken) {
-    console.log('\n🔐 Détails du token d\'accès:');
-    try {
-      // Décoder le token JWT (partie payload)
-      const base64Url = accessToken.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(atob(base64));
+  // Décoder le token pour voir les informations
+  try {
+    const base64Url = employeeAccessToken.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
+    
+    console.log('🔑 Informations du token:');
+    console.log('- Expire le:', new Date(payload.exp * 1000).toLocaleString());
+    console.log('- Émis le:', new Date(payload.iat * 1000).toLocaleString());
+    console.log('- Email:', payload.email || 'Non spécifié');
+    console.log('- User ID:', payload.sub || 'Non spécifié');
+    
+    // Vérifier si le token est expiré
+    const currentTime = Math.floor(Date.now() / 1000);
+    const isExpired = payload.exp < currentTime;
+    console.log('- Expiré:', isExpired ? '❌ OUI' : '✅ NON');
+    
+    if (!isExpired) {
+      // Tester l'appel à l'API employee-demands
+      console.log('🧪 Test de l\'API employee-demands...');
       
-      console.log(`   Issued At: ${new Date(payload.iat * 1000).toLocaleString()}`);
-      console.log(`   Expires At: ${new Date(payload.exp * 1000).toLocaleString()}`);
-      console.log(`   User ID: ${payload.sub || 'Non spécifié'}`);
-      console.log(`   Email: ${payload.email || 'Non spécifié'}`);
-      
-      // Vérifier si le token est expiré
-      const currentTime = Math.floor(Date.now() / 1000);
-      const isExpired = payload.exp < currentTime;
-      console.log(`   Expiré: ${isExpired ? '❌ OUI' : '✅ NON'}`);
-      
-      if (isExpired) {
-        console.log('\n⚠️ Le token est expiré ! Veuillez vous reconnecter.');
-      } else {
-        console.log('\n✅ Le token est valide !');
-      }
-    } catch (error) {
-      console.log('❌ Erreur lors du décodage du token:', error.message);
+      fetch('/api/employee-demands/stats', {
+        headers: {
+          'Authorization': `Bearer ${employeeAccessToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        console.log('📊 Réponse API stats:', response.status, response.statusText);
+        return response.json();
+      })
+      .then(data => {
+        console.log('📊 Données reçues:', data);
+        if (data.success) {
+          console.log('✅ API employee-demands fonctionne correctement!');
+        } else {
+          console.log('❌ Erreur API:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Erreur API:', error);
+      });
+    } else {
+      console.log('⚠️ Token expiré - veuillez vous reconnecter');
     }
-  } else {
-    console.log('\n❌ Aucun token d\'accès trouvé. Veuillez vous connecter.');
+  } catch (error) {
+    console.error('❌ Erreur lors du décodage du token:', error);
   }
   
-  // Vérifier les autres clés de localStorage
-  console.log('\n📦 Autres clés dans localStorage:');
-  const allKeys = Object.keys(localStorage);
-  allKeys.forEach(key => {
-    if (key.includes('token') || key.includes('auth') || key.includes('user')) {
-      const value = localStorage.getItem(key);
-      console.log(`   ${key}: ${value ? '✅ Présent' : '❌ Absent'}`);
-    }
-  });
-  
 } else {
-  console.log('❌ Ce script doit être exécuté dans un navigateur web.');
+  console.log('❌ Aucun token employee_access_token trouvé - utilisateur non authentifié');
+  console.log('💡 Connectez-vous d\'abord sur /login');
+  
+  // Nettoyer l'ancienne clé si elle existe
+  if (employeeToken) {
+    console.log('🧹 Nettoyage de l\'ancienne clé employee_token...');
+    localStorage.removeItem('employee_token');
+  }
 }
-
-console.log('\n💡 Pour tester la page de changement de mot de passe:');
-console.log('1. Assurez-vous d\'être connecté sur /login');
-console.log('2. Vérifiez que les tokens sont présents ci-dessus');
-console.log('3. Accédez à /auth/change-password');
-console.log('4. Si le problème persiste, essayez de vous reconnecter');

@@ -6,7 +6,7 @@ import { TransactionPDF } from './TransactionPDF';
 interface SalaryAdvancePDFProps {
   id: string;
   montant: string;
-  statut: 'En attente' | 'Validé' | 'Rejeté';
+  statut: 'En attente' | 'Approuvée' | 'Rejetée';
   date: string;
   telephone: string;
   reference: string;

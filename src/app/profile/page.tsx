@@ -298,7 +298,7 @@ export default function ProfilePage() {
                            {userData && <FinancialServices user={userData} />}
                          </TabsContent>
                          <TabsContent value="history" className="mt-2">
-                           <TransactionHistory />
+                           {userData && <TransactionHistory user={userData} />}
                          </TabsContent>
                          <TabsContent value="feedback" className="mt-2">
                            <div className="space-y-6">
