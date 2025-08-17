@@ -191,7 +191,11 @@ const generateAndDownloadPDF = async (request: ReturnType<typeof convertApiReque
   }
 };
 
-export function TransactionHistory() {
+interface TransactionHistoryProps {
+  user?: any; // Prop optionnelle pour compatibilité
+}
+
+export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
   const { demands: apiRequests, isLoadingDemands: loading, demandsError: error } = useEmployeeDemands();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);

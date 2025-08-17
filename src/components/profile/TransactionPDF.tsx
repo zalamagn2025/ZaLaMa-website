@@ -164,7 +164,7 @@ export const TransactionPDF = ({
   // Calcul du montant reçu
   const cleanMontant = parseInt(montant.replace(/\D/g, ''), 10) || 0;
   const cleanFrais = parseInt(fraisService.replace(/\D/g, ''), 10) || 0;
-  const montantRecu = statut === 'Validé' ? cleanMontant - cleanFrais : 0;
+  const montantRecu = statut === 'Approuvée' ? cleanMontant - cleanFrais : 0;
 
   return (
     <Document>
@@ -202,26 +202,26 @@ export const TransactionPDF = ({
             <View style={[
               styles.status, 
               {
-                backgroundColor: statut === 'Validé' ? '#E6FFEE' :
+                backgroundColor: statut === 'Approuvée' ? '#E6FFEE' :
                                 statut === 'En attente' ? '#FFF5E6' :
-                                statut === 'Rejeté' ? '#FFE6E6' : '#E5E7EB',
-                color: statut === 'Validé' ? '#00A651' :
+                                statut === 'Rejetée' ? '#FFE6E6' : '#E5E7EB',
+                color: statut === 'Approuvée' ? '#00A651' :
                        statut === 'En attente' ? '#FF9900' :
-                       statut === 'Rejeté' ? '#FF0000' : '#6B7280'
+                       statut === 'Rejetée' ? '#FF0000' : '#6B7280'
               }
             ]}>
               <Text>{statut}</Text>
             </View>
           </View>
           
-          {statut === 'Rejeté' && motifRejet && (
+          {statut === 'Rejetée' && motifRejet && (
             <View style={styles.row}>
               <Text style={styles.label}>Motif de rejet :</Text>
               <Text style={styles.value}>{motifRejet}</Text>
             </View>
           )}
           
-          {statut === 'Validé' && (
+          {statut === 'Approuvée' && (
             <>
               {fraisService && (
                 <View style={styles.row}>
