@@ -99,3 +99,5 @@ L'intégration des nouvelles APIs Edge Function `employee-demands` est maintenan
 **✅ Intégration réussie !** Les nouvelles APIs Edge Function sont maintenant actives et remplacent l'ancien système.
 
 
+
+
