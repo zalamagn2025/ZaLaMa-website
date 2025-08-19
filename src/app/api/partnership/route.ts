@@ -165,8 +165,10 @@ export async function POST(request: NextRequest) {
     
     const smsPromise = enhancedSmsService.sendPartnershipNotification({
       partner_name: data.company_name,
+      company_phone: data.phone,
       representative_phone: data.rep_phone,
       rh_phone: data.hr_phone, // Numéro RH dynamique depuis le formulaire
+      admin_phone: '+224625607878', // Téléphone admin ZaLaMa
       request_id: data.id,
       submission_date: new Date()
     });

@@ -167,7 +167,7 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
         
         // Même en cas d'erreur, forcer le cache local
         try {
-          const cacheKey = `first_login_checked_${getmeData?.data?.email || 'unknown'}`
+          const cacheKey = `first_login_checked_unknown`
           sessionStorage.setItem(cacheKey, JSON.stringify({
             requirePasswordChange: false,
             timestamp: Date.now(),
@@ -229,7 +229,7 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
     console.log('🔍 Diagnostic modal répétitive...');
     
     // Fonction pour tester le statut de première connexion
-    window.testFirstLoginStatus = async () => {
+    (window as any).testFirstLoginStatus = async () => {
       console.log('🚀 Test du statut de première connexion...');
       
       const token = localStorage.getItem('employee_access_token');
@@ -291,12 +291,12 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
         
       } catch (error) {
         console.error('❌ Erreur lors du test:', error);
-        return { error: error.message };
+        return { error: error instanceof Error ? error.message : 'Erreur inconnue' };
       }
     };
 
     // Fonction pour forcer la mise à jour du statut
-    window.forceUpdateFirstLoginStatus = async () => {
+    (window as any).forceUpdateFirstLoginStatus = async () => {
       console.log('🔧 Force mise à jour du statut...');
       
       const token = localStorage.getItem('employee_access_token');
@@ -343,14 +343,14 @@ export function FirstLoginPasswordModal({ isOpen, onClose, onSuccess }: FirstLog
         
       } catch (error) {
         console.error('❌ Erreur lors de la mise à jour forcée:', error);
-        return { error: error.message };
+        return { error: error instanceof Error ? error.message : 'Erreur inconnue' };
       }
     };
 
     // Auto-exécution du diagnostic
     console.log('🚀 Auto-exécution du diagnostic modal répétitive...');
     setTimeout(() => {
-      window.testFirstLoginStatus();
+      (window as any).testFirstLoginStatus();
     }, 2000);
 
     console.log('📝 Fonctions disponibles:');

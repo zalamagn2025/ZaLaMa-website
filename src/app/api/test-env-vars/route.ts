@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       console.log('✅ Client Supabase créé avec succès');
       
     } catch (error) {
-      supabaseTest = `erreur: ${error.message}`;
+      supabaseTest = `erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`;
       console.error('❌ Erreur création client Supabase:', error);
     }
     
