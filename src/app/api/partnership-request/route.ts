@@ -5,9 +5,42 @@ import { enhancedSmsService } from '@/services/smsService';
 // URL de l'Edge Function Supabase
 const SUPABASE_EDGE_FUNCTION_URL = 'https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request';
 
+// Fonction pour tester la connectivité à l'Edge Function
+async function testEdgeFunctionConnectivity() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes pour le test
+    
+    const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
+      method: 'OPTIONS',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    console.error('❌ Test de connectivité échoué:', error);
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Démarrage de l\'API route partnership-request');
+    
+    // Test de connectivité à l'Edge Function
+    console.log('🔍 Test de connectivité à l\'Edge Function...');
+    const isConnected = await testEdgeFunctionConnectivity();
+    if (!isConnected) {
+      console.error('❌ Edge Function non accessible');
+      return NextResponse.json({
+        success: false,
+        error: 'Service temporairement indisponible',
+        details: ['L\'Edge Function n\'est pas accessible actuellement'],
+        debug: 'Edge Function connectivity test failed'
+      }, { status: 503 });
+    }
+    console.log('✅ Edge Function accessible');
     
     // Récupérer les données du body
     const body = await request.json();
@@ -90,13 +123,42 @@ export async function POST(request: NextRequest) {
     });
     console.log('📄 Body complet envoyé à l\'Edge Function:', edgeFunctionData);
     
-    const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(edgeFunctionData),
-    });
+    // Configuration avec timeout plus long et meilleure gestion d'erreur
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 secondes
+
+    let response;
+    try {
+      response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(edgeFunctionData),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('❌ Erreur de connexion avec l\'Edge Function:', fetchError);
+      
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        return NextResponse.json({
+          success: false,
+          error: 'Timeout de connexion',
+          details: ['L\'Edge Function n\'a pas répondu dans les 30 secondes'],
+          debug: 'Connection timeout'
+        }, { status: 408 });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        error: 'Erreur de connexion',
+        details: ['Impossible de joindre l\'Edge Function'],
+        debug: fetchError instanceof Error ? fetchError.message : 'Erreur inconnue'
+      }, { status: 503 });
+    }
 
     const result = await response.json();
     console.log('📥 Réponse de l\'Edge Function:', result);
