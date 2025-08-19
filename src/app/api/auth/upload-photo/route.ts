@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('📤 Envoi vers l\'Edge Function...');
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/upload-photo`;
     
     // Créer un nouveau FormData pour l'Edge Function
@@ -66,11 +67,19 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
+        // Ne pas inclure Content-Type pour FormData
       },
       body: newFormData,
     });
 
     const result = await response.json();
+    
+    console.log('📥 Réponse de l\'Edge Function:', {
+      status: response.status,
+      success: result.success,
+      error: result.error,
+      data: result.data ? 'Présent' : 'Absent'
+    });
     
     if (!response.ok) {
       return createCorsResponse(
@@ -86,7 +95,7 @@ export async function POST(request: NextRequest) {
     return createCorsResponse({
       success: true,
       message: 'Photo uploadée avec succès',
-      data: result.data
+      data: result.data || result
     });
 
   } catch (error: unknown) {

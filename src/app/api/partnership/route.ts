@@ -1,11 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
-import { enhancedSmsService } from '@/services/smsService'
 import { smsAnalytics } from '@/utils/smsAnalytics'
 import { SMSErrorHandler } from '@/middleware/smsErrorHandler'
 import { logSmsError } from '@/utils/smsErrorFormatter'
-import { emailService } from '@/services/emailService'
 
 interface PartnershipData {
   companyName: string
@@ -159,20 +157,6 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Données insérées avec succès:', data)
 
-    // Envoi SMS et e-mails de notification (non-bloquant)
-    const smsStartTime = Date.now();
-    const emailStartTime = Date.now();
-    
-    const smsPromise = enhancedSmsService.sendPartnershipNotification({
-      partner_name: data.company_name,
-      representative_phone: data.rep_phone,
-      rh_phone: data.hr_phone, // Numéro RH dynamique depuis le formulaire
-      request_id: data.id,
-      submission_date: new Date()
-    });
-
-    const emailPromise = emailService.sendPartnershipEmails(data);
-
     // Réponse immédiate à l'utilisateur
     const response = NextResponse.json({
       success: true,
@@ -181,111 +165,10 @@ export async function POST(request: NextRequest) {
         id: data.id,
         companyName: data.company_name,
         status: data.status
-      },
-      smsStatus: 'En cours d\'envoi',
-      emailStatus: 'En cours d\'envoi'
+      }
     });
 
-    // Gestion des SMS en arrière-plan
-    smsPromise.then(smsResult => {
-      const smsDuration = Date.now() - smsStartTime;
-      
-      // Tracking analytics
-      smsAnalytics.trackSMSSend(smsResult, smsDuration);
-      
-      if (!smsResult.success) {
-        console.error('❌ Échec envoi SMS:', {
-          totalFailed: smsResult.summary.totalFailed,
-          errors: smsResult.summary.errors,
-          requestId: data.id,
-          companyName: data.company_name
-        });
-        
-        // Log détaillé des erreurs SMS
-        smsResult.summary.errors.forEach((error: any, index: number) => {
-          logSmsError(error, `Partnership SMS Error ${index + 1}`, {
-            requestId: data.id,
-            companyName: data.company_name,
-            recipient: index === 0 ? 'RH' : 'Représentant'
-          });
-        });
-        
-        SMSErrorHandler.handleError(
-          new Error(smsResult.summary.errors.join(', ')),
-          'Partnership SMS Notification',
-          { requestId: data.id, companyName: data.company_name }
-        );
-      } else {
-        console.log('✅ SMS envoyés avec succès:', smsResult.summary);
-      }
-      
-      // Log des performances
-      console.log(`⏱️ SMS processing completed in ${smsDuration}ms`);
-    }).catch(error => {
-      console.error('❌ Erreur traitement SMS:', error);
-      logSmsError(error, 'SMS Processing Error', { requestId: data.id });
-      SMSErrorHandler.handleError(error, 'SMS Processing', { requestId: data.id });
-    });
 
-    // Gestion des e-mails en arrière-plan
-    emailPromise.then(emailResult => {
-      const emailDuration = Date.now() - emailStartTime;
-      
-             console.log('📧 Résultats envoi e-mails partenariat:', {
-         company: data.company_name,
-         companySuccess: emailResult.companyEmail.success,
-         repSuccess: emailResult.repEmail.success,
-         hrSuccess: emailResult.hrEmail.success,
-         contactSuccess: emailResult.contactEmail.success,
-         overallSuccess: emailResult.overallSuccess,
-         duration: `${emailDuration}ms`
-       });
-
-             // Log des erreurs d'e-mail si nécessaire
-       if (!emailResult.contactEmail.success) {
-         console.error('❌ Erreur e-mail contact:', {
-           company: data.company_name,
-           recipient: emailResult.contactEmail.recipient,
-           error: emailResult.contactEmail.error,
-           errorType: emailResult.contactEmail.errorType
-         });
-       }
-
-       if (!emailResult.companyEmail.success) {
-         console.error('❌ Erreur e-mail entreprise:', {
-           company: data.company_name,
-           recipient: emailResult.companyEmail.recipient,
-           error: emailResult.companyEmail.error,
-           errorType: emailResult.companyEmail.errorType
-         });
-       }
-
-      if (!emailResult.repEmail.success) {
-        console.error('❌ Erreur e-mail représentant:', {
-          company: data.company_name,
-          recipient: emailResult.repEmail.recipient,
-          error: emailResult.repEmail.error,
-          errorType: emailResult.repEmail.errorType
-        });
-      }
-
-      if (!emailResult.hrEmail.success) {
-        console.error('❌ Erreur e-mail RH:', {
-          company: data.company_name,
-          recipient: emailResult.hrEmail.recipient,
-          error: emailResult.hrEmail.error,
-          errorType: emailResult.hrEmail.errorType
-        });
-      }
-
-      // Log des performances
-      console.log(`⏱️ Email processing completed in ${emailDuration}ms`);
-    }).catch(error => {
-      console.error('❌ Erreur critique e-mails:', {
-        company: data.company_name,
-        error: error.message || error
-      });
-    });
 
     return response;
 

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useCallback, useMemo, memo } from 'react';
+import { useState, useCallback, useMemo, memo, useEffect } from 'react';
 import { FileUpload } from '@/components/ui/file-upload';
 import { PaymentDaySelector } from '@/components/ui/payment-day-selector';
 import { CreatePartnershipRequest } from '@/types/partenaire';
@@ -85,7 +85,8 @@ const FormField = memo(({
           onBlur={onBlur}
           required={required}
           placeholder={placeholder}
-          className={`bg-blue-950/30 border text-white placeholder-gray-400/60 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
+          aria-label={label}
+          className={`bg-blue-950/30 border text-white placeholder:text-gray-300/30 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
             hasError 
               ? 'border-red-500/70' 
               : isValid 
@@ -160,6 +161,45 @@ export const PartnershipForm = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [validatedSteps, setValidatedSteps] = useState<Set<number>>(new Set());
+
+
+
+  // Fonction pour réinitialiser le formulaire
+  const resetForm = useCallback(() => {
+    const emptyData = {
+      companyName: '',
+      legalStatus: '',
+      rccm: '',
+      nif: '',
+      activityDomain: '',
+      headquartersAddress: '',
+      phone: '+224',
+      email: '',
+      employeesCount: '',
+      payroll: '',
+      cdiCount: '',
+      cddCount: '',
+      paymentDate: '',
+      paymentDay: '',
+      agreement: false,
+      repFullName: '',
+      repEmail: '',
+      repPhone: '+224',
+      repPosition: '',
+      hrFullName: '',
+      hrEmail: '',
+      hrPhone: '+224'
+    };
+
+    setFormData(emptyData);
+    setTouched({});
+    setErrors({});
+    setValidatedSteps(new Set());
+    setError('');
+    setStep(1);
+
+    console.log('🔄 Formulaire réinitialisé');
+  }, []);
 
   // Validation des champs - mémorisé
   const validateField = useCallback((name: string, value: string | boolean) => {
@@ -429,13 +469,43 @@ export const PartnershipForm = () => {
       setLoading(true);
 
     try {
+        // Transformer les données selon le format attendu par l'Edge Function
         const finalData = {
-          ...formData
+          company_name: formData.companyName?.trim() || '',
+          legal_status: formData.legalStatus?.trim() || '',
+          rccm: formData.rccm?.trim() || '',
+          nif: formData.nif?.trim() || '',
+          activity_domain: formData.activityDomain?.trim() || '',
+          headquarters_address: formData.headquartersAddress?.trim() || '',
+          phone: formData.phone?.trim() || '',
+          email: formData.email?.trim() || '',
+          employees_count: parseInt(formData.employeesCount) || 0,
+          payroll: formData.payroll?.trim() || '',
+          cdi_count: parseInt(formData.cdiCount) || 0,
+          cdd_count: parseInt(formData.cddCount) || 0,
+          payment_date: new Date().toISOString().split('T')[0], // Date actuelle au format YYYY-MM-DD
+          rep_full_name: formData.repFullName?.trim() || '',
+          rep_position: formData.repPosition?.trim() || '',
+          rep_email: formData.repEmail?.trim() || '',
+          rep_phone: formData.repPhone?.trim() || '',
+          hr_full_name: formData.hrFullName?.trim() || '',
+          hr_email: formData.hrEmail?.trim() || '',
+          hr_phone: formData.hrPhone?.trim() || '',
+          agreement: Boolean(formData.agreement),
+          payment_day: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined
         };
 
-        console.log('📤 Envoi des données de partenariat:', finalData);
+        console.log('📤 Données formData originales:', formData);
+        console.log('📤 Envoi des données de partenariat vers l\'Edge Function:', finalData);
+        console.log('🔍 Détail payment_day:', {
+          original: formData.paymentDay,
+          type: typeof formData.paymentDay,
+          trimmed: formData.paymentDay?.trim(),
+          parsed: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined,
+          final: finalData.payment_day
+        });
 
-      const response = await fetch('/api/partnership', {
+        const response = await fetch('/api/partnership-request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -443,20 +513,30 @@ export const PartnershipForm = () => {
           body: JSON.stringify(finalData),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la soumission');
-      }
+        const result = await response.json();
+        console.log('📥 Réponse de l\'API:', result);
 
-      const result = await response.json();
+      if (!response.ok) {
+          // Afficher les détails de l'erreur
+          const errorMessage = result.error || 'Erreur lors de la soumission';
+          const errorDetails = result.details ? `\nDétails: ${result.details.join(', ')}` : '';
+          throw new Error(`${errorMessage}${errorDetails}`);
+        }
+
+        if (result.success) {
       console.log('✅ Demande envoyée avec succès:', result);
-      
       setSuccess(true);
       
         // Réinitialisation après 15 secondes
       setTimeout(() => {
           handleCloseDrawer();
         }, 15000);
+        } else {
+          // Afficher les détails de l'erreur même si response.ok
+          const errorMessage = result.error || 'Erreur lors de la soumission';
+          const errorDetails = result.details ? `\nDétails: ${result.details.join(', ')}` : '';
+          throw new Error(`${errorMessage}${errorDetails}`);
+        }
 
     } catch (err) {
       console.error('❌ Erreur lors de l\'envoi:', err);
@@ -515,6 +595,191 @@ export const PartnershipForm = () => {
     // onSubmit(formData) // This line was removed as per the new_code, as the onSubmit prop was removed.
   }
 
+  // Script de diagnostic pour l'Edge Function
+  useEffect(() => {
+    // Script de test pour diagnostiquer le problème de création de demande
+    console.log('🔍 Diagnostic Edge Function - Problème de création...');
+    
+    // Fonction pour tester l'Edge Function avec différents scénarios
+    (window as any).diagnoseEdgeFunctionIssue = async () => {
+      console.log('🚀 Diagnostic du problème de création de demande...');
+      
+      // Test 1: Données exactes de la documentation
+      const testData1 = {
+        company_name: "Entreprise Test SARL",
+        legal_status: "SARL",
+        rccm: "RC/2024/001",
+        nif: "NIF2024001",
+        activity_domain: "Technologie",
+        headquarters_address: "123 Avenue de la République, Conakry, Guinée",
+        phone: "+224123456789",
+        email: "contact@entreprisetest.gn",
+        employees_count: 25,
+        payroll: "50000000",
+        cdi_count: 20,
+        cdd_count: 5,
+        payment_date: "2024-02-15",
+        rep_full_name: "Mamadou Diallo",
+        rep_position: "Directeur Général",
+        rep_email: "mamadou.diallo@entreprisetest.gn",
+        rep_phone: "+224123456789",
+        hr_full_name: "Fatoumata Camara",
+        hr_email: "fatoumata.camara@entreprisetest.gn",
+        hr_phone: "+224123456790",
+        agreement: true,
+        payment_day: 25
+      };
+
+      console.log('📤 Test 1 - Données de la documentation:', testData1);
+      
+      try {
+        const response1 = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testData1)
+        });
+
+        const result1 = await response1.json();
+        console.log('📥 Réponse Test 1:', {
+          status: response1.status,
+          success: result1.success,
+          error: result1.error,
+          details: result1.details,
+          message: result1.message
+        });
+              } catch (error) {
+          console.log('❌ Erreur Test 1:', (error as Error).message);
+        }
+
+      // Test 2: Données avec date actuelle
+      const testData2 = {
+        ...testData1,
+        payment_date: new Date().toISOString().split('T')[0]
+      };
+
+      console.log('📤 Test 2 - Données avec date actuelle:', testData2);
+      
+      try {
+        const response2 = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testData2)
+        });
+
+        const result2 = await response2.json();
+        console.log('📥 Réponse Test 2:', {
+          status: response2.status,
+          success: result2.success,
+          error: result2.error,
+          details: result2.details,
+          message: result2.message
+        });
+              } catch (error) {
+          console.log('❌ Erreur Test 2:', (error as Error).message);
+        }
+
+      // Test 3: Sans payment_day
+      const testData3: any = {
+        ...testData1,
+        payment_date: new Date().toISOString().split('T')[0]
+      };
+      delete testData3.payment_day;
+
+      console.log('📤 Test 3 - Sans payment_day:', testData3);
+      
+      try {
+        const response3 = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testData3)
+        });
+
+        const result3 = await response3.json();
+        console.log('📥 Réponse Test 3:', {
+          status: response3.status,
+          success: result3.success,
+          error: result3.error,
+          details: result3.details,
+          message: result3.message
+        });
+              } catch (error) {
+          console.log('❌ Erreur Test 3:', (error as Error).message);
+        }
+
+      console.log('📝 Actions disponibles:');
+      console.log('- window.diagnoseEdgeFunctionIssue() : Diagnostic complet');
+    };
+
+    // Fonction pour tester avec les données exactes du formulaire
+    (window as any).testWithFormData = async () => {
+      console.log('🎯 Test avec les données exactes du formulaire...');
+      
+      // Données qui seraient envoyées par le formulaire pré-rempli
+      const formData = {
+        company_name: "Entreprise Test SARL",
+        legal_status: "SARL",
+        rccm: "RC/2024/001",
+        nif: "NIF2024001",
+        activity_domain: "Technologie",
+        headquarters_address: "123 Avenue de la République, Conakry, Guinée",
+        phone: "+224123456789",
+        email: "contact@entreprisetest.gn",
+        employees_count: 25,
+        payroll: "50000000",
+        cdi_count: 20,
+        cdd_count: 5,
+        payment_date: new Date().toISOString().split('T')[0],
+        rep_full_name: "Mamadou Diallo",
+        rep_position: "Directeur Général",
+        rep_email: "mamadou.diallo@entreprisetest.gn",
+        rep_phone: "+224123456789",
+        hr_full_name: "Fatoumata Camara",
+        hr_email: "fatoumata.camara@entreprisetest.gn",
+        hr_phone: "+224123456790",
+        agreement: true,
+        payment_day: 25
+      };
+
+      console.log('📤 Données du formulaire:', formData);
+      
+      try {
+        const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+        console.log('📥 Réponse Edge Function:', {
+          status: response.status,
+          success: result.success,
+          error: result.error,
+          details: result.details,
+          message: result.message,
+          requestId: result.requestId
+        });
+
+        if (result.success) {
+          console.log('✅ Succès ! Request ID:', result.requestId);
+        } else {
+          console.log('❌ Échec:', result.error);
+          console.log('📋 Détails:', result.details);
+        }
+              } catch (error) {
+          console.log('❌ Erreur:', (error as Error).message);
+        }
+    };
+
+    // Auto-exécution du diagnostic
+    console.log('🚀 Auto-exécution du diagnostic Edge Function...');
+    setTimeout(() => {
+      (window as any).diagnoseEdgeFunctionIssue();
+    }, 2000);
+
+    console.log('📝 Fonctions disponibles:');
+    console.log('- window.diagnoseEdgeFunctionIssue() : Diagnostic complet');
+    console.log('- window.testWithFormData() : Test avec données du formulaire');
+  }, []);
 
 
   return (
@@ -568,6 +833,8 @@ export const PartnershipForm = () => {
           animate={{ scaleX: 1 }}
           transition={{ delay: 0.3, duration: 0.8, type: 'spring' }}
         />
+        
+
       </motion.div>
       
       <AnimatePresence mode="wait">
@@ -584,7 +851,7 @@ export const PartnershipForm = () => {
             <FormField 
             name="companyName"
               label="Nom de l'entreprise" 
-              placeholder="Ex: Entreprise ABC"
+              placeholder="Ex: Entreprise XYZ SARL"
               delay={0.4}
             value={formData.companyName}
             onChange={handleChange}
@@ -612,7 +879,7 @@ export const PartnershipForm = () => {
               <FormField 
               name="rccm"
                 label="RCCM" 
-                placeholder="Ex: GN-2023-B-12345"
+                placeholder="Ex: RCCM-CON-01-A-2023"
                 delay={0.5}
               value={formData.rccm}
               onChange={handleChange}
@@ -625,7 +892,7 @@ export const PartnershipForm = () => {
               <FormField 
               name="nif"
                 label="NIF" 
-                placeholder="Ex: 123456789"
+                placeholder="Ex: NIF-12345678"
                 delay={0.55}
               value={formData.nif}
                 onChange={handleChange}
@@ -649,10 +916,10 @@ export const PartnershipForm = () => {
               errorMessage={errors.activityDomain || ''}
             />
 
-            <FormField 
-            name="headquartersAddress"
-              label="Adresse du siège" 
-              placeholder="Ex: 123 Avenue de la République, Conakry"
+                        <FormField 
+              name="headquartersAddress" 
+              label="Adresse du siège"
+              placeholder="Ex: 123 Rue du Commerce, Conakry"
               delay={0.65}
             value={formData.headquartersAddress}
             onChange={handleChange}
@@ -668,7 +935,7 @@ export const PartnershipForm = () => {
               name="phone"
                 label="Téléphone" 
               type="tel"
-                placeholder="+224 xxx xxx xxx"
+                placeholder="Ex: +224 612 34 56 78"
                 delay={0.7}
               value={formData.phone}
               onChange={handleChange}
@@ -682,7 +949,7 @@ export const PartnershipForm = () => {
               name="email"
                 label="Email professionnel" 
               type="email"
-                placeholder="contact@entreprise.com"
+                placeholder="Ex: contact@entreprise.com"
                 delay={0.75}
               value={formData.email}
               onChange={handleChange}
@@ -699,7 +966,7 @@ export const PartnershipForm = () => {
               name="employeesCount"
                 label="Nombre d'employés" 
               type="number"
-                placeholder="50"
+                placeholder="Ex: 50"
                 delay={0.8}
               value={formData.employeesCount}
               onChange={handleChange}
@@ -712,7 +979,7 @@ export const PartnershipForm = () => {
               <FormField 
               name="payroll"
                 label="Masse salariale" 
-                placeholder="Ex: 500 000 000 GNF"
+                placeholder="Ex: 100 000 000 GNF"
                 delay={0.85}
               value={formData.payroll}
                 onChange={handleChange}
@@ -727,7 +994,7 @@ export const PartnershipForm = () => {
                   name="cdiCount" 
                   label="CDI" 
                   type="number"
-                  placeholder="30"
+                  placeholder="Ex: 30"
                   delay={0.9}
                   value={formData.cdiCount}
                   onChange={handleChange}
@@ -740,7 +1007,7 @@ export const PartnershipForm = () => {
                   name="cddCount" 
                   label="CDD" 
                   type="number"
-                  placeholder="20"
+                  placeholder="Ex: 20"
                   delay={0.95}
                   value={formData.cddCount}
                   onChange={handleChange}
@@ -806,7 +1073,7 @@ export const PartnershipForm = () => {
             <FormField 
               name="repFullName" 
               label="Nom complet du représentant" 
-              placeholder="Ex: Mamadou Diallo"
+              placeholder="Ex: Mamadou DIALLO"
               delay={0.4}
               value={formData.repFullName}
               onChange={handleChange}
@@ -833,7 +1100,7 @@ export const PartnershipForm = () => {
               name="repEmail" 
               label="Email du représentant" 
               type="email"
-              placeholder="representant@entreprise.com"
+              placeholder="Ex: m.diallo@entreprise.com"
               delay={0.5}
               value={formData.repEmail}
               onChange={handleChange}
@@ -847,7 +1114,7 @@ export const PartnershipForm = () => {
               name="repPhone" 
               label="Téléphone du représentant" 
               type="tel"
-              placeholder="+224 xxx xxx xxx"
+              placeholder="Ex: +224 612 34 56 78"
               delay={0.55}
               value={formData.repPhone}
                 onChange={handleChange}
@@ -907,7 +1174,7 @@ export const PartnershipForm = () => {
             <FormField 
               name="hrFullName" 
               label="Nom complet du RH" 
-              placeholder="Ex: Fatou Camara"
+              placeholder="Ex: Aissatou BAH"
               delay={0.4}
               value={formData.hrFullName}
               onChange={handleChange}
@@ -921,7 +1188,7 @@ export const PartnershipForm = () => {
               name="hrEmail" 
               label="Email du responsable RH" 
               type="email"
-              placeholder="rh@entreprise.com"
+              placeholder="Ex: rh@entreprise.com"
               delay={0.45}
               value={formData.hrEmail}
               onChange={handleChange}
@@ -935,7 +1202,7 @@ export const PartnershipForm = () => {
               name="hrPhone" 
               label="Téléphone du responsable RH" 
               type="tel"
-              placeholder="+224 xxx xxx xxx"
+              placeholder="Ex: +224 655 12 34 56"
               delay={0.5}
               value={formData.hrPhone}
               onChange={handleChange}

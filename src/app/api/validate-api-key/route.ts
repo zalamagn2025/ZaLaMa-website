@@ -1,64 +1,100 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { handleOptions, createCorsResponse } from '@/lib/cors';
+
+export async function OPTIONS(request: NextRequest) {
+  return handleOptions(request);
+}
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Validation de la clé API...');
-
-    // Parser le body de la requête
     const body = await request.json();
     const { api_key } = body;
-    
-    console.log('📋 Clé API reçue:', api_key ? '***' + api_key.slice(-4) : 'manquant');
 
-    // Vérifier que les variables d'environnement Supabase sont configurées
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('❌ Variables d\'environnement Supabase manquantes:', {
-        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        serviceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-      });
-      return NextResponse.json({
-        success: false,
-        error: 'Configuration Supabase manquante'
-      }, { status: 500 });
+    if (!api_key || api_key.trim() === '') {
+      return createCorsResponse(
+        { 
+          success: false, 
+          error: 'Clé API requise',
+          message: 'Veuillez fournir une clé API valide'
+        },
+        400,
+        request
+      );
     }
 
-    // Validation directe de la clé API via Supabase
-    console.log('🔗 Validation directe de la clé API...');
+    console.log('🔑 Vérification de la clé API via Edge Function...');
+    console.log('📍 URL:', `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/employee-auth/verify-api-key`);
+
+    // Appeler l'Edge Function Supabase pour vérifier la clé API
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    // Créer le client Supabase avec service role
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    
-    // Vérifier si la clé API existe dans la table partners
-    const { data: partners, error } = await supabase
-      .from('partners')
-      .select('id, company_name, api_key')
-      .eq('api_key', api_key)
-      .single();
-    
-    if (error || !partners) {
-      console.log('❌ Clé API invalide:', error?.message || 'Partenaire non trouvé');
-      return NextResponse.json({
-        success: false,
-        error: 'Code entreprise invalide ou inexistant'
-      }, { status: 400 });
+    if (!supabaseUrl) {
+      return createCorsResponse(
+        { 
+          success: false, 
+          error: 'Configuration Supabase manquante',
+          message: 'Erreur de configuration serveur'
+        },
+        500,
+        request
+      );
     }
-    
-    console.log('✅ Clé API valide pour:', partners.company_name);
-    return NextResponse.json({
-      success: true,
-      partner_name: partners.company_name,
-      message: 'Code entreprise validé avec succès'
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/employee-auth/verify-api-key`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey || '',
+        'Authorization': `Bearer ${supabaseAnonKey || ''}`,
+      },
+      body: JSON.stringify({ api_key: api_key.trim() }),
     });
 
+    const result = await response.json();
+    
+    console.log('📋 Réponse Edge Function:', response.status, result);
+
+    if (!response.ok) {
+      console.error('❌ Erreur Edge Function:', response.status, result);
+      return createCorsResponse(
+        { 
+          success: false,
+          error: result.error || 'Erreur de vérification de la clé API',
+          message: result.message || 'Clé API invalide ou entreprise non trouvée',
+          details: result.details,
+          status: response.status
+        },
+        response.status,
+        request
+      );
+    }
+
+    console.log('✅ Clé API vérifiée avec succès');
+    
+    // Retourner les informations de l'entreprise
+    return createCorsResponse({
+      success: true,
+      message: 'Clé API valide',
+      data: {
+        partner: result.partner || result.data?.partner,
+        company_name: result.company_name || result.data?.company_name,
+        logo_url: result.logo_url || result.data?.logo_url,
+        partner_id: result.partner_id || result.data?.partner_id,
+        is_active: result.is_active || result.data?.is_active
+      }
+    }, 200, request);
+
   } catch (error) {
-    console.error('❌ Erreur lors de la validation de la clé API:', error);
-    return NextResponse.json({
-      success: false,
-      error: `Erreur lors de la validation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
-    }, { status: 500 });
+    console.error('❌ Erreur dans la route /api/validate-api-key:', error);
+    return createCorsResponse(
+      { 
+        success: false, 
+        error: 'Erreur interne du serveur',
+        message: 'Une erreur est survenue lors de la vérification de la clé API'
+      },
+      500,
+      request
+    );
   }
 }

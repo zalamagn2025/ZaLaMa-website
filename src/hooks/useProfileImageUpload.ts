@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useEmployeeAuth } from '../contexts/EmployeeAuthContext';
-import { ImageUploadService } from '../services/imageUploadService';
+import { employeeAuthService } from '../lib/apiEmployeeAuth';
 import { toast } from 'sonner';
 
 export interface UseProfileImageUploadReturn {
@@ -108,30 +108,30 @@ export function useProfileImageUpload(
       return;
     }
 
-    // ✅ Support pour différentes structures de données
-    const employeeId = userData.employeId || userData.id;
-
-    if (!employeeId) {
-      console.error('❌ Aucun employee ID trouvé dans les données employee:', userData);
-      setImageError('Impossible de récupérer l\'identifiant employee. Veuillez vous reconnecter.');
-      return;
-    }
-
     setIsUploading(true);
     setImageError(null);
 
     try {
       console.log('🚀 Début de l\'upload de l\'image de profil...');
-      console.log('👤 Employee ID utilisé:', employeeId);
 
-      // Utiliser le service d'upload existant pour l'instant
-      const result = await ImageUploadService.uploadProfileImage(avatarFile, employeeId);
+      // ✅ Utiliser l'API route via employeeAuthService
+      const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token');
+      if (!accessToken) {
+        setImageError('Token d\'authentification manquant. Veuillez vous reconnecter.');
+        return;
+      }
 
-      if (result.success && result.url) {
-        console.log('✅ Upload réussi');
-        setAvatarPreview(result.url);
+      const result = await employeeAuthService.uploadPhoto(accessToken, avatarFile);
+
+      if (result.success) {
+        console.log('✅ Upload réussi via API route');
         toast.success('Photo de profil mise à jour avec succès !');
         setAvatarFile(null);
+        
+        // ✅ Mettre à jour l'aperçu avec la nouvelle URL si disponible
+        if (result.data?.photo_url) {
+          setAvatarPreview(result.data.photo_url);
+        }
       } else {
         console.error('❌ Erreur lors de l\'upload:', result.error);
         setImageError(result.error || 'Une erreur est survenue lors du téléversement');

@@ -6,6 +6,7 @@ import { IconCheck, IconCreditCard, IconEye, IconEyeOff, IconInfoCircle, IconLoc
 import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useEmployeeDemands } from "@/hooks/useEmployeeDemands"
 
 interface SalaryAdvanceFormProps {
   onClose: () => void
@@ -109,6 +110,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   
   const router = useRouter()
 
+  // Hook pour les nouvelles APIs Edge Function
+  const { demands, stats, createDemand, isLoadingDemands, isLoadingStats, isCreating } = useEmployeeDemands()
+
   // Log des données utilisateur pour débogage
   console.log('🔍 Données utilisateur dans SalaryAdvanceForm:', {
     employeId: user.employeId,
@@ -118,29 +122,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     prenom: user.prenom
   })
 
-  // États pour les avances actives
-  const [advanceRequests, setAdvanceRequests] = useState<any[]>([])
-  const [loadingAdvanceRequests, setLoadingAdvanceRequests] = useState(true)
+  // États pour les avances actives (maintenant gérés par le hook)
+  const advanceRequests = demands || []
+  const loadingAdvanceRequests = isLoadingDemands
 
-  // Récupérer les avances actives
+  // Récupérer les avances actives (maintenant géré par le hook useEmployeeDemands)
   const fetchAdvanceRequests = useCallback(async () => {
-    if (!user.employeId) {
-      setLoadingAdvanceRequests(false)
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setAdvanceRequests(data.data || [])
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des avances:', error)
-    } finally {
-      setLoadingAdvanceRequests(false)
-    }
-  }, [user.employeId])
+    // Cette fonction n'est plus nécessaire car le hook gère automatiquement la récupération
+    console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')
+  }, [])
 
   // Calculer l'avance disponible en temps réel
   const calculateAdvanceData = useCallback(() => {
@@ -151,9 +141,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     }
 
     try {
-      // Calculer le total des avances actives (validées) - même logique que profile-stats
+      // Calculer le total des avances actives (approuvées) - même logique que profile-stats
       const totalActiveAdvances = advanceRequests
-        .filter(request => request.statut === 'Validé')
+        .filter(request => request.statut === 'Approuvée')
         .reduce((acc, request) => acc + (request.montant_demande as number), 0)
       
       const calculation = calculateAvailableAdvance(user.salaireNet, totalActiveAdvances)
@@ -300,28 +290,21 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
       console.log('📤 Données envoyées à l\'API:', advanceRequest)
 
-      // Appel API pour soumettre la demande
-      const response = await fetch('/api/salary-advance/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(advanceRequest),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Erreur lors de la soumission de la demande')
+      // Utiliser le hook createDemand pour soumettre la demande via Edge Function
+      const demandData = {
+        montant_demande: validation.requestedAmount,
+        type_motif: requestType,
+        motif: reason.trim(),
+        numero_reception: validation.cleanPhone
       }
 
-      const result = await response.json()
-      console.log("result", result)
+      console.log('📝 Création de la demande via Edge Function:', demandData)
+      
+      const result = await createDemand(demandData)
+      console.log("✅ Demande créée avec succès:", result)
       
       // Actualiser la page
-    router.refresh()
-      
-      // Actualiser les données d'avance après la soumission
-      calculateAdvanceData()
+      router.refresh()
       
       setCurrentStep('success')
       

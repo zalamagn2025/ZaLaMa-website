@@ -52,7 +52,7 @@ Action requise: Vérification immédiate des credentials SMS
       console.error('📧 ALERTE ADMIN ENVOYÉE:', alertMessage);
       
       // Ici vous pouvez intégrer votre service d'email
-      // await emailService.sendAlert(alertMessage);
+      
       
     } catch (emailError) {
       console.error('❌ Erreur envoi alerte admin:', emailError);

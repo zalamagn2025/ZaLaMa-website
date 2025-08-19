@@ -1,0 +1,52 @@
+### Test de vérification de clé API - Employee Auth
+### URL: https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+
+### Test 1: Vérification avec une clé API valide
+POST https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+Content-Type: application/json
+
+{
+  "api_key": "partner_c19af714-1d3a-495c-a0db-b3357e00de3c_1755560524503"
+}
+
+### Test 2: Vérification avec une clé API invalide
+POST https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+Content-Type: application/json
+
+{
+  "api_key": "invalid_api_key"
+}
+
+### Test 3: Vérification sans clé API
+POST https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+Content-Type: application/json
+
+{
+}
+
+### Test 4: Vérification avec une clé API vide
+POST https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+Content-Type: application/json
+
+{
+  "api_key": ""
+}
+
+### Test 5: Vérification avec méthode GET (doit échouer)
+GET https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+
+### Test 6: Vérification avec une clé API existante dans la base
+POST https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+Content-Type: application/json
+
+{
+  "api_key": "zalama_partner_key_2024"
+}
+
+### Test 7: Vérification avec une clé API de partenaire désactivé
+POST https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/employee-auth/verify-api-key
+Content-Type: application/json
+
+{
+  "api_key": "disabled_partner_key"
+}

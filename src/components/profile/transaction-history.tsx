@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { 
   IconSearch, 
   IconFilter, 
@@ -20,27 +20,11 @@ import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import { TransactionPDF } from "./TransactionPDF";
 import { ImageRecu } from "./ImageRecu";
+import { useEmployeeDemands } from "@/hooks/useEmployeeDemands";
+import { SalaryAdvanceDemand } from "@/types/employee-demands";
 
-// Interface pour les demandes d'avance
-interface SalaryAdvanceRequest {
-  id: string;
-  employe_id: string;
-  partenaire_id: string;
-  montant_demande: number;
-  type_motif: string;
-  motif: string;
-  numero_reception?: string;
-  frais_service: number;
-  montant_total: number;
-  salaire_disponible?: number;
-  avance_disponible?: number;
-  statut: "En attente" | "Validé" | "Rejeté" | "Annulé";
-  date_creation: string;
-  date_validation?: string;
-  date_rejet?: string;
-  motif_rejet?: string;
-  created_at: string;
-  updated_at: string;
+// Interface pour les demandes d'avance (compatible avec les Edge Functions)
+interface SalaryAdvanceRequest extends SalaryAdvanceDemand {
   employe?: {
     id: string;
     nom: string;
@@ -53,45 +37,12 @@ interface SalaryAdvanceRequest {
     nom: string;
     adresse: string;
   };
-}
-
-// Hook pour récupérer les demandes d'avance
-function useSalaryAdvanceRequests() {
-  const [requests, setRequests] = useState<SalaryAdvanceRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch("/api/salary-advance/request");
-      
-      if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des demandes");
-      }
-      
-      const data = await response.json();
-      setRequests(data.data || []);
-    } catch (err) {
-      console.error("Erreur lors de la récupération des demandes:", err);
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  return {
-    requests,
-    loading,
-    error,
-    refetch: fetchRequests
-  };
+  date_creation?: string;
+  date_validation?: string;
+  date_rejet?: string;
+  motif_rejet?: string;
+  salaire_disponible?: number;
+  avance_disponible?: number;
 }
 
 // Fonction pour convertir les données API en format d'affichage
@@ -135,7 +86,7 @@ const convertApiRequestToDisplay = (apiRequest: SalaryAdvanceRequest) => {
 
   return {
     id: apiRequest.id,
-    date: formatFullDate(apiRequest.date_creation),
+    date: formatFullDate(apiRequest.date_creation || apiRequest.created_at),
     type: formatMotifType(apiRequest.type_motif),
     amount: formatAmount(apiRequest.montant_demande),
     totalAmount: formatAmount(apiRequest.montant_total),
@@ -225,7 +176,7 @@ const generateAndDownloadPDF = async (request: ReturnType<typeof convertApiReque
     const blob = await pdf(
       <TransactionPDF
         montant={request.amount}
-        statut={request.status as "En attente" | "Validé" | "Rejeté" | "Annulé"}
+        statut={request.status as "En attente" | "Approuvée" | "Rejetée"}
         date={request.date}
         typeMotif={request.type}
         fraisService={request.fraisService}
@@ -240,8 +191,12 @@ const generateAndDownloadPDF = async (request: ReturnType<typeof convertApiReque
   }
 };
 
-export function TransactionHistory() {
-  const { requests: apiRequests, loading, error } = useSalaryAdvanceRequests();
+interface TransactionHistoryProps {
+  user?: any; // Prop optionnelle pour compatibilité
+}
+
+export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
+  const { demands: apiRequests, isLoadingDemands: loading, demandsError: error } = useEmployeeDemands();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
@@ -291,12 +246,10 @@ export function TransactionHistory() {
     switch (status.toLowerCase()) {
       case "en attente":
         return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
-      case "validé":
+      case "approuvée":
         return "bg-green-500/20 text-green-300 border-green-500/30";
-      case "rejeté":
+      case "rejetée":
         return "bg-red-500/20 text-red-300 border-red-500/30";
-      case "annulé":
-        return "bg-gray-500/20 text-gray-300 border-gray-500/30";
       default:
         return "bg-gray-500/20 text-gray-300 border-gray-500/30";
     }
@@ -307,12 +260,10 @@ export function TransactionHistory() {
     switch (status.toLowerCase()) {
       case "en attente":
         return <IconClock className="w-3 h-3" />;
-      case "validé":
+      case "approuvée":
         return <IconCheck className="w-3 h-3" />;
-      case "rejeté":
+      case "rejetée":
         return <IconX className="w-3 h-3" />;
-      case "annulé":
-        return <IconCircle className="w-3 h-3" />;
       default:
         return <IconClock className="w-3 h-3" />;
     }
@@ -323,12 +274,10 @@ export function TransactionHistory() {
     switch (status.toLowerCase()) {
       case "en attente":
         return "En attente";
-      case "validé":
-        return "Validé";
-      case "rejeté":
-        return "Rejeté";
-      case "annulé":
-        return "Annulé";
+      case "approuvée":
+        return "Approuvée";
+      case "rejetée":
+        return "Rejetée";
       default:
         return status;
     }
@@ -351,6 +300,8 @@ export function TransactionHistory() {
   }
 
   if (error) {
+    const isAuthError = error.includes('Token') || error.includes('authentification') || error.includes('connecter');
+    
     return (
       <motion.div
         className="bg-[#010D3E]/30 backdrop-blur-md rounded-xl p-6 border border-[#1A3A8F] shadow-lg"
@@ -362,15 +313,29 @@ export function TransactionHistory() {
           <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <IconCircle className="w-6 h-6" style={{ color: 'rgb(248, 113, 113)' }} />
           </div>
-          <h3 className="text-lg font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>Erreur de chargement</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>
+            {isAuthError ? 'Authentification requise' : 'Erreur de chargement'}
+          </h3>
           <p style={{ color: 'rgb(156, 163, 175)' }} className="mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 rounded-lg"
-            style={{ backgroundColor: 'rgb(255, 103, 30)', color: 'rgb(255, 255, 255)' }}
-          >
-            Réessayer
-          </button>
+          <div className="flex gap-3 justify-center">
+            {isAuthError ? (
+              <button 
+                onClick={() => window.location.href = '/login'}
+                className="px-4 py-2 rounded-lg"
+                style={{ backgroundColor: 'rgb(255, 103, 30)', color: 'rgb(255, 255, 255)' }}
+              >
+                Se connecter
+              </button>
+            ) : (
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 rounded-lg"
+                style={{ backgroundColor: 'rgb(255, 103, 30)', color: 'rgb(255, 255, 255)' }}
+              >
+                Réessayer
+              </button>
+            )}
+          </div>
         </div>
       </motion.div>
     );
@@ -465,9 +430,8 @@ export function TransactionHistory() {
                     options: [
                       { value: "", label: "Tous" },
                       { value: "en attente", label: "En attente" },
-                      { value: "validé", label: "Validée" },
-                      { value: "rejeté", label: "Rejetée" },
-                      { value: "annulé", label: "Annulée" },
+                      { value: "approuvée", label: "Approuvée" },
+                      { value: "rejetée", label: "Rejetée" },
                     ],
                   },
                   {
@@ -718,7 +682,7 @@ export function TransactionHistory() {
                 {selectedRequest && (() => {
                   const request = allRequests.find((r) => r.id === selectedRequest)!;
                   let fieldsToShow: Array<{ label: string; value: string; type?: string }> = [];
-                  if (request.status === "Rejeté") {
+                  if (request.status === "Rejetée") {
                     fieldsToShow = [
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
@@ -728,7 +692,7 @@ export function TransactionHistory() {
                       { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
                       { label: "Date", value: request.date, type: "date" },
                     ];
-                  } else if (request.status === "En attente" || request.status === "Annulé") {
+                  } else if (request.status === "En attente") {
                     fieldsToShow = [
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
@@ -736,7 +700,7 @@ export function TransactionHistory() {
                       { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
                       { label: "Date", value: request.date, type: "date" },
                     ];
-                  } else {
+                  } else if (request.status === "Approuvée") {
                     fieldsToShow = [
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
@@ -749,10 +713,18 @@ export function TransactionHistory() {
                       { label: "Date de validation", value: request.dateValidation || request.date, type: "date" },
                       { label: "Référence", value: request.numeroReception || `REF-${request.id.slice(-8)}`, type: "ref" },
                     ];
+                  } else {
+                    fieldsToShow = [
+                      { label: "Statut", value: request.status, type: "status" },
+                      { label: "Type de motif", value: request.type },
+                      { label: "Montant demandé", value: request.amount, type: "amount" },
+                      { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
+                      { label: "Date", value: request.date, type: "date" },
+                    ];
                   }
                   return (
                     <div className="w-full max-w-2xl mx-auto rounded-2xl p-0 md:p-0 flex flex-col" style={{ minHeight: "320px" }}>
-                      <div className={`${request.status === "Validé" ? "overflow-y-auto max-h-[60vh]" : ""} flex-1 flex flex-col divide-y`} style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+                      <div className={`${request.status === "Approuvée" ? "overflow-y-auto max-h-[60vh]" : ""} flex-1 flex flex-col divide-y`} style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
                         {fieldsToShow.map((item, subIndex) => (
                           <div key={subIndex} className="flex items-center justify-between py-4 px-2 md:px-4">
                             <span className="text-base md:text-lg font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
