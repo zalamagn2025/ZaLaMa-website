@@ -510,7 +510,8 @@ export function validateEmployeeForm(data: EmployeeFormData): {
     if (!result.isValid) {
       errors[field] = result.errorMessage || 'Champ invalide';
     } else if (result.formattedValue !== undefined) {
-      formattedData[field as keyof EmployeeFormData] = result.formattedValue as any;
+      // Type assertion sécurisée pour chaque champ
+      (formattedData as any)[field] = result.formattedValue;
     }
   });
 
