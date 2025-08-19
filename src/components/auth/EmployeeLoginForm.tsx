@@ -591,15 +591,25 @@ export default function EmployeeLoginForm() {
                     <div className="flex-grow border-t border-white/5"></div>
                   </div>
 
-                  {/* Sign up link */}
-                  <motion.p 
-                    className="text-center text-xs text-white/60 mt-4"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    Vous n&apos;avez pas de compte ? Contactez votre RH
-                  </motion.p>
+                                     {/* Sign up link */}
+                   <motion.div 
+                     className="text-center text-xs text-white/60 mt-4"
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     transition={{ delay: 0.5 }}
+                   >
+                     <p>Vous n&apos;avez pas de compte ? 
+                       <button
+                         type="button"
+                         onClick={() => router.push('/register')}
+                         className="inline-flex items-center gap-1 text-[#FF671E] hover:text-[#FF8533] transition-colors font-medium cursor-pointer px-2 py-1 rounded hover:bg-white/5 underline underline-offset-2 relative z-50"
+                         style={{ pointerEvents: 'auto' }}
+                       >
+                         S&apos;inscrire
+                         <ArrowRight className="w-3 h-3" />
+                       </button>
+                     </p>
+                   </motion.div>
                 </form>
               ) : (
                 /* Formulaire de mot de passe oublié */

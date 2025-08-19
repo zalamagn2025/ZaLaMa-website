@@ -626,13 +626,14 @@ export function Component() {
                     transition={{ delay: 0.5 }}
                   >
                     <p>Vous n&apos;avez pas de compte ? 
-                      <Link 
-                        href="/register" 
-                        className="inline-flex items-center gap-1 text-[#FF671E] hover:text-[#FF671E]/80 transition-colors font-medium cursor-pointer px-2 py-1 rounded hover:bg-white/5"
+                      <button
+                        type="button"
+                        onClick={() => router.push('/register')}
+                        className="inline-flex items-center gap-1 text-[#FF671E] hover:text-[#FF8533] transition-colors font-medium cursor-pointer px-2 py-1 rounded hover:bg-white/5 underline underline-offset-2"
                       >
                         S&apos;inscrire
                         <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      </button>
                     </p>
                   </motion.div>
                 </form>

@@ -163,8 +163,16 @@ export default function LoginForm() {
       </div>
       
       <div className="mt-4 text-center text-sm text-gray-600">
-
-        <p>Vous n&rsquo;avez pas de compte? Contactez votre administrateur pour obtenir vos identifiants.</p>
+        <p>
+          Vous n&rsquo;avez pas de compte?{" "}
+          <button
+            type="button"
+            onClick={() => router.push('/register')}
+            className="text-[#FF671E] hover:text-[#FF8533] font-semibold transition-colors duration-200 underline underline-offset-2"
+          >
+            S&rsquo;inscrire
+          </button>
+        </p>
       </div>
     </form>
     </>

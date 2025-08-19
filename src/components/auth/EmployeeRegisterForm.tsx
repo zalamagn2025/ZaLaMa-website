@@ -95,22 +95,22 @@ export default function EmployeeRegisterForm() {
     setIsClient(true);
   }, []);
   
-        // États pour le formulaire complet
-    const [formData, setFormData] = useState<EmployeeRegistrationData>({
-      api_key: "",
-      nom: "",
-      prenom: "",
-      email: "",
-      telephone: "",
-      adresse: "",
-      genre: "Homme",
-      poste: "",
-      matricule: "",
-      type_contrat: "CDI",
-      salaire_net: 0,
-      date_embauche: "",
-      date_expiration: "",
-    });
+  // États pour le formulaire complet
+  const [formData, setFormData] = useState<EmployeeRegistrationData>({
+    api_key: "",
+    nom: "",
+    prenom: "",
+    email: "",
+    telephone: "",
+    adresse: "",
+    genre: "Homme",
+    poste: "",
+    matricule: "",
+    type_contrat: "CDI",
+    salaire_net: 0,
+    date_embauche: "",
+    date_expiration: "",
+  });
 
   // États pour la validation du téléphone
   const [phoneValidation, setPhoneValidation] = useState({
@@ -154,7 +154,7 @@ export default function EmployeeRegisterForm() {
       const result = await response.json();
       console.log('📋 Résultat validation:', result);
 
-             if (result.success) {
+      if (result.success) {
          console.log('✅ Validation réussie pour:', result.data?.company_name);
          setPartnerInfo({
            company_name: result.data?.company_name || 'Entreprise inconnue',
@@ -170,9 +170,9 @@ export default function EmployeeRegisterForm() {
            status: result.data?.status,
            inscription_enabled: result.data?.inscription_enabled
          });
-         setApiKeyError(null);
-         return true;
-       } else {
+        setApiKeyError(null);
+        return true;
+      } else {
         console.log('❌ Validation échouée:', result.error);
         setApiKeyError(result.message || result.error || "Code entreprise invalide");
         setPartnerInfo(null);
@@ -189,20 +189,20 @@ export default function EmployeeRegisterForm() {
     }
   };
 
-     // Fonction simple pour vérifier si le bouton doit être activé
-   const isFormValid = () => {
+  // Fonction simple pour vérifier si le bouton doit être activé
+  const isFormValid = () => {
      // Vérifier si l'inscription est activée pour cette entreprise
      if (partnerInfo && partnerInfo.inscription_enabled === false) {
        return false;
      }
      
-     return formData.nom?.trim() && 
-            formData.prenom?.trim() && 
-            formData.email?.trim() && 
-            formData.poste?.trim() && 
-            formData.salaire_net > 0 && 
-            phoneValidation.isValid;
-   };
+    return formData.nom?.trim() && 
+           formData.prenom?.trim() && 
+           formData.email?.trim() && 
+           formData.poste?.trim() && 
+           formData.salaire_net > 0 && 
+           phoneValidation.isValid;
+  };
 
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,7 +227,7 @@ export default function EmployeeRegisterForm() {
     if (!formData.prenom?.trim()) errors.prenom = "Le prénom est obligatoire";
     if (!formData.email?.trim()) errors.email = "L'email est obligatoire";
     if (!formData.poste?.trim()) errors.poste = "Le poste est obligatoire";
-         if (!formData.salaire_net || formData.salaire_net <= 0) errors.salaire_net = "Le salaire doit être supérieur à 0";
+    if (!formData.salaire_net || formData.salaire_net <= 0) errors.salaire_net = "Le salaire doit être supérieur à 0";
     
     // Validation du téléphone
     if (!phoneValidation.isValid) {
@@ -310,12 +310,12 @@ export default function EmployeeRegisterForm() {
         <div className="absolute inset-0" />
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px]" />
         
-                 <motion.div
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.8 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
            className="w-full max-w-lg relative z-10"
-         >
+        >
            <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-10 border border-white/[0.05] shadow-2xl">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
@@ -336,15 +336,15 @@ export default function EmployeeRegisterForm() {
                </p>
                
                                <div className="space-y-3 text-sm text-left">
-                  <div className="flex items-center gap-2 text-green-300">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Email de confirmation envoyé à {formData.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-green-300">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>SMS de confirmation envoyé à {phoneValidation.formattedValue || formData.telephone}</span>
-                  </div>
-                   <div className="flex items-center gap-2 text-blue-300">
+                 <div className="flex items-center gap-2 text-green-300">
+                   <CheckCircle className="w-4 h-4" />
+                   <span>Email de confirmation envoyé à {formData.email}</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-green-300">
+                   <CheckCircle className="w-4 h-4" />
+                   <span>SMS de confirmation envoyé à {phoneValidation.formattedValue || formData.telephone}</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-blue-300">
                      <div className="w-4 h-4 rounded-full bg-blue-400 flex items-center justify-center">
                        <Info className="w-2.5 h-2.5 text-white" />
                      </div>
@@ -355,8 +355,8 @@ export default function EmployeeRegisterForm() {
                        <AlertTriangle className="w-2.5 h-2.5 text-white" />
                      </div>
                      <span>Si non approuvé, votre inscription sera annulée dans 7 jours et vous devrez vous réinscrire</span>
-                   </div>
-                </div>
+                 </div>
+               </div>
               
               
               <button
@@ -514,29 +514,29 @@ export default function EmployeeRegisterForm() {
                         focusedInput === "api_key" ? 'text-white' : 'text-white/40'
                       }`} />
                       
-                                             <Input
-                         type="text"
-                         placeholder="Code entreprise (API Key)"
-                         value={apiKey}
-                         onChange={(e) => {
-                           setApiKey(e.target.value);
-                           // Réinitialiser les erreurs quand l'utilisateur tape
-                           if (apiKeyError) {
-                             setApiKeyError(null);
-                             setPartnerInfo(null);
-                           }
-                         }}
-                         onFocus={() => setFocusedInput("api_key")}
-                         onBlur={() => setFocusedInput(null)}
-                         required
+                      <Input
+                        type="text"
+                        placeholder="Code entreprise (API Key)"
+                        value={apiKey}
+                        onChange={(e) => {
+                          setApiKey(e.target.value);
+                          // Réinitialiser les erreurs quand l'utilisateur tape
+                          if (apiKeyError) {
+                            setApiKeyError(null);
+                            setPartnerInfo(null);
+                          }
+                        }}
+                        onFocus={() => setFocusedInput("api_key")}
+                        onBlur={() => setFocusedInput(null)}
+                        required
                          className={`w-full bg-white/5 border-2 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10 ${
                            apiKeyError 
                              ? 'border-red-500 focus:border-red-500' 
                              : focusedInput === "api_key"
                              ? 'border-[#FF671E] focus:border-[#FF671E]'
                              : 'border-white/20 hover:border-white/30'
-                         }`}
-                       />
+                        }`}
+                      />
                     </div>
                   </motion.div>
                 </div>
@@ -589,9 +589,9 @@ export default function EmployeeRegisterForm() {
                               </div>
                             )}
                            <div className="flex-1">
-                             <p className="text-green-200 text-sm font-medium">
-                               Code valide pour : <span className="font-semibold text-green-100">{partnerInfo.company_name}</span>
-                             </p>
+                         <p className="text-green-200 text-sm font-medium">
+                           Code valide pour : <span className="font-semibold text-green-100">{partnerInfo.company_name}</span>
+                         </p>
                              {partnerInfo.is_active !== undefined && (
                                <p className="text-green-300/70 text-xs">
                                  Statut : {partnerInfo.is_active ? 'Actif' : 'Inactif'}
@@ -643,23 +643,37 @@ export default function EmployeeRegisterForm() {
                      </AnimatePresence>
                    </div>
                  </motion.button>
+                  
+                  {/* Lien de connexion */}
+                  <div className="mt-6 text-center text-sm text-white/60">
+                    <p>
+                      Vous avez un compte ?{" "}
+                      <button
+                        type="button"
+                        onClick={() => router.push('/login')}
+                        className="text-[#FF671E] hover:text-[#FF8533] font-semibold transition-colors duration-200 underline underline-offset-2 cursor-pointer"
+                      >
+                        Vous connecter
+                      </button>
+                    </p>
+                  </div>
               </motion.form>
             )}
 
-                         {/* Étape 2: Formulaire complet */}
-             {step === 2 && (
-               <motion.form
-                 key="step2"
-                 initial={{ opacity: 0, x: -20 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 exit={{ opacity: 0, x: 20 }}
-                 transition={{ duration: 0.3 }}
-                 onSubmit={handleStep2Submit}
-                 className="space-y-4"
-                 autoComplete="off"
-                 data-form-type="other"
-                 data-lpignore="true"
-               >
+            {/* Étape 2: Formulaire complet */}
+            {step === 2 && (
+              <motion.form
+                key="step2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handleStep2Submit}
+                className="space-y-4"
+                autoComplete="off"
+                data-form-type="other"
+                data-lpignore="true"
+              >
                  {/* Affichage des informations de l'entreprise */}
                  {partnerInfo && (
                    <>
@@ -919,41 +933,41 @@ export default function EmployeeRegisterForm() {
                      
                    </motion.div>
 
-                                     {/* Genre */}
-                   <motion.div 
-                     className={`relative ${focusedInput === "genre" ? 'z-10' : ''}`}
-                     whileFocus={{ scale: 1.02 }}
-                     whileHover={{ scale: 1.01 }}
-                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                   >
-                     <label className="block text-white/70 text-xs font-medium mb-0.5">Genre <span className="text-[#FF671E]">*</span></label>
-                     <div className="relative flex items-center overflow-hidden rounded-lg">
-                       <Users className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                         focusedInput === "genre" ? 'text-white' : 'text-white/40'
-                       }`} />
-                       
-                       <Select
-                         value={formData.genre}
-                         onChange={(e) => handleInputChange('genre', e.target.value as 'Homme' | 'Femme' | 'Autre')}
-                         onFocus={() => setFocusedInput("genre")}
-                         onBlur={() => setFocusedInput(null)}
-                         required
-                         className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none appearance-none cursor-pointer"
-                         style={{
-                           backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                           backgroundPosition: 'right 0.5rem center',
-                           backgroundRepeat: 'no-repeat',
-                           backgroundSize: '1.5em 1.5em',
-                           paddingRight: '2.5rem'
-                         }}
-                       >
-                         <option value="">Sélectionner le genre</option>
-                         <option value="Homme">Homme</option>
-                         <option value="Femme">Femme</option>
-                         <option value="Autre">Autre</option>
-                       </Select>
-                     </div>
-                   </motion.div>
+                  {/* Genre */}
+                  <motion.div 
+                    className={`relative ${focusedInput === "genre" ? 'z-10' : ''}`}
+                    whileFocus={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  >
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Genre <span className="text-[#FF671E]">*</span></label>
+                    <div className="relative flex items-center overflow-hidden rounded-lg">
+                      <Users className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                        focusedInput === "genre" ? 'text-white' : 'text-white/40'
+                      }`} />
+                      
+                      <Select
+                        value={formData.genre}
+                        onChange={(e) => handleInputChange('genre', e.target.value as 'Homme' | 'Femme' | 'Autre')}
+                        onFocus={() => setFocusedInput("genre")}
+                        onBlur={() => setFocusedInput(null)}
+                        required
+                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none appearance-none cursor-pointer"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                          backgroundPosition: 'right 0.5rem center',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundSize: '1.5em 1.5em',
+                          paddingRight: '2.5rem'
+                        }}
+                      >
+                        <option value="">Sélectionner le genre</option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                        <option value="Autre">Autre</option>
+                      </Select>
+                    </div>
+                  </motion.div>
 
                    {/* Adresse */}
                    <motion.div 
@@ -995,8 +1009,8 @@ export default function EmployeeRegisterForm() {
                        </motion.div>
                      )}
                    </motion.div>
-                  </div>
-                </div>
+                 </div>
+               </div>
 
                {/* Section Informations Professionnelles */}
                <div className="space-y-6 mt-8">
