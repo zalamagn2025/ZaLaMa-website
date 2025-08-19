@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { emailService } from '@/services/emailService';
-import { enhancedSmsService } from '@/services/smsService';
+
 
 // URL de l'Edge Function Supabase
 const SUPABASE_EDGE_FUNCTION_URL = 'https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request';
@@ -174,54 +173,7 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Demande de partenariat traitée avec succès');
     
-    // Envoi des emails et SMS de notification (non-bloquant)
-    console.log('📧 Envoi des emails de notification...');
-    console.log('📱 Envoi des SMS de notification...');
-    
-    try {
-      // Envoi parallèle des emails et SMS
-      const [emailResult, smsResult] = await Promise.allSettled([
-        emailService.sendPartnershipEmails(result.data || edgeFunctionData),
-        enhancedSmsService.sendPartnershipNotification({
-          partner_name: edgeFunctionData.company_name,
-          company_phone: edgeFunctionData.phone,
-          representative_phone: edgeFunctionData.rep_phone,
-          rh_phone: edgeFunctionData.hr_phone,
-          admin_phone: '+224625607878', // Téléphone admin ZaLaMa
-          request_id: result.requestId || 'N/A',
-          submission_date: new Date()
-        })
-      ]);
-      
-      console.log('📧 Résultat envoi emails:', emailResult);
-      console.log('📱 Résultat envoi SMS:', smsResult);
-      
-      // Traitement des résultats
-      const emailStatus = emailResult.status === 'fulfilled' ? 
-        (emailResult.value.overallSuccess ? 'Envoyés' : 'Partiellement envoyés') : 
-        'Erreur';
-      
-      const smsStatus = smsResult.status === 'fulfilled' ? 
-        (smsResult.value.success ? 'Envoyés' : 'Partiellement envoyés') : 
-        'Erreur';
-      
-      // Ajouter les informations d'email et SMS à la réponse
-      return NextResponse.json({
-        ...result,
-        emailStatus,
-        smsStatus,
-        emailDetails: emailResult.status === 'fulfilled' ? emailResult.value : emailResult.reason,
-        smsDetails: smsResult.status === 'fulfilled' ? smsResult.value : smsResult.reason
-      });
-         } catch (error) {
-       console.error('❌ Erreur lors de l\'envoi des notifications:', error);
-       return NextResponse.json({
-         ...result,
-         emailStatus: 'Erreur',
-         smsStatus: 'Erreur',
-         error: error instanceof Error ? error.message : 'Erreur inconnue'
-       });
-     }
+    return NextResponse.json(result);
 
      } catch (error) {
      console.error('❌ Erreur dans l\'API route:', error);

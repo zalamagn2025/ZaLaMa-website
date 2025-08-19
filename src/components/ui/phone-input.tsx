@@ -238,25 +238,7 @@ export function PhoneInput({
         </motion.div>
       )}
       
-      {/* Aide contextuelle */}
-      {isFocused && !validationResult?.isValid && value.trim() && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-gray-500 bg-gray-50 dark:bg-gray-800 p-2 rounded border"
-        >
-          <p className="font-medium mb-1">Format attendu :</p>
-                     <ul className="space-y-1 text-xs">
-             <li>• +224 612 34 56 78</li>
-             <li>• 224 612 34 56 78</li>
-             <li>• 612 34 56 78</li>
-             <li>• +224612345678</li>
-           </ul>
-                     <p className="mt-1 text-xs">
-             Le numéro doit commencer par 6 (opérateur guinéen)
-           </p>
-        </motion.div>
-      )}
+
     </div>
   );
 }

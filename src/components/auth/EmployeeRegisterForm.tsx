@@ -20,7 +20,9 @@ import {
   Calendar,
   DollarSign,
   Hash,
-  Users
+  Users,
+  Info,
+  AlertTriangle
 } from "lucide-react";
 import { useRegisterEmployee, EmployeeRegistrationData } from "@/hooks/useRegisterEmployee";
 import PhoneInput from "@/components/ui/phone-input";
@@ -73,29 +75,42 @@ export default function EmployeeRegisterForm() {
   const [isClient, setIsClient] = useState(false);
   const [validatingApiKey, setValidatingApiKey] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-  const [partnerInfo, setPartnerInfo] = useState<{ company_name: string } | null>(null);
+     const [partnerInfo, setPartnerInfo] = useState<{ 
+     company_name: string;
+     logo_url?: string;
+     partner_id?: string;
+     is_active?: boolean;
+     legal_status?: string;
+     rccm?: string;
+     nif?: string;
+     activity_domain?: string;
+     phone?: string;
+     email?: string;
+     status?: string;
+     inscription_enabled?: boolean;
+   } | null>(null);
   
   // Éviter les problèmes d'hydratation
   useEffect(() => {
     setIsClient(true);
   }, []);
   
-  // États pour le formulaire complet
-  const [formData, setFormData] = useState<EmployeeRegistrationData>({
-    api_key: "",
-    nom: "",
-    prenom: "",
-    email: "",
-    telephone: "",
-    adresse: "",
-    genre: "Homme",
-    poste: "",
-    matricule: "",
-    type_contrat: "CDI",
-    salaire_net: 0,
-    date_embauche: "",
-    date_expiration: "",
-  });
+        // États pour le formulaire complet
+    const [formData, setFormData] = useState<EmployeeRegistrationData>({
+      api_key: "",
+      nom: "",
+      prenom: "",
+      email: "",
+      telephone: "",
+      adresse: "",
+      genre: "Homme",
+      poste: "",
+      matricule: "",
+      type_contrat: "CDI",
+      salaire_net: 0,
+      date_embauche: "",
+      date_expiration: "",
+    });
 
   // États pour la validation du téléphone
   const [phoneValidation, setPhoneValidation] = useState({
@@ -139,14 +154,27 @@ export default function EmployeeRegisterForm() {
       const result = await response.json();
       console.log('📋 Résultat validation:', result);
 
-      if (result.success) {
-        console.log('✅ Validation réussie pour:', result.partner_name);
-        setPartnerInfo({ company_name: result.partner_name });
-        setApiKeyError(null);
-        return true;
-      } else {
+             if (result.success) {
+         console.log('✅ Validation réussie pour:', result.data?.company_name);
+         setPartnerInfo({
+           company_name: result.data?.company_name || 'Entreprise inconnue',
+           logo_url: result.data?.logo_url,
+           partner_id: result.data?.partner_id,
+           is_active: result.data?.status === 'approved',
+           legal_status: result.data?.legal_status,
+           rccm: result.data?.rccm,
+           nif: result.data?.nif,
+           activity_domain: result.data?.activity_domain,
+           phone: result.data?.phone,
+           email: result.data?.email,
+           status: result.data?.status,
+           inscription_enabled: result.data?.inscription_enabled
+         });
+         setApiKeyError(null);
+         return true;
+       } else {
         console.log('❌ Validation échouée:', result.error);
-        setApiKeyError(result.error || "Code entreprise invalide");
+        setApiKeyError(result.message || result.error || "Code entreprise invalide");
         setPartnerInfo(null);
         return false;
       }
@@ -161,16 +189,20 @@ export default function EmployeeRegisterForm() {
     }
   };
 
-  // Fonction simple pour vérifier si le bouton doit être activé
-  const isFormValid = () => {
-    return formData.nom?.trim() && 
-           formData.prenom?.trim() && 
-           formData.email?.trim() && 
-           formData.poste?.trim() && 
-           formData.salaire_net > 0 && 
-           formData.date_embauche && 
-           phoneValidation.isValid;
-  };
+     // Fonction simple pour vérifier si le bouton doit être activé
+   const isFormValid = () => {
+     // Vérifier si l'inscription est activée pour cette entreprise
+     if (partnerInfo && partnerInfo.inscription_enabled === false) {
+       return false;
+     }
+     
+     return formData.nom?.trim() && 
+            formData.prenom?.trim() && 
+            formData.email?.trim() && 
+            formData.poste?.trim() && 
+            formData.salaire_net > 0 && 
+            phoneValidation.isValid;
+   };
 
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,8 +227,7 @@ export default function EmployeeRegisterForm() {
     if (!formData.prenom?.trim()) errors.prenom = "Le prénom est obligatoire";
     if (!formData.email?.trim()) errors.email = "L'email est obligatoire";
     if (!formData.poste?.trim()) errors.poste = "Le poste est obligatoire";
-    if (!formData.salaire_net || formData.salaire_net <= 0) errors.salaire_net = "Le salaire doit être supérieur à 0";
-    if (!formData.date_embauche) errors.date_embauche = "La date d'embauche est obligatoire";
+         if (!formData.salaire_net || formData.salaire_net <= 0) errors.salaire_net = "Le salaire doit être supérieur à 0";
     
     // Validation du téléphone
     if (!phoneValidation.isValid) {
@@ -279,13 +310,13 @@ export default function EmployeeRegisterForm() {
         <div className="absolute inset-0" />
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px]" />
         
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="w-full max-w-md relative z-10"
-        >
-          <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-8 border border-white/[0.05] shadow-2xl">
+                 <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.8 }}
+           className="w-full max-w-lg relative z-10"
+         >
+           <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-10 border border-white/[0.05] shadow-2xl">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -304,20 +335,28 @@ export default function EmployeeRegisterForm() {
                  Votre inscription a été validée avec succès.
                </p>
                
-               <div className="space-y-3 text-sm">
-                 <div className="flex items-center gap-2 text-green-300">
-                   <CheckCircle className="w-4 h-4" />
-                   <span>Email de confirmation envoyé à {formData.email}</span>
-                 </div>
-                 <div className="flex items-center gap-2 text-green-300">
-                   <CheckCircle className="w-4 h-4" />
-                   <span>SMS de confirmation envoyé à {phoneValidation.formattedValue || formData.telephone}</span>
-                 </div>
-                 <div className="flex items-center gap-2 text-blue-300">
-                   <div className="w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin"></div>
-                   <span>Votre dossier sera traité sous 24-48 heures</span>
-                 </div>
-               </div>
+                               <div className="space-y-3 text-sm text-left">
+                  <div className="flex items-center gap-2 text-green-300">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Email de confirmation envoyé à {formData.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-green-300">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>SMS de confirmation envoyé à {phoneValidation.formattedValue || formData.telephone}</span>
+                  </div>
+                   <div className="flex items-center gap-2 text-blue-300">
+                     <div className="w-4 h-4 rounded-full bg-blue-400 flex items-center justify-center">
+                       <Info className="w-2.5 h-2.5 text-white" />
+                     </div>
+                     <span>Contactez votre RH ou représentant pour activer votre compte</span>
+                   </div>
+                   <div className="flex items-center gap-2 text-orange-300">
+                     <div className="w-4 h-4 rounded-full bg-orange-400 flex items-center justify-center">
+                       <AlertTriangle className="w-2.5 h-2.5 text-white" />
+                     </div>
+                     <span>Si non approuvé, votre inscription sera annulée dans 7 jours et vous devrez vous réinscrire</span>
+                   </div>
+                </div>
               
               
               <button
@@ -475,25 +514,29 @@ export default function EmployeeRegisterForm() {
                         focusedInput === "api_key" ? 'text-white' : 'text-white/40'
                       }`} />
                       
-                      <Input
-                        type="text"
-                        placeholder="Code entreprise (API Key)"
-                        value={apiKey}
-                        onChange={(e) => {
-                          setApiKey(e.target.value);
-                          // Réinitialiser les erreurs quand l'utilisateur tape
-                          if (apiKeyError) {
-                            setApiKeyError(null);
-                            setPartnerInfo(null);
-                          }
-                        }}
-                        onFocus={() => setFocusedInput("api_key")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className={`w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10 ${
-                          apiKeyError ? 'border-red-500' : ''
-                        }`}
-                      />
+                                             <Input
+                         type="text"
+                         placeholder="Code entreprise (API Key)"
+                         value={apiKey}
+                         onChange={(e) => {
+                           setApiKey(e.target.value);
+                           // Réinitialiser les erreurs quand l'utilisateur tape
+                           if (apiKeyError) {
+                             setApiKeyError(null);
+                             setPartnerInfo(null);
+                           }
+                         }}
+                         onFocus={() => setFocusedInput("api_key")}
+                         onBlur={() => setFocusedInput(null)}
+                         required
+                         className={`w-full bg-white/5 border-2 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 focus:bg-white/10 ${
+                           apiKeyError 
+                             ? 'border-red-500 focus:border-red-500' 
+                             : focusedInput === "api_key"
+                             ? 'border-[#FF671E] focus:border-[#FF671E]'
+                             : 'border-white/20 hover:border-white/30'
+                         }`}
+                       />
                     </div>
                   </motion.div>
                 </div>
@@ -532,9 +575,30 @@ export default function EmployeeRegisterForm() {
                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
                            <CheckCircle className="w-3 h-3 text-green-400" />
                          </div>
-                         <p className="text-green-200 text-sm font-medium">
-                           Code valide pour : <span className="font-semibold text-green-100">{partnerInfo.company_name}</span>
-                         </p>
+                         <div className="flex items-center gap-3 flex-1">
+                                                       {partnerInfo.logo_url && (
+                              <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-white border border-white/30 flex items-center justify-center">
+                                <img 
+                                  src={partnerInfo.logo_url} 
+                                  alt={`Logo ${partnerInfo.company_name}`}
+                                  className="max-w-full max-h-full object-contain"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                           <div className="flex-1">
+                             <p className="text-green-200 text-sm font-medium">
+                               Code valide pour : <span className="font-semibold text-green-100">{partnerInfo.company_name}</span>
+                             </p>
+                             {partnerInfo.is_active !== undefined && (
+                               <p className="text-green-300/70 text-xs">
+                                 Statut : {partnerInfo.is_active ? 'Actif' : 'Inactif'}
+                               </p>
+                             )}
+                           </div>
+                         </div>
                        </div>
                      </motion.div>
                    )}
@@ -582,20 +646,120 @@ export default function EmployeeRegisterForm() {
               </motion.form>
             )}
 
-            {/* Étape 2: Formulaire complet */}
-            {step === 2 && (
-              <motion.form
-                key="step2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-                onSubmit={handleStep2Submit}
-                className="space-y-4"
-                autoComplete="off"
-                data-form-type="other"
-                data-lpignore="true"
-              >
+                         {/* Étape 2: Formulaire complet */}
+             {step === 2 && (
+               <motion.form
+                 key="step2"
+                 initial={{ opacity: 0, x: -20 }}
+                 animate={{ opacity: 1, x: 0 }}
+                 exit={{ opacity: 0, x: 20 }}
+                 transition={{ duration: 0.3 }}
+                 onSubmit={handleStep2Submit}
+                 className="space-y-4"
+                 autoComplete="off"
+                 data-form-type="other"
+                 data-lpignore="true"
+               >
+                 {/* Affichage des informations de l'entreprise */}
+                 {partnerInfo && (
+                   <>
+                     <motion.div
+                       initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                       animate={{ opacity: 1, y: 0, scale: 1 }}
+                       transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                       className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-indigo-600/10 border border-blue-500/30 rounded-xl backdrop-blur-sm"
+                     >
+                     <div className="flex items-start gap-4">
+                                               {partnerInfo.logo_url && (
+                          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-white border border-white/30 shadow-lg flex items-center justify-center">
+                            <img 
+                              src={partnerInfo.logo_url} 
+                              alt={`Logo ${partnerInfo.company_name}`}
+                              className="max-w-full max-h-full object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                       <div className="flex-1">
+                         <div className="flex items-center gap-3 mb-2">
+                           <h3 className="text-blue-200 font-semibold text-lg">
+                             {partnerInfo.company_name}
+                           </h3>
+                           {partnerInfo.legal_status && (
+                             <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full border border-blue-500/30">
+                               {partnerInfo.legal_status}
+                             </span>
+                           )}
+                         </div>
+                         
+                         <p className="text-blue-300/70 text-sm mb-2">
+                           Inscription en cours pour cette entreprise
+                         </p>
+                         
+                         <div className="flex flex-wrap gap-4 text-xs">
+                           {partnerInfo.activity_domain && (
+                             <div className="flex items-center gap-1">
+                               <span className="text-blue-300/60">Domaine :</span>
+                               <span className="text-blue-200 font-medium">{partnerInfo.activity_domain}</span>
+                             </div>
+                           )}
+                           
+                           {partnerInfo.status && (
+                             <div className="flex items-center gap-2">
+                               <div className={`w-2 h-2 rounded-full ${
+                                 partnerInfo.status === 'approved' ? 'bg-green-400' : 
+                                 partnerInfo.status === 'pending' ? 'bg-yellow-400' : 'bg-red-400'
+                               }`}></div>
+                               <span className="text-blue-300/60">Statut :</span>
+                               <span className={`font-medium ${
+                                 partnerInfo.status === 'approved' ? 'text-green-300' : 
+                                 partnerInfo.status === 'pending' ? 'text-yellow-300' : 'text-red-300'
+                               }`}>
+                                 {partnerInfo.status === 'approved' ? 'Approuvé' : 
+                                  partnerInfo.status === 'pending' ? 'En attente' : 'Rejeté'}
+                               </span>
+                             </div>
+                           )}
+                           
+                           {partnerInfo.inscription_enabled !== undefined && (
+                             <div className="flex items-center gap-1">
+                               <span className="text-blue-300/60">Inscription :</span>
+                               <span className={`font-medium ${partnerInfo.inscription_enabled ? 'text-green-300' : 'text-red-300'}`}>
+                                 {partnerInfo.inscription_enabled ? 'Activée' : 'Désactivée'}
+                               </span>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     </div>
+                   </motion.div>
+                   
+                   {/* Message d'avertissement si l'inscription est désactivée */}
+                   {partnerInfo.inscription_enabled === false && (
+                     <motion.div
+                       initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                       animate={{ opacity: 1, y: 0, scale: 1 }}
+                       transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                       className="mb-6 p-4 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 rounded-xl backdrop-blur-sm"
+                     >
+                       <div className="flex items-center gap-3">
+                         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                           <AlertCircle className="w-3 h-3 text-red-400" />
+                         </div>
+                         <div className="flex-1">
+                           <h4 className="text-red-200 font-semibold text-sm mb-1">Inscription temporairement désactivée</h4>
+                           <p className="text-red-300 text-sm">
+                             L'inscription des employés est actuellement désactivée pour {partnerInfo.company_name}. 
+                             Veuillez contacter l'administrateur de votre entreprise.
+                           </p>
+                         </div>
+                       </div>
+                     </motion.div>
+                   )}
+                   </>
+                 )}
                                  {/* Section Informations Personnelles */}
                  <div className="space-y-6">
                    <div className="flex items-center gap-3 mb-6">
@@ -752,58 +916,87 @@ export default function EmployeeRegisterForm() {
                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white placeholder:text-white/30 h-12 transition-all duration-300 focus:bg-white/5 rounded-none"
                        showValidation={false}
                      />
-                     {/* Affichage de la validation du téléphone */}
-                     {phoneValidation.formattedValue && (
+                     
+                   </motion.div>
+
+                                     {/* Genre */}
+                   <motion.div 
+                     className={`relative ${focusedInput === "genre" ? 'z-10' : ''}`}
+                     whileFocus={{ scale: 1.02 }}
+                     whileHover={{ scale: 1.01 }}
+                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                   >
+                     <label className="block text-white/70 text-xs font-medium mb-0.5">Genre <span className="text-[#FF671E]">*</span></label>
+                     <div className="relative flex items-center overflow-hidden rounded-lg">
+                       <Users className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                         focusedInput === "genre" ? 'text-white' : 'text-white/40'
+                       }`} />
+                       
+                       <Select
+                         value={formData.genre}
+                         onChange={(e) => handleInputChange('genre', e.target.value as 'Homme' | 'Femme' | 'Autre')}
+                         onFocus={() => setFocusedInput("genre")}
+                         onBlur={() => setFocusedInput(null)}
+                         required
+                         className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none appearance-none cursor-pointer"
+                         style={{
+                           backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                           backgroundPosition: 'right 0.5rem center',
+                           backgroundRepeat: 'no-repeat',
+                           backgroundSize: '1.5em 1.5em',
+                           paddingRight: '2.5rem'
+                         }}
+                       >
+                         <option value="">Sélectionner le genre</option>
+                         <option value="Homme">Homme</option>
+                         <option value="Femme">Femme</option>
+                         <option value="Autre">Autre</option>
+                       </Select>
+                     </div>
+                   </motion.div>
+
+                   {/* Adresse */}
+                   <motion.div 
+                     className={`relative ${focusedInput === "adresse" ? 'z-10' : ''}`}
+                     whileFocus={{ scale: 1.02 }}
+                     whileHover={{ scale: 1.01 }}
+                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                   >
+                     <label className="block text-white/70 text-xs font-medium mb-0.5">Adresse Complète</label>
+                     <div className="relative flex items-center overflow-hidden rounded-lg">
+                       <MapPin className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                         focusedInput === "adresse" ? 'text-white' : 'text-white/40'
+                       }`} />
+                       
+                       <Input
+                         type="text"
+                         placeholder="Ex: 123 Rue de la Paix, Conakry, Guinée"
+                         value={formData.adresse}
+                         onChange={(e) => {
+                           handleInputChange('adresse', e.target.value);
+                         }}
+                         onFocus={() => setFocusedInput("adresse")}
+                         onBlur={() => setFocusedInput(null)}
+                         className={`w-full bg-transparent border-b text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none ${
+                           getFieldError('adresse') ? 'border-red-500 focus:border-red-500' : 'border-white/20 focus:border-[#FF671E]'
+                         }`}
+                       />
+                     </div>
+                     {getFieldError('adresse') && (
                        <motion.div
                          initial={{ opacity: 0, y: -5, scale: 0.95 }}
                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                         className="mt-2 p-2 bg-green-500/10 border border-green-500/20 rounded-lg"
+                         className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg"
                        >
-                         <p className="text-green-300 text-xs flex items-center gap-1">
-                           <CheckCircle className="w-3 h-3" />
-                           Numéro valide : {phoneValidation.formattedValue}
+                         <p className="text-red-300 text-xs flex items-center gap-1">
+                           <AlertCircle className="w-3 h-3" />
+                           {getFieldError('adresse')}
                          </p>
                        </motion.div>
                      )}
                    </motion.div>
-
-                  {/* Genre */}
-                  <motion.div 
-                    className={`relative ${focusedInput === "genre" ? 'z-10' : ''}`}
-                    whileFocus={{ scale: 1.02 }}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <label className="block text-white/70 text-xs font-medium mb-0.5">Genre <span className="text-[#FF671E]">*</span></label>
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <Users className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "genre" ? 'text-white' : 'text-white/40'
-                      }`} />
-                      
-                      <Select
-                        value={formData.genre}
-                        onChange={(e) => handleInputChange('genre', e.target.value as 'Homme' | 'Femme' | 'Autre')}
-                        onFocus={() => setFocusedInput("genre")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none appearance-none cursor-pointer"
-                        style={{
-                          backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                          backgroundPosition: 'right 0.5rem center',
-                          backgroundRepeat: 'no-repeat',
-                          backgroundSize: '1.5em 1.5em',
-                          paddingRight: '2.5rem'
-                        }}
-                      >
-                        <option value="">Sélectionner le genre</option>
-                        <option value="Homme">Homme</option>
-                        <option value="Femme">Femme</option>
-                        <option value="Autre">Autre</option>
-                      </Select>
-                    </div>
-                  </motion.div>
-                 </div>
-               </div>
+                  </div>
+                </div>
 
                {/* Section Informations Professionnelles */}
                <div className="space-y-6 mt-8">
@@ -968,32 +1161,7 @@ export default function EmployeeRegisterForm() {
                      )}
                   </motion.div>
 
-                  {/* Date d'embauche */}
-                  <motion.div 
-                    className={`relative ${focusedInput === "date_embauche" ? 'z-10' : ''}`}
-                    whileFocus={{ scale: 1.02 }}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                                          <label className="block text-white/70 text-xs font-medium mb-0.5">Date d'Embauche</label>
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <Calendar className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "date_embauche" ? 'text-white' : 'text-white/40'
-                      }`} />
-                      
-                                              <Input
-                          type="date"
-                          value={formData.date_embauche}
-                          onChange={(e) => handleInputChange('date_embauche', e.target.value)}
-                          onFocus={() => setFocusedInput("date_embauche")}
-                          onBlur={() => setFocusedInput(null)}
-                          required
-                          max={new Date().toISOString().split('T')[0]}
-                          min="1900-01-01"
-                          className="w-full bg-transparent border-b border-white/20 focus:border-[#FF671E] text-white h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none"
-                        />
-                    </div>
-                  </motion.div>
+                  
 
                                      {/* Date d'expiration - Affichage conditionnel pour CDD */}
                    {formData.type_contrat === 'CDD' && (
@@ -1039,55 +1207,7 @@ export default function EmployeeRegisterForm() {
                   </div>
                 </div>
 
-                {/* Section Adresse */}
-                <div className="space-y-6 mt-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-full bg-[#FF671E]/20 flex items-center justify-center">
-                      <MapPin className="w-4 h-4 text-[#FF671E]" />
-                    </div>
-                    <h3 className="text-white font-semibold text-lg">Adresse</h3>
-                  </div>
-                  
-                  <motion.div 
-                    className={`relative ${focusedInput === "adresse" ? 'z-10' : ''}`}
-                    whileFocus={{ scale: 1.02 }}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <label className="block text-white/70 text-xs font-medium mb-0.5">Adresse Complète</label>
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <MapPin className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "adresse" ? 'text-white' : 'text-white/40'
-                      }`} />
-                      
-                      <Input
-                        type="text"
-                        placeholder="Ex: 123 Rue de la Paix, Conakry, Guinée (optionnel)"
-                        value={formData.adresse}
-                        onChange={(e) => {
-                          handleInputChange('adresse', e.target.value);
-                        }}
-                        onFocus={() => setFocusedInput("adresse")}
-                        onBlur={() => setFocusedInput(null)}
-                        className={`w-full bg-transparent border-b text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none ${
-                          getFieldError('adresse') ? 'border-red-500 focus:border-red-500' : 'border-white/20 focus:border-[#FF671E]'
-                        }`}
-                      />
-                    </div>
-                    {getFieldError('adresse') && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg"
-                      >
-                        <p className="text-red-300 text-xs flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          {getFieldError('adresse')}
-                        </p>
-                      </motion.div>
-                    )}
-                  </motion.div>
-                </div>
+                
 
 
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { resendEmailService } from '@/services/resendEmailService';
+
 import crypto from 'crypto';
 
 const supabase = createClient(
@@ -77,37 +77,14 @@ export async function POST(request: NextRequest) {
     // Nom de l'utilisateur pour personnalisation (utiliser prenom et nom)
     const userName = user.prenom ? `${user.prenom} ${user.nom || ''}`.trim() : undefined;
 
-    // Envoyer l'email via Resend
-    const emailResult = await resendEmailService.sendForgotPasswordEmail(
-      email,
-      resetLink,
-      userName
-    );
-
-    if (!emailResult.success) {
-      console.error('❌ Erreur envoi email pour:', email, emailResult.error);
-      
-      // Supprimer le token si l'email n'a pas pu être envoyé
-      await supabase
-        .from('password_reset_tokens')
-        .delete()
-        .eq('token_hash', resetTokenHash);
-
-      return NextResponse.json(
-        { error: 'Erreur lors de l\'envoi de l\'email' },
-        { status: 500 }
-      );
-    }
-
-    console.log('✅ Email de réinitialisation envoyé avec succès pour:', email);
+    console.log('✅ Token de réinitialisation généré pour:', email);
 
     // Log de sécurité
     console.log('🔒 Token de réinitialisation généré:', {
       userId: user.id,
       email: email,
       expiresAt: expiresAt,
-      tokenHash: resetTokenHash.substring(0, 10) + '...',
-      messageId: emailResult.messageId
+      tokenHash: resetTokenHash.substring(0, 10) + '...'
     });
 
     return NextResponse.json({

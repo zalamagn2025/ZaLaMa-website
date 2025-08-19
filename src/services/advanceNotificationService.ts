@@ -302,50 +302,7 @@ Merci pour votre confiance.`
     }
   }
 
-  /**
-   * Retry automatique pour les SMS avec backoff exponentiel
-   */
-  private async sendSMSWithRetry(phone: string, message: string, context: string): Promise<SMSResult> {
-    let lastError: string = ''
-    
-    for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
-      try {
-        const result = await this.smsClient.messages.create({
-          to: [this.formatPhoneNumber(phone)],
-          message,
-          sender_name: 'ZaLaMa'
-        })
 
-        return {
-          success: true,
-          messageId: result.messageid,
-          timestamp: new Date(),
-          recipient: phone
-        }
-
-      } catch (error) {
-        lastError = formatSmsError(error, `Tentative ${attempt}/${this.retryAttempts} échouée pour ${context}`)
-        
-        logSmsError(error, `${context} - Tentative ${attempt}`, {
-          attempt,
-          totalAttempts: this.retryAttempts,
-          phone: phone,
-          context
-        })
-        
-        if (attempt < this.retryAttempts) {
-          await this.delay(this.retryDelay * attempt) // Backoff exponentiel
-        }
-      }
-    }
-
-    return {
-      success: false,
-      error: lastError,
-      timestamp: new Date(),
-      recipient: phone
-    }
-  }
 
   /**
    * Délai utilitaire pour le retry
