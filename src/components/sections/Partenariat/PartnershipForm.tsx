@@ -85,7 +85,8 @@ const FormField = memo(({
           onBlur={onBlur}
           required={required}
           placeholder={placeholder}
-          className={`bg-blue-950/30 border text-white placeholder-gray-600/50 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
+          aria-label={label}
+          className={`bg-blue-950/30 border text-white placeholder:text-gray-300/30 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
             hasError 
               ? 'border-red-500/70' 
               : isValid 
@@ -850,7 +851,7 @@ export const PartnershipForm = () => {
             <FormField 
             name="companyName"
               label="Nom de l'entreprise" 
-              placeholder="Nom de votre entreprise"
+              placeholder="Ex: Entreprise XYZ SARL"
               delay={0.4}
             value={formData.companyName}
             onChange={handleChange}
@@ -878,7 +879,7 @@ export const PartnershipForm = () => {
               <FormField 
               name="rccm"
                 label="RCCM" 
-                placeholder="Numéro RCCM"
+                placeholder="Ex: RCCM-CON-01-A-2023"
                 delay={0.5}
               value={formData.rccm}
               onChange={handleChange}
@@ -891,7 +892,7 @@ export const PartnershipForm = () => {
               <FormField 
               name="nif"
                 label="NIF" 
-                placeholder="Numéro NIF"
+                placeholder="Ex: NIF-12345678"
                 delay={0.55}
               value={formData.nif}
                 onChange={handleChange}
@@ -918,7 +919,7 @@ export const PartnershipForm = () => {
                         <FormField 
               name="headquartersAddress" 
               label="Adresse du siège"
-              placeholder="Adresse complète"
+              placeholder="Ex: 123 Rue du Commerce, Conakry"
               delay={0.65}
             value={formData.headquartersAddress}
             onChange={handleChange}
@@ -934,7 +935,7 @@ export const PartnershipForm = () => {
               name="phone"
                 label="Téléphone" 
               type="tel"
-                placeholder="Votre téléphone"
+                placeholder="Ex: +224 612 34 56 78"
                 delay={0.7}
               value={formData.phone}
               onChange={handleChange}
@@ -948,7 +949,7 @@ export const PartnershipForm = () => {
               name="email"
                 label="Email professionnel" 
               type="email"
-                placeholder="Email professionnel"
+                placeholder="Ex: contact@entreprise.com"
                 delay={0.75}
               value={formData.email}
               onChange={handleChange}
@@ -965,7 +966,7 @@ export const PartnershipForm = () => {
               name="employeesCount"
                 label="Nombre d'employés" 
               type="number"
-                placeholder="50"
+                placeholder="Ex: 50"
                 delay={0.8}
               value={formData.employeesCount}
               onChange={handleChange}
@@ -978,7 +979,7 @@ export const PartnershipForm = () => {
               <FormField 
               name="payroll"
                 label="Masse salariale" 
-                placeholder="Masse salariale"
+                placeholder="Ex: 100 000 000 GNF"
                 delay={0.85}
               value={formData.payroll}
                 onChange={handleChange}
@@ -993,7 +994,7 @@ export const PartnershipForm = () => {
                   name="cdiCount" 
                   label="CDI" 
                   type="number"
-                  placeholder="30"
+                  placeholder="Ex: 30"
                   delay={0.9}
                   value={formData.cdiCount}
                   onChange={handleChange}
@@ -1006,7 +1007,7 @@ export const PartnershipForm = () => {
                   name="cddCount" 
                   label="CDD" 
                   type="number"
-                  placeholder="20"
+                  placeholder="Ex: 20"
                   delay={0.95}
                   value={formData.cddCount}
                   onChange={handleChange}
@@ -1072,7 +1073,7 @@ export const PartnershipForm = () => {
             <FormField 
               name="repFullName" 
               label="Nom complet du représentant" 
-              placeholder="Nom complet"
+              placeholder="Ex: Mamadou DIALLO"
               delay={0.4}
               value={formData.repFullName}
               onChange={handleChange}
@@ -1085,7 +1086,7 @@ export const PartnershipForm = () => {
             <FormField 
               name="repPosition" 
               label="Fonction du représentant" 
-              placeholder="Fonction"
+              placeholder="Ex: Directeur Général"
               delay={0.45}
               value={formData.repPosition}
               onChange={handleChange}
@@ -1099,7 +1100,7 @@ export const PartnershipForm = () => {
               name="repEmail" 
               label="Email du représentant" 
               type="email"
-              placeholder="Email du représentant"
+              placeholder="Ex: m.diallo@entreprise.com"
               delay={0.5}
               value={formData.repEmail}
               onChange={handleChange}
@@ -1113,7 +1114,7 @@ export const PartnershipForm = () => {
               name="repPhone" 
               label="Téléphone du représentant" 
               type="tel"
-              placeholder="Téléphone du représentant"
+              placeholder="Ex: +224 612 34 56 78"
               delay={0.55}
               value={formData.repPhone}
                 onChange={handleChange}
@@ -1173,7 +1174,7 @@ export const PartnershipForm = () => {
             <FormField 
               name="hrFullName" 
               label="Nom complet du RH" 
-              placeholder="Nom complet du RH"
+              placeholder="Ex: Aissatou BAH"
               delay={0.4}
               value={formData.hrFullName}
               onChange={handleChange}
@@ -1187,7 +1188,7 @@ export const PartnershipForm = () => {
               name="hrEmail" 
               label="Email du responsable RH" 
               type="email"
-              placeholder="Email du RH"
+              placeholder="Ex: rh@entreprise.com"
               delay={0.45}
               value={formData.hrEmail}
               onChange={handleChange}
@@ -1201,7 +1202,7 @@ export const PartnershipForm = () => {
               name="hrPhone" 
               label="Téléphone du responsable RH" 
               type="tel"
-              placeholder="Téléphone du RH"
+              placeholder="Ex: +224 655 12 34 56"
               delay={0.5}
               value={formData.hrPhone}
               onChange={handleChange}
