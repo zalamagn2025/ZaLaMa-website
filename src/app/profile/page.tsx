@@ -73,6 +73,22 @@ export default function ProfilePage() {
           console.log('⚠️ Aucun token trouvé, skip de la vérification')
           return
         }
+
+        // Vérifier le cache local d'abord
+        const cacheKey = `first_login_checked_${employee?.email || 'unknown'}`
+        const cachedResult = sessionStorage.getItem(cacheKey)
+        
+        if (cachedResult) {
+          const cached = JSON.parse(cachedResult)
+          console.log('📋 Résultat en cache:', cached)
+          
+          if (cached.requirePasswordChange === false) {
+            console.log('✅ Cache indique que le mot de passe a déjà été changé')
+            setShowFirstLoginModal(false)
+            setHasCheckedFirstLogin(true)
+            return
+          }
+        }
         
         const response = await fetch('/api/auth/check-first-login', {
           method: 'GET',
@@ -86,9 +102,19 @@ export default function ProfilePage() {
           const data = await response.json()
           console.log('✅ Statut première connexion:', data.requirePasswordChange)
           
+          // Mettre en cache le résultat
+          sessionStorage.setItem(cacheKey, JSON.stringify({
+            requirePasswordChange: data.requirePasswordChange,
+            timestamp: Date.now()
+          }))
+          
+          // SOLUTION INFALLIBLE - Modal s'affiche seulement si vraiment première connexion
           if (data.requirePasswordChange) {
             console.log('🔑 Première connexion détectée, affichage du modal')
             setShowFirstLoginModal(true)
+          } else {
+            console.log('✅ Utilisateur a déjà changé son mot de passe')
+            setShowFirstLoginModal(false)
           }
         } else {
           console.error('❌ Erreur lors de la vérification de la première connexion')
@@ -101,10 +127,25 @@ export default function ProfilePage() {
     }
 
     checkFirstLogin()
-  }, [isAuthenticated, hasCheckedFirstLogin])
+  }, [isAuthenticated, hasCheckedFirstLogin, employee?.email])
 
   const handleFirstLoginSuccess = () => {
+    console.log('🎉 Première connexion réussie, mise à jour du cache...')
+    
+    // Mettre à jour le cache local
+    const cacheKey = `first_login_checked_${employee?.email || 'unknown'}`
+    sessionStorage.setItem(cacheKey, JSON.stringify({
+      requirePasswordChange: false,
+      timestamp: Date.now()
+    }))
+    
     setShowFirstLoginModal(false)
+    
+    // Nettoyer le cache après un délai
+    setTimeout(() => {
+      sessionStorage.removeItem(cacheKey)
+    }, 5000)
+    
     // Recharger la page pour mettre à jour l'état
     window.location.reload()
   }
@@ -298,7 +339,7 @@ export default function ProfilePage() {
                            {userData && <FinancialServices user={userData} />}
                          </TabsContent>
                          <TabsContent value="history" className="mt-2">
-                           <TransactionHistory />
+                           {userData && <TransactionHistory user={userData} />}
                          </TabsContent>
                          <TabsContent value="feedback" className="mt-2">
                            <div className="space-y-6">

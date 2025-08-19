@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { PasswordVerificationModal } from "@/components/ui/password-verification-modal"
 import { usePasswordVerification } from "@/hooks/usePasswordVerification"
+import { useEmployeeDemands } from "@/hooks/useEmployeeDemands"
 
 // Type pour les demandes d'avance
 interface AdvanceRequest {
@@ -21,7 +22,7 @@ interface AdvanceRequest {
   montant_total: number
   salaire_disponible?: number
   avance_disponible?: number
-  statut: 'En attente' | 'Validé' | 'Rejeté' | 'Annulé'
+  statut: 'En attente' | 'Approuvée' | 'Rejetée'
   date_creation: string
   date_validation?: string
   date_rejet?: string
@@ -93,13 +94,13 @@ function getTotalWorkingDaysInMonth(year: number, month: number): number {
 }
 
 // Fonction utilitaire pour calculer les montants financiers
-function calculateFinancialAmounts(salaireNet: number, advanceRequests: AdvanceRequest[]) {
+function calculateFinancialAmounts(salaireNet: number, advanceRequests: any[]) {
   // 1. Acompte disponible (basé sur les jours ouvrables écoulés)
   const acompteDisponible = calculateAvailableAdvance(salaireNet)
   
-  // 2. Total des avances actives (validées)
+  // 2. Total des avances actives (approuvées)
   const totalActiveAdvances = advanceRequests
-    .filter(request => request.statut === 'Validé')
+    .filter(request => request.statut === 'Approuvée')
     .reduce((acc, request) => acc + (request.montant_demande as number), 0)
   
   // 3. Salaire restant = Salaire net - Avances actives
@@ -124,8 +125,12 @@ function calculateFinancialAmounts(salaireNet: number, advanceRequests: AdvanceR
 }
 
 export function ProfileStats({ user }: { user: UserWithEmployeData }) {
-  const [advanceRequests, setAdvanceRequests] = useState<AdvanceRequest[]>([])
-  const [loading, setLoading] = useState(true)
+  // Hook pour les nouvelles APIs Edge Function
+  const { demands, stats: demandsStats, isLoadingDemands } = useEmployeeDemands()
+  
+  // Utiliser les données du hook au lieu de l'état local
+  const advanceRequests = demands || []
+  const loading = isLoadingDemands
   const [debugData, setDebugData] = useState<any>(null)
   const [schemaData, setSchemaData] = useState<any>(null)
   
@@ -314,46 +319,10 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     }
   }
 
-  // Récupérer les demandes d'avance
+  // Récupération des demandes d'avance maintenant gérée par le hook useEmployeeDemands
   useEffect(() => {
-    const fetchAdvanceRequests = async () => {
-      if (!user.employeId) {
-        console.log("⚠️ employeId non défini, impossible de récupérer les demandes")
-        setLoading(false)
-        return
-      }
-      
-      try {
-        console.log("🔍 Récupération des demandes pour employeId:", user.employeId)
-        const response = await fetch(`/api/salary-advance/request?employeId=${user.employeId}`)
-        console.log("📡 Response status:", response.status)
-        
-        if (response.ok) {
-          const data = await response.json()
-          console.log("📦 Données complètes reçues:", data)
-          console.log("📋 Demandes trouvées:", data.data)
-          console.log("📊 Nombre de demandes:", data.data?.length || 0)
-          
-          if (data.data && data.data.length > 0) {
-            console.log("🔍 Première demande:", data.data[0])
-            console.log("📋 Statuts des demandes:", data.data.map((d: any) => ({ id: d.id, statut: d.statut, montant: d.montant_demande })))
-          }
-          
-          setAdvanceRequests(data.data || [])
-        } else {
-          console.error("❌ Erreur API:", response.status, response.statusText)
-          const errorData = await response.json()
-          console.error("❌ Détails erreur:", errorData)
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des demandes:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAdvanceRequests()
-  }, [user.employeId])
+    console.log("📋 Récupération des demandes gérée par le hook useEmployeeDemands")
+  }, [])
 
   // Réinitialiser la vérification quand l'utilisateur change
   useEffect(() => {
@@ -374,15 +343,15 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   const availableAdvance = user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0
 
   // Trouver la demande d'avance active (approuvée)
-  const activeAdvance = advanceRequests.find(request => request.statut === 'Validé')
+  const activeAdvance = advanceRequests.find(request => request.statut === 'Approuvée')
   
   //la somme de toutes les demandes d'avance approuvées
   const totalAdvance = advanceRequests
-    .filter(request => request.statut === 'Validé')
+    .filter(request => request.statut === 'Approuvée')
     .reduce((acc, request) => acc + (request.montant_demande as number), 0)
   
   const advanceValue = activeAdvance ? activeAdvance.montant_total : 0
-  const advanceStatus = activeAdvance ? `${advanceRequests.filter(r => r.statut === 'Validé').length} avances en cours` : 'Aucune avance active'
+  const advanceStatus = activeAdvance ? `${advanceRequests.filter(r => r.statut === 'Approuvée').length} avances en cours` : 'Aucune avance active'
 
   // Calculer tous les montants financiers avec la fonction utilitaire
   const financialAmounts = user.salaireNet ? calculateFinancialAmounts(user.salaireNet, advanceRequests) : null

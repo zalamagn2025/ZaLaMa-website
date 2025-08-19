@@ -284,13 +284,34 @@ class EmployeeAuthService {
     accessToken: string,
     profileData: UpdateProfileData
   ): Promise<EmployeeAuthResponse> {
-    return this.makeRequest('update-profile', {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(profileData),
-    });
+    try {
+      const response = await fetch('/api/auth/update-profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error || 'Erreur lors de la mise à jour du profil',
+          details: result.message,
+        };
+      }
+
+      return result;
+    } catch (error) {
+      console.error('💥 Erreur lors de la mise à jour du profil:', error);
+      return {
+        success: false,
+        error: 'Erreur de connexion au serveur',
+      };
+    }
   }
 
   /**
@@ -298,12 +319,10 @@ class EmployeeAuthService {
    */
   async uploadPhoto(accessToken: string, photoFile: File): Promise<EmployeeAuthResponse> {
     try {
-      const url = this.getEdgeFunctionUrl('upload-photo');
-      
       const formData = new FormData();
       formData.append('photo', photoFile);
       
-      const response = await fetch(url, {
+      const response = await fetch('/api/auth/upload-photo', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
