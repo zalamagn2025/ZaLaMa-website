@@ -100,9 +100,29 @@ export async function GET(request: NextRequest) {
 
     // Maintenant vérifier si c'est la première connexion en utilisant admin_users
     const cookieStore = await cookies();
+    
+    // Vérifier que les variables d'environnement sont définies
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('❌ Variables d\'environnement Supabase manquantes:', {
+        url: supabaseUrl ? 'définie' : 'manquante',
+        serviceRoleKey: serviceRoleKey ? 'définie' : 'manquante'
+      });
+      
+      // Fallback: retourner false pour éviter la modal
+      return createCorsResponse({
+        success: true,
+        requirePasswordChange: false,
+        message: 'Vérification terminée (variables manquantes)',
+        isFirstLogin: false
+      });
+    }
+    
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      serviceRoleKey,
       {
         cookies: {
           get(name: string) {
@@ -133,6 +153,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('📧 Email employé récupéré:', employeeData.email);
+
     // Vérifier dans admin_users si le changement de mot de passe est requis
     const { data: adminUserData, error: adminUserError } = await supabase
       .from('admin_users')
@@ -140,13 +162,42 @@ export async function GET(request: NextRequest) {
       .eq('email', employeeData.email)
       .single();
 
+    console.log('🔍 Résultat vérification admin_users:', { adminUserData, adminUserError });
+
     if (adminUserError) {
-      console.error('❌ Erreur lors de la récupération des données admin_users:', adminUserError);
-      // Si l'utilisateur n'existe pas dans admin_users, considérer qu'il n'a pas besoin de changer son mot de passe
+      console.log('⚠️ Utilisateur non trouvé dans admin_users, création automatique...');
+      
+      // Créer automatiquement l'entrée dans admin_users avec require_password_change = false
+      const { data: insertData, error: insertError } = await supabase
+        .from('admin_users')
+        .insert({
+          id: crypto.randomUUID(),
+          email: employeeData.email,
+          display_name: employeeData.email.split('@')[0], // Fallback simple
+          role: 'user',
+          active: true,
+          require_password_change: false
+        })
+        .select();
+
+      console.log('➕ Résultat création automatique:', { insertData, insertError });
+
+      if (insertError) {
+        console.error('❌ Erreur lors de la création automatique:', insertError);
+        // En cas d'erreur, considérer qu'il n'a pas besoin de changer son mot de passe
+        return createCorsResponse({
+          success: true,
+          requirePasswordChange: false,
+          message: 'Vérification terminée (création échouée)',
+          isFirstLogin: false
+        });
+      }
+
+      // Retourner false car l'entrée a été créée avec require_password_change = false
       return createCorsResponse({
         success: true,
         requirePasswordChange: false,
-        message: 'Vérification terminée',
+        message: 'Vérification terminée (entrée créée)',
         isFirstLogin: false
       });
     }
@@ -159,7 +210,8 @@ export async function GET(request: NextRequest) {
       employeeId,
       employeeEmail: employeeData.email,
       isFirstLogin,
-      requirePasswordChange
+      requirePasswordChange,
+      adminUserData
     });
     
     return createCorsResponse({
