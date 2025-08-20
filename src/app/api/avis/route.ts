@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { CreateAvisRequest, AvisResponse, AvisListResponse } from '@/types/avis'
 import jwt from 'jsonwebtoken'
+import { createCorsResponse, handleOptions } from '@/lib/cors'
 
 // Interface pour le token JWT
 interface JWTPayload {
@@ -30,7 +31,16 @@ const MAX_AVIS_PER_DAY = 3
 // Fonction pour vérifier le token JWT
 function verifyAuthToken(request: NextRequest): JWTPayload | null {
   try {
-    const authToken = request.cookies.get('auth-token')?.value
+    // Vérifier d'abord le cookie auth-token
+    let authToken = request.cookies.get('auth-token')?.value
+    
+    // Si pas de cookie, vérifier le header Authorization
+    if (!authToken) {
+      const authHeader = request.headers.get('authorization')
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.replace('Bearer ', '')
+      }
+    }
     
     if (!authToken) {
       console.log('❌ Aucun token d\'authentification trouvé')
@@ -114,6 +124,10 @@ async function checkDailyAvisLimit(supabase: any, employeeId: string): Promise<{
   }
 }
 
+export async function OPTIONS(request: NextRequest) {
+  return handleOptions(request);
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse<AvisResponse>> {
   try {
     console.log('🔧 POST /api/avis - Début de la requête')
@@ -121,9 +135,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
     // Vérifier l'authentification via JWT
     const userData = verifyAuthToken(request)
     if (!userData) {
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Non autorisé' },
-        { status: 401 }
+        401,
+        request
       )
     }
 
@@ -151,25 +166,28 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
     // Validation des données
     if (!body.note || body.note < 1 || body.note > 5) {
       console.log('❌ Note invalide:', body.note)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'La note doit être entre 1 et 5' },
-        { status: 400 }
+        400,
+        request
       )
     }
 
     if (!body.commentaire || body.commentaire.trim().length === 0) {
       console.log('❌ Commentaire vide')
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Le commentaire est requis' },
-        { status: 400 }
+        400,
+        request
       )
     }
 
     if (!body.type_retour || !['positif', 'negatif'].includes(body.type_retour)) {
       console.log('❌ Type de retour invalide:', body.type_retour)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Le type de retour doit être "positif" ou "negatif"' },
-        { status: 400 }
+        400,
+        request
       )
     }
 
@@ -190,17 +208,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
 
       if (employeeError) {
         console.error('❌ Erreur lors de la récupération de l\'employé:', employeeError)
-        return NextResponse.json(
+        return createCorsResponse(
           { success: false, error: 'Employé non trouvé' },
-          { status: 404 }
+          404,
+          request
         )
       }
 
       if (!employee) {
         console.log('❌ Aucun employé trouvé pour user_id:', userData.uid)
-        return NextResponse.json(
+        return createCorsResponse(
           { success: false, error: 'Employé non trouvé' },
-          { status: 404 }
+          404,
+          request
         )
       }
 
@@ -213,7 +233,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
       
       if (!limitCheck.canPost) {
         console.log('❌ Limite d\'avis quotidienne atteinte')
-        return NextResponse.json(
+        return createCorsResponse(
           { 
             success: false, 
             error: `Limite d'avis quotidienne atteinte. Vous avez déjà posté ${limitCheck.currentCount} avis aujourd'hui (limite: ${limitCheck.limit}). Réessayez demain.`,
@@ -223,7 +243,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
               remaining: 0
             }
           },
-          { status: 429 } // Too Many Requests
+          429, // Too Many Requests
+          request
         )
       }
 
@@ -251,9 +272,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
 
       if (insertError) {
         console.error('❌ Erreur lors de la création de l\'avis:', insertError)
-        return NextResponse.json(
+        return createCorsResponse(
           { success: false, error: 'Erreur lors de la création de l\'avis' },
-          { status: 500 }
+          500,
+          request
         )
       }
 
@@ -266,28 +288,31 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
         remaining: limitCheck.limit - (limitCheck.currentCount + 1)
       }
       
-      return NextResponse.json(
+      return createCorsResponse(
         { 
           success: true, 
           data: avis,
           limitInfo: updatedLimitInfo
         },
-        { status: 201 }
+        201,
+        request
       )
 
     } catch (error) {
       console.error('💥 Erreur lors de la création de l\'avis:', error)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Erreur interne du serveur' },
-        { status: 500 }
+        500,
+        request
       )
     }
 
   } catch (error) {
     console.error('💥 Erreur générale:', error)
-    return NextResponse.json(
+    return createCorsResponse(
       { success: false, error: 'Erreur interne du serveur' },
-      { status: 500 }
+      500,
+      request
     )
   }
 }
@@ -299,9 +324,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
     // Vérifier l'authentification via JWT
     const userData = verifyAuthToken(request)
     if (!userData) {
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, data: [], error: 'Non autorisé' },
-        { status: 401 }
+        401,
+        request
       )
     }
 
@@ -314,9 +340,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
       console.log('✅ Client Supabase créé avec succès')
     } catch (error) {
       console.error('❌ Erreur lors de la création du client Supabase:', error)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Erreur de configuration Supabase' },
-        { status: 500 }
+        500,
+        request
       )
     }
 
@@ -330,9 +357,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
 
     if (employeeError || !employee) {
       console.error('❌ Employé non trouvé:', employeeError)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, data: [], error: 'Employé non trouvé' },
-        { status: 404 }
+        404,
+        request
       )
     }
 
@@ -345,23 +373,26 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
 
     if (fetchError) {
       console.error('Erreur lors de la récupération des avis:', fetchError)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, data: [], error: 'Erreur lors de la récupération des avis' },
-        { status: 500 }
+        500,
+        request
       )
     }
 
     console.log('✅ Avis récupérés:', avis?.length || 0)
-    return NextResponse.json(
+    return createCorsResponse(
       { success: true, data: avis || [] },
-      { status: 200 }
+      200,
+      request
     )
 
   } catch (error) {
     console.error('Erreur serveur:', error)
-    return NextResponse.json(
+    return createCorsResponse(
       { success: false, data: [], error: 'Erreur serveur interne' },
-      { status: 500 }
+      500,
+      request
     )
   }
 } 

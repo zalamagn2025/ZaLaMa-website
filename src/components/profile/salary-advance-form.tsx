@@ -138,9 +138,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       
       if (!accessToken) {
         setError('Token d\'accès non trouvé')
-        return
-      }
-      
+      return
+    }
+
       // Appeler l'API getme pour récupérer les données financières
       const response = await fetch('/api/auth/getme', {
         method: 'GET',
@@ -355,7 +355,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       console.log("✅ Demande créée avec succès:", result)
       
       // Actualiser la page
-      router.refresh()
+    router.refresh()
       
       setCurrentStep('success')
       
