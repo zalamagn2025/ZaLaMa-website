@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test CORS - ZaLaMa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test CORS - ZaLaMa API</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Vérification CORS basique</h2>
+        <p>Test de la route OPTIONS pour vérifier les headers CORS</p>
+        <button onclick="testCorsBasic()">Tester CORS basique</button>
+        <div id="cors-result" class="result info">En attente...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Test d'authentification</h2>
+        <p>Test de la route /api/avis avec authentification</p>
+        <button onclick="testAuth()">Tester authentification</button>
+        <div id="auth-result" class="result info">En attente...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Test complet avis</h2>
+        <p>Test complet de création d'avis</p>
+        <button onclick="testAvisComplete()">Tester avis complet</button>
+        <div id="avis-result" class="result info">En attente...</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3002/api';
+        
+        function updateResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = content;
+            element.className = `result ${type}`;
+        }
+
+        async function testCorsBasic() {
+            updateResult('cors-result', 'Test en cours...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/avis`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'https://zalamagn.com',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type, Authorization'
+                    }
+                });
+
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
+                };
+
+                console.log('Headers CORS reçus:', corsHeaders);
+                
+                if (response.status === 200) {
+                    updateResult('cors-result', 
+                        `✅ CORS OK!\nStatus: ${response.status}\nHeaders: ${JSON.stringify(corsHeaders, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    updateResult('cors-result', 
+                        `❌ Erreur CORS\nStatus: ${response.status}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                updateResult('cors-result', 
+                    `❌ Erreur réseau: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testAuth() {
+            updateResult('auth-result', 'Test en cours...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/avis`, {
+                    method: 'GET',
+                    headers: {
+                        'Origin': 'https://zalamagn.com',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 401) {
+                    updateResult('auth-result', 
+                        `✅ Authentification requise (normal)\nStatus: ${response.status}\nMessage: ${data.error}`, 
+                        'success'
+                    );
+                } else if (response.status === 200) {
+                    updateResult('auth-result', 
+                        `✅ Authentification réussie\nStatus: ${response.status}\nDonnées: ${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    updateResult('auth-result', 
+                        `⚠️ Statut inattendu\nStatus: ${response.status}\nMessage: ${data.error || 'Aucun message'}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                updateResult('auth-result', 
+                    `❌ Erreur réseau: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testAvisComplete() {
+            updateResult('avis-result', 'Test en cours...', 'info');
+            
+            try {
+                const avisData = {
+                    note: 5,
+                    commentaire: "Test CORS depuis zalamagn.com",
+                    type_retour: "positif"
+                };
+
+                const response = await fetch(`${API_BASE}/avis`, {
+                    method: 'POST',
+                    headers: {
+                        'Origin': 'https://zalamagn.com',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(avisData)
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 401) {
+                    updateResult('avis-result', 
+                        `✅ Authentification requise (normal)\nStatus: ${response.status}\nMessage: ${data.error}`, 
+                        'success'
+                    );
+                } else if (response.status === 201) {
+                    updateResult('avis-result', 
+                        `✅ Avis créé avec succès!\nStatus: ${response.status}\nDonnées: ${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    updateResult('avis-result', 
+                        `⚠️ Statut inattendu\nStatus: ${response.status}\nMessage: ${data.error || 'Aucun message'}\nDonnées: ${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                updateResult('avis-result', 
+                    `❌ Erreur réseau: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        // Test automatique au chargement
+        window.addEventListener('load', () => {
+            console.log('🧪 Page de test CORS chargée');
+            console.log('📍 Origine actuelle:', window.location.origin);
+            console.log('🎯 API Base:', API_BASE);
+        });
+    </script>
+</body>
+</html>

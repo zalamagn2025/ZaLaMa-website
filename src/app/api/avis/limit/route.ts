@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import jwt from 'jsonwebtoken'
+import { createCorsResponse, handleOptions } from '@/lib/cors'
 
 // Interface pour le token JWT
 interface JWTPayload {
@@ -29,7 +30,16 @@ const MAX_AVIS_PER_DAY = 3
 // Fonction pour vérifier le token JWT
 function verifyAuthToken(request: NextRequest): JWTPayload | null {
   try {
-    const authToken = request.cookies.get('auth-token')?.value
+    // Vérifier d'abord le cookie auth-token
+    let authToken = request.cookies.get('auth-token')?.value
+    
+    // Si pas de cookie, vérifier le header Authorization
+    if (!authToken) {
+      const authHeader = request.headers.get('authorization')
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.replace('Bearer ', '')
+      }
+    }
     
     if (!authToken) {
       console.log('❌ Aucun token d\'authentification trouvé')
@@ -109,6 +119,10 @@ async function getDailyAvisLimit(supabase: any, employeeId: string): Promise<{ c
   }
 }
 
+export async function OPTIONS(request: NextRequest) {
+  return handleOptions(request);
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('🔧 GET /api/avis/limit - Début de la requête')
@@ -116,9 +130,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Vérifier l'authentification via JWT
     const userData = verifyAuthToken(request)
     if (!userData) {
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Non autorisé' },
-        { status: 401 }
+        401,
+        request
       )
     }
 
@@ -131,9 +146,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       console.log('✅ Client Supabase créé avec succès')
     } catch (error) {
       console.error('❌ Erreur lors de la création du client Supabase:', error)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Erreur de configuration Supabase' },
-        { status: 500 }
+        500,
+        request
       )
     }
 
@@ -149,9 +165,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       if (employeeError || !employee) {
         console.error('❌ Erreur lors de la récupération de l\'employé:', employeeError)
-        return NextResponse.json(
+        return createCorsResponse(
           { success: false, error: 'Employé non trouvé' },
-          { status: 404 }
+          404,
+          request
         )
       }
 
@@ -160,27 +177,30 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // Récupérer les informations de limite
       const limitInfo = await getDailyAvisLimit(supabase, employee.id)
       
-      return NextResponse.json(
+      return createCorsResponse(
         { 
           success: true, 
           data: limitInfo
         },
-        { status: 200 }
+        200,
+        request
       )
 
     } catch (error) {
       console.error('💥 Erreur lors de la récupération des informations de limite:', error)
-      return NextResponse.json(
+      return createCorsResponse(
         { success: false, error: 'Erreur interne du serveur' },
-        { status: 500 }
+        500,
+        request
       )
     }
 
   } catch (error) {
     console.error('💥 Erreur générale:', error)
-    return NextResponse.json(
+    return createCorsResponse(
       { success: false, error: 'Erreur interne du serveur' },
-      { status: 500 }
+      500,
+      request
     )
   }
 } 
