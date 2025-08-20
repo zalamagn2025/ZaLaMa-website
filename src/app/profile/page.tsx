@@ -11,7 +11,7 @@ import { ProfileHeader } from "@/components/profile/profile-header"
 import { ProfileSettings } from "@/components/profile/profile-settings"
 import { Partenaire } from "@/types/partenaire"
 import { TransactionHistory } from "@/components/profile/transaction-history"
-import { FirstLoginPasswordModal } from "@/components/auth/FirstLoginPasswordModal"
+
 import { useEmployeeAuth } from "@/contexts/EmployeeAuthContext"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 
@@ -28,9 +28,7 @@ export default function ProfilePage() {
   const { employee, loading, isAuthenticated } = useEmployeeAuth()
   const [entreprise, setEntreprise] = useState<Partenaire | undefined>(undefined)
   
-  // États pour la première connexion
-  const [showFirstLoginModal, setShowFirstLoginModal] = useState(false)
-  const [hasCheckedFirstLogin, setHasCheckedFirstLogin] = useState(false)
+
 
   // Fonction pour récupérer les informations de l'entreprise
   const fetchEntrepriseInfo = async (partenaireId: string) => {
@@ -60,95 +58,7 @@ export default function ProfilePage() {
     }
   }, [employee])
 
-  // Vérifier si c'est la première connexion
-  useEffect(() => {
-    const checkFirstLogin = async () => {
-      if (!isAuthenticated || hasCheckedFirstLogin) return;
-      
-      try {
-        console.log('🔍 Vérification de la première connexion...')
-        
-        const accessToken = localStorage.getItem('employee_access_token')
-        if (!accessToken) {
-          console.log('⚠️ Aucun token trouvé, skip de la vérification')
-          return
-        }
 
-        // Vérifier le cache local d'abord
-        const cacheKey = `first_login_checked_${employee?.email || 'unknown'}`
-        const cachedResult = sessionStorage.getItem(cacheKey)
-        
-        if (cachedResult) {
-          const cached = JSON.parse(cachedResult)
-          console.log('📋 Résultat en cache:', cached)
-          
-          if (cached.requirePasswordChange === false) {
-            console.log('✅ Cache indique que le mot de passe a déjà été changé')
-            setShowFirstLoginModal(false)
-            setHasCheckedFirstLogin(true)
-            return
-          }
-        }
-        
-        const response = await fetch('/api/auth/check-first-login', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          console.log('✅ Statut première connexion:', data.requirePasswordChange)
-          
-          // Mettre en cache le résultat
-          sessionStorage.setItem(cacheKey, JSON.stringify({
-            requirePasswordChange: data.requirePasswordChange,
-            timestamp: Date.now()
-          }))
-          
-          // SOLUTION INFALLIBLE - Modal s'affiche seulement si vraiment première connexion
-          if (data.requirePasswordChange) {
-            console.log('🔑 Première connexion détectée, affichage du modal')
-            setShowFirstLoginModal(true)
-          } else {
-            console.log('✅ Utilisateur a déjà changé son mot de passe')
-            setShowFirstLoginModal(false)
-          }
-        } else {
-          console.error('❌ Erreur lors de la vérification de la première connexion')
-        }
-      } catch (error) {
-        console.error('💥 Erreur lors de la vérification de la première connexion:', error)
-      } finally {
-        setHasCheckedFirstLogin(true)
-      }
-    }
-
-    checkFirstLogin()
-  }, [isAuthenticated, hasCheckedFirstLogin, employee?.email])
-
-  const handleFirstLoginSuccess = () => {
-    console.log('🎉 Première connexion réussie, mise à jour du cache...')
-    
-    // Mettre à jour le cache local
-    const cacheKey = `first_login_checked_${employee?.email || 'unknown'}`
-    sessionStorage.setItem(cacheKey, JSON.stringify({
-      requirePasswordChange: false,
-      timestamp: Date.now()
-    }))
-    
-    setShowFirstLoginModal(false)
-    
-    // Nettoyer le cache après un délai
-    setTimeout(() => {
-      sessionStorage.removeItem(cacheKey)
-    }, 5000)
-    
-    // Recharger la page pour mettre à jour l'état
-    window.location.reload()
-  }
 
   useEffect(() => {
     setIsMounted(true)
@@ -205,12 +115,12 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className={`flex flex-1 flex-col min-h-screen ${showFirstLoginModal ? 'pointer-events-none' : ''}`}>
+      <div className="flex flex-1 flex-col min-h-screen">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className={`flex flex-1 flex-col w-full ${showFirstLoginModal ? 'blur-sm' : ''}`}
+          className="flex flex-1 flex-col w-full"
         >
           <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -389,12 +299,7 @@ export default function ProfilePage() {
           <ProfileSettings onClose={() => setShowSettings(false)} userData={userData} />
         )}
 
-        {/* Modal de première connexion */}
-        <FirstLoginPasswordModal
-          isOpen={showFirstLoginModal}
-          onClose={() => setShowFirstLoginModal(false)}
-          onSuccess={handleFirstLoginSuccess}
-        />
+
       </div>
     </ProtectedRoute>
   )

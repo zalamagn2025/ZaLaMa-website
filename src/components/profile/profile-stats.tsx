@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { PasswordVerificationModal } from "@/components/ui/password-verification-modal"
 import { usePasswordVerification } from "@/hooks/usePasswordVerification"
-import { useEmployeeDemands } from "@/hooks/useEmployeeDemands"
+
 
 // Type pour les demandes d'avance
 interface AdvanceRequest {
@@ -125,14 +125,55 @@ function calculateFinancialAmounts(salaireNet: number, advanceRequests: any[]) {
 }
 
 export function ProfileStats({ user }: { user: UserWithEmployeData }) {
-  // Hook pour les nouvelles APIs Edge Function
-  const { demands, stats: demandsStats, isLoadingDemands } = useEmployeeDemands()
+  const [loading, setLoading] = useState(true)
+  const [financialData, setFinancialData] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
   
-  // Utiliser les données du hook au lieu de l'état local
-  const advanceRequests = demands || []
-  const loading = isLoadingDemands
-  const [debugData, setDebugData] = useState<any>(null)
-  const [schemaData, setSchemaData] = useState<any>(null)
+  // Charger les données financières depuis l'Edge Function
+  useEffect(() => {
+    const loadFinancialData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Récupérer le token d'accès depuis localStorage
+        const accessToken = localStorage.getItem('employee_access_token')
+        
+        if (!accessToken) {
+          setError('Token d\'accès non trouvé')
+          return
+        }
+        
+        // Appeler l'API getme pour récupérer les données financières
+        const response = await fetch('/api/auth/getme', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            console.log('📊 Données financières récupérées:', result.data)
+            setFinancialData(result.data)
+          } else {
+            setError(result.error || 'Erreur lors du chargement des données')
+          }
+        } else {
+          setError('Erreur de connexion au serveur')
+        }
+      } catch (err) {
+        console.error('❌ Erreur lors du chargement des données financières:', err)
+        setError('Erreur de connexion')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadFinancialData()
+  }, [])
   
   // Hook pour la vérification par mot de passe
   const {
@@ -188,17 +229,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
         
         console.log("💰 Transactions financières:", transactionsData)
         console.log("❌ Erreur transactions:", transactionsError)
-        
-        setDebugData({
-          employe: employeData,
-          demandes: demandesData,
-          transactions: transactionsData,
-          errors: {
-            employe: employeError,
-            demandes: demandesError,
-            transactions: transactionsError
-          }
-        })
       }
     } catch (error) {
       console.error("💥 Erreur lors du test:", error)
@@ -214,7 +244,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       if (response.ok) {
         const data = await response.json()
         console.log("🏗️ Schéma complet:", data)
-        setSchemaData(data.debugInfo)
       } else {
         console.error("❌ Erreur API schéma:", response.status)
       }
@@ -342,19 +371,31 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   // Calculer l'avance disponible dynamiquement
   const availableAdvance = user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0
 
-  // Trouver la demande d'avance active (approuvée)
-  const activeAdvance = advanceRequests.find(request => request.statut === 'Approuvée')
+  // Utiliser les données de l'Edge Function pour les avances actives
+  const activeAdvance = financialData?.financial?.avanceActif || 0
   
-  //la somme de toutes les demandes d'avance approuvées
-  const totalAdvance = advanceRequests
-    .filter(request => request.statut === 'Approuvée')
-    .reduce((acc, request) => acc + (request.montant_demande as number), 0)
+  //la somme de toutes les demandes d'avance approuvées (depuis l'Edge Function)
+  const totalAdvance = financialData?.financial?.avanceActif || 0
   
-  const advanceValue = activeAdvance ? activeAdvance.montant_total : 0
-  const advanceStatus = activeAdvance ? `${advanceRequests.filter(r => r.statut === 'Approuvée').length} avances en cours` : 'Aucune avance active'
+  // Utiliser les données de l'Edge Function pour le statut des avances
+  const nombreAvances = financialData?.financial?.nombreAvancesValidees || 0
+  const advanceStatus = financialData?.financial ? 
+    (financialData.financial.avanceActif > 0 ? 
+      `${nombreAvances} avance(s) active(s)` : 
+      'Aucune avance active') : 
+    (loading ? 'Chargement...' : 'Données non disponibles')
 
-  // Calculer tous les montants financiers avec la fonction utilitaire
-  const financialAmounts = user.salaireNet ? calculateFinancialAmounts(user.salaireNet, advanceRequests) : null
+  // Utiliser les données financières de l'Edge Function
+  const financialAmounts = financialData?.financial ? {
+    salaireNet: financialData.financial.salaireNet || 0,
+    acompteDisponible: financialData.financial.acompteDisponible || 0,
+    totalActiveAdvances: financialData.financial.avanceActif || 0,
+    remainingSalary: financialData.financial.salaireRestant || 0,
+    monthlyLimit: Math.floor((financialData.financial.salaireNet || 0) * 0.25),
+    remainingMonthlyAdvance: financialData.financial.avanceDisponible || 0,
+    workingDaysElapsed: 0, // À calculer si nécessaire
+    totalWorkingDays: 0 // À calculer si nécessaire
+  } : null
   
   //get remaining salary - CORRIGÉ: Salaire restant = Salaire net - Avance actif
   const remainingSalary = financialAmounts?.remainingSalary || 0
@@ -370,7 +411,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   }
 
   console.log("activeAdvance", activeAdvance)
-  console.log("advanceValue", advanceValue)
+  console.log("totalAdvance", totalAdvance)
   console.log("advanceStatus", advanceStatus)
 
   const stats = [

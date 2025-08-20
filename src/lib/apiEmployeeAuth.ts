@@ -205,8 +205,6 @@ class EmployeeAuthService {
         url = '/api/auth/login';
       } else if (endpoint === 'getme') {
         url = '/api/auth/getme';
-      } else if (endpoint === 'check-first-login') {
-        url = '/api/auth/check-first-login';
       } else {
         // Pour les autres endpoints, utiliser l'Edge Function directement
         url = this.getEdgeFunctionUrl(endpoint);
@@ -227,15 +225,15 @@ class EmployeeAuthService {
       if (!response.ok) {
         console.error(`❌ Erreur ${response.status} pour ${endpoint}:`, result);
         
-        // Gestion spéciale pour les erreurs d'authentification
-        if (response.status === 401) {
-          console.log('🔒 Erreur 401 détectée - Token invalide ou expiré');
-          return {
-            success: false,
-            error: 'Token invalide ou expiré. Veuillez vous reconnecter.',
-            details: result.message || result.details,
-          };
-        }
+                 // Gestion spéciale pour les erreurs d'authentification
+         if (response.status === 401) {
+           console.log('🔒 Erreur 401 détectée - Identifiants invalides');
+           return {
+             success: false,
+             error: result.error || 'Email ou mot de passe incorrect',
+             details: result.message || result.details,
+           };
+         }
         
         return {
           success: false,
@@ -465,23 +463,7 @@ class EmployeeAuthService {
     }
   }
 
-  /**
-   * Vérifier si c'est la première connexion de l'utilisateur
-   */
-  async checkFirstLogin(): Promise<EmployeeAuthResponse> {
-    return this.makeRequest('check-first-login', {
-      method: 'GET',
-    });
-  }
 
-  /**
-   * Marquer que le mot de passe a été changé
-   */
-  async markPasswordChanged(): Promise<EmployeeAuthResponse> {
-    return this.makeRequest('mark-password-changed', {
-      method: 'POST',
-    });
-  }
 
   /**
    * Extraire les informations du token JWT (côté client)
@@ -524,7 +506,6 @@ export const useEmployeeAuth = () => {
     saveTokens: employeeAuthService.saveTokens.bind(employeeAuthService),
     clearTokens: employeeAuthService.clearTokens.bind(employeeAuthService),
     logout: employeeAuthService.logout.bind(employeeAuthService),
-    checkFirstLogin: employeeAuthService.checkFirstLogin.bind(employeeAuthService),
-    markPasswordChanged: employeeAuthService.markPasswordChanged.bind(employeeAuthService),
+
   };
 };
