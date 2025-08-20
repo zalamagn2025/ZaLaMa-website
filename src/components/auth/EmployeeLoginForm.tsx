@@ -55,6 +55,13 @@ export default function EmployeeLoginForm() {
       setTimeout(() => {
         setShowSuccessMessage(false);
       }, 5000);
+    } else if (message === 'password_setup_success') {
+      setShowSuccessMessage(true);
+      setErrorMessage('');
+      // Masquer le message après 5 secondes
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
     }
   }, [searchParams]);
 
@@ -337,7 +344,12 @@ export default function EmployeeLoginForm() {
                     className="mb-4 p-3 bg-green-900/20 border border-green-700 rounded-lg flex items-center"
                   >
                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    <p className="text-green-200 text-sm">Votre mot de passe a été mis à jour avec succès. Veuillez vous reconnecter.</p>
+                    <p className="text-green-200 text-sm">
+                      {searchParams.get('message') === 'password_setup_success' 
+                        ? 'Votre compte a été activé avec succès ! Vous pouvez maintenant vous connecter.'
+                        : 'Votre mot de passe a été mis à jour avec succès. Veuillez vous reconnecter.'
+                      }
+                    </p>
                   </motion.div>
                 )}
 
