@@ -229,17 +229,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
         
         console.log("💰 Transactions financières:", transactionsData)
         console.log("❌ Erreur transactions:", transactionsError)
-        
-        setDebugData({
-          employe: employeData,
-          demandes: demandesData,
-          transactions: transactionsData,
-          errors: {
-            employe: employeError,
-            demandes: demandesError,
-            transactions: transactionsError
-          }
-        })
       }
     } catch (error) {
       console.error("💥 Erreur lors du test:", error)
@@ -255,7 +244,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       if (response.ok) {
         const data = await response.json()
         console.log("🏗️ Schéma complet:", data)
-        setSchemaData(data.debugInfo)
       } else {
         console.error("❌ Erreur API schéma:", response.status)
       }
