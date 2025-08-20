@@ -205,8 +205,6 @@ class EmployeeAuthService {
         url = '/api/auth/login';
       } else if (endpoint === 'getme') {
         url = '/api/auth/getme';
-      } else if (endpoint === 'check-first-login') {
-        url = '/api/auth/check-first-login';
       } else {
         // Pour les autres endpoints, utiliser l'Edge Function directement
         url = this.getEdgeFunctionUrl(endpoint);
@@ -465,23 +463,7 @@ class EmployeeAuthService {
     }
   }
 
-  /**
-   * Vérifier si c'est la première connexion de l'utilisateur
-   */
-  async checkFirstLogin(): Promise<EmployeeAuthResponse> {
-    return this.makeRequest('check-first-login', {
-      method: 'GET',
-    });
-  }
 
-  /**
-   * Marquer que le mot de passe a été changé
-   */
-  async markPasswordChanged(): Promise<EmployeeAuthResponse> {
-    return this.makeRequest('mark-password-changed', {
-      method: 'POST',
-    });
-  }
 
   /**
    * Extraire les informations du token JWT (côté client)
@@ -524,7 +506,6 @@ export const useEmployeeAuth = () => {
     saveTokens: employeeAuthService.saveTokens.bind(employeeAuthService),
     clearTokens: employeeAuthService.clearTokens.bind(employeeAuthService),
     logout: employeeAuthService.logout.bind(employeeAuthService),
-    checkFirstLogin: employeeAuthService.checkFirstLogin.bind(employeeAuthService),
-    markPasswordChanged: employeeAuthService.markPasswordChanged.bind(employeeAuthService),
+
   };
 };
