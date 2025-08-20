@@ -102,6 +102,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [avanceData, setAvanceData] = useState<AvanceData | null>(null)
   const [loadingAvance, setLoadingAvance] = useState(true)
   const [showAdvanceDetails, setShowAdvanceDetails] = useState(false)
+  const [financialData, setFinancialData] = useState<any>(null)
   
   // États de confirmation
   const [password, setPassword] = useState("")
@@ -126,63 +127,113 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const advanceRequests = demands || []
   const loadingAdvanceRequests = isLoadingDemands
 
+  // Charger les données financières depuis l'Edge Function
+  const loadFinancialData = useCallback(async () => {
+    try {
+      setLoadingAvance(true)
+      setError("")
+      
+      // Récupérer le token d'accès depuis localStorage
+      const accessToken = localStorage.getItem('employee_access_token')
+      
+      if (!accessToken) {
+        setError('Token d\'accès non trouvé')
+        return
+      }
+      
+      // Appeler l'API getme pour récupérer les données financières
+      const response = await fetch('/api/auth/getme', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data) {
+          console.log('📊 Données financières récupérées dans le formulaire:', result.data)
+          setFinancialData(result.data)
+        } else {
+          setError(result.error || 'Erreur lors du chargement des données')
+        }
+      } else {
+        setError('Erreur de connexion au serveur')
+      }
+    } catch (err) {
+      console.error('❌ Erreur lors du chargement des données financières:', err)
+      setError('Erreur de connexion')
+    } finally {
+      setLoadingAvance(false)
+    }
+  }, [])
+
   // Récupérer les avances actives (maintenant géré par le hook useEmployeeDemands)
   const fetchAdvanceRequests = useCallback(async () => {
     // Cette fonction n'est plus nécessaire car le hook gère automatiquement la récupération
     console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')
   }, [])
 
-  // Calculer l'avance disponible en temps réel
+  // Calculer l'avance disponible en temps réel avec les données de l'Edge Function
   const calculateAdvanceData = useCallback(() => {
-    if (!user.salaireNet) {
+    if (!financialData?.financial) {
       setAvanceData(null)
       setLoadingAvance(false)
       return
     }
 
     try {
-      // Calculer le total des avances actives (approuvées) - même logique que profile-stats
-      const totalActiveAdvances = advanceRequests
-        .filter(request => request.statut === 'Approuvée')
-        .reduce((acc, request) => acc + (request.montant_demande as number), 0)
+      const financial = financialData.financial
       
-      const calculation = calculateAvailableAdvance(user.salaireNet, totalActiveAdvances)
+      // Utiliser les données de l'Edge Function
+      const salaireNet = financial.salaireNet || 0
+      const avanceActive = financial.avanceActif || 0
+      const avanceDisponible = financial.avanceDisponible || 0
+      const salaireRestant = financial.salaireRestant || 0
       
-      // Calculer le salaire restant - même logique que profile-stats
-      const remainingSalary = user.salaireNet - totalActiveAdvances
+      // Calculer les jours ouvrables pour information
+      const today = new Date()
+      const currentMonth = today.getMonth()
+      const currentYear = today.getFullYear()
+      const workingDaysElapsed = getWorkingDaysElapsed(currentYear, currentMonth, today.getDate())
+      const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
+      const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
       
       setAvanceData({
-        salaireNet: user.salaireNet,
-        avanceActive: totalActiveAdvances, // Total des avances actives
-        salaireRestant: remainingSalary, // Salaire net - avances actives
-        maxAvanceMonthly: Math.floor(user.salaireNet * 0.25), // 25% max
-        totalAvancesApprouveesMonthly: totalActiveAdvances, // Total des avances approuvées
-        avanceDisponible: calculation.avanceDisponible,
-        workingDaysElapsed: calculation.workingDaysElapsed,
-        totalWorkingDays: calculation.totalWorkingDays,
-        workingDaysPercentage: calculation.workingDaysPercentage,
-        limiteAvance: calculation.limiteAvance
+        salaireNet: salaireNet,
+        avanceActive: avanceActive, // Total des avances actives depuis l'Edge Function
+        salaireRestant: salaireRestant, // Salaire restant depuis l'Edge Function
+        maxAvanceMonthly: Math.floor(salaireNet * 0.25), // 25% max
+        totalAvancesApprouveesMonthly: avanceActive, // Total des avances approuvées depuis l'Edge Function
+        avanceDisponible: avanceDisponible, // Avance disponible depuis l'Edge Function
+        workingDaysElapsed: workingDaysElapsed,
+        totalWorkingDays: totalWorkingDays,
+        workingDaysPercentage: workingDaysPercentage,
+        limiteAvance: avanceDisponible // Limite = avance disponible
       })
       
-      console.log('🔍 Données d\'avance calculées:', {
-        salaireNet: user.salaireNet,
-        totalActiveAdvances,
-        remainingSalary,
-        calculation
+      console.log('🔍 Données d\'avance calculées avec Edge Function:', {
+        salaireNet,
+        avanceActive,
+        salaireRestant,
+        avanceDisponible,
+        workingDaysElapsed,
+        totalWorkingDays
       })
     } catch (error) {
       console.error('Erreur lors du calcul de l\'avance disponible:', error)
     } finally {
       setLoadingAvance(false)
     }
-  }, [user.salaireNet, advanceRequests])
+  }, [financialData])
 
-  // Récupérer les avances actives au chargement
+  // Charger les données financières au chargement
   useEffect(() => {
-    fetchAdvanceRequests()
-  }, [fetchAdvanceRequests])
+    loadFinancialData()
+  }, [loadFinancialData])
 
-  // Recalculer quand les avances changent
+  // Recalculer quand les données financières changent
   useEffect(() => {
     calculateAdvanceData()
   }, [calculateAdvanceData])
@@ -191,14 +242,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        fetchAdvanceRequests()
+        loadFinancialData()
         calculateAdvanceData()
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [fetchAdvanceRequests, calculateAdvanceData])
+  }, [loadFinancialData, calculateAdvanceData])
 
   // Validation du formulaire
   const validateForm = () => {
