@@ -115,12 +115,12 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className={`flex flex-1 flex-col min-h-screen ${showFirstLoginModal ? 'pointer-events-none' : ''}`}>
+      <div className="flex flex-1 flex-col min-h-screen">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className={`flex flex-1 flex-col w-full ${showFirstLoginModal ? 'blur-sm' : ''}`}
+          className="flex flex-1 flex-col w-full"
         >
           <div className="flex flex-1 flex-col gap-2 px-4 lg:px-6">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
