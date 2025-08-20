@@ -227,15 +227,15 @@ class EmployeeAuthService {
       if (!response.ok) {
         console.error(`❌ Erreur ${response.status} pour ${endpoint}:`, result);
         
-        // Gestion spéciale pour les erreurs d'authentification
-        if (response.status === 401) {
-          console.log('🔒 Erreur 401 détectée - Token invalide ou expiré');
-          return {
-            success: false,
-            error: 'Token invalide ou expiré. Veuillez vous reconnecter.',
-            details: result.message || result.details,
-          };
-        }
+                 // Gestion spéciale pour les erreurs d'authentification
+         if (response.status === 401) {
+           console.log('🔒 Erreur 401 détectée - Identifiants invalides');
+           return {
+             success: false,
+             error: result.error || 'Email ou mot de passe incorrect',
+             details: result.message || result.details,
+           };
+         }
         
         return {
           success: false,
