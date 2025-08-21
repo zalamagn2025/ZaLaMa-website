@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useRegisterEmployee, EmployeeRegistrationData } from "@/hooks/useRegisterEmployee";
 import PhoneInput from "@/components/ui/phone-input";
+import CurrencyInput from "@/components/ui/currency-input";
 import { validateAndFormatPhone } from "@/utils/phoneValidation";
 import { 
   validateName, 
@@ -118,6 +119,12 @@ export default function EmployeeRegisterForm() {
     formattedValue: ""
   });
 
+  // État pour la validation du salaire
+  const [salaryValidation, setSalaryValidation] = useState({
+    isValid: false,
+    numericValue: 0
+  });
+
   // États pour les erreurs de validation (seulement lors de la soumission)
   const [validationErrors, setValidationErrors] = useState<FormValidationErrors>({});
 
@@ -200,7 +207,7 @@ export default function EmployeeRegisterForm() {
            formData.prenom?.trim() && 
            formData.email?.trim() && 
            formData.poste?.trim() && 
-           formData.salaire_net > 0 && 
+           salaryValidation.isValid && 
            phoneValidation.isValid;
   };
 
@@ -227,7 +234,7 @@ export default function EmployeeRegisterForm() {
     if (!formData.prenom?.trim()) errors.prenom = "Le prénom est obligatoire";
     if (!formData.email?.trim()) errors.email = "L'email est obligatoire";
     if (!formData.poste?.trim()) errors.poste = "Le poste est obligatoire";
-    if (!formData.salaire_net || formData.salaire_net <= 0) errors.salaire_net = "Le salaire doit être supérieur à 0";
+    if (!salaryValidation.isValid) errors.salaire_net = "Le salaire doit être supérieur à 0";
     
     // Validation du téléphone
     if (!phoneValidation.isValid) {
@@ -256,7 +263,8 @@ export default function EmployeeRegisterForm() {
     // Préparer les données pour l'envoi
     const dataToSend = {
       ...formData,
-      telephone: phoneValidation.formattedValue || formData.telephone
+      telephone: phoneValidation.formattedValue || formData.telephone,
+      salaire_net: salaryValidation.numericValue || formData.salaire_net
     };
     
     await registerEmployee(dataToSend);
@@ -1136,43 +1144,38 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
-                    <label className="block text-white/70 text-xs font-medium mb-0.5">Salaire Net Mensuel <span className="text-[#FF671E]">*</span></label>
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <DollarSign className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "salaire_net" ? 'text-white' : 'text-white/40'
-                      }`} />
-                      
-                      <Input
-                        type="number"
-                        placeholder="Ex: 500000 (entre 50k et 50M GNF)"
-                        value={formData.salaire_net}
-                                                 onChange={(e) => {
-                           const value = parseFloat(e.target.value) || 0;
-                           handleInputChange('salaire_net', value);
-                         }}
-                        onFocus={() => setFocusedInput("salaire_net")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        min="50000"
-                        max="50000000"
-                        step="1000"
-                        className={`w-full bg-transparent border-b text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none ${
-                          getFieldError('salaire_net') ? 'border-red-500 focus:border-red-500' : 'border-white/20 focus:border-[#FF671E]'
-                        }`}
-                      />
-                    </div>
-                                         {getFieldError('salaire_net') && (
-                       <motion.div
-                         initial={{ opacity: 0, y: -5, scale: 0.95 }}
-                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                         className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg"
-                       >
-                         <p className="text-red-300 text-xs flex items-center gap-1">
-                           <AlertCircle className="w-3 h-3" />
-                           {getFieldError('salaire_net')}
-                         </p>
-                       </motion.div>
-                     )}
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Salaire Net Mensuel (GNF)<span className="text-[#FF671E]">*</span></label>
+                    <CurrencyInput
+                      value={formData.salaire_net.toString()}
+                      onChange={(value) => {
+                        const numericValue = parseInt(value) || 0;
+                        handleInputChange('salaire_net', numericValue);
+                      }}
+                      onValidationChange={(isValid, numericValue) => {
+                        setSalaryValidation({ isValid, numericValue });
+                      }}
+                      placeholder="ex: 100.000"
+                      label=""
+                      required={true}
+                      min={100000}
+                      max={50000000}
+                      className={`w-full bg-transparent border-b text-white placeholder:text-white/30 h-12 transition-all duration-300 focus:bg-white/5 rounded-none ${
+                        getFieldError('salaire_net') ? 'border-red-500 focus:border-red-500' : 'border-white/20 focus:border-[#FF671E]'
+                      }`}
+                      showValidation={false}
+                    />
+                    {getFieldError('salaire_net') && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg"
+                      >
+                        <p className="text-red-300 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {getFieldError('salaire_net')}
+                        </p>
+                      </motion.div>
+                    )}
                   </motion.div>
 
                   

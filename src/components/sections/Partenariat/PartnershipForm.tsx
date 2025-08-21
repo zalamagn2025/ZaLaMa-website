@@ -10,6 +10,7 @@ import { useState, useCallback, useMemo, memo, useEffect } from 'react';
 import { FileUpload } from '@/components/ui/file-upload';
 import { PaymentDaySelector } from '@/components/ui/payment-day-selector';
 import PhoneInput from '@/components/ui/phone-input';
+import CurrencyInput from '@/components/ui/currency-input';
 import { CreatePartnershipRequest } from '@/types/partenaire';
 
 // Composant FormField mémorisé pour éviter les re-renders
@@ -177,6 +178,12 @@ export const PartnershipForm = () => {
     formattedValue: ""
   });
 
+  // État pour la validation de la masse salariale
+  const [payrollValidation, setPayrollValidation] = useState({
+    isValid: false,
+    numericValue: 0
+  });
+
 
 
   // Fonction pour réinitialiser le formulaire
@@ -217,6 +224,9 @@ export const PartnershipForm = () => {
     setPhoneValidation({ isValid: false, formattedValue: "" });
     setRepPhoneValidation({ isValid: false, formattedValue: "" });
     setHrPhoneValidation({ isValid: false, formattedValue: "" });
+    
+    // Réinitialiser la validation de la masse salariale
+    setPayrollValidation({ isValid: false, numericValue: 0 });
 
     console.log('🔄 Formulaire réinitialisé');
   }, []);
@@ -273,6 +283,7 @@ export const PartnershipForm = () => {
         
       case 'payroll':
         if (!stringValue.trim()) return 'La masse salariale est obligatoire';
+        if (!payrollValidation.isValid) return 'Montant invalide';
         break;
         
       case 'cdiCount':
@@ -342,7 +353,7 @@ export const PartnershipForm = () => {
     }
     
     return '';
-  }, [phoneValidation.isValid, repPhoneValidation.isValid, hrPhoneValidation.isValid]);
+  }, [phoneValidation.isValid, repPhoneValidation.isValid, hrPhoneValidation.isValid, payrollValidation.isValid]);
 
   // Handle change mémorisé
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -435,7 +446,7 @@ export const PartnershipForm = () => {
     }
     
     return Object.keys(newErrors).length === 0;
-  }, [validateField, formData, phoneValidation.isValid, repPhoneValidation.isValid, hrPhoneValidation.isValid]);
+  }, [validateField, formData, phoneValidation.isValid, repPhoneValidation.isValid, hrPhoneValidation.isValid, payrollValidation.isValid]);
 
   const handleCloseDrawer = useCallback(() => {
     setSuccess(false);
@@ -470,6 +481,9 @@ export const PartnershipForm = () => {
     setPhoneValidation({ isValid: false, formattedValue: "" });
     setRepPhoneValidation({ isValid: false, formattedValue: "" });
     setHrPhoneValidation({ isValid: false, formattedValue: "" });
+    
+    // Réinitialiser la validation de la masse salariale
+    setPayrollValidation({ isValid: false, numericValue: 0 });
     
     router.push('https://www.zalamagn.com');
   }, [router]);
@@ -506,7 +520,7 @@ export const PartnershipForm = () => {
           phone: phoneValidation.formattedValue || formData.phone?.trim() || '',
           email: formData.email?.trim() || '',
           employees_count: parseInt(formData.employeesCount) || 0,
-          payroll: formData.payroll?.trim() || '',
+          payroll: payrollValidation.numericValue.toString() || '',
           cdi_count: parseInt(formData.cdiCount) || 0,
           cdd_count: parseInt(formData.cddCount) || 0,
           payment_date: new Date().toISOString().split('T')[0], // Date actuelle au format YYYY-MM-DD
@@ -571,7 +585,7 @@ export const PartnershipForm = () => {
       setLoading(false);
     }
     }
-  }, [validateStep, step, formData, handleCloseDrawer, phoneValidation.formattedValue, repPhoneValidation.formattedValue, hrPhoneValidation.formattedValue]);
+  }, [validateStep, step, formData, handleCloseDrawer, phoneValidation.formattedValue, repPhoneValidation.formattedValue, hrPhoneValidation.formattedValue, payrollValidation.numericValue]);
 
   // Options pour les domaines d'activité - mémorisé
   const activityDomains = useMemo(() => [
@@ -1042,18 +1056,61 @@ export const PartnershipForm = () => {
                 errorMessage={errors.employeesCount || ''}
               />
 
-              <FormField 
-              name="payroll"
-                label="Masse salariale" 
-                placeholder="Ex: 100 000 000 GNF"
-                delay={0.85}
-              value={formData.payroll}
-                onChange={handleChange}
-                onBlur={handlePayrollBlur}
-                hasError={!!(touched.payroll && errors.payroll)}
-                isValid={validatedSteps.has(1) && !!(touched.payroll && !errors.payroll && formData.payroll)}
-                errorMessage={errors.payroll || ''}
-              />
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.85 }}
+                whileHover={{ scale: 1.01 }}
+              >
+                <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
+                  Masse salariale <span className="text-red-400">*</span>
+                </label>
+                <CurrencyInput
+                  value={formData.payroll}
+                  onChange={(value) => {
+                    setFormData(prev => ({ ...prev, payroll: value }));
+                    if (errors.payroll) {
+                      setErrors(prev => ({ ...prev, payroll: '' }));
+                    }
+                  }}
+                  onValidationChange={(isValid, numericValue) => {
+                    setPayrollValidation({ isValid, numericValue });
+                  }}
+                  placeholder="0"
+                  label=""
+                  required={true}
+                                     min={100000}
+                  max={999999999999}
+                  className={`w-full bg-blue-950/30 border text-white placeholder:text-gray-300/30 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
+                    touched.payroll && errors.payroll 
+                      ? 'border-red-500/70' 
+                      : validatedSteps.has(1) && touched.payroll && !errors.payroll && formData.payroll && payrollValidation.isValid
+                      ? 'border-green-500/70' 
+                      : 'border-blue-700/70'
+                  }`}
+                  showValidation={false}
+                />
+                {!!(touched.payroll && errors.payroll) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1 mt-1 text-red-400 text-xs"
+                  >
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.payroll}
+                  </motion.div>
+                )}
+                {validatedSteps.has(1) && !!(touched.payroll && !errors.payroll && formData.payroll && payrollValidation.isValid) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1 mt-1 text-green-400 text-xs"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Valide
+                  </motion.div>
+                )}
+              </motion.div>
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField 
