@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useRegisterEmployee, EmployeeRegistrationData } from "@/hooks/useRegisterEmployee";
 import PhoneInput from "@/components/ui/phone-input";
+import CurrencyInput from "@/components/ui/currency-input";
 import { validateAndFormatPhone } from "@/utils/phoneValidation";
 import { 
   validateName, 
@@ -75,20 +76,26 @@ export default function EmployeeRegisterForm() {
   const [isClient, setIsClient] = useState(false);
   const [validatingApiKey, setValidatingApiKey] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-     const [partnerInfo, setPartnerInfo] = useState<{ 
-     company_name: string;
-     logo_url?: string;
-     partner_id?: string;
-     is_active?: boolean;
-     legal_status?: string;
-     rccm?: string;
-     nif?: string;
-     activity_domain?: string;
-     phone?: string;
-     email?: string;
-     status?: string;
-     inscription_enabled?: boolean;
-   } | null>(null);
+           const [partnerInfo, setPartnerInfo] = useState<{ 
+      company_name: string;
+      logo_url?: string;
+      partner_id?: string;
+      is_active?: boolean;
+      legal_status?: string;
+      rccm?: string;
+      nif?: string;
+      activity_domain?: string;
+      phone?: string;
+      email?: string;
+      status?: string;
+      inscription_enabled?: boolean;
+      employee_limit?: {
+        current_employees: number;
+        max_employees: number;
+        limit_reached: boolean;
+        can_register: boolean;
+      };
+    } | null>(null);
   
   // Éviter les problèmes d'hydratation
   useEffect(() => {
@@ -116,6 +123,12 @@ export default function EmployeeRegisterForm() {
   const [phoneValidation, setPhoneValidation] = useState({
     isValid: false,
     formattedValue: ""
+  });
+
+  // État pour la validation du salaire
+  const [salaryValidation, setSalaryValidation] = useState({
+    isValid: false,
+    numericValue: 0
   });
 
   // États pour les erreurs de validation (seulement lors de la soumission)
@@ -154,25 +167,33 @@ export default function EmployeeRegisterForm() {
       const result = await response.json();
       console.log('📋 Résultat validation:', result);
 
-      if (result.success) {
-         console.log('✅ Validation réussie pour:', result.data?.company_name);
-         setPartnerInfo({
-           company_name: result.data?.company_name || 'Entreprise inconnue',
-           logo_url: result.data?.logo_url,
-           partner_id: result.data?.partner_id,
-           is_active: result.data?.status === 'approved',
-           legal_status: result.data?.legal_status,
-           rccm: result.data?.rccm,
-           nif: result.data?.nif,
-           activity_domain: result.data?.activity_domain,
-           phone: result.data?.phone,
-           email: result.data?.email,
-           status: result.data?.status,
-           inscription_enabled: result.data?.inscription_enabled
-         });
-        setApiKeyError(null);
-        return true;
-      } else {
+             if (result.success) {
+          console.log('✅ Validation réussie pour:', result.data?.company_name);
+          setPartnerInfo({
+            company_name: result.data?.company_name || 'Entreprise inconnue',
+            logo_url: result.data?.logo_url,
+            partner_id: result.data?.partner_id,
+            is_active: result.data?.status === 'approved',
+            legal_status: result.data?.legal_status,
+            rccm: result.data?.rccm,
+            nif: result.data?.nif,
+            activity_domain: result.data?.activity_domain,
+            phone: result.data?.phone,
+            email: result.data?.email,
+            status: result.data?.status,
+            inscription_enabled: result.data?.inscription_enabled,
+            employee_limit: result.data?.employee_limit
+          });
+          
+          // Vérifier si la limite d'employés est atteinte
+          if (result.data?.employee_limit?.limit_reached) {
+            setApiKeyError("Limite d'employés atteinte pour cette entreprise");
+            return false;
+          }
+          
+         setApiKeyError(null);
+         return true;
+       } else {
         console.log('❌ Validation échouée:', result.error);
         setApiKeyError(result.message || result.error || "Code entreprise invalide");
         setPartnerInfo(null);
@@ -189,20 +210,25 @@ export default function EmployeeRegisterForm() {
     }
   };
 
-  // Fonction simple pour vérifier si le bouton doit être activé
-  const isFormValid = () => {
-     // Vérifier si l'inscription est activée pour cette entreprise
-     if (partnerInfo && partnerInfo.inscription_enabled === false) {
-       return false;
-     }
-     
-    return formData.nom?.trim() && 
-           formData.prenom?.trim() && 
-           formData.email?.trim() && 
-           formData.poste?.trim() && 
-           formData.salaire_net > 0 && 
-           phoneValidation.isValid;
-  };
+     // Fonction simple pour vérifier si le bouton doit être activé
+   const isFormValid = () => {
+      // Vérifier si l'inscription est activée pour cette entreprise
+      if (partnerInfo && partnerInfo.inscription_enabled === false) {
+        return false;
+      }
+      
+      // Vérifier si la limite d'employés est atteinte
+      if (partnerInfo && partnerInfo.employee_limit?.limit_reached) {
+        return false;
+      }
+      
+     return formData.nom?.trim() && 
+            formData.prenom?.trim() && 
+            formData.email?.trim() && 
+            formData.poste?.trim() && 
+            salaryValidation.isValid && 
+            phoneValidation.isValid;
+   };
 
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,7 +253,7 @@ export default function EmployeeRegisterForm() {
     if (!formData.prenom?.trim()) errors.prenom = "Le prénom est obligatoire";
     if (!formData.email?.trim()) errors.email = "L'email est obligatoire";
     if (!formData.poste?.trim()) errors.poste = "Le poste est obligatoire";
-    if (!formData.salaire_net || formData.salaire_net <= 0) errors.salaire_net = "Le salaire doit être supérieur à 0";
+    if (!salaryValidation.isValid) errors.salaire_net = "Le salaire doit être supérieur à 0";
     
     // Validation du téléphone
     if (!phoneValidation.isValid) {
@@ -256,7 +282,8 @@ export default function EmployeeRegisterForm() {
     // Préparer les données pour l'envoi
     const dataToSend = {
       ...formData,
-      telephone: phoneValidation.formattedValue || formData.telephone
+      telephone: phoneValidation.formattedValue || formData.telephone,
+      salaire_net: salaryValidation.numericValue || formData.salaire_net
     };
     
     await registerEmployee(dataToSend);
@@ -737,41 +764,75 @@ export default function EmployeeRegisterForm() {
                              </div>
                            )}
                            
-                           {partnerInfo.inscription_enabled !== undefined && (
-                             <div className="flex items-center gap-1">
-                               <span className="text-blue-300/60">Inscription :</span>
-                               <span className={`font-medium ${partnerInfo.inscription_enabled ? 'text-green-300' : 'text-red-300'}`}>
-                                 {partnerInfo.inscription_enabled ? 'Activée' : 'Désactivée'}
-                               </span>
-                             </div>
-                           )}
+                                                       {partnerInfo.inscription_enabled !== undefined && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-blue-300/60">Inscription :</span>
+                                <span className={`font-medium ${partnerInfo.inscription_enabled ? 'text-green-300' : 'text-red-300'}`}>
+                                  {partnerInfo.inscription_enabled ? 'Activée' : 'Désactivée'}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {partnerInfo.employee_limit && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-blue-300/60">Employés :</span>
+                                <span className={`font-medium ${
+                                  partnerInfo.employee_limit.limit_reached ? 'text-red-300' : 'text-green-300'
+                                }`}>
+                                  {partnerInfo.employee_limit.current_employees}/{partnerInfo.employee_limit.max_employees}
+                                </span>
+                              </div>
+                            )}
                          </div>
                        </div>
                      </div>
                    </motion.div>
                    
-                   {/* Message d'avertissement si l'inscription est désactivée */}
-                   {partnerInfo.inscription_enabled === false && (
-                     <motion.div
-                       initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                       className="mb-6 p-4 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 rounded-xl backdrop-blur-sm"
-                     >
-                       <div className="flex items-center gap-3">
-                         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
-                           <AlertCircle className="w-3 h-3 text-red-400" />
-                         </div>
-                         <div className="flex-1">
-                           <h4 className="text-red-200 font-semibold text-sm mb-1">Inscription temporairement désactivée</h4>
-                           <p className="text-red-300 text-sm">
-                             L'inscription des employés est actuellement désactivée pour {partnerInfo.company_name}. 
-                             Veuillez contacter l'administrateur de votre entreprise.
-                           </p>
-                         </div>
-                       </div>
-                     </motion.div>
-                   )}
+                                       {/* Message d'avertissement si l'inscription est désactivée */}
+                    {partnerInfo.inscription_enabled === false && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="mb-6 p-4 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 rounded-xl backdrop-blur-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                            <AlertCircle className="w-3 h-3 text-red-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-red-200 font-semibold text-sm mb-1">Inscription temporairement désactivée</h4>
+                            <p className="text-red-300 text-sm">
+                              L'inscription des employés est actuellement désactivée pour {partnerInfo.company_name}. 
+                              Veuillez contacter l'administrateur de votre entreprise.
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                    
+                    {/* Message d'avertissement si la limite d'employés est atteinte */}
+                    {partnerInfo.employee_limit?.limit_reached && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="mb-6 p-4 bg-gradient-to-r from-orange-500/10 to-yellow-600/10 border border-orange-500/30 rounded-xl backdrop-blur-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center">
+                            <AlertTriangle className="w-3 h-3 text-orange-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-orange-200 font-semibold text-sm mb-1">Limite d'employés atteinte</h4>
+                            <p className="text-orange-300 text-sm">
+                              Cette entreprise a atteint sa limite d'employés ({partnerInfo.employee_limit.current_employees}/{partnerInfo.employee_limit.max_employees}). 
+                              Aucune nouvelle inscription n'est possible pour le moment.
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
                    </>
                  )}
                                  {/* Section Informations Personnelles */}
@@ -1136,43 +1197,38 @@ export default function EmployeeRegisterForm() {
                     whileHover={{ scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   >
-                    <label className="block text-white/70 text-xs font-medium mb-0.5">Salaire Net Mensuel <span className="text-[#FF671E]">*</span></label>
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <DollarSign className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "salaire_net" ? 'text-white' : 'text-white/40'
-                      }`} />
-                      
-                      <Input
-                        type="number"
-                        placeholder="Ex: 500000 (entre 50k et 50M GNF)"
-                        value={formData.salaire_net}
-                                                 onChange={(e) => {
-                           const value = parseFloat(e.target.value) || 0;
-                           handleInputChange('salaire_net', value);
-                         }}
-                        onFocus={() => setFocusedInput("salaire_net")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        min="50000"
-                        max="50000000"
-                        step="1000"
-                        className={`w-full bg-transparent border-b text-white placeholder:text-white/30 h-12 transition-all duration-300 pl-10 focus:bg-white/5 rounded-none ${
-                          getFieldError('salaire_net') ? 'border-red-500 focus:border-red-500' : 'border-white/20 focus:border-[#FF671E]'
-                        }`}
-                      />
-                    </div>
-                                         {getFieldError('salaire_net') && (
-                       <motion.div
-                         initial={{ opacity: 0, y: -5, scale: 0.95 }}
-                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                         className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg"
-                       >
-                         <p className="text-red-300 text-xs flex items-center gap-1">
-                           <AlertCircle className="w-3 h-3" />
-                           {getFieldError('salaire_net')}
-                         </p>
-                       </motion.div>
-                     )}
+                    <label className="block text-white/70 text-xs font-medium mb-0.5">Salaire Net Mensuel (GNF)<span className="text-[#FF671E]">*</span></label>
+                    <CurrencyInput
+                      value={formData.salaire_net.toString()}
+                      onChange={(value) => {
+                        const numericValue = parseInt(value) || 0;
+                        handleInputChange('salaire_net', numericValue);
+                      }}
+                      onValidationChange={(isValid, numericValue) => {
+                        setSalaryValidation({ isValid, numericValue });
+                      }}
+                      placeholder="ex: 100.000"
+                      label=""
+                      required={true}
+                      min={100000}
+                      max={50000000}
+                      className={`w-full bg-transparent border-b text-white placeholder:text-white/30 h-12 transition-all duration-300 focus:bg-white/5 rounded-none ${
+                        getFieldError('salaire_net') ? 'border-red-500 focus:border-red-500' : 'border-white/20 focus:border-[#FF671E]'
+                      }`}
+                      showValidation={false}
+                    />
+                    {getFieldError('salaire_net') && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg"
+                      >
+                        <p className="text-red-300 text-xs flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {getFieldError('salaire_net')}
+                        </p>
+                      </motion.div>
+                    )}
                   </motion.div>
 
                   

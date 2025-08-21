@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { useState, useCallback, useMemo, memo, useEffect } from 'react';
 import { FileUpload } from '@/components/ui/file-upload';
 import { PaymentDaySelector } from '@/components/ui/payment-day-selector';
+import PhoneInput from '@/components/ui/phone-input';
+import CurrencyInput from '@/components/ui/currency-input';
 import { CreatePartnershipRequest } from '@/types/partenaire';
 
 // Composant FormField mémorisé pour éviter les re-renders
@@ -162,6 +164,26 @@ export const PartnershipForm = () => {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [validatedSteps, setValidatedSteps] = useState<Set<number>>(new Set());
 
+  // États pour la validation des téléphones
+  const [phoneValidation, setPhoneValidation] = useState({
+    isValid: false,
+    formattedValue: ""
+  });
+  const [repPhoneValidation, setRepPhoneValidation] = useState({
+    isValid: false,
+    formattedValue: ""
+  });
+  const [hrPhoneValidation, setHrPhoneValidation] = useState({
+    isValid: false,
+    formattedValue: ""
+  });
+
+  // État pour la validation de la masse salariale
+  const [payrollValidation, setPayrollValidation] = useState({
+    isValid: false,
+    numericValue: 0
+  });
+
 
 
   // Fonction pour réinitialiser le formulaire
@@ -197,6 +219,14 @@ export const PartnershipForm = () => {
     setValidatedSteps(new Set());
     setError('');
     setStep(1);
+    
+    // Réinitialiser les validations des téléphones
+    setPhoneValidation({ isValid: false, formattedValue: "" });
+    setRepPhoneValidation({ isValid: false, formattedValue: "" });
+    setHrPhoneValidation({ isValid: false, formattedValue: "" });
+    
+    // Réinitialiser la validation de la masse salariale
+    setPayrollValidation({ isValid: false, numericValue: 0 });
 
     console.log('🔄 Formulaire réinitialisé');
   }, []);
@@ -236,6 +266,7 @@ export const PartnershipForm = () => {
         
       case 'phone':
         if (!stringValue.trim()) return 'Le téléphone est obligatoire';
+        if (!phoneValidation.isValid) return 'Format de téléphone invalide';
         break;
         
       case 'email':
@@ -252,6 +283,7 @@ export const PartnershipForm = () => {
         
       case 'payroll':
         if (!stringValue.trim()) return 'La masse salariale est obligatoire';
+        if (!payrollValidation.isValid) return 'Montant invalide';
         break;
         
       case 'cdiCount':
@@ -294,6 +326,7 @@ export const PartnershipForm = () => {
         
       case 'repPhone':
         if (!stringValue.trim()) return 'Le téléphone du représentant est obligatoire';
+        if (!repPhoneValidation.isValid) return 'Format de téléphone invalide';
         break;
         
       case 'hrFullName':
@@ -309,6 +342,7 @@ export const PartnershipForm = () => {
         
       case 'hrPhone':
         if (!stringValue.trim()) return 'Le téléphone du responsable RH est obligatoire';
+        if (!hrPhoneValidation.isValid) return 'Format de téléphone invalide';
         break;
         
       case 'agreement':
@@ -319,7 +353,7 @@ export const PartnershipForm = () => {
     }
     
     return '';
-  }, []);
+  }, [phoneValidation.isValid, repPhoneValidation.isValid, hrPhoneValidation.isValid, payrollValidation.isValid]);
 
   // Handle change mémorisé
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -349,7 +383,6 @@ export const PartnershipForm = () => {
   const handleNifBlur = useCallback(() => handleBlur('nif'), [handleBlur]);
   const handleActivityDomainBlur = useCallback(() => handleBlur('activityDomain'), [handleBlur]);
   const handleHeadquartersAddressBlur = useCallback(() => handleBlur('headquartersAddress'), [handleBlur]);
-  const handlePhoneBlur = useCallback(() => handleBlur('phone'), [handleBlur]);
   const handleEmailBlur = useCallback(() => handleBlur('email'), [handleBlur]);
   const handleEmployeesCountBlur = useCallback(() => handleBlur('employeesCount'), [handleBlur]);
   const handlePayrollBlur = useCallback(() => handleBlur('payroll'), [handleBlur]);
@@ -360,10 +393,8 @@ export const PartnershipForm = () => {
   const handleRepFullNameBlur = useCallback(() => handleBlur('repFullName'), [handleBlur]);
   const handleRepPositionBlur = useCallback(() => handleBlur('repPosition'), [handleBlur]);
   const handleRepEmailBlur = useCallback(() => handleBlur('repEmail'), [handleBlur]);
-  const handleRepPhoneBlur = useCallback(() => handleBlur('repPhone'), [handleBlur]);
   const handleHrFullNameBlur = useCallback(() => handleBlur('hrFullName'), [handleBlur]);
   const handleHrEmailBlur = useCallback(() => handleBlur('hrEmail'), [handleBlur]);
-  const handleHrPhoneBlur = useCallback(() => handleBlur('hrPhone'), [handleBlur]);
 
   const validateStep = useCallback((stepNumber: number) => {
     const stepFields: Record<number, string[]> = {
@@ -415,7 +446,7 @@ export const PartnershipForm = () => {
     }
     
     return Object.keys(newErrors).length === 0;
-  }, [validateField, formData]);
+  }, [validateField, formData, phoneValidation.isValid, repPhoneValidation.isValid, hrPhoneValidation.isValid, payrollValidation.isValid]);
 
   const handleCloseDrawer = useCallback(() => {
     setSuccess(false);
@@ -445,6 +476,15 @@ export const PartnershipForm = () => {
     });
     setErrors({});
     setTouched({});
+    
+    // Réinitialiser les validations des téléphones
+    setPhoneValidation({ isValid: false, formattedValue: "" });
+    setRepPhoneValidation({ isValid: false, formattedValue: "" });
+    setHrPhoneValidation({ isValid: false, formattedValue: "" });
+    
+    // Réinitialiser la validation de la masse salariale
+    setPayrollValidation({ isValid: false, numericValue: 0 });
+    
     router.push('https://www.zalamagn.com');
   }, [router]);
 
@@ -477,20 +517,20 @@ export const PartnershipForm = () => {
           nif: formData.nif?.trim() || '',
           activity_domain: formData.activityDomain?.trim() || '',
           headquarters_address: formData.headquartersAddress?.trim() || '',
-          phone: formData.phone?.trim() || '',
+          phone: phoneValidation.formattedValue || formData.phone?.trim() || '',
           email: formData.email?.trim() || '',
           employees_count: parseInt(formData.employeesCount) || 0,
-          payroll: formData.payroll?.trim() || '',
+          payroll: payrollValidation.numericValue.toString() || '',
           cdi_count: parseInt(formData.cdiCount) || 0,
           cdd_count: parseInt(formData.cddCount) || 0,
           payment_date: new Date().toISOString().split('T')[0], // Date actuelle au format YYYY-MM-DD
           rep_full_name: formData.repFullName?.trim() || '',
           rep_position: formData.repPosition?.trim() || '',
           rep_email: formData.repEmail?.trim() || '',
-          rep_phone: formData.repPhone?.trim() || '',
+          rep_phone: repPhoneValidation.formattedValue || formData.repPhone?.trim() || '',
           hr_full_name: formData.hrFullName?.trim() || '',
           hr_email: formData.hrEmail?.trim() || '',
-          hr_phone: formData.hrPhone?.trim() || '',
+          hr_phone: hrPhoneValidation.formattedValue || formData.hrPhone?.trim() || '',
           agreement: Boolean(formData.agreement),
           payment_day: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined
         };
@@ -545,7 +585,7 @@ export const PartnershipForm = () => {
       setLoading(false);
     }
     }
-  }, [validateStep, step, formData, handleCloseDrawer]);
+  }, [validateStep, step, formData, handleCloseDrawer, phoneValidation.formattedValue, repPhoneValidation.formattedValue, hrPhoneValidation.formattedValue, payrollValidation.numericValue]);
 
   // Options pour les domaines d'activité - mémorisé
   const activityDomains = useMemo(() => [
@@ -931,19 +971,59 @@ export const PartnershipForm = () => {
 
         {/* Téléphone et Email */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField 
-              name="phone"
-                label="Téléphone" 
-              type="tel"
-                placeholder="Ex: +224 612 34 56 78"
-                delay={0.7}
-              value={formData.phone}
-              onChange={handleChange}
-                onBlur={handlePhoneBlur}
-                hasError={!!(touched.phone && errors.phone)}
-                isValid={validatedSteps.has(1) && !!(touched.phone && !errors.phone && formData.phone)}
-                errorMessage={errors.phone || ''}
-              />
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                whileHover={{ scale: 1.01 }}
+              >
+                <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
+                  Téléphone <span className="text-red-400">*</span>
+                </label>
+                <PhoneInput
+                  value={formData.phone}
+                  onChange={(value) => {
+                    setFormData(prev => ({ ...prev, phone: value }));
+                    if (errors.phone) {
+                      setErrors(prev => ({ ...prev, phone: '' }));
+                    }
+                  }}
+                  onValidationChange={(isValid, formattedValue) => {
+                    setPhoneValidation({ isValid, formattedValue });
+                  }}
+                  placeholder="+224 612 34 56 78"
+                  label=""
+                  required={true}
+                  className={`w-full bg-blue-950/30 border text-white placeholder:text-gray-300/30 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
+                    touched.phone && errors.phone 
+                      ? 'border-red-500/70' 
+                      : validatedSteps.has(1) && touched.phone && !errors.phone && formData.phone && phoneValidation.isValid
+                      ? 'border-green-500/70' 
+                      : 'border-blue-700/70'
+                  }`}
+                  showValidation={false}
+                />
+                {!!(touched.phone && errors.phone) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1 mt-1 text-red-400 text-xs"
+                  >
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.phone}
+                  </motion.div>
+                )}
+                {validatedSteps.has(1) && !!(touched.phone && !errors.phone && formData.phone && phoneValidation.isValid) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1 mt-1 text-green-400 text-xs"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Valide
+                  </motion.div>
+                )}
+              </motion.div>
               
               <FormField 
               name="email"
@@ -976,18 +1056,61 @@ export const PartnershipForm = () => {
                 errorMessage={errors.employeesCount || ''}
               />
 
-              <FormField 
-              name="payroll"
-                label="Masse salariale" 
-                placeholder="Ex: 100 000 000 GNF"
-                delay={0.85}
-              value={formData.payroll}
-                onChange={handleChange}
-                onBlur={handlePayrollBlur}
-                hasError={!!(touched.payroll && errors.payroll)}
-                isValid={validatedSteps.has(1) && !!(touched.payroll && !errors.payroll && formData.payroll)}
-                errorMessage={errors.payroll || ''}
-              />
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.85 }}
+                whileHover={{ scale: 1.01 }}
+              >
+                <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
+                  Masse salariale <span className="text-red-400">*</span>
+                </label>
+                <CurrencyInput
+                  value={formData.payroll}
+                  onChange={(value) => {
+                    setFormData(prev => ({ ...prev, payroll: value }));
+                    if (errors.payroll) {
+                      setErrors(prev => ({ ...prev, payroll: '' }));
+                    }
+                  }}
+                  onValidationChange={(isValid, numericValue) => {
+                    setPayrollValidation({ isValid, numericValue });
+                  }}
+                  placeholder="0"
+                  label=""
+                  required={true}
+                                     min={100000}
+                  max={999999999999}
+                  className={`w-full bg-blue-950/30 border text-white placeholder:text-gray-300/30 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
+                    touched.payroll && errors.payroll 
+                      ? 'border-red-500/70' 
+                      : validatedSteps.has(1) && touched.payroll && !errors.payroll && formData.payroll && payrollValidation.isValid
+                      ? 'border-green-500/70' 
+                      : 'border-blue-700/70'
+                  }`}
+                  showValidation={false}
+                />
+                {!!(touched.payroll && errors.payroll) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1 mt-1 text-red-400 text-xs"
+                  >
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.payroll}
+                  </motion.div>
+                )}
+                {validatedSteps.has(1) && !!(touched.payroll && !errors.payroll && formData.payroll && payrollValidation.isValid) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1 mt-1 text-green-400 text-xs"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    Valide
+                  </motion.div>
+                )}
+              </motion.div>
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField 
@@ -1110,19 +1233,59 @@ export const PartnershipForm = () => {
               errorMessage={errors.repEmail || ''}
             />
 
-            <FormField 
-              name="repPhone" 
-              label="Téléphone du représentant" 
-              type="tel"
-              placeholder="Ex: +224 612 34 56 78"
-              delay={0.55}
-              value={formData.repPhone}
-                onChange={handleChange}
-              onBlur={handleRepPhoneBlur}
-              hasError={!!(touched.repPhone && errors.repPhone)}
-              isValid={validatedSteps.has(2) && !!(touched.repPhone && !errors.repPhone && formData.repPhone)}
-              errorMessage={errors.repPhone || ''}
-            />
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
+              whileHover={{ scale: 1.01 }}
+            >
+              <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
+                Téléphone du représentant <span className="text-red-400">*</span>
+              </label>
+              <PhoneInput
+                value={formData.repPhone}
+                onChange={(value) => {
+                  setFormData(prev => ({ ...prev, repPhone: value }));
+                  if (errors.repPhone) {
+                    setErrors(prev => ({ ...prev, repPhone: '' }));
+                  }
+                }}
+                onValidationChange={(isValid, formattedValue) => {
+                  setRepPhoneValidation({ isValid, formattedValue });
+                }}
+                placeholder="+224 612 34 56 78"
+                label=""
+                required={true}
+                className={`w-full bg-blue-950/30 border text-white placeholder:text-gray-300/30 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
+                  touched.repPhone && errors.repPhone 
+                    ? 'border-red-500/70' 
+                    : validatedSteps.has(2) && touched.repPhone && !errors.repPhone && formData.repPhone && repPhoneValidation.isValid
+                    ? 'border-green-500/70' 
+                    : 'border-blue-700/70'
+                }`}
+                showValidation={false}
+              />
+              {!!(touched.repPhone && errors.repPhone) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 mt-1 text-red-400 text-xs"
+                >
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.repPhone}
+                </motion.div>
+              )}
+              {validatedSteps.has(2) && !!(touched.repPhone && !errors.repPhone && formData.repPhone && repPhoneValidation.isValid) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 mt-1 text-green-400 text-xs"
+                >
+                  <CheckCircle className="h-3 w-3" />
+                  Valide
+                </motion.div>
+              )}
+            </motion.div>
 
             {/* Boutons de navigation */}
             <div className="grid grid-cols-2 gap-4 pt-6">
@@ -1198,19 +1361,59 @@ export const PartnershipForm = () => {
               errorMessage={errors.hrEmail || ''}
             />
 
-            <FormField 
-              name="hrPhone" 
-              label="Téléphone du responsable RH" 
-              type="tel"
-              placeholder="Ex: +224 655 12 34 56"
-              delay={0.5}
-              value={formData.hrPhone}
-              onChange={handleChange}
-              onBlur={handleHrPhoneBlur}
-              hasError={!!(touched.hrPhone && errors.hrPhone)}
-              isValid={validatedSteps.has(3) && !!(touched.hrPhone && !errors.hrPhone && formData.hrPhone)}
-              errorMessage={errors.hrPhone || ''}
-            />
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.01 }}
+            >
+              <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
+                Téléphone du responsable RH <span className="text-red-400">*</span>
+              </label>
+              <PhoneInput
+                value={formData.hrPhone}
+                onChange={(value) => {
+                  setFormData(prev => ({ ...prev, hrPhone: value }));
+                  if (errors.hrPhone) {
+                    setErrors(prev => ({ ...prev, hrPhone: '' }));
+                  }
+                }}
+                onValidationChange={(isValid, formattedValue) => {
+                  setHrPhoneValidation({ isValid, formattedValue });
+                }}
+                placeholder="+224 655 12 34 56"
+                label=""
+                required={true}
+                className={`w-full bg-blue-950/30 border text-white placeholder:text-gray-300/30 h-11 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent px-4 transition-all ${
+                  touched.hrPhone && errors.hrPhone 
+                    ? 'border-red-500/70' 
+                    : validatedSteps.has(3) && touched.hrPhone && !errors.hrPhone && formData.hrPhone && hrPhoneValidation.isValid
+                    ? 'border-green-500/70' 
+                    : 'border-blue-700/70'
+                }`}
+                showValidation={false}
+              />
+              {!!(touched.hrPhone && errors.hrPhone) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 mt-1 text-red-400 text-xs"
+                >
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.hrPhone}
+                </motion.div>
+              )}
+              {validatedSteps.has(3) && !!(touched.hrPhone && !errors.hrPhone && formData.hrPhone && hrPhoneValidation.isValid) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-1 mt-1 text-green-400 text-xs"
+                >
+                  <CheckCircle className="h-3 w-3" />
+                  Valide
+                </motion.div>
+              )}
+            </motion.div>
 
         {/* Lettre d'engagement */}
         <motion.div 
