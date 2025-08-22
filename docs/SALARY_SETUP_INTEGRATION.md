@@ -2,329 +2,307 @@
 
 ## 📋 Vue d'ensemble
 
-Ce document décrit l'intégration complète du système de configuration automatique du salaire pour les RH et responsables lors de leur première connexion.
+Ce document décrit l'intégration complète du système de configuration de salaire pour les utilisateurs RH et Responsable dans l'application ZaLaMa. Le système permet aux utilisateurs éligibles de configurer leur salaire net lors de leur première connexion ou quand leur salaire est à zéro.
 
-## 🏗️ Architecture Intégrée
+## 🏗️ Architecture
 
-### **Composants Frontend**
-- **Modale stylisée** : `src/components/modals/SalarySetupModal.tsx`
-- **Hook personnalisé** : `src/hooks/useSalarySetup.ts`
-- **Intégration profil** : `src/app/profile/page.tsx`
+### **Composants implémentés**
 
-### **API Routes**
-- **Vérification** : `src/app/api/salary-setup/check/route.ts`
-- **Configuration** : `src/app/api/salary-setup/configure/route.ts`
+1. **Hook `useSalarySetup`** : Gère la logique de vérification et configuration
+2. **Modale `SalarySetupModal`** : Interface utilisateur pour la configuration
+3. **Intégration dans le profil** : Affichage automatique de la modale
+4. **Edge Function Supabase** : Backend pour la logique métier
 
-### **Base de Données**
-- **Table principale** : `employees` (colonnes existantes)
-- **Table historique** : `salary_setup_history` (à créer)
+### **Flux utilisateur**
 
-## 🔧 Installation et Configuration
+```
+1. Connexion RH/Responsable → 2. Vérification salaire (0) → 3. Affichage modale → 4. Configuration → 5. Mise à jour DB → 6. Rechargement page
+```
 
-### **1. Prérequis**
-- Next.js 15+ installé
-- Supabase configuré
-- Variables d'environnement définies
+## 📁 Fichiers créés/modifiés
 
-### **2. Variables d'environnement requises**
+### **Nouveaux fichiers**
+
+- `src/hooks/useSalarySetup.ts` - Hook pour la gestion du salaire
+- `src/components/modals/SalarySetupModal.tsx` - Modale de configuration
+- `scripts/assign-user-role.js` - Script d'assignation de rôle
+
+### **Fichiers modifiés**
+
+- `src/app/profile/page.tsx` - Intégration de la modale
+- `src/app/api/salary-setup/check/route.ts` - API route de vérification
+- `src/app/api/salary-setup/configure/route.ts` - API route de configuration
+
+## 🎨 Design et UX
+
+### **Style de la modale**
+
+- **Palette de couleurs** : Bleu ZaLaMa (`#010D3E`, `#1A3A8F`, `#3b82f6`)
+- **Design cohérent** : Même style que les cards de statistiques du profil
+- **Taille compacte** : `max-w-sm` pour une interface mignonne
+- **Animations** : Framer Motion pour les transitions fluides
+
+### **Éléments visuels**
+
+- **Icône principale** : DollarSign dans un cercle bleu
+- **Badge de rôle** : Affichage du rôle (RH/Responsable) en bleu
+- **Nom de l'entreprise** : Affichage de l'entreprise
+- **Champs stylisés** : Inputs avec icônes et focus bleu
+
+## 🔧 Fonctionnalités
+
+### **Vérification automatique**
+
+```typescript
+// Le hook vérifie automatiquement si l'utilisateur a besoin de configurer son salaire
+useEffect(() => {
+  if (employee && isAuthenticated) {
+    // Vérification via Edge Function Supabase
+    checkSalarySetup();
+  }
+}, [employee, isAuthenticated]);
+```
+
+### **Conditions d'affichage**
+
+- ✅ Utilisateur connecté
+- ✅ Rôle = 'rh' ou 'responsable'
+- ✅ Salaire net = 0 ou null
+- ✅ Utilisateur existe dans `admin_users`
+
+### **Validation des données**
+
+- **Salaire net** : Entre 1 et 10 000 000 FG
+- **Date d'embauche** : Ne peut pas être dans le futur
+- **Poste** : Minimum 2 caractères
+- **Type de contrat** : Doit être dans la liste autorisée
+
+### **Types de contrat supportés**
+
+- CDI
+- CDD
+- Consultant
+- Stage
+- Autre
+
+## 🔐 Sécurité
+
+### **Authentification**
+
+- **Token requis** : Récupération depuis `localStorage`
+- **Header Authorization** : `Bearer <token>`
+- **Validation côté serveur** : Edge Function Supabase
+
+### **Autorisation**
+
+- **Rôles autorisés** : `rh`, `responsable`
+- **Vérification DB** : Table `admin_users`
+- **Accès refusé** : Rôles `admin`, `user`
+
+## 📊 Base de données
+
+### **Tables utilisées**
+
+```sql
+-- Table employees (existante)
+employees (
+  id, user_id, email, nom, prenom, salaire_net, 
+  type_contrat, date_embauche, poste, partner_id
+)
+
+-- Table admin_users (existante)
+admin_users (
+  id, email, display_name, role, partenaire_id, 
+  active, created_at, updated_at
+)
+
+-- Table salary_setup_history (nouvelle)
+salary_setup_history (
+  id, user_id, employee_id, old_salary, new_salary,
+  changed_by, reason, created_at
+)
+```
+
+### **Relations**
+
+- `employees.user_id` ↔ `admin_users.id`
+- `admin_users.partenaire_id` ↔ `partners.id`
+- `salary_setup_history.user_id` ↔ `employees.user_id`
+
+## 🚀 Déploiement
+
+### **Prérequis**
+
+1. **Supabase CLI** installé
+2. **Variables d'environnement** configurées
+3. **Edge Function** déployée
+4. **Tables** créées
+
+### **Variables d'environnement**
+
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-### **3. Structure de la base de données**
+### **Scripts de déploiement**
 
-#### **Table `employees` (existante)**
-```sql
--- Colonnes utilisées par le système
-salaire_net INTEGER DEFAULT 0,
-type_contrat VARCHAR(50),
-date_embauche DATE,
-poste VARCHAR(100),
-user_id UUID REFERENCES auth.users(id),
-partner_id UUID REFERENCES partners(id)
-```
+```bash
+# Assigner un rôle à un utilisateur
+node scripts/assign-user-role.js
 
-#### **Table `salary_setup_history` (à créer)**
-```sql
-CREATE TABLE IF NOT EXISTS salary_setup_history (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id),
-  employee_id UUID REFERENCES employees(id),
-  old_salary INTEGER DEFAULT 0,
-  new_salary INTEGER NOT NULL,
-  changed_by UUID REFERENCES auth.users(id),
-  reason TEXT DEFAULT 'Configuration initiale du salaire',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Index pour optimiser les performances
-CREATE INDEX IF NOT EXISTS idx_salary_history_user_id ON salary_setup_history(user_id);
-CREATE INDEX IF NOT EXISTS idx_salary_history_employee_id ON salary_setup_history(employee_id);
-CREATE INDEX IF NOT EXISTS idx_salary_history_created_at ON salary_setup_history(created_at);
-```
-
-## 🎯 Fonctionnalités
-
-### **1. Détection automatique**
-- Vérification du rôle utilisateur (RH ou responsable)
-- Contrôle du salaire actuel (0 ou null = configuration requise)
-- Affichage automatique de la modale
-
-### **2. Interface utilisateur**
-- Design cohérent avec la page de connexion
-- Validation en temps réel
-- Messages d'erreur clairs
-- Animations fluides avec Framer Motion
-
-### **3. Validation des données**
-- Salaire : 1 à 10 000 000 FG
-- Type de contrat : CDI, CDD, Consultant, Stage, Autre
-- Date d'embauche : pas dans le futur
-- Poste : minimum 2 caractères
-
-### **4. Sécurité**
-- Authentification requise
-- Validation côté serveur
-- Historique des modifications
-- Tokens d'accès sécurisés
-
-## 🔄 Flux d'utilisation
-
-### **Scénario 1 : Première connexion RH/Responsable**
-```
-1. Utilisateur se connecte
-2. Système vérifie le rôle et le salaire
-3. Si salaire = 0 → Modale s'affiche automatiquement
-4. Utilisateur remplit le formulaire
-5. Validation et sauvegarde
-6. Modale se ferme → Accès au profil
-```
-
-### **Scénario 2 : Utilisateur déjà configuré**
-```
-1. Utilisateur se connecte
-2. Système vérifie le rôle et le salaire
-3. Si salaire > 0 → Pas de modale
-4. Accès direct au profil
+# Vérifier la configuration
+npm run dev
 ```
 
 ## 🧪 Tests
 
-### **Tests automatisés**
-```bash
-# Exécuter les tests
-node test-salary-setup.js
-```
+### **Scénarios de test**
+
+1. **Utilisateur RH avec salaire à 0**
+   - ✅ Modale s'affiche
+   - ✅ Configuration réussie
+   - ✅ Page se recharge
+   - ✅ Salaire mis à jour
+
+2. **Utilisateur Responsable avec salaire à 0**
+   - ✅ Modale s'affiche
+   - ✅ Configuration réussie
+   - ✅ Page se recharge
+   - ✅ Salaire mis à jour
+
+3. **Utilisateur avec salaire > 0**
+   - ✅ Modale ne s'affiche pas
+
+4. **Utilisateur sans rôle**
+   - ✅ Modale ne s'affiche pas
 
 ### **Tests manuels**
-1. **Créer un utilisateur RH avec salaire = 0**
-2. **Se connecter et accéder à `/profile`**
-3. **Vérifier l'affichage de la modale**
-4. **Remplir le formulaire avec des données valides**
-5. **Vérifier la sauvegarde et la fermeture de la modale**
 
-### **Tests de validation**
-- Salaire négatif → Erreur
-- Date future → Erreur
-- Poste vide → Erreur
-- Type de contrat invalide → Erreur
-
-## 📊 Monitoring et Logs
-
-### **Logs à surveiller**
-```javascript
-// Dans les API routes
-console.error('Erreur lors de la vérification du salaire:', error);
-console.error('Erreur lors de la configuration du salaire:', error);
-console.error('Erreur lors de l\'enregistrement de l\'historique:', error);
+```bash
+# 1. Se connecter en tant que RH/Responsable
+# 2. Aller sur /profile
+# 3. Vérifier l'affichage de la modale
+# 4. Configurer le salaire
+# 5. Vérifier la mise à jour
 ```
 
-### **Métriques importantes**
-- Taux d'affichage de la modale
-- Taux de succès de configuration
-- Temps moyen de configuration
-- Erreurs de validation
+## 🔄 Flux complet
 
-## 🚨 Gestion des erreurs
+### **1. Connexion utilisateur**
 
-### **Erreurs courantes**
-1. **Token invalide** : Vérifier l'authentification
-2. **Rôle non autorisé** : Vérifier les permissions
-3. **Données invalides** : Vérifier la validation
-4. **Erreur de base de données** : Vérifier la connexion
-
-### **Solutions**
-```javascript
-// Exemple de gestion d'erreur
-try {
-  const result = await configureSalary(data);
-  if (result) {
-    // Succès
-  } else {
-    // Afficher l'erreur à l'utilisateur
-  }
-} catch (error) {
-  console.error('Erreur:', error);
-  // Gérer l'erreur
-}
-```
-
-## 🔄 Maintenance
-
-### **Mise à jour du système**
-1. **Modifier les validations** : `src/app/api/salary-setup/configure/route.ts`
-2. **Changer l'interface** : `src/components/modals/SalarySetupModal.tsx`
-3. **Ajouter des champs** : Modifier les types et validations
-
-### **Migration de données**
-```sql
--- Exemple : Ajouter un nouveau type de contrat
-ALTER TYPE contract_type ADD VALUE 'Freelance';
-
--- Mettre à jour les types autorisés dans l'API
-const CONTRACT_TYPES = ['CDI', 'CDD', 'Consultant', 'Stage', 'Autre', 'Freelance'];
-```
-
-## 📝 Documentation API
-
-### **GET /api/salary-setup/check**
-Vérifie si l'utilisateur a besoin de configurer son salaire.
-
-**Headers requis :**
-```
-Authorization: Bearer <access_token>
-```
-
-**Réponse :**
-```json
-{
-  "success": true,
-  "needsSetup": true,
-  "user": {
-    "id": "user-uuid",
-    "role": "rh",
-    "email": "rh@example.com",
-    "display_name": "John Doe",
-    "currentSalary": 0,
-    "partner": {
-      "id": "partner-uuid",
-      "company_name": "Entreprise Example"
-    }
-  }
-}
-```
-
-### **POST /api/salary-setup/configure**
-Configure le salaire de l'utilisateur.
-
-**Headers requis :**
-```
-Authorization: Bearer <access_token>
-Content-Type: application/json
-```
-
-**Body :**
-```json
-{
-  "salaire_net": 750000,
-  "type_contrat": "CDI",
-  "date_embauche": "2024-01-15",
-  "poste": "Responsable RH"
-}
-```
-
-**Réponse :**
-```json
-{
-  "success": true,
-  "message": "Salaire configuré avec succès",
-  "employee": {
-    "id": "employee-uuid",
-    "salaire_net": 750000,
-    "poste": "Responsable RH",
-    "type_contrat": "CDI",
-    "updated_at": "2024-12-01T10:00:00Z"
-  }
-}
-```
-
-## 🎨 Personnalisation
-
-### **Modifier le design**
 ```typescript
-// Dans SalarySetupModal.tsx
-// Changer les couleurs
-className="bg-[#FF671E]" // Couleur principale
-className="text-[#FF671E]" // Couleur des icônes
-
-// Modifier les animations
-transition={{ type: "spring", stiffness: 400, damping: 25 }}
+// L'utilisateur se connecte
+const { employee, isAuthenticated } = useEmployeeAuth();
 ```
 
-### **Ajouter des champs**
-```typescript
-// 1. Ajouter dans l'interface
-interface SalaryFormData {
-  salaire_net: number;
-  type_contrat: string;
-  date_embauche: string;
-  poste: string;
-  nouveau_champ: string; // Nouveau champ
-}
+### **2. Vérification automatique**
 
-// 2. Ajouter dans le formulaire
-<input
-  type="text"
-  placeholder="Nouveau champ"
-  value={formData.nouveau_champ}
-  onChange={(e) => handleInputChange('nouveau_champ', e.target.value)}
+```typescript
+// Le hook vérifie automatiquement
+useEffect(() => {
+  if (employee && isAuthenticated) {
+    checkSalarySetup(); // Appel Edge Function
+  }
+}, [employee, isAuthenticated]);
+```
+
+### **3. Affichage de la modale**
+
+```typescript
+// Si conditions remplies
+<SalarySetupModal
+  isOpen={needsSetup === true && showModal}
+  onClose={handleCloseModal}
+  onSuccess={handleSuccess}
+  userInfo={userInfo}
 />
-
-// 3. Ajouter la validation
-if (!formData.nouveau_champ) {
-  setErrorMessage('Le nouveau champ est requis');
-  return false;
-}
-
-// 4. Mettre à jour l'API
 ```
 
-## 🆘 Support et Dépannage
+### **4. Configuration du salaire**
+
+```typescript
+// Soumission du formulaire
+const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/salary-setup/configure', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(formData),
+});
+```
+
+### **5. Mise à jour et rechargement**
+
+```typescript
+// Succès
+setStatus('success');
+setTimeout(() => {
+  onSuccess();
+  onClose();
+  window.location.reload(); // Rechargement automatique
+}, 1500);
+```
+
+## 🐛 Dépannage
 
 ### **Problèmes courants**
 
-#### **La modale ne s'affiche pas**
-1. Vérifier que l'utilisateur a le rôle `rh` ou `responsable`
-2. Vérifier que le salaire est à 0 dans la base de données
-3. Vérifier les logs de l'API `/api/salary-setup/check`
+1. **Modale ne s'affiche pas**
+   - Vérifier le rôle dans `admin_users`
+   - Vérifier que `salaire_net = 0`
+   - Vérifier les logs console
 
-#### **Erreur de validation**
-1. Vérifier les données envoyées
-2. Consulter les messages d'erreur
-3. Vérifier les règles de validation
+2. **Erreur 401**
+   - Vérifier le token dans `localStorage`
+   - Vérifier la validité du token
+   - Vérifier l'Edge Function
 
-#### **Erreur de base de données**
-1. Vérifier la connexion Supabase
-2. Vérifier les permissions de la table
-3. Vérifier que la table `salary_setup_history` existe
+3. **Erreur de validation**
+   - Vérifier les données saisies
+   - Vérifier les règles de validation
 
-### **Contact**
-Pour toute question technique, consulter les logs ou contacter l'équipe de développement.
+### **Logs de débogage**
 
-## ✅ Checklist de déploiement
+```typescript
+// Dans useSalarySetup.ts
+console.log('🔄 Hook useSalarySetup - Vérification automatique...');
+console.log('   - employee.user_id:', employee.user_id);
+console.log('   - employee.salaire_net:', employee.salaire_net);
+console.log('   - employee.poste:', employee.poste);
+```
 
-- [ ] Variables d'environnement configurées
-- [ ] Table `salary_setup_history` créée
-- [ ] API routes déployées
-- [ ] Composants frontend intégrés
-- [ ] Tests automatisés passent
-- [ ] Tests manuels effectués
-- [ ] Documentation mise à jour
-- [ ] Monitoring configuré
+## 📝 Notes importantes
 
----
+### **Sécurité**
 
-**Version :** 1.0.0  
-**Date :** Décembre 2024  
-**Auteur :** Équipe ZaLaMa
+- ✅ Tokens d'accès requis pour toutes les opérations
+- ✅ Validation côté serveur et client
+- ✅ Rôles vérifiés dans la base de données
+- ✅ Historique des modifications
+
+### **Performance**
+
+- ✅ Vérification automatique au montage
+- ✅ Cache des données utilisateur
+- ✅ Rechargement optimisé
+
+### **UX**
+
+- ✅ Interface intuitive et responsive
+- ✅ Messages d'erreur clairs
+- ✅ Animations fluides
+- ✅ Fermeture automatique après succès
+
+## 🎉 Résultat final
+
+Le système de configuration de salaire est maintenant **entièrement fonctionnel** avec :
+
+- ✅ **Interface utilisateur** : Modale stylée et intuitive
+- ✅ **Logique métier** : Vérification et validation complètes
+- ✅ **Sécurité** : Authentification et autorisation robustes
+- ✅ **Base de données** : Intégration complète avec Supabase
+- ✅ **UX optimisée** : Flux utilisateur fluide et professionnel
+
+Les utilisateurs RH et Responsable peuvent maintenant configurer leur salaire de manière sécurisée et intuitive ! 🚀

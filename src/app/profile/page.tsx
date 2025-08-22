@@ -32,6 +32,16 @@ export default function ProfilePage() {
   
   // Hook pour la configuration du salaire
   const { needsSetup, userInfo, configureSalary, loading: salaryLoading, error: salaryError } = useSalarySetup()
+  const [showModal, setShowModal] = useState(true)
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+  }
+
+  const handleSuccess = () => {
+    console.log('Salaire configuré avec succès')
+    setShowModal(false)
+  }
 
   // Debug: Logs pour comprendre pourquoi la modale ne s'affiche pas
   useEffect(() => {
@@ -135,26 +145,10 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute>
       <div className="flex flex-1 flex-col min-h-screen">
-        {/* Debug: Affichage des informations de débogage */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="fixed top-4 right-4 bg-black/80 text-white p-4 rounded-lg z-50 text-xs">
-            <div>DEBUG:</div>
-            <div>needsSetup: {String(needsSetup)}</div>
-            <div>loading: {String(loading)}</div>
-            <div>salaryLoading: {String(salaryLoading)}</div>
-            <div>role: {employee?.role}</div>
-            <div>salaire: {employee?.salaire_net}</div>
-          </div>
-        )}
-        
-        {/* Modale de configuration du salaire */}
         <SalarySetupModal
-          isOpen={needsSetup === true}
-          onClose={() => {}} // Ne pas permettre de fermer la modale
-          onSuccess={() => {
-            // La modale se fermera automatiquement après succès
-            console.log('Salaire configuré avec succès');
-          }}
+          isOpen={needsSetup === true && showModal}
+          onClose={handleCloseModal}
+          onSuccess={handleSuccess}
           userInfo={userInfo}
         />
         
