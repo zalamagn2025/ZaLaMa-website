@@ -8,10 +8,10 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     
     console.log('🔍 Récupération du rôle pour user_id:', userId);
 
@@ -19,7 +19,7 @@ export async function GET(
     const { data: adminUser, error } = await supabase
       .from('admin_users')
       .select('role')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
 
     if (error) {
