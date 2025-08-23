@@ -82,8 +82,8 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
           const workingDaysElapsed = getWorkingDaysElapsed(currentYear, currentMonth, today.getDate())
           const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
           
-          // L'avance sur salaire est limitée à 25% du salaire net (pas de calcul de jours)
-          const availableAdvance = Math.floor(salaireNet * 0.25)
+          // L'avance sur salaire est limitée à 30% du salaire net (pas de calcul de jours)
+          const availableAdvance = Math.floor(salaireNet * 0.30)
           
           console.log('💰 Calcul avance sur salaire:', {
             salaireNet,
@@ -336,7 +336,7 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
                   <span className="text-lg font-bold text-blue-900">{formData.avanceDisponible} GNF</span>
                 </div>
                 <p className="text-xs text-blue-700 mt-1">
-                  Limite mensuelle: 25% de votre salaire net
+                                          Limite mensuelle: 30% de votre salaire net
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
                   Information: {getWorkingDaysElapsed(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())} jours ouvrables écoulés sur {getTotalWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth())} jours

@@ -89,7 +89,7 @@ const baseMetadata: Metadata = {
 export const pageMetadata = {
   home: {
     title: 'Accueil',
-    description: 'Découvrez ZaLaMa, la solution fintech innovante pour les avances sur salaire en Guinée. Accès rapide à 25% de votre salaire, conseil financier IA et services marketing.',
+    description: 'Découvrez ZaLaMa, la solution fintech innovante pour les avances sur salaire en Guinée. Accès rapide à 30% de votre salaire, conseil financier IA et services marketing.',
     keywords: ['accueil', 'ZaLaMa', 'avance sur salaire', 'fintech', 'Guinée'],
     openGraph: {
       title: 'ZaLaMa - La Fintech des Avances sur Salaire',
@@ -119,11 +119,11 @@ export const pageMetadata = {
 
   avanceSurSalaire: {
     title: 'Avance sur salaire',
-    description: 'Accédez rapidement à 25% de votre salaire avant la date de paie officielle. Traitement en moins de 10 minutes, frais transparents de 6,5%.',
+    description: 'Accédez rapidement à 30% de votre salaire avant la date de paie officielle. Traitement en moins de 10 minutes, frais transparents de 6,5%.',
     keywords: ['avance sur salaire', 'prêt salarié', 'finance', 'mobile money', 'Guinée'],
     openGraph: {
       title: 'Avance sur salaire - ZaLaMa',
-      description: 'Accédez à 25% de votre salaire en moins de 10 minutes. Frais transparents de 6,5%.',
+      description: 'Accédez à 30% de votre salaire en moins de 10 minutes. Frais transparents de 6,5%.',
     },
   },
 
@@ -268,7 +268,7 @@ export function generateMetadata(pageKey: keyof typeof pageMetadata, customData?
     case 'avanceSurSalaire':
       structuredData = generateFinancialServiceSchema({
         name: 'Avance sur salaire',
-        description: 'Accédez rapidement à 25% de votre salaire avant la date de paie officielle',
+        description: 'Accédez rapidement à 30% de votre salaire avant la date de paie officielle',
         url: 'https://www.zalamagn.com/avance-sur-salaire',
         provider: 'ZaLaMa',
         areaServed: 'Guinée',

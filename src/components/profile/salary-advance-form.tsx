@@ -38,8 +38,8 @@ function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0)
   const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
   const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
   
-  // L'avance disponible = 25% du salaire net - avance active
-  const limiteAvanceBase = Math.floor(salaireNet * 0.25)
+  // L'avance disponible = 50% du salaire net - avance active
+  const limiteAvanceBase = Math.floor(salaireNet * 0.50)
   const avanceDisponible = Math.max(0, limiteAvanceBase - avanceActive)
   const limiteAvance = avanceDisponible
   
@@ -192,19 +192,49 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       const avanceDisponible = financial.avanceDisponible || 0
       const salaireRestant = financial.salaireRestant || 0
       
-      // Calculer les jours ouvrables pour information
-      const today = new Date()
-      const currentMonth = today.getMonth()
-      const currentYear = today.getFullYear()
-      const workingDaysElapsed = getWorkingDaysElapsed(currentYear, currentMonth, today.getDate())
-      const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
-      const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
+             // Calculer les jours ouvrables pour information - FORCER le calcul local
+       const today = new Date()
+       const currentMonth = today.getMonth()
+       const currentYear = today.getFullYear()
+       const currentDay = Math.max(1, today.getDate()) // S'assurer que le jour minimum est 1
+       
+       // Calculer directement les jours ouvrables
+       let workingDaysElapsed = 0
+       for (let day = 1; day <= currentDay; day++) {
+         const date = new Date(currentYear, currentMonth, day)
+         const dayOfWeek = date.getDay()
+         if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+           workingDaysElapsed++
+         }
+       }
+       
+       // Calculer le total des jours ouvrables du mois
+       const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate()
+       let totalWorkingDays = 0
+       for (let day = 1; day <= lastDay; day++) {
+         const date = new Date(currentYear, currentMonth, day)
+         const dayOfWeek = date.getDay()
+         if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+           totalWorkingDays++
+         }
+       }
+       
+       const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
+       
+       console.log('📅 Calcul FORCÉ des jours ouvrables:', {
+         currentYear,
+         currentMonth,
+         currentDay,
+         workingDaysElapsed,
+         totalWorkingDays,
+         workingDaysPercentage
+       })
       
       setAvanceData({
         salaireNet: salaireNet,
         avanceActive: avanceActive, // Total des avances actives depuis l'Edge Function
         salaireRestant: salaireRestant, // Salaire restant depuis l'Edge Function
-        maxAvanceMonthly: Math.floor(salaireNet * 0.25), // 25% max
+                 maxAvanceMonthly: Math.floor(salaireNet * 0.30), // 30% max pour auto-approbation
         totalAvancesApprouveesMonthly: avanceActive, // Total des avances approuvées depuis l'Edge Function
         avanceDisponible: avanceDisponible, // Avance disponible depuis l'Edge Function
         workingDaysElapsed: workingDaysElapsed,
@@ -237,6 +267,68 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   useEffect(() => {
     calculateAdvanceData()
   }, [calculateAdvanceData])
+  
+  // Forcer le calcul des jours ouvrables indépendamment des données financières
+  useEffect(() => {
+    const calculateWorkingDays = () => {
+      const today = new Date()
+      const currentMonth = today.getMonth()
+      const currentYear = today.getFullYear()
+      const currentDay = Math.max(1, today.getDate())
+      
+      // Calculer directement les jours ouvrables
+      let workingDaysElapsed = 0
+      for (let day = 1; day <= currentDay; day++) {
+        const date = new Date(currentYear, currentMonth, day)
+        const dayOfWeek = date.getDay()
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          workingDaysElapsed++
+        }
+      }
+      
+      // Calculer le total des jours ouvrables du mois
+      const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate()
+      let totalWorkingDays = 0
+      for (let day = 1; day <= lastDay; day++) {
+        const date = new Date(currentYear, currentMonth, day)
+        const dayOfWeek = date.getDay()
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          totalWorkingDays++
+        }
+      }
+      
+      const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
+      
+      console.log('🚀 Calcul FORCÉ des jours ouvrables au chargement:', {
+        currentYear,
+        currentMonth,
+        currentDay,
+        workingDaysElapsed,
+        totalWorkingDays,
+        workingDaysPercentage
+      })
+      
+      // Mettre à jour l'état si avanceData existe déjà
+      if (avanceData) {
+        setAvanceData(prev => prev ? {
+          ...prev,
+          workingDaysElapsed,
+          totalWorkingDays,
+          workingDaysPercentage
+        } : null)
+      }
+    }
+    
+    // Exécuter immédiatement
+    calculateWorkingDays()
+    
+    // Et aussi après un délai pour s'assurer que c'est fait
+    const timer = setTimeout(calculateWorkingDays, 500)
+    
+    return () => clearTimeout(timer)
+  }, [avanceData])
+  
+
 
   // Actualiser les données quand le composant devient visible
   useEffect(() => {
@@ -506,7 +598,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             <div className="p-1.5 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53]">
                               <IconCalculator className="h-4 w-4 text-white" />
                             </div>
-                            <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible (25%)</h4>
+                                                         <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible (50%)</h4>
                           </div>
                        <button
                             type="button"
@@ -567,10 +659,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                                    <span className="text-gray-400">Salaire net:</span>
                                    <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
                       </div>
-                       <div className="flex justify-between">
-                                    <span className="text-gray-400">Limite base (25%):</span>
-                                    <span className="text-blue-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
-                       </div>
+                                               <div className="flex justify-between">
+                                     <span className="text-gray-400">Limite auto-approbation (30%):</span>
+                                     <span className="text-blue-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
+                        </div>
                       <div className="flex justify-between">
                                    <span className="text-gray-400">Jours écoulés:</span>
                                    <span className="text-blue-400">{avanceData.workingDaysElapsed} jours</span>
@@ -606,9 +698,29 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               </div>
                             </motion.div>
                           )}
-                        </AnimatePresence>
-                   </motion.div>
-                )}
+                                                 </AnimatePresence>
+                     </motion.div>
+                  )}
+
+                     {/* Information sur l'approbation RH */}
+                     <motion.div 
+                       initial={{ opacity: 0, y: -10 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       transition={{ duration: 0.3, delay: 0.1 }}
+                       className="mb-4 p-4 rounded-xl bg-gradient-to-br from-blue-900/30 to-blue-800/30 border border-blue-600/30 shadow-lg"
+                     >
+                       <div className="flex items-center space-x-2 mb-2">
+                         <div className="p-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
+                           <IconInfoCircle className="h-4 w-4 text-white" />
+                         </div>
+                         <h4 className="text-sm font-semibold text-blue-300">Processus d'approbation</h4>
+                       </div>
+                       <div className="text-xs text-blue-200 space-y-1">
+                         <p>• <strong>Jusqu'à 30%</strong> : Approbation automatique par ZaLaMa</p>
+                         <p>• <strong>30% à 50%</strong> : Approbation RH/Représentant entreprise requise avant décaissement</p>
+                         <p className="text-yellow-200 mt-2">💡 L'avance disponible affichée (50%) inclut les montants nécessitant une approbation RH</p>
+                       </div>
+                     </motion.div>
 
                     {/* Montant demandé */}
                   <motion.div 
