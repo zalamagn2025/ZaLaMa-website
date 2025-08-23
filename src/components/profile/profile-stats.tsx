@@ -453,8 +453,8 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     remainingSalary: financialData.financial.salaireRestant || 0,
     monthlyLimit: Math.floor((financialData.financial.salaireNet || 0) * 0.30),
     remainingMonthlyAdvance: financialData.financial.avanceDisponible || 0,
-    workingDaysElapsed: 0, // À calculer si nécessaire
-    totalWorkingDays: 0 // À calculer si nécessaire
+    workingDaysElapsed: financialData.workingDaysElapsed || 0, // Utiliser les jours calculés
+    totalWorkingDays: financialData.totalWorkingDays || 0 // Utiliser les jours calculés
   } : null
   
   //get remaining salary - CORRIGÉ: Salaire restant = Salaire net - Avance actif
