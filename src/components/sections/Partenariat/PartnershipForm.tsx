@@ -11,6 +11,7 @@ import { FileUpload } from '@/components/ui/file-upload';
 import { PaymentDaySelector } from '@/components/ui/payment-day-selector';
 import PhoneInput from '@/components/ui/phone-input';
 import CurrencyInput from '@/components/ui/currency-input';
+import { LogoUpload } from '@/components/ui/logo-upload';
 import { CreatePartnershipRequest } from '@/types/partenaire';
 
 // Composant FormField mémorisé pour éviter les re-renders
@@ -145,6 +146,9 @@ export const PartnershipForm = () => {
     cddCount: '',
     paymentDate: '',
     paymentDay: '',
+    logoUrl: '',
+    siteWeb: '',
+    nombreAnneesActivite: '',
     agreement: false,
     repFullName: '',
     repEmail: '',
@@ -203,6 +207,9 @@ export const PartnershipForm = () => {
       cddCount: '',
       paymentDate: '',
       paymentDay: '',
+      logoUrl: '',
+      siteWeb: '',
+      nombreAnneesActivite: '',
       agreement: false,
       repFullName: '',
       repEmail: '',
@@ -309,6 +316,24 @@ export const PartnershipForm = () => {
         if (isNaN(day) || day < 1 || day > 31) return 'Le jour doit être entre 1 et 31';
         break;
         
+      case 'logoUrl':
+        // Validation supprimée car maintenant gérée par l'upload de fichier
+        break;
+        
+      case 'siteWeb':
+        if (stringValue.trim() && stringValue.length > 255) return 'L\'URL du site web ne peut pas dépasser 255 caractères';
+        if (stringValue.trim() && !stringValue.startsWith('http://') && !stringValue.startsWith('https://')) {
+          return 'L\'URL du site web doit commencer par http:// ou https://';
+        }
+        break;
+        
+      case 'nombreAnneesActivite':
+        if (stringValue.trim()) {
+          const years = parseInt(stringValue);
+          if (isNaN(years) || years < 0) return 'Le nombre d\'années d\'activité doit être positif';
+        }
+        break;
+        
       case 'repFullName':
         if (!stringValue.trim()) return 'Le nom du représentant est obligatoire';
         if (stringValue.length < 3) return 'Le nom doit contenir au moins 3 caractères';
@@ -395,10 +420,13 @@ export const PartnershipForm = () => {
   const handleRepEmailBlur = useCallback(() => handleBlur('repEmail'), [handleBlur]);
   const handleHrFullNameBlur = useCallback(() => handleBlur('hrFullName'), [handleBlur]);
   const handleHrEmailBlur = useCallback(() => handleBlur('hrEmail'), [handleBlur]);
+  const handleLogoUrlBlur = useCallback(() => handleBlur('logoUrl'), [handleBlur]);
+  const handleSiteWebBlur = useCallback(() => handleBlur('siteWeb'), [handleBlur]);
+  const handleNombreAnneesActiviteBlur = useCallback(() => handleBlur('nombreAnneesActivite'), [handleBlur]);
 
   const validateStep = useCallback((stepNumber: number) => {
     const stepFields: Record<number, string[]> = {
-      1: ['companyName', 'legalStatus', 'rccm', 'nif', 'activityDomain', 'headquartersAddress', 'phone', 'email', 'employeesCount', 'payroll', 'cdiCount', 'cddCount', 'paymentDay'],
+      1: ['companyName', 'legalStatus', 'rccm', 'nif', 'activityDomain', 'headquartersAddress', 'phone', 'email', 'employeesCount', 'payroll', 'cdiCount', 'cddCount', 'paymentDay', 'logoUrl', 'siteWeb', 'nombreAnneesActivite'],
       2: ['repFullName', 'repPosition', 'repEmail', 'repPhone'],
       3: ['hrFullName', 'hrEmail', 'hrPhone', 'agreement']
     };
@@ -465,6 +493,9 @@ export const PartnershipForm = () => {
       cddCount: '',
       paymentDate: '',
       paymentDay: '',
+      logoUrl: '',
+      siteWeb: '',
+      nombreAnneesActivite: '',
       agreement: false,
       repFullName: '',
       repEmail: '',
@@ -524,6 +555,9 @@ export const PartnershipForm = () => {
           cdi_count: parseInt(formData.cdiCount) || 0,
           cdd_count: parseInt(formData.cddCount) || 0,
           payment_date: new Date().toISOString().split('T')[0], // Date actuelle au format YYYY-MM-DD
+          logo_url: formData.logoUrl?.trim() || undefined,
+          site_web: formData.siteWeb?.trim() || undefined,
+          nombre_annees_activite: formData.nombreAnneesActivite?.trim() ? parseInt(formData.nombreAnneesActivite) : undefined,
           rep_full_name: formData.repFullName?.trim() || '',
           rep_position: formData.repPosition?.trim() || '',
           rep_email: formData.repEmail?.trim() || '',
@@ -981,7 +1015,7 @@ export const PartnershipForm = () => {
                   Téléphone <span className="text-red-400">*</span>
                 </label>
                 <PhoneInput
-                  value={formData.phone}
+              value={formData.phone}
                   onChange={(value) => {
                     setFormData(prev => ({ ...prev, phone: value }));
                     if (errors.phone) {
@@ -1066,7 +1100,7 @@ export const PartnershipForm = () => {
                   Masse salariale <span className="text-red-400">*</span>
                 </label>
                 <CurrencyInput
-                  value={formData.payroll}
+              value={formData.payroll}
                   onChange={(value) => {
                     setFormData(prev => ({ ...prev, payroll: value }));
                     if (errors.payroll) {
@@ -1158,6 +1192,67 @@ export const PartnershipForm = () => {
               delay={1}
             />
 
+            {/* Upload du logo */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1 }}
+              whileHover={{ scale: 1.01 }}
+            >
+              <label className="block text-sm font-medium text-blue-100/90 mb-2 tracking-wide">
+                Logo de l'entreprise <span className="text-blue-300/60">(optionnel)</span>
+              </label>
+              <LogoUpload
+                onFileUploaded={(url) => {
+                  setFormData(prev => ({ ...prev, logoUrl: url }));
+                  if (errors.logoUrl) {
+                    setErrors(prev => ({ ...prev, logoUrl: '' }));
+                  }
+                }}
+                onFileRemoved={() => {
+                  setFormData(prev => ({ ...prev, logoUrl: '' }));
+                }}
+                label="Logo de l'entreprise"
+                placeholder="Glissez votre logo ici ou cliquez pour sélectionner"
+                hasError={!!(touched.logoUrl && errors.logoUrl)}
+                isValid={validatedSteps.has(1) && !!(touched.logoUrl && !errors.logoUrl && formData.logoUrl)}
+                errorMessage={errors.logoUrl || ''}
+              />
+            </motion.div>
+
+            {/* Autres champs optionnels */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField 
+                name="siteWeb"
+                label="Site web de l'entreprise" 
+                type="url"
+                placeholder="https://www.entreprise.com"
+                required={false}
+                delay={1.15}
+                value={formData.siteWeb}
+                onChange={handleChange}
+                onBlur={handleSiteWebBlur}
+                hasError={!!(touched.siteWeb && errors.siteWeb)}
+                isValid={validatedSteps.has(1) && !!(touched.siteWeb && !errors.siteWeb && formData.siteWeb)}
+                errorMessage={errors.siteWeb || ''}
+              />
+              
+              <FormField 
+                name="nombreAnneesActivite"
+                label="Nombre d'années d'activité" 
+                type="number"
+                placeholder="Ex: 5"
+                required={false}
+                delay={1.2}
+                value={formData.nombreAnneesActivite}
+                onChange={handleChange}
+                onBlur={handleNombreAnneesActiviteBlur}
+                hasError={!!(touched.nombreAnneesActivite && errors.nombreAnneesActivite)}
+                isValid={validatedSteps.has(1) && !!(touched.nombreAnneesActivite && !errors.nombreAnneesActivite && formData.nombreAnneesActivite)}
+                errorMessage={errors.nombreAnneesActivite || ''}
+              />
+            </div>
+
 
 
             {/* Bouton de soumission */}
@@ -1243,7 +1338,7 @@ export const PartnershipForm = () => {
                 Téléphone du représentant <span className="text-red-400">*</span>
               </label>
               <PhoneInput
-                value={formData.repPhone}
+              value={formData.repPhone}
                 onChange={(value) => {
                   setFormData(prev => ({ ...prev, repPhone: value }));
                   if (errors.repPhone) {
@@ -1371,7 +1466,7 @@ export const PartnershipForm = () => {
                 Téléphone du responsable RH <span className="text-red-400">*</span>
               </label>
               <PhoneInput
-                value={formData.hrPhone}
+              value={formData.hrPhone}
                 onChange={(value) => {
                   setFormData(prev => ({ ...prev, hrPhone: value }));
                   if (errors.hrPhone) {

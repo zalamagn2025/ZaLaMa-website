@@ -1,5 +1,6 @@
 /**
  * Utilitaires pour la validation et le formatage des numéros de téléphone guinéens
+ * Version ultra-optimisée pour la performance
  */
 
 export interface PhoneValidationResult {
@@ -9,77 +10,127 @@ export interface PhoneValidationResult {
   originalInput: string;
 }
 
+// Cache de validation pour éviter les recalculs
+const validationCache = new Map<string, PhoneValidationResult>();
+
 /**
  * Nettoie un numéro de téléphone en supprimant tous les caractères non numériques
+ * Version ultra-rapide sans regex
  */
 export function cleanPhoneNumber(phone: string): string {
-  return phone.replace(/[\s\-\(\)\.\+\/]/g, '');
+  let result = '';
+  for (let i = 0; i < phone.length; i++) {
+    const char = phone[i];
+    if (char >= '0' && char <= '9') {
+      result += char;
+    }
+  }
+  return result;
+}
+
+/**
+ * Nettoie un numéro de téléphone en gardant seulement les chiffres du numéro local
+ * Version corrigée pour traiter les préfixes +224
+ */
+export function cleanPhoneNumberLocal(phone: string): string {
+  let result = '';
+  for (let i = 0; i < phone.length; i++) {
+    const char = phone[i];
+    if (char >= '0' && char <= '9') {
+      result += char;
+    }
+  }
+  
+  // Si le numéro commence par 224, le supprimer pour garder seulement le numéro local
+  if (result.startsWith('224')) {
+    result = result.slice(3);
+  }
+  
+  return result;
 }
 
 /**
  * Vérifie si un numéro commence par un préfixe guinéen valide
+ * Version ultra-rapide
  */
 export function hasValidGuineaPrefix(phone: string): boolean {
   const cleanPhone = cleanPhoneNumber(phone);
-  return cleanPhone.startsWith('224') || cleanPhone.startsWith('+224') || cleanPhone.startsWith('00224');
+  return cleanPhone.startsWith('224') || cleanPhone.startsWith('00224');
 }
 
 /**
  * Normalise un numéro de téléphone au format international +224XXXXXXXXX
+ * Version ultra-rapide avec validation simple
  */
 export function normalizePhoneNumber(phone: string): string {
   let cleanPhone = cleanPhoneNumber(phone);
   
-  // Supprimer les préfixes existants
+  // Supprimer les préfixes existants (plus rapide que substring)
   if (cleanPhone.startsWith('00224')) {
-    cleanPhone = cleanPhone.substring(5);
+    cleanPhone = cleanPhone.slice(5);
   } else if (cleanPhone.startsWith('224')) {
-    cleanPhone = cleanPhone.substring(3);
-  } else if (cleanPhone.startsWith('+224')) {
-    cleanPhone = cleanPhone.substring(4);
+    cleanPhone = cleanPhone.slice(3);
   }
   
-  // Vérifier que le numéro commence par 6 (opérateur guinéen)
-  if (!/^6/.test(cleanPhone)) {
+  // Vérifications ultra-rapides
+  if (cleanPhone.length !== 9) {
+    throw new Error('Le numéro doit contenir 9 chiffres après le préfixe');
+  }
+  
+  // Accepter tous les préfixes valides guinéens
+  if (cleanPhone[0] !== '6') {
     throw new Error('Le numéro doit commencer par 6 (opérateur guinéen)');
   }
   
-  // Vérifier la longueur (9 chiffres pour les mobiles guinéens)
-  if (cleanPhone.length !== 9) {
-    throw new Error('Le numéro doit contenir 9 chiffres après le préfixe');
+  // Vérifier que le deuxième chiffre est entre 1 et 6 (61, 62, 63, 64, 65, 66)
+  const secondDigit = parseInt(cleanPhone[1]);
+  if (secondDigit < 1 || secondDigit > 6) {
+    throw new Error('Le numéro doit commencer par 61, 62, 63, 64, 65 ou 66 (opérateurs guinéens)');
   }
   
   return `+224${cleanPhone}`;
 }
 
 /**
- * Valide et formate un numéro de téléphone guinéen
+ * Validation ultra-rapide avec cache
  */
 export function validateAndFormatPhone(phone: string): PhoneValidationResult {
+  // Vérifier le cache d'abord
+  if (validationCache.has(phone)) {
+    return validationCache.get(phone)!;
+  }
+
   try {
     if (!phone || phone.trim() === '') {
-      return {
+      const result = {
         isValid: false,
         formattedNumber: '',
         errorMessage: 'Le numéro de téléphone est requis',
         originalInput: phone
       };
+      validationCache.set(phone, result);
+      return result;
     }
 
     const normalizedNumber = normalizePhoneNumber(phone);
     
-    return {
+    const result = {
       isValid: true,
       formattedNumber: normalizedNumber,
       originalInput: phone
     };
+    
+    validationCache.set(phone, result);
+    return result;
   } catch (error) {
-    return {
+    const result = {
       isValid: false,
       formattedNumber: '',
       errorMessage: error instanceof Error ? error.message : 'Format de numéro invalide',
       originalInput: phone
     };
+    validationCache.set(phone, result);
+    return result;
   }
 }
 
@@ -89,10 +140,10 @@ export function validateAndFormatPhone(phone: string): PhoneValidationResult {
 export function formatPhoneForDisplay(phone: string): string {
   try {
     const normalized = normalizePhoneNumber(phone);
-    const numberPart = normalized.substring(4); // Enlever +224
+    const numberPart = normalized.slice(4); // Enlever +224
     
     // Formater: +224 612 34 56 78
-    return `+224 ${numberPart.substring(0, 3)} ${numberPart.substring(3, 5)} ${numberPart.substring(5, 7)} ${numberPart.substring(7)}`;
+    return `+224 ${numberPart.slice(0, 3)} ${numberPart.slice(3, 5)} ${numberPart.slice(5, 7)} ${numberPart.slice(7)}`;
   } catch {
     return phone; // Retourner l'original si erreur
   }
@@ -100,7 +151,7 @@ export function formatPhoneForDisplay(phone: string): string {
 
 /**
  * Formate un numéro de téléphone pendant la saisie
- * Optimisé pour éviter les changements de valeur inutiles
+ * Version ultra-rapide sans regex
  */
 export function formatPhoneWhileTyping(phone: string): string {
   // Si la valeur est vide, la retourner telle quelle
@@ -110,53 +161,44 @@ export function formatPhoneWhileTyping(phone: string): string {
 
   const cleanPhone = cleanPhoneNumber(phone);
   
-  // Si le numéro commence par +224, le garder tel quel
+  // Vérifications ultra-rapides sans regex
   if (phone.startsWith('+224')) {
-    const numberPart = cleanPhone.substring(3);
-    if (numberPart.length <= 3) {
-      return `+224 ${numberPart}`;
-    } else if (numberPart.length <= 5) {
-      return `+224 ${numberPart.substring(0, 3)} ${numberPart.substring(3)}`;
-    } else if (numberPart.length <= 7) {
-      return `+224 ${numberPart.substring(0, 3)} ${numberPart.substring(3, 5)} ${numberPart.substring(5)}`;
-    } else if (numberPart.length <= 9) {
-      return `+224 ${numberPart.substring(0, 3)} ${numberPart.substring(3, 5)} ${numberPart.substring(5, 7)} ${numberPart.substring(7)}`;
-    } else {
-      return `+224 ${numberPart.substring(0, 3)} ${numberPart.substring(3, 5)} ${numberPart.substring(5, 7)} ${numberPart.substring(7, 9)}`;
-    }
+    const numberPart = cleanPhone.slice(3);
+    const len = numberPart.length;
+    
+    if (len <= 3) return `+224 ${numberPart}`;
+    if (len <= 5) return `+224 ${numberPart.slice(0, 3)} ${numberPart.slice(3)}`;
+    if (len <= 7) return `+224 ${numberPart.slice(0, 3)} ${numberPart.slice(3, 5)} ${numberPart.slice(5)}`;
+    if (len <= 9) return `+224 ${numberPart.slice(0, 3)} ${numberPart.slice(3, 5)} ${numberPart.slice(5, 7)} ${numberPart.slice(7)}`;
+    return `+224 ${numberPart.slice(0, 3)} ${numberPart.slice(3, 5)} ${numberPart.slice(5, 7)} ${numberPart.slice(7, 9)}`;
   }
   
   // Si le numéro commence par 6, ajouter +224
-  if (/^6/.test(cleanPhone)) {
-    if (cleanPhone.length <= 3) {
-      return `+224 ${cleanPhone}`;
-    } else if (cleanPhone.length <= 5) {
-      return `+224 ${cleanPhone.substring(0, 3)} ${cleanPhone.substring(3)}`;
-    } else if (cleanPhone.length <= 7) {
-      return `+224 ${cleanPhone.substring(0, 3)} ${cleanPhone.substring(3, 5)} ${cleanPhone.substring(5)}`;
-    } else if (cleanPhone.length <= 9) {
-      return `+224 ${cleanPhone.substring(0, 3)} ${cleanPhone.substring(3, 5)} ${cleanPhone.substring(5, 7)} ${cleanPhone.substring(7)}`;
-    } else {
-      return `+224 ${cleanPhone.substring(0, 3)} ${cleanPhone.substring(3, 5)} ${cleanPhone.substring(5, 7)} ${cleanPhone.substring(7, 9)}`;
+  if (cleanPhone[0] === '6') {
+    const len = cleanPhone.length;
+    
+    if (len <= 3) return `+224 ${cleanPhone}`;
+    if (len <= 5) return `+224 ${cleanPhone.slice(0, 3)} ${cleanPhone.slice(3)}`;
+    if (len <= 7) return `+224 ${cleanPhone.slice(0, 3)} ${cleanPhone.slice(3, 5)} ${cleanPhone.slice(5)}`;
+    if (len <= 9) return `+224 ${cleanPhone.slice(0, 3)} ${cleanPhone.slice(3, 5)} ${cleanPhone.slice(5, 7)} ${cleanPhone.slice(7)}`;
+    return `+224 ${cleanPhone.slice(0, 3)} ${cleanPhone.slice(3, 5)} ${cleanPhone.slice(5, 7)} ${cleanPhone.slice(7, 9)}`;
+  }
+  
+  // Vérifications ultra-rapides sans regex
+  if (phone.startsWith('+224 ')) {
+    const parts = phone.split(' ');
+    if (parts.length === 5 && parts[1].length === 3 && parts[2].length === 2 && parts[3].length === 2 && parts[4].length === 2) {
+      return phone;
     }
-  }
-  
-  // Si le numéro est déjà dans un format acceptable, le retourner tel quel
-  // pour éviter les changements inutiles
-  if (phone.match(/^\+224\s\d{3}\s\d{2}\s\d{2}\s\d{2}$/)) {
-    return phone;
-  }
-  
-  if (phone.match(/^\+224\s\d{3}\s\d{2}\s\d{2}$/)) {
-    return phone;
-  }
-  
-  if (phone.match(/^\+224\s\d{3}\s\d{2}$/)) {
-    return phone;
-  }
-  
-  if (phone.match(/^\+224\s\d{3}$/)) {
-    return phone;
+    if (parts.length === 4 && parts[1].length === 3 && parts[2].length === 2 && parts[3].length === 2) {
+      return phone;
+    }
+    if (parts.length === 3 && parts[1].length === 3 && parts[2].length === 2) {
+      return phone;
+    }
+    if (parts.length === 2 && parts[1].length === 3) {
+      return phone;
+    }
   }
   
   return phone;
@@ -175,18 +217,65 @@ export function isPhoneValid(phone: string): boolean {
 }
 
 /**
+ * Validation ultra-rapide pour la saisie en temps réel
+ * Retourne true si le format semble correct, false sinon
+ */
+export function quickPhoneValidation(phone: string): boolean {
+  if (!phone || phone.trim() === '') return false;
+  
+  const cleanPhone = cleanPhoneNumberLocal(phone);
+  
+  // Vérifications ultra-rapides
+  if (cleanPhone.length < 9) return false;
+  if (cleanPhone.length > 12) return false;
+  
+  // Accepter tous les préfixes valides guinéens
+  // 61, 62, 63, 64, 65, 66 sont des préfixes valides
+  if (cleanPhone[0] !== '6') return false;
+  
+  // Vérifier que le deuxième chiffre est entre 1 et 6 (61, 62, 63, 64, 65, 66)
+  const secondDigit = parseInt(cleanPhone[1]);
+  if (secondDigit < 1 || secondDigit > 6) return false;
+  
+  return true;
+}
+
+/**
+ * Nettoyer le cache de validation (utile pour libérer la mémoire)
+ */
+export function clearValidationCache(): void {
+  validationCache.clear();
+}
+
+/**
  * Exemples de numéros valides pour les tests
  */
 export const VALID_PHONE_EXAMPLES = [
-  '+224612345678',  // Format international complet
-  '+224 612 34 56 78', // Format international avec espaces
-  '224612345678',   // Format sans +
-  '224 612 34 56 78', // Format sans + avec espaces
-  '612345678',      // Format local
-  '612 34 56 78',   // Format local avec espaces
-  '00224612345678', // Format avec 00
-  '612345678',      // Format local
-  '612 34 56 78'    // Format local avec espaces
+  '+224612345678',  // Format international complet (Orange)
+  '+224 612 34 56 78', // Format international avec espaces (Orange)
+  '+224628775473',  // Format international complet (MTN)
+  '+224 628 77 54 73', // Format international avec espaces (MTN)
+  '+224635123456',  // Format international complet (Cellcom)
+  '+224 635 12 34 56', // Format international avec espaces (Cellcom)
+  '+224641234567',  // Format international complet (MTN)
+  '+224 641 23 45 67', // Format international avec espaces (MTN)
+  '+224651234567',  // Format international complet (Orange)
+  '+224 651 23 45 67', // Format international avec espaces (Orange)
+  '+224663867866',  // Format international complet (Nouvel opérateur)
+  '+224 663 86 78 66', // Format international avec espaces (Nouvel opérateur)
+  '224612345678',   // Format sans + (Orange)
+  '224 612 34 56 78', // Format sans + avec espaces (Orange)
+  '224628775473',   // Format sans + (MTN)
+  '224 628 77 54 73', // Format sans + avec espaces (MTN)
+  '612345678',      // Format local (Orange)
+  '612 34 56 78',   // Format local avec espaces (Orange)
+  '628775473',      // Format local (MTN)
+  '628 77 54 73',   // Format local avec espaces (MTN)
+  '663867866',      // Format local (Nouvel opérateur)
+  '663 86 78 66',   // Format local avec espaces (Nouvel opérateur)
+  '00224612345678', // Format avec 00 (Orange)
+  '00224628775473', // Format avec 00 (MTN)
+  '00224663867866'  // Format avec 00 (Nouvel opérateur)
 ];
 
 /**

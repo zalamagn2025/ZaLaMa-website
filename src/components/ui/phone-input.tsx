@@ -6,6 +6,7 @@ import { Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { 
   validateAndFormatPhone, 
   formatPhoneWhileTyping, 
+  quickPhoneValidation,
   PhoneValidationResult 
 } from '@/utils/phoneValidation';
 
@@ -38,81 +39,62 @@ export function PhoneInput({
   const [validationResult, setValidationResult] = useState<PhoneValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [lastValidatedValue, setLastValidatedValue] = useState<string>('');
-  const [shouldValidate, setShouldValidate] = useState(false);
+  const [quickValidation, setQuickValidation] = useState<boolean | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fonction de validation optimisée
-  const validatePhone = useCallback((phoneValue: string) => {
-    // Éviter de valider si la valeur n'a pas changé
-    if (phoneValue === lastValidatedValue) {
-      return;
-    }
-
-    // Éviter de valider si le champ est vide
+  // Validation ultra-rapide en temps réel
+  const handleQuickValidation = useCallback((phoneValue: string) => {
     if (!phoneValue.trim()) {
-      setValidationResult(null);
-      setLastValidatedValue('');
-      onValidationChange?.(false, '');
+      setQuickValidation(null);
       return;
     }
 
-    // Éviter de valider si la valeur est trop courte (moins de 3 caractères)
-    const digitsOnly = phoneValue.replace(/[^\d]/g, '');
-    if (digitsOnly.length < 3) {
+    // Validation instantanée pour l'UX
+    const isQuickValid = quickPhoneValidation(phoneValue);
+    setQuickValidation(isQuickValid);
+
+    // Si la validation rapide échoue, pas besoin de validation complète
+    if (!isQuickValid) {
       setValidationResult(null);
+      onValidationChange?.(false, phoneValue);
       return;
     }
 
-         // Éviter de valider si la valeur est en cours de saisie (pas assez de chiffres)
-     if (digitsOnly.length < 9) {
-       setValidationResult(null);
-       return;
-     }
-
-    setIsValidating(true);
-    setShouldValidate(true);
-    
-    // Nettoyer le timeout précédent
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    // Validation complète seulement si nécessaire
+    if (phoneValue !== lastValidatedValue && phoneValue.trim().length >= 12) {
+      setIsValidating(true);
+      
+      // Timeout ultra-court pour la validation complète
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        const result = validateAndFormatPhone(phoneValue);
+        setValidationResult(result);
+        setLastValidatedValue(phoneValue);
+        onValidationChange?.(result.isValid, result.formattedNumber);
+        setIsValidating(false);
+      }, 150); // Réduit à 150ms pour une réponse quasi-instantanée
     }
-    
-    // Délai pour éviter trop de validations pendant la saisie
-    timeoutRef.current = setTimeout(() => {
-      const result = validateAndFormatPhone(phoneValue);
-      setValidationResult(result);
-      setLastValidatedValue(phoneValue);
-      onValidationChange?.(result.isValid, result.formattedNumber);
-      setIsValidating(false);
-      setShouldValidate(false);
-    }, 800); // Augmenté à 800ms pour réduire les clignotements
   }, [lastValidatedValue, onValidationChange]);
 
-  // Validation en temps réel optimisée
+  // Validation en temps réel ultra-rapide
   useEffect(() => {
-    // Ne valider que si la valeur a suffisamment de caractères (9 chiffres)
-    const digitsOnly = value.replace(/[^\d]/g, '');
-    if (digitsOnly.length >= 9) {
-      validatePhone(value);
-    } else {
-      // Réinitialiser la validation si la valeur est trop courte
-      setValidationResult(null);
-      setShouldValidate(false);
-    }
+    handleQuickValidation(value);
     
-    // Cleanup function
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [value, validatePhone]);
+  }, [value, handleQuickValidation]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Formater pendant la saisie
+    // Formatage instantané pendant la saisie
     const formattedValue = formatPhoneWhileTyping(inputValue);
     onChange(formattedValue);
   };
@@ -123,13 +105,18 @@ export function PhoneInput({
 
   const handleBlur = () => {
     setIsFocused(false);
-    // Valider immédiatement lors du blur si la valeur a changé
-    if (value.trim() && value !== lastValidatedValue) {
-      // Nettoyer le timeout en cours
+    
+    // Validation immédiate au blur si la valeur a changé
+    if (value.trim() && value !== lastValidatedValue && quickValidation) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      validatePhone(value);
+      
+      // Validation complète immédiate au blur
+      const result = validateAndFormatPhone(value);
+      setValidationResult(result);
+      setLastValidatedValue(value);
+      onValidationChange?.(result.isValid, result.formattedNumber);
     }
   };
 
@@ -140,6 +127,10 @@ export function PhoneInput({
       baseClass += " border-green-500 focus-visible:border-green-500";
     } else if (validationResult && !validationResult.isValid) {
       baseClass += " border-red-500 focus-visible:border-red-500";
+    } else if (quickValidation === true) {
+      baseClass += " border-blue-400 focus-visible:border-blue-400";
+    } else if (quickValidation === false) {
+      baseClass += " border-orange-400 focus-visible:border-orange-400";
     } else if (isFocused) {
       baseClass += " border-blue-500 focus-visible:border-blue-500";
     }
@@ -148,8 +139,8 @@ export function PhoneInput({
   };
 
   const getValidationIcon = () => {
-    // Ne montrer le spinner que si on valide vraiment et que la valeur a changé
-    if (isValidating && shouldValidate && value.trim() && value !== lastValidatedValue) {
+    // Spinner ultra-rapide
+    if (isValidating && value.trim().length >= 12) {
       return (
         <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
       );
@@ -163,13 +154,21 @@ export function PhoneInput({
       return <AlertCircle className="w-4 h-4 text-red-500" />;
     }
     
+    // Indicateurs de validation rapide
+    if (quickValidation === true) {
+      return <CheckCircle className="w-4 h-4 text-blue-400" />;
+    }
+    
+    if (quickValidation === false && value.trim().length >= 9) {
+      return <AlertCircle className="w-4 h-4 text-orange-400" />;
+    }
+    
     return <Phone className="w-4 h-4 text-gray-400" />;
   };
 
   const getValidationMessage = () => {
-    // Ne montrer "Validation en cours..." que si on valide vraiment
-    if (isValidating && shouldValidate && value.trim() && value !== lastValidatedValue) {
-      return "Validation en cours...";
+    if (isValidating && value.trim().length >= 12) {
+      return "Validation...";
     }
     
     if (validationResult?.isValid) {
@@ -178,6 +177,15 @@ export function PhoneInput({
     
     if (validationResult?.errorMessage) {
       return validationResult.errorMessage;
+    }
+    
+    // Messages de validation rapide
+    if (quickValidation === true) {
+      return "Format correct";
+    }
+    
+    if (quickValidation === false && value.trim().length >= 9) {
+      return "Vérifiez le format";
     }
     
     return "";
@@ -211,14 +219,20 @@ export function PhoneInput({
           autoComplete="tel"
         />
         
-        {showValidation && validationResult && (
+        {showValidation && (validationResult || quickValidation !== null) && (
           <AnimatePresence>
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className={`absolute -bottom-6 left-0 text-xs ${
-                validationResult.isValid ? 'text-green-600' : 'text-red-600'
+                validationResult?.isValid || quickValidation === true 
+                  ? 'text-green-600' 
+                  : validationResult && !validationResult.isValid
+                  ? 'text-red-600'
+                  : quickValidation === false
+                  ? 'text-orange-600'
+                  : 'text-gray-600'
               }`}
             >
               {getValidationMessage()}
@@ -237,8 +251,6 @@ export function PhoneInput({
           {error}
         </motion.div>
       )}
-      
-
     </div>
   );
 }
