@@ -159,6 +159,12 @@ export const PartnershipForm = () => {
     hrPhone: '+224'
   });
 
+  // État pour les données du logo (base64 + nom de fichier)
+  const [logoData, setLogoData] = useState<{
+    base64: string;
+    filename: string;
+  } | null>(null);
+
 
 
   const [loading, setLoading] = useState(false);
@@ -234,6 +240,9 @@ export const PartnershipForm = () => {
     
     // Réinitialiser la validation de la masse salariale
     setPayrollValidation({ isValid: false, numericValue: 0 });
+
+    // Réinitialiser les données du logo
+    setLogoData(null);
 
     console.log('🔄 Formulaire réinitialisé');
   }, []);
@@ -516,6 +525,9 @@ export const PartnershipForm = () => {
     // Réinitialiser la validation de la masse salariale
     setPayrollValidation({ isValid: false, numericValue: 0 });
     
+    // Réinitialiser les données du logo
+    setLogoData(null);
+    
     router.push('https://www.zalamagn.com');
   }, [router]);
 
@@ -554,8 +566,10 @@ export const PartnershipForm = () => {
           payroll: payrollValidation.numericValue.toString() || '',
           cdi_count: parseInt(formData.cdiCount) || 0,
           cdd_count: parseInt(formData.cddCount) || 0,
-          payment_date: new Date().toISOString().split('T')[0], // Date actuelle au format YYYY-MM-DD
-          logo_url: formData.logoUrl?.trim() || undefined,
+          payment_day: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined,
+          // Logo : toujours envoyer en base64 pour l'API
+          logo_base64: logoData?.base64 || undefined,
+          logo_filename: logoData?.filename || undefined,
           site_web: formData.siteWeb?.trim() || undefined,
           nombre_annees_activite: formData.nombreAnneesActivite?.trim() ? parseInt(formData.nombreAnneesActivite) : undefined,
           rep_full_name: formData.repFullName?.trim() || '',
@@ -565,8 +579,7 @@ export const PartnershipForm = () => {
           hr_full_name: formData.hrFullName?.trim() || '',
           hr_email: formData.hrEmail?.trim() || '',
           hr_phone: hrPhoneValidation.formattedValue || formData.hrPhone?.trim() || '',
-          agreement: Boolean(formData.agreement),
-          payment_day: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined
+          agreement: Boolean(formData.agreement)
         };
 
         console.log('📤 Données formData originales:', formData);
@@ -578,8 +591,20 @@ export const PartnershipForm = () => {
           parsed: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined,
           final: finalData.payment_day
         });
+        console.log('🖼️ Détail logo:', {
+          logoData: logoData,
+          hasBase64: !!logoData?.base64,
+          base64Length: logoData?.base64?.length || 0,
+          filename: logoData?.filename,
+          base64Sample: logoData?.base64 ? `${logoData.base64.substring(0, 100)}...` : 'null',
+          base64StartsWith: logoData?.base64?.startsWith('data:') ? 'OUI - MAUVAIS FORMAT' : 'NON - BON FORMAT',
+          base64FirstChars: logoData?.base64 ? logoData.base64.substring(0, 20) : 'null',
+          base64LastChars: logoData?.base64 ? logoData.base64.substring(-20) : 'null',
+          logo_base64_value: finalData.logo_base64 ? `${finalData.logo_base64.substring(0, 100)}...` : 'undefined',
+          logo_filename_value: finalData.logo_filename
+        });
 
-        const response = await fetch('/api/partnership-request', {
+        const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -844,12 +869,6 @@ export const PartnershipForm = () => {
         }
     };
 
-    // Auto-exécution du diagnostic
-    console.log('🚀 Auto-exécution du diagnostic Edge Function...');
-    setTimeout(() => {
-      (window as any).diagnoseEdgeFunctionIssue();
-    }, 2000);
-
     console.log('📝 Fonctions disponibles:');
     console.log('- window.diagnoseEdgeFunctionIssue() : Diagnostic complet');
     console.log('- window.testWithFormData() : Test avec données du formulaire');
@@ -912,16 +931,17 @@ export const PartnershipForm = () => {
       </motion.div>
       
       <AnimatePresence mode="wait">
-        {step === 1 && (
-          <motion.form
-            key="step1"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-            onSubmit={(e) => handleSubmitStep(e, 2)}
-            className="space-y-7"
-          >
+                 {step === 1 && (
+           <motion.form
+             key="step1"
+             initial={{ opacity: 0, x: -20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: 20 }}
+             transition={{ duration: 0.3 }}
+             onSubmit={(e) => handleSubmitStep(e, 2)}
+             className="space-y-7"
+             suppressHydrationWarning={true}
+           >
             <FormField 
             name="companyName"
               label="Nom de l'entreprise" 
@@ -1204,6 +1224,7 @@ export const PartnershipForm = () => {
               </label>
               <LogoUpload
                 onFileUploaded={(url) => {
+                  console.log('🎯 Logo uploadé avec succès, URL:', url);
                   setFormData(prev => ({ ...prev, logoUrl: url }));
                   if (errors.logoUrl) {
                     setErrors(prev => ({ ...prev, logoUrl: '' }));
@@ -1211,11 +1232,19 @@ export const PartnershipForm = () => {
                 }}
                 onFileRemoved={() => {
                   setFormData(prev => ({ ...prev, logoUrl: '' }));
+                  setLogoData(null);
+                }}
+                onFileDataChange={(fileData) => {
+                  console.log('📁 Données du fichier reçues:', fileData);
+                  setLogoData(fileData);
+                  if (errors.logoUrl) {
+                    setErrors(prev => ({ ...prev, logoUrl: '' }));
+                  }
                 }}
                 label="Logo de l'entreprise"
                 placeholder="Glissez votre logo ici ou cliquez pour sélectionner"
                 hasError={!!(touched.logoUrl && errors.logoUrl)}
-                isValid={validatedSteps.has(1) && !!(touched.logoUrl && !errors.logoUrl && formData.logoUrl)}
+                isValid={validatedSteps.has(1) && !!(touched.logoUrl && !errors.logoUrl && (formData.logoUrl || logoData))}
                 errorMessage={errors.logoUrl || ''}
               />
             </motion.div>
@@ -1278,16 +1307,17 @@ export const PartnershipForm = () => {
           </motion.form>
         )}
 
-        {step === 2 && (
-          <motion.form
-            key="step2"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-            onSubmit={(e) => handleSubmitStep(e, 3)}
-            className="space-y-7"
-          >
+                 {step === 2 && (
+           <motion.form
+             key="step2"
+             initial={{ opacity: 0, x: -20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: 20 }}
+             transition={{ duration: 0.3 }}
+             onSubmit={(e) => handleSubmitStep(e, 3)}
+             className="space-y-7"
+             suppressHydrationWarning={true}
+           >
             <FormField 
               name="repFullName" 
               label="Nom complet du représentant" 
@@ -1419,16 +1449,17 @@ export const PartnershipForm = () => {
           </motion.form>
         )}
 
-        {step === 3 && (
-          <motion.form
-            key="step3"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-            onSubmit={(e) => handleSubmitStep(e, null)}
-            className="space-y-7"
-          >
+                 {step === 3 && (
+           <motion.form
+             key="step3"
+             initial={{ opacity: 0, x: -20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: 20 }}
+             transition={{ duration: 0.3 }}
+             onSubmit={(e) => handleSubmitStep(e, null)}
+             className="space-y-7"
+             suppressHydrationWarning={true}
+           >
             <FormField 
               name="hrFullName" 
               label="Nom complet du RH" 

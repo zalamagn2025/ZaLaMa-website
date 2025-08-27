@@ -1,153 +1,183 @@
-"use client"
+'use client';
 
-import { useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Image, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Upload, X, CheckCircle, AlertCircle, FileImage } from 'lucide-react';
+import { logoUploadService } from '../../services/logoUploadService';
 
 interface LogoUploadProps {
-  onFileUploaded: (url: string) => void
-  onFileRemoved: () => void
-  label?: string
-  placeholder?: string
-  className?: string
-  hasError?: boolean
-  isValid?: boolean
-  errorMessage?: string
+  onFileUploaded: (url: string) => void;
+  onFileRemoved: () => void;
+  onFileDataChange: (fileData: { base64: string; filename: string } | null) => void;
+  label?: string;
+  placeholder?: string;
+  className?: string;
+  hasError?: boolean;
+  isValid?: boolean;
+  errorMessage?: string;
 }
 
-export function LogoUpload({
+export const LogoUpload = ({
   onFileUploaded,
   onFileRemoved,
+  onFileDataChange,
   label = "Logo de l'entreprise",
   placeholder = "Glissez votre logo ici ou cliquez pour sélectionner",
   className = "",
   hasError = false,
   isValid = false,
   errorMessage = ""
-}: LogoUploadProps) {
-  const [isUploading, setIsUploading] = useState(false)
+}: LogoUploadProps) => {
   const [uploadedFile, setUploadedFile] = useState<{
-    name: string
-    url: string
-    size: number
-    preview: string
-  } | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [dragActive, setDragActive] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+    name: string;
+    url: string;
+    size: number;
+    preview: string;
+  } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const acceptedTypes = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-  const maxSize = 5 * 1024 * 1024 // 5MB
+  const acceptedTypes = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  const maxSize = 5 * 1024 * 1024; // 5MB
 
   const handleFileUpload = async (file: File) => {
-    setError(null)
-    setIsUploading(true)
+    setError(null);
+    setIsUploading(true);
 
     try {
-      // Validation du type de fichier
-      const fileExtension = file.name.split('.').pop()?.toLowerCase()
-      const allowedExtensions = acceptedTypes.map(type => type.replace('.', ''))
-      
-      if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-        throw new Error(`Type de fichier non autorisé. Types acceptés: ${acceptedTypes.join(', ')}`)
-      }
-
-      // Validation de la taille
-      if (file.size > maxSize) {
-        const maxSizeMB = Math.round(maxSize / (1024 * 1024))
-        throw new Error(`Fichier trop volumineux. Taille maximale: ${maxSizeMB}MB`)
+      // Validation du fichier
+      const validation = logoUploadService.validateFile(file);
+      if (!validation.isValid) {
+        throw new Error(validation.error);
       }
 
       // Créer un aperçu de l'image
-      const preview = URL.createObjectURL(file)
+      const preview = URL.createObjectURL(file);
 
-      // Créer FormData pour l'upload
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('type', 'logo')
+      // Upload vers l'Edge Function
+      const uploadResult = await logoUploadService.uploadLogo(file);
+      
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Erreur lors de l\'upload');
+      }
 
-             // TODO: Remplacer par votre propre route d'upload
-       // Upload vers l'API temporairement désactivé
-       throw new Error('Upload temporairement désactivé - Route en cours de configuration')
+      // Mettre à jour l'état avec les informations du fichier uploadé
+      setUploadedFile({
+        name: file.name,
+        url: uploadResult.data!.publicUrl,
+        size: file.size,
+        preview: preview
+      });
 
-       // Code original commenté pour référence :
-       /*
-       const response = await fetch('/api/upload/logo', {
-         method: 'POST',
-         body: formData,
-       })
+      // Notifier le parent avec l'URL du fichier uploadé
+      onFileUploaded(uploadResult.data!.publicUrl);
 
-       const result = await response.json()
+      // Convertir en base64 pour compatibilité avec l'ancien système
+      const base64 = await logoUploadService.fileToBase64(file);
+      onFileDataChange({
+        base64: base64,
+        filename: uploadResult.data!.fileName
+      });
 
-       if (!result.success) {
-         throw new Error(result.error || 'Erreur lors de l\'upload')
-       }
+      console.log('✅ Logo uploadé avec succès:', {
+        fileName: uploadResult.data!.fileName,
+        publicUrl: uploadResult.data!.publicUrl,
+        fileSize: uploadResult.data!.fileSize
+      });
 
-       // Mettre à jour l'état
-       setUploadedFile({
-         name: file.name,
-         url: result.url,
-         size: file.size,
-         preview: preview
-       })
-
-       // Notifier le parent
-       onFileUploaded(result.url)
-       */
-
-    } catch (error) {
-      console.error('Erreur upload:', error)
-      setError(error instanceof Error ? error.message : 'Erreur lors de l\'upload')
+    } catch (err) {
+      console.error('❌ Erreur upload logo:', err);
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'upload');
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
+      setDragActive(true);
     } else if (e.type === "dragleave") {
-      setDragActive(false)
+      setDragActive(false);
     }
-  }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileUpload(e.dataTransfer.files[0])
+      handleFileUpload(e.dataTransfer.files[0]);
     }
-  }
+  };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      handleFileUpload(e.target.files[0])
+      handleFileUpload(e.target.files[0]);
     }
-  }
+  };
 
-  const removeFile = () => {
-    if (uploadedFile?.preview) {
-      URL.revokeObjectURL(uploadedFile.preview)
+  const removeFile = async () => {
+    try {
+      // Si on a un fichier uploadé, le supprimer du stockage
+      if (uploadedFile?.url) {
+        // Extraire le nom du fichier de l'URL
+        const urlParts = uploadedFile.url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        
+        console.log('🗑️ Suppression du logo:', fileName);
+        
+        const deleteResult = await logoUploadService.deleteLogo(fileName);
+        if (!deleteResult.success) {
+          console.error('❌ Erreur suppression logo:', deleteResult.error);
+          // On continue quand même pour nettoyer l'interface
+        }
+      }
+
+      // Nettoyer l'interface
+      if (uploadedFile?.preview) {
+        URL.revokeObjectURL(uploadedFile.preview);
+      }
+      setUploadedFile(null);
+      setError(null);
+      onFileRemoved();
+      if (onFileDataChange) {
+        onFileDataChange(null);
+      }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      console.log('✅ Logo supprimé avec succès');
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression:', error);
+      // Nettoyer l'interface même en cas d'erreur
+      if (uploadedFile?.preview) {
+        URL.revokeObjectURL(uploadedFile.preview);
+      }
+      setUploadedFile(null);
+      setError(null);
+      onFileRemoved();
+      if (onFileDataChange) {
+        onFileDataChange(null);
+      }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
-    setUploadedFile(null)
-    setError(null)
-    onFileRemoved()
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
+  };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -193,85 +223,104 @@ export function LogoUpload({
                 />
                 <CheckCircle className="absolute -top-1 -right-1 h-5 w-5 text-green-500 bg-white rounded-full" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-blue-100">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">
                   {uploadedFile.name}
                 </p>
-                <p className="text-xs text-blue-300/60">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {formatFileSize(uploadedFile.size)}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={removeFile}
+                className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full hover:bg-red-200 transition-colors"
+              >
+                <X className="h-3 w-3" />
+                Supprimer
+              </button>
             </motion.div>
           ) : (
-            <div className="space-y-3">
-              {isUploading ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <Upload className="mx-auto h-12 w-12 text-orange-500" />
-                </motion.div>
-              ) : (
-                <Image className="mx-auto h-12 w-12 text-blue-300/60" />
-              )}
-              <div>
-                <p className="text-sm font-medium text-blue-100">
-                  {isUploading ? 'Upload en cours...' : label}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3"
+            >
+              <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                {isUploading ? (
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                ) : (
+                  <FileImage className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {isUploading ? 'Traitement en cours...' : label}
                 </p>
-                <p className="text-xs text-blue-300/60">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {placeholder}
                 </p>
-                <p className="text-xs text-blue-300/40 mt-1">
-                  Types acceptés: {acceptedTypes.join(', ')} • Max: {formatFileSize(maxSize)}
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Types acceptés: {acceptedTypes.join(', ')} • Max: 5MB
                 </p>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
-        {/* Bouton de suppression */}
-        {uploadedFile && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={removeFile}
-            className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-colors"
-            type="button"
+        {/* Indicateur de drag & drop */}
+        {!uploadedFile && !isUploading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: dragActive ? 1 : 0 }}
+            className="absolute inset-0 bg-orange-500/10 border-2 border-orange-500 rounded-xl flex items-center justify-center"
           >
-            <X className="h-4 w-4" />
-          </motion.button>
+            <div className="text-center">
+              <Upload className="mx-auto h-8 w-8 text-orange-500 mb-2" />
+              <p className="text-sm font-medium text-orange-600">
+                Déposez votre fichier ici
+              </p>
+            </div>
+          </motion.div>
         )}
       </div>
 
-      {/* Message d'erreur */}
+      {/* Messages d'erreur et de validation */}
       <AnimatePresence>
-        {(error || errorMessage) && (
+        {error && (
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
-            className="flex items-center gap-1 text-red-400 text-xs"
+            className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
           >
-            <AlertCircle className="h-3 w-3" />
-            {error || errorMessage}
+            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      {/* Message de validation */}
-      <AnimatePresence>
-        {isValid && uploadedFile && (
+        {hasError && errorMessage && (
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="flex items-center gap-1 text-green-400 text-xs"
+            className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
           >
-            <CheckCircle className="h-3 w-3" />
-            Logo valide
+            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-700 dark:text-red-300">{errorMessage}</p>
+          </motion.div>
+        )}
+
+        {isValid && !error && !hasError && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+          >
+            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+            <p className="text-sm text-green-700 dark:text-green-300">Logo valide</p>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
-  )
-}
+  );
+};

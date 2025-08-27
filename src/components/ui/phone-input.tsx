@@ -42,6 +42,12 @@ export function PhoneInput({
   const [quickValidation, setQuickValidation] = useState<boolean | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onValidationChangeRef = useRef(onValidationChange);
+
+  // Mettre à jour la référence de onValidationChange
+  useEffect(() => {
+    onValidationChangeRef.current = onValidationChange;
+  }, [onValidationChange]);
 
   // Validation ultra-rapide en temps réel
   const handleQuickValidation = useCallback((phoneValue: string) => {
@@ -57,7 +63,7 @@ export function PhoneInput({
     // Si la validation rapide échoue, pas besoin de validation complète
     if (!isQuickValid) {
       setValidationResult(null);
-      onValidationChange?.(false, phoneValue);
+      onValidationChangeRef.current?.(false, phoneValue);
       return;
     }
 
@@ -74,11 +80,11 @@ export function PhoneInput({
         const result = validateAndFormatPhone(phoneValue);
         setValidationResult(result);
         setLastValidatedValue(phoneValue);
-        onValidationChange?.(result.isValid, result.formattedNumber);
+        onValidationChangeRef.current?.(result.isValid, result.formattedNumber);
         setIsValidating(false);
       }, 150); // Réduit à 150ms pour une réponse quasi-instantanée
     }
-  }, [lastValidatedValue, onValidationChange]);
+  }, [lastValidatedValue]);
 
   // Validation en temps réel ultra-rapide
   useEffect(() => {
@@ -116,7 +122,7 @@ export function PhoneInput({
       const result = validateAndFormatPhone(value);
       setValidationResult(result);
       setLastValidatedValue(value);
-      onValidationChange?.(result.isValid, result.formattedNumber);
+      onValidationChangeRef.current?.(result.isValid, result.formattedNumber);
     }
   };
 
@@ -205,7 +211,7 @@ export function PhoneInput({
           {getValidationIcon()}
         </div>
         
-        <input
+                         <input
           ref={inputRef}
           type="tel"
           value={value}
@@ -216,7 +222,7 @@ export function PhoneInput({
           disabled={disabled}
           className={getInputClassName()}
           style={{ paddingLeft: '2.5rem' }}
-          autoComplete="tel"
+          suppressHydrationWarning={true}
         />
         
         {showValidation && (validationResult || quickValidation !== null) && (
