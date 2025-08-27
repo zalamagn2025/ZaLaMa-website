@@ -140,7 +140,7 @@ export default function TermsOfServicePage() {
               <ul className="space-y-3 ml-4">
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2.5"></div>
-                  <span><strong>Avance sur salaire :</strong> Prêt à court terme jusqu'à 25% du salaire net mensuel</span>
+                  <span><strong>Avance sur salaire :</strong> Prêt à court terme jusqu'à 30% du salaire net mensuel</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2.5"></div>
@@ -176,7 +176,7 @@ export default function TermsOfServicePage() {
               <ul className="space-y-3 ml-4">
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2.5"></div>
-                  <span><strong>Montant maximum :</strong> 25% du salaire net mensuel</span>
+                  <span><strong>Montant maximum :</strong> 30% du salaire net mensuel</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2.5"></div>

@@ -14,7 +14,7 @@ const zalamaFAQData = [
   },
   {
     question: "Quel est le montant maximum que je peux demander ?",
-    answer: "Avance sur salaire : Jusqu'à 25% de votre revenu mensuel."
+    answer: "Avance sur salaire : Jusqu'à 30% de votre revenu mensuel."
   },
   {
     question: "En combien de temps puis-je recevoir l'argent ?",

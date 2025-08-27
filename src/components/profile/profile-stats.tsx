@@ -106,8 +106,8 @@ function calculateFinancialAmounts(salaireNet: number, advanceRequests: any[]) {
   // 3. Salaire restant = Salaire net - Avances actives
   const remainingSalary = salaireNet - totalActiveAdvances
   
-  // 4. Limite mensuelle pour avance sur salaire (25% du salaire) - pour les demandes d'avance
-  const monthlyLimit = Math.floor(salaireNet * 0.25)
+  // 4. Limite mensuelle pour avance sur salaire (30% du salaire) - pour les demandes d'avance
+  const monthlyLimit = Math.floor(salaireNet * 0.30)
   
   // 5. Avance restante ce mois (limite - avances déjà utilisées)
   const remainingMonthlyAdvance = Math.max(0, monthlyLimit - totalActiveAdvances)
@@ -117,7 +117,7 @@ function calculateFinancialAmounts(salaireNet: number, advanceRequests: any[]) {
     acompteDisponible, // Acompte basé sur les jours écoulés
     totalActiveAdvances,
     remainingSalary,
-    monthlyLimit, // Limite pour avance sur salaire (25%)
+    monthlyLimit, // Limite pour avance sur salaire (30%)
     remainingMonthlyAdvance,
     workingDaysElapsed: getWorkingDaysElapsed(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()),
     totalWorkingDays: getTotalWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth())
@@ -174,6 +174,66 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     
     loadFinancialData()
   }, [])
+  
+  // Forcer le calcul des jours ouvrables après le chargement des données financières
+  useEffect(() => {
+    if (financialData) {
+      const calculateWorkingDays = () => {
+        const today = new Date()
+        const currentMonth = today.getMonth()
+        const currentYear = today.getFullYear()
+        const currentDay = Math.max(1, today.getDate())
+        
+        // Calculer directement les jours ouvrables
+        let workingDaysElapsed = 0
+        for (let day = 1; day <= currentDay; day++) {
+          const date = new Date(currentYear, currentMonth, day)
+          const dayOfWeek = date.getDay()
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            workingDaysElapsed++
+          }
+        }
+        
+        // Calculer le total des jours ouvrables du mois
+        const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate()
+        let totalWorkingDays = 0
+        for (let day = 1; day <= lastDay; day++) {
+          const date = new Date(currentYear, currentMonth, day)
+          const dayOfWeek = date.getDay()
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            totalWorkingDays++
+          }
+        }
+        
+        const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
+        
+        console.log('🚀 Calcul FORCÉ des jours ouvrables dans profile-stats:', {
+          currentYear,
+          currentMonth,
+          currentDay,
+          workingDaysElapsed,
+          totalWorkingDays,
+          workingDaysPercentage
+        })
+        
+        // Mettre à jour financialData avec les jours ouvrables calculés
+        setFinancialData(prev => prev ? {
+          ...prev,
+          workingDaysElapsed,
+          totalWorkingDays,
+          workingDaysPercentage
+        } : null)
+      }
+      
+      // Exécuter immédiatement
+      calculateWorkingDays()
+      
+      // Et aussi après un délai pour s'assurer que c'est fait
+      const timer = setTimeout(calculateWorkingDays, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [financialData])
   
   // Hook pour la vérification par mot de passe
   const {
@@ -280,7 +340,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     console.log("💰 Test avec salaire de 1,000,000 GNF:")
     console.log("  - Salaire par jour ouvrable:", dailySalary.toLocaleString(), "GNF")
     console.log("  - Acompte disponible:", acompteDisponible.toLocaleString(), "GNF")
-    console.log("  - Limite d'avance (25%):", limiteAvance.toLocaleString(), "GNF")
+    console.log("  - Limite d'avance (30%):", limiteAvance.toLocaleString(), "GNF")
     console.log("  - Différence:", (acompteDisponible - limiteAvance).toLocaleString(), "GNF")
   }
 
@@ -391,10 +451,10 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     acompteDisponible: financialData.financial.acompteDisponible || 0,
     totalActiveAdvances: financialData.financial.avanceActif || 0,
     remainingSalary: financialData.financial.salaireRestant || 0,
-    monthlyLimit: Math.floor((financialData.financial.salaireNet || 0) * 0.25),
+    monthlyLimit: Math.floor((financialData.financial.salaireNet || 0) * 0.30),
     remainingMonthlyAdvance: financialData.financial.avanceDisponible || 0,
-    workingDaysElapsed: 0, // À calculer si nécessaire
-    totalWorkingDays: 0 // À calculer si nécessaire
+    workingDaysElapsed: financialData.workingDaysElapsed || 0, // Utiliser les jours calculés
+    totalWorkingDays: financialData.totalWorkingDays || 0 // Utiliser les jours calculés
   } : null
   
   //get remaining salary - CORRIGÉ: Salaire restant = Salaire net - Avance actif
@@ -406,7 +466,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     console.log("  - Total avances actives:", financialAmounts.totalActiveAdvances.toLocaleString(), "GNF")
     console.log("  - Salaire restant:", financialAmounts.remainingSalary.toLocaleString(), "GNF")
     console.log("  - Avance disponible:", financialAmounts.acompteDisponible.toLocaleString(), "GNF")
-    console.log("  - Limite mensuelle (25%):", financialAmounts.monthlyLimit.toLocaleString(), "GNF")
+    console.log("  - Limite mensuelle (30%):", financialAmounts.monthlyLimit.toLocaleString(), "GNF")
     console.log("  - Avance restante ce mois:", financialAmounts.remainingMonthlyAdvance.toLocaleString(), "GNF")
   }
 
