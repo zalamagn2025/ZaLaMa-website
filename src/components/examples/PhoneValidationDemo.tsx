@@ -1,249 +1,253 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Phone, CheckCircle, AlertCircle, Info, Zap } from 'lucide-react';
-import PhoneInput from '@/components/ui/phone-input';
-import { validateAndFormatPhone, VALID_PHONE_EXAMPLES, INVALID_PHONE_EXAMPLES } from '@/utils/phoneValidation';
+import { PhoneInput } from '@/components/ui/phone-input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Clock, Zap, CheckCircle, XCircle, Phone } from 'lucide-react';
 
-export default function PhoneValidationDemo() {
-  const [phoneValue, setPhoneValue] = useState('');
-  const [validationResult, setValidationResult] = useState<any>(null);
-  const [showExamples, setShowExamples] = useState(false);
-  const [validationCount, setValidationCount] = useState(0);
+export function PhoneValidationDemo() {
+  const [phone, setPhone] = useState('');
+  const [isValid, setIsValid] = useState(false);
+  const [formattedValue, setFormattedValue] = useState('');
+  const [validationTime, setValidationTime] = useState<number>(0);
+  const [testResults, setTestResults] = useState<Array<{
+    input: string;
+    isValid: boolean;
+    time: number;
+    formatted: string;
+  }>>([]);
 
-  const handlePhoneChange = (value: string) => {
-    setPhoneValue(value);
-    setValidationCount(prev => prev + 1);
-    const result = validateAndFormatPhone(value);
-    setValidationResult(result);
+  const handleValidationChange = (valid: boolean, formatted: string) => {
+    setIsValid(valid);
+    setFormattedValue(formatted);
   };
 
-  const testExamples = () => {
-    console.log('🧪 Test des exemples de numéros valides:');
-    VALID_PHONE_EXAMPLES.forEach(phone => {
-      const result = validateAndFormatPhone(phone);
-      console.log(`${result.isValid ? '✅' : '❌'} "${phone}" => "${result.formattedNumber}"`);
+  const runPerformanceTest = () => {
+    const testNumbers = [
+      '612345678',
+      '+224612345678',
+      '224612345678',
+      '00224612345678',
+      '612 34 56 78',
+      '+224 612 34 56 78',
+      '61234567', // invalide
+      '712345678', // invalide
+      '6123456789', // invalide
+      'abc123def', // invalide
+    ];
+
+    const results = testNumbers.map(input => {
+      const start = performance.now();
+      const isValid = /^\+2246\d{8}$/.test(input.replace(/\D/g, ''));
+      const end = performance.now();
+      
+      return {
+        input,
+        isValid,
+        time: end - start,
+        formatted: isValid ? `+224${input.replace(/\D/g, '').slice(-9)}` : 'Invalide'
+      };
     });
 
-    console.log('\n🧪 Test des exemples de numéros invalides:');
-    INVALID_PHONE_EXAMPLES.forEach(phone => {
-      const result = validateAndFormatPhone(phone);
-      console.log(`${result.isValid ? '✅' : '❌'} "${phone}" => ${result.errorMessage}`);
-    });
+    setTestResults(results);
+    
+    const avgTime = results.reduce((sum, r) => sum + r.time, 0) / results.length;
+    setValidationTime(avgTime);
   };
 
-  const resetValidationCount = () => {
-    setValidationCount(0);
+  const clearTest = () => {
+    setTestResults([]);
+    setValidationTime(0);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-8">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20"
-        >
-          <h1 className="text-3xl font-bold text-white mb-8 text-center">
-            📱 Démonstration - Validation des Numéros de Téléphone Guinéens
-          </h1>
+    <div className="space-y-6 p-6">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          🚀 Validation Ultra-Rapide des Numéros de Téléphone
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Testez la performance de validation en temps réel
+        </p>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Zone de test */}
-            <div className="space-y-6">
-              <div className="bg-white/5 rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                  <Phone className="w-5 h-5" />
-                  Test en temps réel
-                </h2>
-                
-                <PhoneInput
-                  value={phoneValue}
-                  onChange={handlePhoneChange}
-                  placeholder="+224 612 34 56 78"
-                  label="Numéro de téléphone"
-                  required={true}
-                  showValidation={true}
-                />
-
-                {validationResult && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`mt-4 p-4 rounded-lg ${
-                      validationResult.isValid 
-                        ? 'bg-green-500/20 border border-green-500/30' 
-                        : 'bg-red-500/20 border border-red-500/30'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      {validationResult.isValid ? (
-                        <CheckCircle className="w-5 h-5 text-green-400" />
-                      ) : (
-                        <AlertCircle className="w-5 h-5 text-red-400" />
-                      )}
-                      <span className={`font-medium ${
-                        validationResult.isValid ? 'text-green-400' : 'text-red-400'
-                      }`}>
-                        {validationResult.isValid ? 'Numéro valide' : 'Numéro invalide'}
-                      </span>
-                    </div>
-                    
-                    {validationResult.isValid && (
-                      <p className="text-green-300 text-sm">
-                        Formaté: <code className="bg-green-500/30 px-2 py-1 rounded">
-                          {validationResult.formattedNumber}
-                        </code>
-                      </p>
-                    )}
-                    
-                    {!validationResult.isValid && validationResult.errorMessage && (
-                      <p className="text-red-300 text-sm">
-                        Erreur: {validationResult.errorMessage}
-                      </p>
-                    )}
-                  </motion.div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Composant de test */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="w-5 h-5" />
+              Test en Temps Réel
+            </CardTitle>
+            <CardDescription>
+              Saisissez un numéro et observez la validation instantanée
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <PhoneInput
+              value={phone}
+              onChange={setPhone}
+              onValidationChange={handleValidationChange}
+              placeholder="+224 612 34 56 78"
+              label="Numéro de téléphone"
+              required
+            />
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Statut:</span>
+                {isValid ? (
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Valide
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">
+                    <XCircle className="w-3 h-3 mr-1" />
+                    En cours
+                  </Badge>
                 )}
-
-                {/* Compteur de validations */}
-                <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-300 text-sm">
-                    <Zap className="w-4 h-4" />
-                    <span>Validations déclenchées: {validationCount}</span>
-                    <button
-                      onClick={resetValidationCount}
-                      className="ml-auto text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded transition-colors"
-                    >
-                      Reset
-                    </button>
-                  </div>
-                  <p className="text-blue-200 text-xs mt-1">
-                    Ce compteur montre le nombre de fois que la validation a été déclenchée.
-                    Un nombre élevé indique des clignotements excessifs.
-                  </p>
-                </div>
               </div>
-
-              <div className="bg-white/5 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
-                <div className="space-y-3">
-                  <button
-                    onClick={testExamples}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    🧪 Tester les exemples dans la console
-                  </button>
-                  
-                  <button
-                    onClick={() => setShowExamples(!showExamples)}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    {showExamples ? 'Masquer' : 'Afficher'} les exemples
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setPhoneValue('');
-                      setValidationResult(null);
-                      resetValidationCount();
-                    }}
-                    className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    🔄 Réinitialiser le test
-                  </button>
+              
+              {formattedValue && (
+                <div className="text-sm">
+                  <span className="font-medium">Formaté:</span> {formattedValue}
                 </div>
-              </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tests de performance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              Tests de Performance
+            </CardTitle>
+            <CardDescription>
+              Mesurez la vitesse de validation
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Button onClick={runPerformanceTest} variant="default">
+                Lancer les Tests
+              </Button>
+              <Button onClick={clearTest} variant="outline">
+                Effacer
+              </Button>
             </div>
 
-            {/* Exemples et documentation */}
-            <div className="space-y-6">
-              <div className="bg-white/5 rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                  <Info className="w-5 h-5" />
-                  Formats acceptés
-                </h2>
-                
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="text-green-400 font-medium mb-2">✅ Formats valides :</h4>
-                    <ul className="text-sm text-gray-300 space-y-1">
-                      <li>• +224 612 34 56 78</li>
-                      <li>• 224 612 34 56 78</li>
-                      <li>• 612 34 56 78</li>
-                      <li>• +22461234567</li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-red-400 font-medium mb-2">❌ Formats invalides :</h4>
-                    <ul className="text-sm text-gray-300 space-y-1">
-                      <li>• 12345678 (ne commence pas par 6 ou 7)</li>
-                      <li>• 6123456 (trop court)</li>
-                      <li>• 6123456789 (trop long)</li>
-                      <li>• abc123456 (contient des lettres)</li>
-                      <li>• 51234567 (commence par 5)</li>
-                    </ul>
-                  </div>
+            {validationTime > 0 && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">Temps moyen de validation:</span>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                    {validationTime.toFixed(3)}ms
+                  </Badge>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                  ⚡ Ultra-rapide ! La validation se fait en temps réel
+                </p>
+              </div>
+            )}
+
+            {testResults.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Résultats des tests:</h4>
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {testResults.map((result, index) => (
+                    <div
+                      key={index}
+                      className={`text-xs p-2 rounded border ${
+                        result.isValid 
+                          ? 'bg-green-50 border-green-200 text-green-800' 
+                          : 'bg-red-50 border-red-200 text-red-800'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono">{result.input}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {result.time.toFixed(3)}ms
+                        </Badge>
+                      </div>
+                      <div className="text-xs opacity-75">
+                        {result.formatted}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-              {showExamples && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-white/5 rounded-lg p-6"
-                >
-                  <h3 className="text-lg font-semibold text-white mb-4">Exemples de test</h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-green-400 font-medium mb-2">Numéros valides :</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {VALID_PHONE_EXAMPLES.slice(0, 8).map((phone, index) => (
-                          <div
-                            key={index}
-                            className="text-xs bg-green-500/20 p-2 rounded border border-green-500/30"
-                          >
-                            {phone}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-red-400 font-medium mb-2">Numéros invalides :</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {INVALID_PHONE_EXAMPLES.map((phone, index) => (
-                          <div
-                            key={index}
-                            className="text-xs bg-red-500/20 p-2 rounded border border-red-500/30"
-                          >
-                            {phone}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              <div className="bg-white/5 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Optimisations Anti-Clignotement</h3>
-                <ul className="text-sm text-gray-300 space-y-2">
-                  <li>• ✅ Debouncing de 800ms (au lieu de 300ms)</li>
-                  <li>• ✅ Validation seulement après 8 chiffres</li>
-                  <li>• ✅ Évitement des validations redondantes</li>
-                  <li>• ✅ Formatage intelligent sans changements inutiles</li>
-                  <li>• ✅ Validation immédiate au blur</li>
-                  <li>• ✅ Compteur de validations pour monitoring</li>
-                </ul>
-              </div>
+      {/* Informations techniques */}
+      <Card>
+        <CardHeader>
+          <CardTitle>⚡ Optimisations Implémentées</CardTitle>
+          <CardDescription>
+            Techniques utilisées pour une validation ultra-rapide
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium text-green-700 dark:text-green-300">
+                ✅ Validation en Temps Réel
+              </h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• Validation instantanée dès 9 chiffres</li>
+                <li>• Feedback visuel immédiat</li>
+                <li>• Formatage automatique pendant la saisie</li>
+              </ul>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-blue-700 dark:text-blue-300">
+                🚀 Performance
+              </h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• Cache de validation intelligent</li>
+                <li>• Timeout réduit à 150ms</li>
+                <li>• Suppression des regex coûteuses</li>
+                <li>• Validation conditionnelle</li>
+              </ul>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-purple-700 dark:text-purple-300">
+                🎨 UX Améliorée
+              </h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• Indicateurs visuels colorés</li>
+                <li>• Messages contextuels</li>
+                <li>• Animations fluides</li>
+                <li>• États de validation clairs</li>
+              </ul>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-orange-700 dark:text-orange-300">
+                🔧 Technique
+              </h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <li>• useCallback pour optimiser les re-renders</li>
+                <li>• Gestion intelligente des timeouts</li>
+                <li>• Validation en deux étapes</li>
+                <li>• Nettoyage automatique des ressources</li>
+              </ul>
             </div>
           </div>
-        </motion.div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+export default PhoneValidationDemo;
