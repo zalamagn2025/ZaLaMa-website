@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { HandCoins, LineChart, Megaphone } from 'lucide-react';
+import { HandCoins, LineChart, Megaphone, TrendingUp, BarChart3 } from 'lucide-react';
 import { ServiceCard } from './ServiceCard';
 
 export function ServicesSection() {
@@ -11,7 +11,7 @@ export function ServicesSection() {
       description: "Permet aux salariés et pensionnés un accès rapide à une partie de leurs salaires avant la date de paie officielle pour les imprévus et urgences financières.",
       icon: <HandCoins className="w-6 h-6" />,
       features: [
-        "Montant disponible jusqu'à 25% de votre salaire",
+        "Montant disponible jusqu'à 50% de votre salaire",
         "Traitement en moins de 30 minutes",
         "Frais fixes transparents et minimes",
       ],
@@ -35,7 +35,7 @@ export function ServicesSection() {
     {
       title: "Marketing",
       description: "Un espace publicitaire intégrée permettant aux entreprises locales et internationales de promouvoir leurs produits et services auprès de notre communauté d'utilisateurs.",
-      icon: <Megaphone className="w-6 h-6" />,
+      icon: <div className="w-6 h-6 flex items-center justify-center text-[#FF671E]">📊</div>,
       features: [
         "Ciblage intelligent",
         "Interfaces de gestion et statistiques à temps réel",

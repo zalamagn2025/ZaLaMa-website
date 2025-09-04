@@ -190,7 +190,7 @@ export default function AvanceSurSalairePage() {
                   transition={{ duration: 0.6, delay: 0.2 }}
                   className="bg-zalama-bg-dark/50 backdrop-blur-sm rounded-2xl border border-border/30 p-6"
                 >
-                  <div className="text-3xl font-bold text-primary mb-2">25%</div>
+                  <div className="text-3xl font-bold text-primary mb-2">30%</div>
                   <div className="text-zalama-text-secondary">Du salaire net</div>
                 </motion.div>
                 <motion.div
@@ -237,7 +237,7 @@ export default function AvanceSurSalairePage() {
                   <div>
                     <h3 className="text-xl font-semibold text-zalama-text mb-2">Accès anticipé à votre salaire</h3>
                     <p className="text-zalama-text-secondary">
-                      Obtenez jusqu'à 25% de votre salaire net avant la date de paie officielle pour faire face aux imprévus.
+                      Obtenez jusqu'à 30% de votre salaire net avant la date de paie officielle pour faire face aux imprévus.
                     </p>
                   </div>
                 </div>
@@ -282,19 +282,24 @@ export default function AvanceSurSalairePage() {
                   <span className="text-zalama-text font-semibold">2 000 000 GNF</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-zalama-text-secondary">Avance disponible (25%)</span>
-                  <span className="text-primary font-semibold">500 000 GNF</span>
+                  <span className="text-zalama-text-secondary">Avance disponible (50%)</span>
+                  <span className="text-primary font-semibold">1 000 000 GNF</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-zalama-text-secondary">Frais de service (2%)</span>
-                  <span className="text-zalama-text-secondary">10 000 GNF</span>
+                  <span className="text-zalama-text-secondary">20 000 GNF</span>
                 </div>
                 <div className="border-t border-border/30 pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-zalama-text font-semibold">Montant reçu</span>
-                    <span className="text-primary font-bold text-xl">490 000 GNF</span>
+                    <span className="text-primary font-bold text-xl">980 000 GNF</span>
                   </div>
                 </div>
+              </div>
+              <div className="mt-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                <p className="text-sm text-orange-600 dark:text-orange-400">
+                  <strong>Note :</strong> Les avances au-delà de 30% du salaire net nécessitent l'approbation préalable du RH ou du représentant de l'entreprise avant que ZaLaMa puisse débloquer les fonds.
+                </p>
               </div>
             </motion.div>
           </div>
@@ -503,7 +508,7 @@ export default function AvanceSurSalairePage() {
                 <div>
                   <h3 className="text-xl font-semibold text-zalama-text mb-2">Gestion responsable</h3>
                   <p className="text-zalama-text-secondary">
-                    Limite de 25% du salaire pour éviter le surendettement et favoriser une gestion saine.
+                    Limite de 30% du salaire pour éviter le surendettement et favoriser une gestion saine.
                   </p>
                 </div>
               </div>

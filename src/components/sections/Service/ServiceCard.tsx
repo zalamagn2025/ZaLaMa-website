@@ -30,8 +30,10 @@ export function ServiceCard({
       transition={{ duration: 0.5, delay: delay * 0.1 }}
       className="flex flex-col h-full p-6 rounded-2xl bg-gray-800/50 border border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-300"
     >
-      <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary/10 text-primary">
-        {icon}
+      <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary/10 text-[#FF671E]">
+        <div className="w-6 h-6 flex items-center justify-center">
+          {icon}
+        </div>
       </div>
       <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
       <p className="text-gray-300 mb-4 flex-grow">{description}</p>

@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
     }
 
     const salaireNet = employeDataValidation.salaire_net
-    const maxAvanceMonthly = Math.floor(salaireNet * 0.25) // 25% du salaire mensuel
+    const maxAvanceMonthly = Math.floor(salaireNet * 0.30) // 30% du salaire mensuel
 
     // Vérifier le total des demandes approuvées ce mois-ci
     const currentMonth = new Date()
@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
     
     console.log('📅 Demandes du mois en cours:', demandesMonthly)
 
-    // Vérifier si la nouvelle demande + total existant dépasse 25%
+    // Vérifier si la nouvelle demande + total existant dépasse 30%
     const nouvelleDemande = parseFloat(montantDemande)
     const totalApresNouvelleDemande = totalAvancesApprouvees + nouvelleDemande
 

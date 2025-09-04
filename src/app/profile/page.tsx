@@ -14,6 +14,8 @@ import { TransactionHistory } from "@/components/profile/transaction-history"
 
 import { useEmployeeAuth } from "@/contexts/EmployeeAuthContext"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
+import { useSalarySetup } from "@/hooks/useSalarySetup"
+import SalarySetupModal from "@/components/modals/SalarySetupModal"
 
 
 export default function ProfilePage() {
@@ -28,7 +30,36 @@ export default function ProfilePage() {
   const { employee, loading, isAuthenticated } = useEmployeeAuth()
   const [entreprise, setEntreprise] = useState<Partenaire | undefined>(undefined)
   
+  // Hook pour la configuration du salaire
+  const { needsSetup, userInfo, configureSalary, loading: salaryLoading, error: salaryError } = useSalarySetup()
+  const [showModal, setShowModal] = useState(true)
 
+  const handleCloseModal = () => {
+    setShowModal(false)
+  }
+
+  const handleSuccess = () => {
+    console.log('Salaire configuré avec succès')
+    setShowModal(false)
+  }
+
+  // Debug: Logs pour comprendre pourquoi la modale ne s'affiche pas
+  useEffect(() => {
+    console.log('🔍 DEBUG - Profile Page State:');
+    console.log('   - employee:', employee);
+    console.log('   - loading:', loading);
+    console.log('   - isAuthenticated:', isAuthenticated);
+    console.log('   - needsSetup:', needsSetup);
+    console.log('   - userInfo:', userInfo);
+    console.log('   - salaryLoading:', salaryLoading);
+    console.log('   - salaryError:', salaryError);
+    
+    if (employee) {
+      console.log('   - employee.role:', employee.role);
+      console.log('   - employee.salaire_net:', employee.salaire_net);
+      console.log('   - employee.user_id:', employee.user_id);
+    }
+  }, [employee, loading, isAuthenticated, needsSetup, userInfo, salaryLoading, salaryError]);
 
   // Fonction pour récupérer les informations de l'entreprise
   const fetchEntrepriseInfo = async (partenaireId: string) => {
@@ -57,8 +88,6 @@ export default function ProfilePage() {
       fetchEntrepriseInfo(employee.partner_id)
     }
   }, [employee])
-
-
 
   useEffect(() => {
     setIsMounted(true)
@@ -116,6 +145,13 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute>
       <div className="flex flex-1 flex-col min-h-screen">
+        <SalarySetupModal
+          isOpen={needsSetup === true && showModal}
+          onClose={handleCloseModal}
+          onSuccess={handleSuccess}
+          userInfo={userInfo}
+        />
+        
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -36,6 +36,7 @@
     "src/app/dashboard/page.tsx.jeanos"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "supabase"
   ]
 }
