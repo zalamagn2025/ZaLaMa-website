@@ -39,8 +39,8 @@ export const LogoUpload = ({
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const acceptedTypes = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const acceptedTypes = ['.jpg', '.jpeg', '.png', '.webp', '.svg'];
+  const maxSize = 2 * 1024 * 1024; // 2MB selon la documentation de l'edge function
 
   const handleFileUpload = async (file: File) => {
     setError(null);
@@ -56,7 +56,7 @@ export const LogoUpload = ({
       // Créer un aperçu de l'image
       const preview = URL.createObjectURL(file);
 
-      // Upload vers l'Edge Function
+      // Upload vers l'Edge Function upload-partner-logo
       const uploadResult = await logoUploadService.uploadLogo(file);
       
       if (!uploadResult.success) {
@@ -66,7 +66,7 @@ export const LogoUpload = ({
       // Mettre à jour l'état avec les informations du fichier uploadé
       setUploadedFile({
         name: file.name,
-        url: uploadResult.data!.publicUrl,
+        url: uploadResult.data!.publicUrl, // Utiliser publicUrl de l'API directe
         size: file.size,
         preview: preview
       });
@@ -74,17 +74,18 @@ export const LogoUpload = ({
       // Notifier le parent avec l'URL du fichier uploadé
       onFileUploaded(uploadResult.data!.publicUrl);
 
-      // Convertir en base64 pour compatibilité avec l'ancien système
-      const base64 = await logoUploadService.fileToBase64(file);
+      // Utiliser les données de l'API directe
       onFileDataChange({
-        base64: base64,
-        filename: uploadResult.data!.fileName
+        base64: '', // L'API directe ne fournit pas de base64
+        filename: uploadResult.data!.fileName // Utiliser fileName de l'API directe
       });
 
-      console.log('✅ Logo uploadé avec succès:', {
+      console.log('✅ Logo uploadé avec succès via API directe:', {
         fileName: uploadResult.data!.fileName,
+        filePath: uploadResult.data!.filePath,
         publicUrl: uploadResult.data!.publicUrl,
-        fileSize: uploadResult.data!.fileSize
+        fileSize: uploadResult.data!.fileSize,
+        fileType: uploadResult.data!.fileType
       });
 
     } catch (err) {
@@ -116,8 +117,12 @@ export const LogoUpload = ({
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('🎯 handleFileInput appelé:', e.target.files);
     if (e.target.files && e.target.files[0]) {
+      console.log('📁 Fichier sélectionné:', e.target.files[0]);
       handleFileUpload(e.target.files[0]);
+    } else {
+      console.log('❌ Aucun fichier sélectionné');
     }
   };
 
@@ -204,11 +209,17 @@ export const LogoUpload = ({
           type="file"
           accept={acceptedTypes.join(',')}
           onChange={handleFileInput}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           disabled={isUploading}
+          style={{ cursor: 'pointer' }}
         />
 
-        <div className="text-center">
+        <div className="text-center" onClick={() => {
+          console.log('🎯 Clic sur la zone de texte, déclenchement de l\'input file');
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}>
           {uploadedFile ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -261,7 +272,7 @@ export const LogoUpload = ({
                   {placeholder}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Types acceptés: {acceptedTypes.join(', ')} • Max: 5MB
+                  Types acceptés: {acceptedTypes.join(', ')} • Max: 2MB
                 </p>
               </div>
             </motion.div>

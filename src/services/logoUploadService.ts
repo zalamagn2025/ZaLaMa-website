@@ -1,14 +1,19 @@
+'use client';
+
+import { createClient } from '@supabase/supabase-js';
+
+// Interfaces pour les réponses
 export interface LogoUploadResponse {
   success: boolean;
   message?: string;
   error?: string;
   details?: string;
   data?: {
-    fileName: string;
-    filePath: string;
-    publicUrl: string;
-    fileSize: number;
-    fileType: string;
+    fileName: string;        // Nom du fichier généré
+    filePath: string;        // Chemin du fichier dans le bucket
+    publicUrl: string;       // URL publique du fichier
+    fileSize: number;        // Taille du fichier en bytes
+    fileType: string;        // Type MIME du fichier
   };
 }
 
@@ -16,30 +21,38 @@ export interface LogoDeleteResponse {
   success: boolean;
   message?: string;
   error?: string;
-  details?: string;
-  data?: {
-    fileName: string;
-  };
 }
 
+export interface FileValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+/**
+ * Service pour l'upload et la gestion des logos de partenaires
+ * Utilise l'edge function Supabase upload-partner-logo
+ */
 class LogoUploadService {
-  private baseUrl = 'https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/upload-logo';
+  // Utiliser la route API locale directe vers Supabase Storage (plus fiable)
+  private baseUrl = '/api/upload-logo-direct';
 
   /**
-   * Upload un logo vers Supabase Storage
+   * Upload un logo vers Supabase Storage via l'edge function
    * @param file - Le fichier à uploader
+   * @param partnerId - L'ID du partenaire (optionnel, généré automatiquement si non fourni)
    * @returns Promise<LogoUploadResponse>
    */
-  async uploadLogo(file: File): Promise<LogoUploadResponse> {
+  async uploadLogo(file: File, partnerId?: string): Promise<LogoUploadResponse> {
     try {
-      console.log('🚀 Début upload logo:', {
+      console.log('🚀 Début upload logo partenaire:', {
         name: file.name,
         size: file.size,
-        type: file.type
+        type: file.type,
+        partnerId: partnerId || 'auto-generated'
       });
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('logo', file); // L'API route attend 'logo'
 
       const response = await fetch(this.baseUrl, {
         method: 'POST',
@@ -47,15 +60,69 @@ class LogoUploadService {
       });
 
       const result = await response.json();
-      console.log('📥 Réponse upload logo:', result);
+      console.log('📥 Réponse upload logo partenaire:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        result
+      });
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de l\'upload');
+        console.error('❌ Erreur HTTP:', response.status, response.statusText);
+        console.error('❌ Détails de l\'erreur:', result);
+        throw new Error(result.error || `Erreur ${response.status}: ${response.statusText}`);
       }
 
       return result;
     } catch (error) {
-      console.error('❌ Erreur upload logo:', error);
+      console.error('❌ Erreur upload logo partenaire:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erreur inconnue lors de l\'upload'
+      };
+    }
+  }
+
+  /**
+   * Upload un logo avec un ID de partenaire spécifique
+   * @param file - Le fichier à uploader
+   * @param partnerId - L'ID du partenaire
+   * @returns Promise<LogoUploadResponse>
+   */
+  async uploadLogoForPartner(file: File, partnerId: string): Promise<LogoUploadResponse> {
+    try {
+      console.log('🚀 Début upload logo pour partenaire:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        partnerId
+      });
+
+      const formData = new FormData();
+      formData.append('logo', file); // L'API route attend 'logo'
+
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log('📥 Réponse upload logo partenaire:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        result
+      });
+
+      if (!response.ok) {
+        console.error('❌ Erreur HTTP:', response.status, response.statusText);
+        console.error('❌ Détails de l\'erreur:', result);
+        throw new Error(result.error || `Erreur ${response.status}: ${response.statusText}`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ Erreur upload logo partenaire:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Erreur inconnue lors de l\'upload'
@@ -72,7 +139,7 @@ class LogoUploadService {
     try {
       console.log('🗑️ Début suppression logo:', fileName);
 
-      const url = `${this.baseUrl}?fileName=${encodeURIComponent(fileName)}`;
+      const url = `/api/delete-logo?fileName=${encodeURIComponent(fileName)}`;
       
       const response = await fetch(url, {
         method: 'DELETE',
@@ -98,11 +165,19 @@ class LogoUploadService {
   /**
    * Valider un fichier avant upload
    * @param file - Le fichier à valider
-   * @returns { isValid: boolean, error?: string }
+   * @returns FileValidationResult
    */
-  validateFile(file: File): { isValid: boolean; error?: string } {
-    // Vérifier le type de fichier
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+  validateFile(file: File): FileValidationResult {
+    // Types de fichiers autorisés
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/webp',
+      'image/svg+xml'
+    ];
+
+    // Vérifier le type MIME
     if (!allowedTypes.includes(file.type)) {
       return {
         isValid: false,
@@ -110,12 +185,12 @@ class LogoUploadService {
       };
     }
 
-    // Vérifier la taille (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Vérifier la taille (2MB max selon la documentation)
+    const maxSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxSize) {
       return {
         isValid: false,
-        error: 'Fichier trop volumineux. Taille maximale: 5MB'
+        error: `Fichier trop volumineux. Taille maximale: ${(maxSize / (1024 * 1024)).toFixed(1)}MB`
       };
     }
 
@@ -123,20 +198,14 @@ class LogoUploadService {
   }
 
   /**
-   * Convertir un fichier en base64 (pour compatibilité avec l'ancien système)
-   * @param file - Le fichier à convertir
-   * @returns Promise<string>
+   * Obtenir l'URL de l'edge function
+   * @returns string
    */
-  async fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
+  getEdgeFunctionUrl(): string {
+    return this.baseUrl;
   }
 }
 
-// Instance singleton
+// Instance singleton du service
 export const logoUploadService = new LogoUploadService();
 
