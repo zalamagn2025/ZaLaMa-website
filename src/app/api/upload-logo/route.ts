@@ -89,7 +89,10 @@ export async function POST(request: NextRequest) {
         { 
           success: false, 
           error: 'Format JSON invalide de l\'edge function',
-          details: { rawResponse: responseText, parseError: parseError.message }
+          details: { 
+            rawResponse: responseText, 
+            parseError: parseError instanceof Error ? parseError.message : String(parseError)
+          }
         },
         { status: 500 }
       );
