@@ -124,9 +124,25 @@ function calculateFinancialAmounts(salaireNet: number, advanceRequests: any[]) {
   }
 }
 
+// Type pour les données financières étendues
+interface ExtendedFinancialData {
+  financial?: {
+    salaireNet: number;
+    salaireRestant: number;
+    acompteDisponible: number;
+    avanceActif: number;
+    avanceDisponible: number;
+    nombreAvancesValidees?: number;
+    devise: string;
+  };
+  workingDaysElapsed?: number;
+  totalWorkingDays?: number;
+  workingDaysPercentage?: number;
+}
+
 export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   const [loading, setLoading] = useState(true)
-  const [financialData, setFinancialData] = useState<any>(null)
+  const [financialData, setFinancialData] = useState<ExtendedFinancialData | null>(null)
   const [error, setError] = useState<string | null>(null)
   
   // Charger les données financières depuis l'Edge Function
@@ -217,7 +233,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
         })
         
         // Mettre à jour financialData avec les jours ouvrables calculés
-        setFinancialData(prev => prev ? {
+        setFinancialData((prev: ExtendedFinancialData | null) => prev ? {
           ...prev,
           workingDaysElapsed,
           totalWorkingDays,
