@@ -129,23 +129,15 @@ export default function DeleteAccountForm() {
     router.push("/profile");
   };
 
-  // Animation variants
+  // Animation variants simplifiés
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut" }
-    }
+    visible: { opacity: 1, y: 0 }
   };
 
   const stepVariants = {
     hidden: { opacity: 0, x: 20 },
-    visible: { 
-      opacity: 1, 
-      x: 0,
-      transition: { duration: 0.3, ease: "easeOut" }
-    }
+    visible: { opacity: 1, x: 0 }
   };
 
   if (deleteSuccess) {
@@ -176,6 +168,7 @@ export default function DeleteAccountForm() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
+      transition={{ duration: 0.5, ease: "easeOut" }}
       className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full"
     >
       {/* En-tête */}
@@ -193,7 +186,10 @@ export default function DeleteAccountForm() {
 
       {/* Étape 1: Authentification */}
       {!isAuthenticatedStep && (
-        <motion.div variants={stepVariants}>
+        <motion.div 
+          variants={stepVariants}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-5 h-5 text-blue-500" />
@@ -282,7 +278,10 @@ export default function DeleteAccountForm() {
 
       {/* Étape 2: Confirmation de suppression */}
       {isAuthenticatedStep && (
-        <motion.div variants={stepVariants}>
+        <motion.div 
+          variants={stepVariants}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-5 h-5 text-red-500" />
