@@ -33,8 +33,8 @@ export interface FileValidationResult {
  * Utilise l'edge function Supabase upload-partner-logo
  */
 class LogoUploadService {
-  // Utiliser la route API locale directe vers Supabase Storage (plus fiable)
-  private baseUrl = '/api/upload-logo-direct';
+  // Utiliser la route API locale qui fonctionne
+  private baseUrl = '/api/upload-logo';
 
   /**
    * Upload un logo vers Supabase Storage via l'edge function
