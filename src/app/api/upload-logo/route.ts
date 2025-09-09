@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
           error: 'Format JSON invalide de l\'edge function',
           details: { 
             rawResponse: responseText.substring(0, 200) + '...', 
-            parseError: parseError.message,
+            parseError: parseError instanceof Error ? parseError.message : String(parseError),
             status: response.status,
             statusText: response.statusText
           }
