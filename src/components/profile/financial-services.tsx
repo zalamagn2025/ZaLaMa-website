@@ -29,6 +29,8 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // État local pour la simulation du service de paiement (retard salaire)
+  const [isPaymentActive, setIsPaymentActive] = useState<boolean>(false)
   
   // Fetch services from Supabase
   useEffect(() => {
@@ -125,7 +127,8 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       ),
       maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentage_max}%`,
       maxAmount: service.nom.toLowerCase().includes("prêt") ? "25 000 000" : undefined,
-      eligibility: service.disponible ? "Disponible" : "Indisponible"
+      // Remplacer "Indisponible" par "Désactivé" sauf pour les services de conseil/AI
+      eligibility: service.disponible ? "Disponible" : (service.nom.toLowerCase().includes("conseil") ? "Indisponible" : "Désactivé")
     }
   })
 
@@ -174,7 +177,10 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
-          {mappedServices.map((service, index) => (
+          {/* Autres services venant de la BD, en excluant Marketing */}
+          {mappedServices
+            .filter(service => !service.nom.toLowerCase().includes("marketing"))
+            .map((service, index) => (
             <motion.div
               key={service.id}
               initial={{ opacity: 0, y: 20 }}
@@ -252,6 +258,64 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               </div>
             </motion.div>
           ))}
+
+          {/* Carte mock: Paiement de salaire (retard) placée en dernier */}
+          <motion.div
+            key="payment-mock"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0 }}
+            className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30 transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
+          >
+            <motion.div
+              className={`absolute top-2 right-2 text-white text-xs font-medium px-2 py-1 rounded-full ${
+                isPaymentActive
+                  ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53]"
+                  : "bg-gray-500"
+              }`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+            >
+              {isPaymentActive ? "Activé" : "Désactivé"}
+            </motion.div>
+            <div className="flex items-center mb-4">
+              <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-orange-500">
+                  <rect x="3" y="4" width="18" height="14" rx="2" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <circle cx="8" cy="15" r="1" />
+                  <circle cx="12" cy="15" r="1" />
+                  <circle cx="16" cy="15" r="1" />
+                </svg>
+              </motion.div>
+              <h3 className="ml-3 text-lg font-semibold text-white">Paiement de salaire (retard)</h3>
+            </div>
+            <p className="text-white/80 text-sm mb-4 flex-grow">
+              En cas de retard de paiement, votre entreprise peut vous payer via ZaLaMa. Utilisez le bouton ci-dessous pour simuler l'activation.
+            </p>
+            <div className="flex justify-between items-center mt-auto">
+              <div>
+                <p className="text-xs text-white/60">Statut</p>
+                <p className="font-semibold text-white">{isPaymentActive ? "Activé" : "Désactivé"}</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.1, x: 5 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsPaymentActive(prev => !prev)
+                }}
+                className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
+                  !isPaymentActive
+                    ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
+                    : "bg-gray-500 hover:bg-gray-600"
+                }`}
+              >
+                {isPaymentActive ? "Désactiver" : "Activer"} <IconArrowRight className="ml-1 h-4 w-4" />
+              </motion.button>
+            </div>
+          </motion.div>
         </div>
       )}
 
