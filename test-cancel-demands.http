@@ -1,0 +1,267 @@
+### ========================================
+### Tests pour la route /cancel des demandes d'avance
+### Edge Function: employee-demands
+### ========================================
+
+### Variables d'environnement
+@baseUrl = https://mspmrzlqhwpdkkburjiw.supabase.co
+@functionUrl = {{baseUrl}}/functions/v1/employee-demands
+@authToken = eyJhbGciOiJIUzI1NiIsImtpZCI6IkMvUHpxSEtWamc5L0JTRHUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL21zcG1yemxxaHdwZGtrYnVyaml3LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3MzQ4NDE3Ny0wNzNmLTQ0YjMtYTZmMi0wODgzYzhjMGNiNzYiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU3NTE3Njc1LCJpYXQiOjE3NTc1MTQwNzUsImVtYWlsIjoibW9yeWtvdWxpYmFseTIwMjNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZnVsbF9uYW1lIjoiTW9yeSBLb3VsaWJhbHkiLCJwYXJ0ZW5haXJlX2lkIjoiMDdlMWFjNDItOWExNi00ODNjLWEyZTAtYzZhYTU3ODQ0NDI0Iiwicm9sZSI6InJoIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NTc1MTQwNzV9XSwic2Vzc2lvbl9pZCI6IjM4MzdjYWEyLWI1MGUtNGViMy1hMjViLTkxODRhYWVkZWNiOSIsImlzX2Fub255bW91cyI6ZmFsc2V9.9VJAKALe_MVCNK1e4SmuczzIdeB4JDVgM1H0133t67s
+@demandId = 495f0800-6cc7-4dea-8b6a-384bf9217935
+
+### ========================================
+### 1. Annuler une demande (avec motif)
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "id": "{{demandId}}",
+    "reason": "Changement de situation personnelle"
+}
+
+### ========================================
+### 2. Annuler une demande (sans motif)
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}"
+}
+
+### ========================================
+### 3. Test avec ID de demande invalide
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "invalid-uuid-here"
+}
+
+### ========================================
+### 4. Test sans ID de demande
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "reason": "Test sans ID"
+}
+
+### ========================================
+### 5. Test sans token d'authentification
+### ========================================
+POST {{functionUrl}}/cancel
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": "Test sans auth"
+}
+
+### ========================================
+### 6. Test avec token invalide
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer invalid-token-here
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": "Test token invalide"
+}
+
+### ========================================
+### 7. Test avec méthode GET (non autorisée)
+### ========================================
+GET {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+
+### ========================================
+### 8. Test avec JSON malformé
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": "Test JSON malformé
+}
+
+### ========================================
+### 9. Test d'annulation d'une demande déjà validée
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "validated-demand-id-here",
+  "reason": "Tentative d'annulation d'une demande validée"
+}
+
+### ========================================
+### 10. Test d'annulation d'une demande déjà rejetée
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "rejected-demand-id-here",
+  "reason": "Tentative d'annulation d'une demande rejetée"
+}
+
+### ========================================
+### 11. Test d'annulation d'une demande d'un autre employé
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "other-employee-demand-id-here",
+  "reason": "Tentative d'annulation d'une demande d'un autre employé"
+}
+
+### ========================================
+### 12. Test avec motif très long
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+}
+
+### ========================================
+### 13. Test avec caractères spéciaux dans le motif
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": "Motif avec caractères spéciaux: éàçù€£¥@#$%^&*()_+-=[]{}|;':\",./<>?"
+}
+
+### ========================================
+### 14. Test avec motif vide
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": ""
+}
+
+### ========================================
+### 15. Test avec motif null
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": null
+}
+
+### ========================================
+### 16. Test avec ID null
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": null,
+  "reason": "Test avec ID null"
+}
+
+### ========================================
+### 17. Test avec ID vide
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "",
+  "reason": "Test avec ID vide"
+}
+
+### ========================================
+### 18. Test avec body vide
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{}
+
+### ========================================
+### 19. Test avec propriétés supplémentaires
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": "Test avec propriétés supplémentaires",
+  "extraField": "valeur supplémentaire",
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+
+### ========================================
+### 20. Test de performance avec requête rapide
+### ========================================
+POST {{functionUrl}}/cancel
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "id": "{{demandId}}",
+  "reason": "Test de performance"
+}
+
+### ========================================
+### INSTRUCTIONS D'UTILISATION
+### ========================================
+###
+### 1. Remplacez {{baseUrl}} par l'URL de votre projet Supabase
+### 2. Remplacez {{authToken}} par un token d'authentification valide d'un employé
+### 3. Remplacez {{demandId}} par l'ID d'une demande d'avance en attente
+### 4. Exécutez les tests dans l'ordre pour vérifier tous les cas d'usage
+### 5. Vérifiez les logs dans la console Supabase pour les détails d'exécution
+###
+### CAS DE TEST COUVERTS:
+### - Annulation normale avec et sans motif
+### - Validation des données d'entrée
+### - Authentification et autorisation
+### - Gestion des erreurs
+### - Cas limites et edge cases
+### - Performance et robustesse
+###
+### RÉPONSES ATTENDUES:
+### - 200: Annulation réussie
+### - 400: Données invalides ou demande non annulable
+### - 401: Token invalide ou manquant
+### - 404: Demande non trouvée
+### - 405: Méthode non autorisée
+### - 500: Erreur serveur
+###
+

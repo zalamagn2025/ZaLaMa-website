@@ -165,6 +165,29 @@ class EmployeeDemandsService {
       throw error;
     }
   }
+
+  /**
+   * Annuler une demande d'avance
+   */
+  async cancelDemand(demandId: string, reason?: string): Promise<any> {
+    try {
+      console.log('❌ Annulation de la demande:', demandId, reason ? `Motif: ${reason}` : 'Sans motif');
+      
+      const response = await this.makeRequest('cancel', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: demandId,
+          ...(reason && { reason })
+        }),
+      });
+      
+      console.log('✅ Demande annulée avec succès');
+      return response;
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'annulation de la demande:', error);
+      throw error;
+    }
+  }
 }
 
 // Instance singleton

@@ -139,6 +139,35 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
     }
   }, [mutateDemands, mutateStats]);
 
+  // Annuler une demande
+  const cancelDemand = useCallback(async (demandId: string, reason?: string) => {
+    setIsUpdating(true);
+    try {
+      console.log('❌ Annulation de la demande...', demandId, reason ? `Motif: ${reason}` : 'Sans motif');
+      
+      const response = await employeeDemandsService.cancelDemand(demandId, reason);
+      
+      // Rafraîchir les données
+      await Promise.all([
+        mutateDemands(),
+        mutateStats(),
+        mutate('employee-demands-list-*')
+      ]);
+      
+      toast.success('Demande annulée avec succès !');
+      console.log('✅ Demande annulée:', response);
+      
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'annulation de la demande';
+      toast.error(errorMessage);
+      console.error('❌ Erreur annulation demande:', error);
+      throw error;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [mutateDemands, mutateStats]);
+
   // Rafraîchir manuellement les données
   const refreshData = useCallback(async () => {
     try {
@@ -174,6 +203,7 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
     createDemand,
     updateDemand,
     deleteDemand,
+    cancelDemand,
     refreshData,
     
     // Utilitaires

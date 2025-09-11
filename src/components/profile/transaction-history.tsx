@@ -14,6 +14,8 @@ import {
   IconPhone,
   IconCalendar,
   IconCurrency,
+  IconTrash,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { pdf } from "@react-pdf/renderer";
@@ -196,7 +198,7 @@ interface TransactionHistoryProps {
 }
 
 export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
-  const { demands: apiRequests, isLoadingDemands: loading, demandsError: error } = useEmployeeDemands();
+  const { demands: apiRequests, isLoadingDemands: loading, demandsError: error, cancelDemand, isUpdating } = useEmployeeDemands();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
@@ -208,6 +210,11 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const modalRef = useRef<HTMLDivElement>(null);
   const requestsPerPage = 10;
+  
+  // États pour la modal d'annulation
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [demandToCancel, setDemandToCancel] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const allRequests = apiRequests.map(convertApiRequestToDisplay);
 
@@ -239,6 +246,41 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
 
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+  };
+
+  // Fonction pour ouvrir la modal d'annulation
+  const handleCancelRequest = (demandId: string) => {
+    setDemandToCancel(demandId);
+    setCancelModalOpen(true);
+    setCancelReason("");
+  };
+
+  // Fonction pour confirmer l'annulation
+  const handleConfirmCancel = async () => {
+    if (!demandToCancel) return;
+    
+    try {
+      await cancelDemand(demandToCancel, cancelReason.trim() || undefined);
+      setCancelModalOpen(false);
+      setDemandToCancel(null);
+      setCancelReason("");
+    } catch (error) {
+      console.error('Erreur lors de l\'annulation:', error);
+    }
+  };
+
+  // Fonction pour annuler l'annulation
+  const handleCancelCancel = () => {
+    setCancelModalOpen(false);
+    setDemandToCancel(null);
+    setCancelReason("");
+  };
+
+  // Fonction pour vérifier si une demande peut être annulée
+  const canCancelRequest = (status: string | undefined) => {
+    if (!status) return false;
+    const normalizedStatus = status.toLowerCase();
+    return normalizedStatus === "en attente" || normalizedStatus === "en attente rh/responsable";
   };
 
   const getStatusColor = (status: string | undefined) => {
@@ -549,6 +591,19 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                         <IconEye className="w-4 h-4" />
                         Voir détail
                       </motion.button>
+                      
+                      {canCancelRequest(request.status) && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleCancelRequest(request.id)}
+                          className="px-3 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+                          style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'rgb(239, 68, 68)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                        >
+                          <IconTrash className="w-4 h-4" />
+                          Annuler
+                        </motion.button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -775,6 +830,106 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                     </div>
                   );
                 })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal d'annulation */}
+      <AnimatePresence>
+        {cancelModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#010D3E]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={handleCancelCancel}
+          >
+            <motion.div
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="relative mx-auto w-full max-w-md bg-[#010D3E] rounded-2xl shadow-2xl border overflow-hidden"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <motion.button
+                whileHover={{ scale: 1.2, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleCancelCancel}
+                className="absolute top-4 right-4 p-2 rounded-lg transition-colors"
+                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+              >
+                <IconX className="w-6 h-6" />
+              </motion.button>
+              
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)' }}>
+                    <IconAlertTriangle className="w-6 h-6" style={{ color: 'rgb(239, 68, 68)' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>
+                      Annuler la demande
+                    </h3>
+                    <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      Cette action est irréversible
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                    Motif d'annulation (optionnel)
+                  </label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Expliquez pourquoi vous annulez cette demande..."
+                    className="w-full px-3 py-2 rounded-lg bg-[#010D3E]/50 backdrop-blur-md border text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-300 resize-none"
+                    style={{ 
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'rgb(255, 255, 255)',
+                      '--tw-ring-color': 'rgb(255, 142, 83)',
+                      '--tw-placeholder-color': 'rgb(156, 163, 175)'
+                    } as any}
+                    rows={3}
+                  />
+                </div>
+                
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleCancelCancel}
+                    className="flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgb(255, 255, 255)' }}
+                  >
+                    Garder la demande
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleConfirmCancel}
+                    disabled={isUpdating}
+                    className="flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    style={{ backgroundColor: 'rgb(239, 68, 68)', color: 'rgb(255, 255, 255)' }}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Annulation...
+                      </>
+                    ) : (
+                      <>
+                        <IconTrash className="w-4 h-4" />
+                        Annuler la demande
+                      </>
+                    )}
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
