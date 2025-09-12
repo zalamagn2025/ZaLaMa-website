@@ -11,12 +11,13 @@ import { ProfileHeader } from "@/components/profile/profile-header"
 import { ProfileSettings } from "@/components/profile/profile-settings"
 import { Partenaire } from "@/types/partenaire"
 import { TransactionHistory } from "@/components/profile/transaction-history"
+import { PaymentList } from "@/components/profile/payment-list"
+import { PaymentData } from "@/components/profile/payment-service-card"
 
 import { useEmployeeAuth } from "@/contexts/EmployeeAuthContext"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 import { useSalarySetup } from "@/hooks/useSalarySetup"
 import SalarySetupModal from "@/components/modals/SalarySetupModal"
-
 
 export default function ProfilePage() {
   const [isMounted, setIsMounted] = useState(false)
@@ -33,6 +34,66 @@ export default function ProfilePage() {
   // Hook pour la configuration du salaire
   const { needsSetup, userInfo, configureSalary, loading: salaryLoading, error: salaryError } = useSalarySetup()
   const [showModal, setShowModal] = useState(true)
+
+  // Données de démonstration pour les paiements
+  const allPayments: PaymentData[] = [
+    {
+      id: "user-1",
+      clientName: "Entreprise ABC",
+      clientEmail: "contact@entreprise-abc.com",
+      amount: 150000,
+      currency: "GNF",
+      status: "pending",
+      createdAt: "2024-01-15T10:30:00Z",
+      reference: "PAY-USER-001"
+    },
+    {
+      id: "user-2",
+      clientName: "Société XYZ",
+      clientEmail: "admin@societe-xyz.com",
+      amount: 250000,
+      currency: "GNF",
+      status: "received",
+      createdAt: "2024-01-14T14:20:00Z",
+      receivedAt: "2024-01-14T16:45:00Z",
+      reference: "PAY-USER-002",
+      notes: "Paiement reçu via virement"
+    },
+    {
+      id: "user-3",
+      clientName: "Client Direct",
+      clientEmail: "client@direct.com",
+      amount: 75000,
+      currency: "GNF",
+      status: "received",
+      createdAt: "2024-01-13T09:15:00Z",
+      receivedAt: "2024-01-13T11:30:00Z",
+      reference: "PAY-USER-003",
+      notes: "Paiement en espèces"
+    },
+    {
+      id: "user-4",
+      clientName: "Nouveau Client",
+      clientEmail: "nouveau@client.com",
+      amount: 200000,
+      currency: "GNF",
+      status: "pending",
+      createdAt: "2024-01-16T09:15:00Z",
+      reference: "PAY-USER-004"
+    }
+  ]
+
+  const handleStatusChange = (paymentId: string, newStatus: PaymentData['status']) => {
+    console.log('Status change:', paymentId, newStatus)
+  }
+
+  const handleDownload = (paymentId: string) => {
+    console.log('Download:', paymentId)
+  }
+
+  const handleShare = (paymentId: string) => {
+    console.log('Share:', paymentId)
+  }
 
   const handleCloseModal = () => {
     setShowModal(false)
@@ -109,14 +170,11 @@ export default function ProfilePage() {
 
   // Adapter les données employé au format attendu par les composants
   const userData = employee ? {
-    // Propriétés requises par UserWithEmployeData
     id: employee.user_id,
     email: employee.email,
-    emailVerified: true, // Par défaut, on considère que l'email est vérifié pour les employés
-    // Propriétés optionnelles
+    emailVerified: true,
     displayName: employee.nomComplet || `${employee.prenom} ${employee.nom}`,
     photoURL: employee.photo_url,
-    // Données employé
     employeId: employee.id,
     prenom: employee.prenom,
     nom: employee.nom,
@@ -131,7 +189,6 @@ export default function ProfilePage() {
     dateEmbauche: employee.date_embauche,
     partnerId: employee.partner_id,
     partenaireId: employee.partner_id,
-    // Propriétés supplémentaires pour compatibilité
     uid: employee.user_id,
     salaire_net: employee.salaire_net,
     type_contrat: employee.type_contrat,
@@ -164,7 +221,6 @@ export default function ProfilePage() {
                 {userData && (
                   <>
                     <ProfileHeader user={userData} entreprise={entreprise} />
-                    
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={isMounted ? { opacity: 1, y: 0 } : {}}
@@ -189,7 +245,7 @@ export default function ProfilePage() {
                   >
                     <TabsList 
                       ref={tabsRef}
-                      className="relative w-full grid grid-cols-3 mb-8 bg-[#010D3E]/50 p-1 rounded-xl h-12 backdrop-blur-md border border-[#1A3A8F]"
+                      className="relative w-full grid grid-cols-4 mb-8 bg-[#010D3E]/50 p-1 rounded-xl h-12 backdrop-blur-md border border-[#1A3A8F]"
                     >
                       {activeTabRect && (
                         <motion.div
@@ -202,7 +258,6 @@ export default function ProfilePage() {
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         />
                       )}
-                      
                       <TabsTrigger 
                         value="services" 
                         className="relative z-10 flex-1 flex items-center justify-center text-sm font-medium transition-colors h-full rounded-lg data-[state=active]:font-bold data-[state=active]:text-white"
@@ -225,7 +280,6 @@ export default function ProfilePage() {
                           Services
                         </motion.span>
                       </TabsTrigger>
-                      
                       <TabsTrigger 
                         value="history" 
                         className="relative z-10 flex-1 flex items-center justify-center text-sm font-medium transition-colors h-full rounded-lg data-[state=active]:font-bold data-[state=active]:text-white"
@@ -248,7 +302,6 @@ export default function ProfilePage() {
                           Historiques
                         </motion.span>
                       </TabsTrigger>
-                      
                       <TabsTrigger 
                         value="feedback" 
                         className="relative z-10 flex-1 flex items-center justify-center text-sm font-medium transition-colors h-full rounded-lg data-[state=active]:font-bold data-[state=active]:text-white"
@@ -271,30 +324,64 @@ export default function ProfilePage() {
                           Avis
                         </motion.span>
                       </TabsTrigger>
+                      <TabsTrigger 
+                        value="payments" 
+                        className="relative z-10 flex-1 flex items-center justify-center text-sm font-medium transition-colors h-full rounded-lg data-[state=active]:font-bold data-[state=active]:text-white"
+                      >
+                        <motion.span
+                          className="flex items-center gap-2 text-gray-300 hover:text-white"
+                          whileHover={{ scale: 1.05, textShadow: "0 0 8px rgba(255,255,255,0.3)" }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <motion.svg 
+                            className="w-5 h-5"
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor"
+                            animate={activeTab === "payments" ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                            transition={{ repeat: activeTab === "payments" ? Infinity : 0, duration: 1 }}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </motion.svg>
+                          Paiements
+                        </motion.span>
+                      </TabsTrigger>
                     </TabsList>
-
-                                         <AnimatePresence mode="wait">
-                       <motion.div
-                         key={activeTab}
-                         initial={{ opacity: 0, y: 10 }}
-                         animate={{ opacity: 1, y: 0 }}
-                         exit={{ opacity: 0, y: -10 }}
-                         transition={{ duration: 0.2 }}
-                       >
-                         <TabsContent value="services" className="mt-2">
-                           {userData && <FinancialServices user={userData} />}
-                         </TabsContent>
-                         <TabsContent value="history" className="mt-2">
-                           {userData && <TransactionHistory user={userData} />}
-                         </TabsContent>
-                         <TabsContent value="feedback" className="mt-2">
-                           <div className="space-y-6">
-                             <FeedbackSection />
-                             <AvisHistory />
-                           </div>
-                         </TabsContent>
-                       </motion.div>
-                     </AnimatePresence>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <TabsContent value="services" className="mt-2">
+                          {userData && <FinancialServices user={userData} />}
+                        </TabsContent>
+                        <TabsContent value="history" className="mt-2">
+                          {userData && <TransactionHistory user={userData} />}
+                        </TabsContent>
+                        <TabsContent value="feedback" className="mt-2">
+                          <div className="space-y-6">
+                            <FeedbackSection />
+                            <AvisHistory />
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="payments" className="mt-2">
+                          {userData && (
+                            <div className="max-w-7xl mx-auto px-4">
+                              <PaymentList
+                                payments={allPayments}
+                                onStatusChange={handleStatusChange}
+                                onDownload={handleDownload}
+                                onShare={handleShare}
+                                onRefresh={() => console.log('Refresh payments')}
+                              />
+                            </div>
+                          )}
+                        </TabsContent>
+                      </motion.div>
+                    </AnimatePresence>
                   </Tabs>
                 </motion.div>
               </div>
@@ -302,7 +389,6 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* AI Button */}
         <motion.button
           className="fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] shadow-lg flex items-center justify-center text-white font-semibold text-sm cursor-not-allowed"
           disabled
@@ -310,9 +396,6 @@ export default function ProfilePage() {
           AI
         </motion.button>
 
-
-
-        {/* Chatbot Drawer */}
         <AnimatePresence>
           {isChatbotOpen && (
             <motion.div
@@ -325,17 +408,13 @@ export default function ProfilePage() {
               <div className="mb-4">
                 <h2 className="text-white text-lg font-semibold">AI Chatbot</h2>
               </div>
-              {/* <AI onClose={() => setIsChatbotOpen(false)} user={user} entreprise={entreprise} /> */}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Paramètres utilisateur */}
         {showSettings && userData && (
           <ProfileSettings onClose={() => setShowSettings(false)} userData={userData} />
         )}
-
-
       </div>
     </ProtectedRoute>
   )

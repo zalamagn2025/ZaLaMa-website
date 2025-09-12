@@ -1,5 +1,3 @@
-"use client"
-
 import { IconArrowRight } from "@tabler/icons-react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -7,6 +5,9 @@ import { SalaryAdvanceForm } from "./salary-advance-form"
 import { AI } from "@/components/profile/AI"
 import { UserWithEmployeData } from "@/types/employe"
 import { supabase } from '@/lib/supabase'
+import { PendingPayments } from "./pending-payments"
+import { PaymentList } from "./payment-list"
+import { PaymentData } from "./payment-service-card"
 
 interface Service {
   id: string
@@ -31,6 +32,10 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [error, setError] = useState<string | null>(null)
   // État local pour la simulation du service de paiement (retard salaire)
   const [isPaymentActive, setIsPaymentActive] = useState<boolean>(false)
+  // État pour la gestion des paiements
+  const [showPaymentManagement, setShowPaymentManagement] = useState(false)
+  const [showAllPayments, setShowAllPayments] = useState(false)
+  const [activeTab, setActiveTab] = useState<'services' | 'history' | 'reviews' | 'payments'>('services')
   
   // Fetch services from Supabase
   useEffect(() => {
@@ -127,7 +132,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       ),
       maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentage_max}%`,
       maxAmount: service.nom.toLowerCase().includes("prêt") ? "25 000 000" : undefined,
-      // Remplacer "Indisponible" par "Désactivé" sauf pour les services de conseil/AI
       eligibility: service.disponible ? "Disponible" : (service.nom.toLowerCase().includes("conseil") ? "Indisponible" : "Désactivé")
     }
   })
@@ -135,17 +139,82 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   console.log("🎯 Services mappés:", mappedServices.length)
   console.log("🎯 Services disponibles:", mappedServices.filter(s => s.eligibility === "Disponible").length)
 
+  // Données de démonstration pour tous les paiements
+  const allPayments: PaymentData[] = [
+    {
+      id: "user-1",
+      clientName: "Entreprise ABC",
+      clientEmail: "contact@entreprise-abc.com",
+      amount: 150000,
+      currency: "GNF",
+      status: "pending",
+      createdAt: "2024-01-15T10:30:00Z",
+      reference: "PAY-USER-001"
+    },
+    {
+      id: "user-2",
+      clientName: "Société XYZ",
+      clientEmail: "admin@societe-xyz.com",
+      amount: 250000,
+      currency: "GNF",
+      status: "received",
+      createdAt: "2024-01-14T14:20:00Z",
+      receivedAt: "2024-01-14T16:45:00Z",
+      reference: "PAY-USER-002",
+      notes: "Paiement reçu via virement"
+    },
+    {
+      id: "user-3",
+      clientName: "Client Direct",
+      clientEmail: "client@direct.com",
+      amount: 75000,
+      currency: "GNF",
+      status: "received",
+      createdAt: "2024-01-13T09:15:00Z",
+      receivedAt: "2024-01-13T11:30:00Z",
+      reference: "PAY-USER-003",
+      notes: "Paiement en espèces"
+    },
+    {
+      id: "user-4",
+      clientName: "Nouveau Client",
+      clientEmail: "nouveau@client.com",
+      amount: 200000,
+      currency: "GNF",
+      status: "pending",
+      createdAt: "2024-01-16T09:15:00Z",
+      reference: "PAY-USER-004"
+    }
+  ]
+
+  // Gestion des actions de paiement
+  const handlePaymentAction = (action: string) => {
+    switch (action) {
+      case 'manage':
+        setShowPaymentManagement(true)
+        break
+      case 'all-payments':
+        setActiveTab('payments')
+        setShowAllPayments(true)
+        break
+    }
+  }
+
+  const handleStatusChange = (paymentId: string, newStatus: PaymentData['status']) => {
+    console.log('Status change:', paymentId, newStatus)
+  }
+
+  const handleDownload = (paymentId: string) => {
+    console.log('Download:', paymentId)
+  }
+
+  const handleShare = (paymentId: string) => {
+    console.log('Share:', paymentId)
+  }
+
   return (
     <div className="py-8 bg-[#010D3E]">
-      {/* <motion.h2
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-2xl font-bold text-white mb-8 text-center"
-      >
-        Services financiers disponibles
-      </motion.h2> */}
-
+      {/* Contenu des services */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
           {[1, 2, 3].map((_, index) => (
@@ -177,89 +246,86 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
-          {/* Autres services venant de la BD, en excluant Marketing */}
           {mappedServices
             .filter(service => !service.nom.toLowerCase().includes("marketing"))
             .map((service, index) => (
-            <motion.div
-              key={service.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={service.eligibility === "Disponible" ? { 
-                scale: 1.03,
-                boxShadow: service.nom.toLowerCase().includes("avance") ? "0 8px 20px rgba(59, 130, 246, 0.3)" : 
-                          service.nom.toLowerCase().includes("conseil") ? "0 8px 20px rgba(34, 197, 94, 0.3)" : 
-                          "0 8px 20px rgba(249, 115, 22, 0.3)"
-              } : {}}
-              className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border ${
-                service.nom.toLowerCase().includes("avance") ? "border-blue-500/30" : 
-                service.nom.toLowerCase().includes("conseil") ? "border-green-500/30" : 
-                "border-orange-500/30"
-              } ${service.eligibility === "Disponible" ? "cursor-pointer" : "cursor-not-allowed opacity-60"} transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
-              onClick={() => {
-                if (service.eligibility === "Disponible") {
-                  if (service.nom.toLowerCase().includes("conseil")) {
-                    setIsChatbotOpen(true)
-                  } else {
-                    setActiveService(service.id)
-                  }
-                }
-              }}
-            >
               <motion.div
-                className={`absolute top-2 right-2 text-white text-xs font-medium px-2 py-1 rounded-full ${
-                  service.eligibility === "Disponible" 
-                    ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53]" 
-                    : "bg-gray-500"
-                }`}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.2, type: "spring", stiffness: 200 }}
-              >
-                {service.eligibility}
-              </motion.div>
-              <div className="flex items-center mb-4">
-                <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
-                  {service.icon}
-                </motion.div>
-                <h3 className="ml-3 text-lg font-semibold text-white">{service.title}</h3>
-              </div>
-              <p className="text-white/80 text-sm mb-4 flex-grow">{service.description}</p>
-              <div className="flex justify-between items-center mt-auto">
-                <div>
-                  <p className="text-xs text-white/60">
-                    {service.nom.toLowerCase().includes("prêt") ? "Montant max" : "Pourcentage max"}
-                  </p>
-                  <p className="font-semibold text-white">{service.nom.toLowerCase().includes("prêt") ? service.maxAmount : service.maxpourcent}</p>
-                </div>
-                <motion.button
-                  whileHover={service.eligibility === "Disponible" ? { scale: 1.1, x: 5 } : {}}
-                  whileTap={service.eligibility === "Disponible" ? { scale: 0.95 } : {}}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (service.eligibility === "Disponible") {
-                      if (service.nom.toLowerCase().includes("conseil")) {
-                        setIsChatbotOpen(true)
-                      } else {
-                        setActiveService(service.id)
-                      }
+                key={service.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={service.eligibility === "Disponible" ? { 
+                  scale: 1.03,
+                  boxShadow: service.nom.toLowerCase().includes("avance") ? "0 8px 20px rgba(59, 130, 246, 0.3)" : 
+                            service.nom.toLowerCase().includes("conseil") ? "0 8px 20px rgba(34, 197, 94, 0.3)" : 
+                            "0 8px 20px rgba(249, 115, 22, 0.3)"
+                } : {}}
+                className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border ${
+                  service.nom.toLowerCase().includes("avance") ? "border-blue-500/30" : 
+                  service.nom.toLowerCase().includes("conseil") ? "border-green-500/30" : 
+                  "border-orange-500/30"
+                } ${service.eligibility === "Disponible" ? "cursor-pointer" : "cursor-not-allowed opacity-60"} transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
+                onClick={() => {
+                  if (service.eligibility === "Disponible") {
+                    if (service.nom.toLowerCase().includes("conseil")) {
+                      setIsChatbotOpen(true)
+                    } else {
+                      setActiveService(service.id)
                     }
-                  }}
-                  className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
-                    service.eligibility === "Disponible"
-                      ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
-                      : "bg-gray-500 cursor-not-allowed"
+                  }
+                }}
+              >
+                <motion.div
+                  className={`absolute top-2 right-2 text-white text-xs font-medium px-2 py-1 rounded-full ${
+                    service.eligibility === "Disponible" 
+                      ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53]" 
+                      : "bg-gray-500"
                   }`}
-                  disabled={service.eligibility !== "Disponible"}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: index * 0.2, type: "spring", stiffness: 200 }}
                 >
-                  Demander <IconArrowRight className="ml-1 h-4 w-4" />
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
-
-          {/* Carte mock: Paiement de salaire (retard) placée en dernier */}
+                  {service.eligibility}
+                </motion.div>
+                <div className="flex items-center mb-4">
+                  <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+                    {service.icon}
+                  </motion.div>
+                  <h3 className="ml-3 text-lg font-semibold text-white">{service.title}</h3>
+                </div>
+                <p className="text-white/80 text-sm mb-4 flex-grow">{service.description}</p>
+                <div className="flex justify-between items-center mt-auto">
+                  <div>
+                    <p className="text-xs text-white/60">
+                      {service.nom.toLowerCase().includes("prêt") ? "Montant max" : "Pourcentage max"}
+                    </p>
+                    <p className="font-semibold text-white">{service.nom.toLowerCase().includes("prêt") ? service.maxAmount : service.maxpourcent}</p>
+                  </div>
+                  <motion.button
+                    whileHover={service.eligibility === "Disponible" ? { scale: 1.1, x: 5 } : {}}
+                    whileTap={service.eligibility === "Disponible" ? { scale: 0.95 } : {}}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (service.eligibility === "Disponible") {
+                        if (service.nom.toLowerCase().includes("conseil")) {
+                          setIsChatbotOpen(true)
+                        } else {
+                          setActiveService(service.id)
+                        }
+                      }
+                    }}
+                    className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
+                      service.eligibility === "Disponible"
+                        ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
+                        : "bg-gray-500 cursor-not-allowed"
+                    }`}
+                    disabled={service.eligibility !== "Disponible"}
+                  >
+                    Demander <IconArrowRight className="ml-1 h-4 w-4" />
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
           <motion.div
             key="payment-mock"
             initial={{ opacity: 0, y: 20 }}
@@ -299,21 +365,36 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
                 <p className="text-xs text-white/60">Statut</p>
                 <p className="font-semibold text-white">{isPaymentActive ? "Activé" : "Désactivé"}</p>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.1, x: 5 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsPaymentActive(prev => !prev)
-                }}
-                className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
-                  !isPaymentActive
-                    ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
-                    : "bg-gray-500 hover:bg-gray-600"
-                }`}
-              >
-                {isPaymentActive ? "Désactiver" : "Activer"} <IconArrowRight className="ml-1 h-4 w-4" />
-              </motion.button>
+              <div className="flex space-x-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsPaymentActive(prev => !prev)
+                  }}
+                  className={`inline-flex items-center text-sm font-medium text-white px-3 py-2 rounded-lg transition-all duration-300 ${
+                    !isPaymentActive
+                      ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
+                      : "bg-gray-500 hover:bg-gray-600"
+                  }`}
+                >
+                  {isPaymentActive ? "Désactiver" : "Activer"}
+                </motion.button>
+                {isPaymentActive && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handlePaymentAction('manage')
+                    }}
+                    className="inline-flex items-center text-sm font-medium text-white px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-all duration-300"
+                  >
+                    Gérer <IconArrowRight className="ml-1 h-4 w-4" />
+                  </motion.button>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>
@@ -368,6 +449,33 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               <h2 className="text-white text-lg font-semibold">AI Chatbot</h2>
             </div>
             <AI onClose={() => setIsChatbotOpen(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPaymentManagement && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPaymentManagement(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="relative w-full max-w-4xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <PendingPayments
+                userId={user.id || 'default-user'}
+                onClose={() => setShowPaymentManagement(false)}
+              />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
