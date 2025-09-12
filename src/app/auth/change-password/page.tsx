@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useEmployeeAuth } from '@/contexts/EmployeeAuthContext';
@@ -28,7 +28,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const { employee, isAuthenticated } = useEmployeeAuth();
+  const { employee, isAuthenticated, loading } = useEmployeeAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,13 +41,34 @@ export default function ChangePasswordPage() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
-  // Vérifier si l'utilisateur est connecté
-  if (!employee || !isAuthenticated) {
-    // Rediriger vers la page de connexion
-    router.push('/login');
+  // Diagnostic: log on mount to confirm page is displayed
+  useEffect(() => {
+    console.log('🔓 ChangePasswordPage mounted', { loading, isAuthenticated, hasEmployee: !!employee });
+  }, []);
+
+  // Attendre la fin du chargement du contexte avant de décider
+  useEffect(() => {
+    if (!loading && (!employee || !isAuthenticated)) {
+      router.push('/login');
+    }
+  }, [loading, employee, isAuthenticated, router]);
+
+  if (loading) {
     return (
       <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
-        <div className="text-white text-center">
+        <div className="flex flex-col items-center gap-3 text-white/80">
+          <div className="w-6 h-6 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+          <p>Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!employee || !isAuthenticated) {
+    return (
+      <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-white text-center">
+          <div className="w-6 h-6 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
           <p>Vous devez être connecté pour accéder à cette page.</p>
           <p>Redirection en cours...</p>
         </div>
@@ -156,7 +177,7 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center bg-gray-950 z-[9999]">
       {/* Bouton Retour */}
       <button
         type="button"
