@@ -159,11 +159,9 @@ export const PartnershipForm = () => {
     hrPhone: '+224'
   });
 
-  // État pour les données du logo (base64 + nom de fichier)
-  const [logoData, setLogoData] = useState<{
-    base64: string;
-    filename: string;
-  } | null>(null);
+  // État pour les données du logo (fichier sélectionné)
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
 
 
@@ -242,9 +240,9 @@ export const PartnershipForm = () => {
     setPayrollValidation({ isValid: false, numericValue: 0 });
 
     // Réinitialiser les données du logo
-    setLogoData(null);
+    setLogoFile(null);
+    setLogoPreview(null);
 
-    console.log('🔄 Formulaire réinitialisé');
   }, []);
 
   // Validation des champs - mémorisé
@@ -319,7 +317,6 @@ export const PartnershipForm = () => {
         break;
         
       case 'paymentDay':
-        console.log('🔧 PaymentDay validation:', stringValue, typeof stringValue);
         if (!stringValue) return 'Le jour de paiement est obligatoire';
         const day = parseInt(stringValue);
         if (isNaN(day) || day < 1 || day > 31) return 'Le jour doit être entre 1 et 31';
@@ -526,7 +523,8 @@ export const PartnershipForm = () => {
     setPayrollValidation({ isValid: false, numericValue: 0 });
     
     // Réinitialiser les données du logo
-    setLogoData(null);
+    setLogoFile(null);
+    setLogoPreview(null);
     
     router.push('https://www.zalamagn.com');
   }, [router]);
@@ -552,6 +550,18 @@ export const PartnershipForm = () => {
       setLoading(true);
 
     try {
+        // Upload du logo si un fichier est sélectionné
+        let logoUrl: string | undefined = formData.logoUrl || undefined;
+        if (logoFile && !logoUrl) {
+          const uploadedUrl = await uploadLogoOnSubmit(logoFile);
+          if (!uploadedUrl) {
+            setError('Erreur lors de l\'upload du logo. Veuillez réessayer.');
+            setLoading(false);
+            return;
+          }
+          logoUrl = uploadedUrl;
+        }
+
         // Transformer les données selon le format attendu par l'Edge Function
         const finalData = {
           company_name: formData.companyName?.trim() || '',
@@ -567,9 +577,8 @@ export const PartnershipForm = () => {
           cdi_count: parseInt(formData.cdiCount) || 0,
           cdd_count: parseInt(formData.cddCount) || 0,
           payment_day: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined,
-          // Logo : toujours envoyer en base64 pour l'API
-          logo_base64: logoData?.base64 || undefined,
-          logo_filename: logoData?.filename || undefined,
+          // Logo : envoyer l'URL si disponible
+          logo_url: logoUrl || undefined,
           site_web: formData.siteWeb?.trim() || undefined,
           nombre_annees_activite: formData.nombreAnneesActivite?.trim() ? parseInt(formData.nombreAnneesActivite) : undefined,
           rep_full_name: formData.repFullName?.trim() || '',
@@ -582,27 +591,6 @@ export const PartnershipForm = () => {
           agreement: Boolean(formData.agreement)
         };
 
-        console.log('📤 Données formData originales:', formData);
-        console.log('📤 Envoi des données de partenariat vers l\'Edge Function:', finalData);
-        console.log('🔍 Détail payment_day:', {
-          original: formData.paymentDay,
-          type: typeof formData.paymentDay,
-          trimmed: formData.paymentDay?.trim(),
-          parsed: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined,
-          final: finalData.payment_day
-        });
-        console.log('🖼️ Détail logo:', {
-          logoData: logoData,
-          hasBase64: !!logoData?.base64,
-          base64Length: logoData?.base64?.length || 0,
-          filename: logoData?.filename,
-          base64Sample: logoData?.base64 ? `${logoData.base64.substring(0, 100)}...` : 'null',
-          base64StartsWith: logoData?.base64?.startsWith('data:') ? 'OUI - MAUVAIS FORMAT' : 'NON - BON FORMAT',
-          base64FirstChars: logoData?.base64 ? logoData.base64.substring(0, 20) : 'null',
-          base64LastChars: logoData?.base64 ? logoData.base64.substring(-20) : 'null',
-          logo_base64_value: finalData.logo_base64 ? `${finalData.logo_base64.substring(0, 100)}...` : 'undefined',
-          logo_filename_value: finalData.logo_filename
-        });
 
         const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
         method: 'POST',
@@ -613,17 +601,16 @@ export const PartnershipForm = () => {
       });
 
         const result = await response.json();
-        console.log('📥 Réponse de l\'API:', result);
 
       if (!response.ok) {
           // Afficher les détails de l'erreur
           const errorMessage = result.error || 'Erreur lors de la soumission';
-          const errorDetails = result.details ? `\nDétails: ${result.details.join(', ')}` : '';
+          const errorDetails = result.details ? 
+            `\nDétails: ${Array.isArray(result.details) ? result.details.join(', ') : result.details}` : '';
           throw new Error(`${errorMessage}${errorDetails}`);
         }
 
         if (result.success) {
-      console.log('✅ Demande envoyée avec succès:', result);
       setSuccess(true);
       
         // Réinitialisation après 15 secondes
@@ -633,7 +620,8 @@ export const PartnershipForm = () => {
         } else {
           // Afficher les détails de l'erreur même si response.ok
           const errorMessage = result.error || 'Erreur lors de la soumission';
-          const errorDetails = result.details ? `\nDétails: ${result.details.join(', ')}` : '';
+          const errorDetails = result.details ? 
+            `\nDétails: ${Array.isArray(result.details) ? result.details.join(', ') : result.details}` : '';
           throw new Error(`${errorMessage}${errorDetails}`);
         }
 
@@ -729,7 +717,6 @@ export const PartnershipForm = () => {
         payment_day: 25
       };
 
-      console.log('📤 Test 1 - Données de la documentation:', testData1);
       
       try {
         const response1 = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
@@ -739,15 +726,7 @@ export const PartnershipForm = () => {
         });
 
         const result1 = await response1.json();
-        console.log('📥 Réponse Test 1:', {
-          status: response1.status,
-          success: result1.success,
-          error: result1.error,
-          details: result1.details,
-          message: result1.message
-        });
               } catch (error) {
-          console.log('❌ Erreur Test 1:', (error as Error).message);
         }
 
       // Test 2: Données avec date actuelle
@@ -874,6 +853,46 @@ export const PartnershipForm = () => {
     console.log('- window.testWithFormData() : Test avec données du formulaire');
   }, []);
 
+  // Fonction pour uploader le logo lors de la soumission
+  const uploadLogoOnSubmit = async (file: File): Promise<string | undefined> => {
+    try {
+      console.log('🖼️ Upload du logo lors de la soumission...');
+      
+      // Convertir le fichier en base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Appeler l'API d'upload
+      const formData = new FormData();
+      formData.append('logo', file);
+      formData.append('partner_id', `temp-${Date.now()}`);
+
+      const response = await fetch('/api/upload-logo', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'upload du logo');
+      }
+
+      const result = await response.json();
+      if (result.success && result.data?.publicUrl) {
+        console.log('✅ Logo uploadé avec succès:', result.data.publicUrl);
+        return result.data.publicUrl;
+      } else {
+        throw new Error(result.error || 'Erreur lors de l\'upload');
+      }
+    } catch (error) {
+      console.error('❌ Erreur upload logo:', error);
+      return undefined;
+    }
+  };
+
 
   return (
     <motion.div 
@@ -895,6 +914,7 @@ export const PartnershipForm = () => {
           </Button>
         </Link>
       </motion.div>
+
 
       {/* Titre et progression */}
       <motion.div 
@@ -1232,11 +1252,21 @@ export const PartnershipForm = () => {
                 }}
                 onFileRemoved={() => {
                   setFormData(prev => ({ ...prev, logoUrl: '' }));
-                  setLogoData(null);
+                  setLogoFile(null);
+                  setLogoPreview(null);
                 }}
                 onFileDataChange={(fileData) => {
                   console.log('📁 Données du fichier reçues:', fileData);
-                  setLogoData(fileData);
+                  if (errors.logoUrl) {
+                    setErrors(prev => ({ ...prev, logoUrl: '' }));
+                  }
+                }}
+                onFileSelected={(file) => {
+                  console.log('📁 Fichier sélectionné pour upload différé:', file);
+                  setLogoFile(file);
+                  // Créer une preview
+                  const preview = URL.createObjectURL(file);
+                  setLogoPreview(preview);
                   if (errors.logoUrl) {
                     setErrors(prev => ({ ...prev, logoUrl: '' }));
                   }
@@ -1244,7 +1274,7 @@ export const PartnershipForm = () => {
                 label="Logo de l'entreprise"
                 placeholder="Glissez votre logo ici ou cliquez pour sélectionner"
                 hasError={!!(touched.logoUrl && errors.logoUrl)}
-                isValid={validatedSteps.has(1) && !!(touched.logoUrl && !errors.logoUrl && (formData.logoUrl || logoData))}
+                isValid={validatedSteps.has(1) && !!(touched.logoUrl && !errors.logoUrl && (formData.logoUrl || logoFile))}
                 errorMessage={errors.logoUrl || ''}
               />
             </motion.div>

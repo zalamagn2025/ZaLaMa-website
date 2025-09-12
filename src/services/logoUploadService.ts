@@ -44,12 +44,6 @@ class LogoUploadService {
    */
   async uploadLogo(file: File, partnerId?: string): Promise<LogoUploadResponse> {
     try {
-      console.log('🚀 Début upload logo partenaire:', {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        partnerId: partnerId || 'auto-generated'
-      });
 
       const formData = new FormData();
       formData.append('logo', file); // L'API route attend 'logo'
