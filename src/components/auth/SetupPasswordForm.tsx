@@ -1,11 +1,124 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeClosed, ArrowRight, CheckCircle, AlertCircle, ArrowLeft, Shield } from 'lucide-react';
+import { Key, ArrowRight, CheckCircle, AlertCircle, ArrowLeft, Shield, Eye, EyeClosed } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
+
+// Fonction pour formater le PIN (masquer les chiffres)
+const formatPin = (value: string, show: boolean) => {
+  if (show) return value;
+  return value.replace(/\d/g, '•');
+};
+
+// Composant Input PIN style OTP
+function PinInput({ 
+  value, 
+  onChange, 
+  onFocus, 
+  onBlur, 
+  placeholder, 
+  showValue, 
+  onToggleShow,
+  className,
+  ref,
+  disabled = false,
+  hasUserInteracted = false,
+  hasUserInteractedWithConfirm = false,
+  isConfirmField = false,
+  label = "Nouveau Code PIN",
+  ...props 
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onFocus: () => void;
+  onBlur: () => void;
+  placeholder: string;
+  showValue: boolean;
+  onToggleShow: () => void;
+  className?: string;
+  ref?: React.Ref<HTMLInputElement>;
+  disabled?: boolean;
+  hasUserInteracted?: boolean;
+  hasUserInteractedWithConfirm?: boolean;
+  isConfirmField?: boolean;
+  label?: string;
+}) {
+  const digits = value.split('').concat(Array(6 - value.length).fill(''));
+  
+  return (
+    <div className="relative">
+      {/* Header avec icônes */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Key className="w-4 h-4 text-white/40" />
+          <span className="text-sm text-white/60 font-medium">{label}</span>
+        </div>
+        
+        {/* Bouton toggle visibility */}
+        <div 
+          onClick={onToggleShow} 
+          className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors duration-300"
+        >
+          {showValue ? (
+            <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+          ) : (
+            <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
+          )}
+        </div>
+      </div>
+      
+      {/* Zone de saisie avec input invisible */}
+      <div className="relative">
+        {/* Input invisible pour la saisie */}
+        <input
+          ref={ref}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          disabled={disabled}
+          className={`absolute inset-0 w-full h-12 opacity-0 z-10 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          maxLength={6}
+          {...props}
+        />
+        
+        {/* Affichage OTP */}
+        <div className="flex gap-3 justify-center">
+          {digits.map((digit, index) => (
+            <motion.div
+              key={index}
+              className={cn(
+                "w-12 h-12 rounded-xl border-2 flex items-center justify-center text-xl font-mono transition-all duration-300 relative",
+                disabled 
+                  ? "border-white/10 bg-white/5 text-white/20 cursor-not-allowed"
+                  : digit 
+                    ? "border-[#FF671E] bg-[#FF671E]/10 text-white" 
+                    : "border-white/20 bg-white/5 text-white/30",
+                !disabled && index === value.length && "border-[#FF671E] bg-[#FF671E]/5 shadow-lg shadow-[#FF671E]/20"
+              )}
+              animate={{
+                scale: !disabled && (isConfirmField ? hasUserInteractedWithConfirm : hasUserInteracted) && index === value.length ? [1, 1.05, 1] : 1,
+              }}
+              transition={{
+                duration: 0.3,
+                repeat: !disabled && (isConfirmField ? hasUserInteractedWithConfirm : hasUserInteracted) && index === value.length ? Infinity : 0,
+                repeatType: "reverse"
+              }}
+            >
+              {digit ? (showValue ? digit : '•') : ''}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -26,16 +139,23 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 export default function SetupPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [isFirstPinComplete, setIsFirstPinComplete] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [hasUserInteractedWithConfirm, setHasUserInteractedWithConfirm] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [token, setToken] = useState<string | null>(null);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [employeeInfo, setEmployeeInfo] = useState<{ nom: string; prenom: string } | null>(null);
+  const [showPin, setShowPin] = useState(false);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
+  
+  // Refs pour les inputs PIN
+  const pinInputRef = useRef<HTMLInputElement>(null);
+  const confirmPinInputRef = useRef<HTMLInputElement>(null);
 
   // Récupérer le token depuis l'URL
   useEffect(() => {
@@ -44,10 +164,16 @@ export default function SetupPasswordForm() {
       setToken(tokenFromUrl);
       validateToken(tokenFromUrl);
     } else {
+      // Afficher un toast d'erreur au lieu de bloquer le formulaire
       setStatus('error');
       setMessage('Token d\'activation manquant. Veuillez utiliser le lien fourni dans votre email/SMS.');
+      
+      // Redirection automatique vers la page de connexion après 3 secondes
+      setTimeout(() => {
+        router.push('/login?error=missing_token');
+      }, 3000);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   // Valider le token
   const validateToken = async (tokenToValidate: string) => {
@@ -78,10 +204,54 @@ export default function SetupPasswordForm() {
     }
   };
 
-  // Validation du mot de passe
-  const isPasswordValid = password.length >= 6;
-  const isConfirmPasswordValid = confirmPassword === password && password.length > 0;
-  const isFormValid = isPasswordValid && isConfirmPasswordValid && tokenValid;
+  // Validation du code PIN
+  const isPinValid = pin.length === 6 && /^\d{6}$/.test(pin);
+  const isConfirmPinValid = confirmPin === pin && pin.length === 6 && confirmPin.length === 6;
+  const isFormValid = isPinValid && isConfirmPinValid && tokenValid;
+
+
+  // Fonction pour gérer la saisie du PIN
+  const handlePinChange = (value: string, setter: (value: string) => void) => {
+    // Marquer que l'utilisateur a interagi
+    setHasUserInteracted(true);
+    
+    // Ne garder que les chiffres et limiter à 6 caractères
+    const numericValue = value.replace(/\D/g, '').slice(0, 6);
+    setter(numericValue);
+    
+    // Si c'est le premier PIN, vérifier s'il est complet
+    if (setter === setPin) {
+      setIsFirstPinComplete(numericValue.length === 6);
+      // Si le premier PIN n'est plus complet, vider le PIN de confirmation
+      if (numericValue.length < 6) {
+        setConfirmPin("");
+      }
+    }
+  };
+
+  // Fonction pour gérer le focus sur le premier PIN
+  const handleFirstPinFocus = () => {
+    setFocusedInput("pin");
+    setHasUserInteracted(true);
+  };
+
+  // Fonction pour gérer le focus sur le PIN de confirmation
+  const handleConfirmPinFocus = () => {
+    if (isFirstPinComplete) {
+      setFocusedInput("confirmPin");
+      setHasUserInteractedWithConfirm(true);
+    }
+  };
+
+  // Fonction pour gérer le clic sur le champ de confirmation (même s'il est désactivé)
+  const handleConfirmPinClick = () => {
+    if (isFirstPinComplete) {
+      setFocusedInput("confirmPin");
+      setHasUserInteractedWithConfirm(true);
+      confirmPinInputRef.current?.focus();
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +271,7 @@ export default function SetupPasswordForm() {
         },
         body: JSON.stringify({
           token: token,
-          password: password
+          pin: pin
         }),
       });
 
@@ -109,15 +279,15 @@ export default function SetupPasswordForm() {
 
       if (response.ok && data.success) {
         setStatus('success');
-        setMessage('Mot de passe défini avec succès ! Redirection vers la page de connexion...');
+        setMessage('Code PIN défini avec succès ! Redirection vers la page de connexion...');
         
         // Redirection vers la page de connexion après 3 secondes
         setTimeout(() => {
-          router.push('/login?message=password_setup_success');
+          router.push('/login?message=pin_setup_success');
         }, 3000);
       } else {
         setStatus('error');
-        setMessage(data.error || 'Erreur lors de la définition du mot de passe');
+        setMessage(data.error || 'Erreur lors de la définition du code PIN');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -138,32 +308,73 @@ export default function SetupPasswordForm() {
     );
   }
 
-  // Si le token est invalide, afficher un message d'erreur
+  // Si le token est invalide, afficher un toast d'erreur mais continuer à afficher le formulaire
   if (tokenValid === false) {
-    return (
-      <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
-        <div className="w-full max-w-sm relative z-10">
-          <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl">
-            <div className="text-center space-y-4">
-              <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
-              <h1 className="text-xl font-bold text-white">Lien invalide</h1>
-              <p className="text-white/60 text-sm">{message}</p>
-              <button
-                onClick={() => router.push('/login')}
-                className="w-full bg-[#FF671E] text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Retour à la connexion
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    // Le toast sera affiché dans le JSX principal
   }
 
   return (
     <div className="min-h-screen w-screen relative overflow-hidden flex items-center justify-center">
+      {/* Toast d'erreur pour token manquant */}
+      {status === 'error' && !token && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="absolute top-6 left-1/2 transform -translate-x-1/2 z-30"
+        >
+          <div className="bg-red-900/90 backdrop-blur-xl border border-red-700 rounded-xl px-6 py-4 shadow-2xl max-w-md">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <div>
+                <p className="text-red-100 font-medium text-sm">Token d'activation manquant</p>
+                <p className="text-red-200 text-xs mt-1">Redirection vers la page de connexion...</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Toast d'erreur pour token invalide */}
+      {tokenValid === false && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="absolute top-6 left-1/2 transform -translate-x-1/2 z-30"
+        >
+          <div className="bg-red-900/90 backdrop-blur-xl border border-red-700 rounded-xl px-6 py-4 shadow-2xl max-w-md">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <div>
+                <p className="text-red-100 font-medium text-sm">Lien invalide ou expiré</p>
+                <p className="text-red-200 text-xs mt-1">Veuillez utiliser un lien valide</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Toast d'erreur pour les erreurs de soumission */}
+      {status === 'error' && token && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="absolute top-6 left-1/2 transform -translate-x-1/2 z-30"
+        >
+          <div className="bg-red-900/90 backdrop-blur-xl border border-red-700 rounded-xl px-6 py-4 shadow-2xl max-w-md">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <div>
+                <p className="text-red-100 font-medium text-sm">Erreur lors de la définition</p>
+                <p className="text-red-200 text-xs mt-1">{message}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Bouton Retour */}
       <button
         type="button"
@@ -222,7 +433,7 @@ export default function SetupPasswordForm() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="w-full max-w-sm relative z-10"
+        className="w-full max-w-md relative z-10"
         style={{ perspective: 1500 }}
       >
         <motion.div className="relative">
@@ -283,7 +494,7 @@ export default function SetupPasswordForm() {
                   transition={{ delay: 0.2 }}
                   className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80"
                 >
-                  Définir votre mot de passe
+                  Définir votre code PIN
                 </motion.h1>
                 
                 <motion.p
@@ -293,190 +504,154 @@ export default function SetupPasswordForm() {
                   className="text-white/60 text-xs"
                 >
                   {employeeInfo 
-                    ? `Bonjour ${employeeInfo.prenom} ${employeeInfo.nom}, définissez votre mot de passe pour activer votre compte`
-                    : 'Définissez votre mot de passe pour activer votre compte'
+                    ? `Bonjour ${employeeInfo.prenom} ${employeeInfo.nom}, définissez votre code PIN à 6 chiffres pour activer votre compte`
+                    : 'Définissez votre code PIN à 6 chiffres pour activer votre compte'
                   }
                 </motion.p>
               </div>
 
-              {/* Messages de statut */}
-              <AnimatePresence>
-                {status === 'success' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 p-3 bg-green-900/20 border border-green-700 rounded-lg flex items-center"
-                  >
-                    <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    <p className="text-green-200 text-sm">{message}</p>
-                  </motion.div>
-                )}
+               {/* Messages de statut - seulement pour le succès */}
+               <AnimatePresence>
+                 {status === 'success' && (
+                   <motion.div
+                     initial={{ opacity: 0, y: -10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0, y: -10 }}
+                     className="mb-4 p-3 bg-green-900/20 border border-green-700 rounded-lg flex items-center"
+                   >
+                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                     <p className="text-green-200 text-sm">{message}</p>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
 
-                {status === 'error' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded-lg flex items-center"
-                  >
-                    <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
-                    <p className="text-red-200 text-sm">{message}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+               {/* Formulaire de définition de code PIN */}
+               <form onSubmit={handleSubmit} className="space-y-6">
+                 <motion.div className="space-y-6">
+                   {/* Code PIN */}
+                   <motion.div 
+                     className={`relative p-4 rounded-xl bg-white/5 border border-white/10 ${focusedInput === "pin" ? 'border-[#FF671E]/30 bg-[#FF671E]/5' : ''}`}
+                     whileFocus={{ scale: 1.01 }}
+                     whileTap={{ scale: 0.99 }}
+                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                     onClick={() => {
+                       setFocusedInput("pin");
+                       setHasUserInteracted(true);
+                       pinInputRef.current?.focus();
+                     }}
+                   >
+                     <PinInput
+                       ref={pinInputRef}
+                       value={pin}
+                       onChange={(value) => handlePinChange(value, setPin)}
+                       onFocus={handleFirstPinFocus}
+                       onBlur={() => setFocusedInput(null)}
+                       placeholder="Code PIN (6 chiffres)"
+                       showValue={showPin}
+                       onToggleShow={() => setShowPin(!showPin)}
+                       disabled={false}
+                       hasUserInteracted={hasUserInteracted}
+                     />
+                     
+                     {/* Indicateur de progression du PIN */}
+                     {pin && (
+                       <motion.div
+                         initial={{ opacity: 0, y: -5 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         className="mt-4 text-xs"
+                       >
+                         <div className="flex items-center gap-2">
+                           <div className="flex-1 bg-white/10 rounded-full h-1">
+                             <div 
+                               className={`h-1 rounded-full transition-all duration-300 ${
+                                 pin.length === 6 ? 'bg-green-400' : 'bg-orange-400'
+                               }`}
+                               style={{ width: `${(pin.length / 6) * 100}%` }}
+                             />
+                           </div>
+                           <span className={`text-xs ${
+                             pin.length === 6 ? 'text-green-400' : 'text-orange-400'
+                           }`}>
+                             {pin.length === 6 ? '✓' : `${6 - pin.length} chiffres restants`}
+                           </span>
+                         </div>
+                       </motion.div>
+                     )}
+                   </motion.div>
 
-              {/* Formulaire de définition de mot de passe */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <motion.div className="space-y-3">
-                  {/* Mot de passe */}
-                  <motion.div 
-                    className={`relative ${focusedInput === "password" ? 'z-10' : ''}`}
-                    whileFocus={{ scale: 1.02 }}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                    
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "password" ? 'text-white' : 'text-white/40'
-                      }`} />
-                      
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Nouveau mot de passe"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setFocusedInput("password")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
-                      />
-                      
-                      <div 
-                        onClick={() => setShowPassword(!showPassword)} 
-                        className="absolute right-3 cursor-pointer"
-                      >
-                        {showPassword ? (
-                          <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
-                        ) : (
-                          <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
-                        )}
-                      </div>
-                      
-                      {focusedInput === "password" && (
-                        <motion.div 
-                          layoutId="input-highlight"
-                          className="absolute inset-0 bg-white/5 -z-10"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        />
-                      )}
-                    </div>
-                    
-                    {/* Indicateur de force du mot de passe */}
-                    {password && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-2 text-xs"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-white/10 rounded-full h-1">
-                            <div 
-                              className={`h-1 rounded-full transition-all duration-300 ${
-                                password.length >= 6 ? 'bg-green-400' : 'bg-red-400'
-                              }`}
-                              style={{ width: `${Math.min((password.length / 6) * 100, 100)}%` }}
-                            />
-                          </div>
-                          <span className={`text-xs ${
-                            password.length >= 6 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {password.length >= 6 ? '✓' : `${6 - password.length} caractères restants`}
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </motion.div>
+                   {/* Confirmation du code PIN */}
+                   <motion.div 
+                     className={`relative p-4 rounded-xl bg-white/5 border border-white/10 transition-all duration-300 ${
+                       !isFirstPinComplete 
+                         ? 'opacity-50 cursor-not-allowed' 
+                         : focusedInput === "confirmPin" 
+                           ? 'border-[#FF671E]/30 bg-[#FF671E]/5' 
+                           : ''
+                     }`}
+                     whileFocus={isFirstPinComplete ? { scale: 1.01 } : {}}
+                     whileTap={isFirstPinComplete ? { scale: 0.99 } : {}}
+                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                     onClick={handleConfirmPinClick}
+                   >
+                     <PinInput
+                       ref={confirmPinInputRef}
+                       value={confirmPin}
+                       onChange={(value) => handlePinChange(value, setConfirmPin)}
+                       onFocus={handleConfirmPinFocus}
+                       onBlur={() => setFocusedInput(null)}
+                       placeholder="Confirmer le code PIN"
+                       showValue={showConfirmPin}
+                       onToggleShow={() => isFirstPinComplete && setShowConfirmPin(!showConfirmPin)}
+                       disabled={!isFirstPinComplete}
+                       hasUserInteracted={hasUserInteracted}
+                       hasUserInteractedWithConfirm={hasUserInteractedWithConfirm}
+                       isConfirmField={true}
+                       label="Confirmation du code PIN"
+                     />
+                     
+                     {/* Message d'aide ou indicateur de correspondance */}
+                     {!isFirstPinComplete ? (
+                       <motion.div
+                         initial={{ opacity: 0, y: -5 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         className="mt-4 text-xs text-white/40 text-center"
+                       >
+                         Complétez d'abord le code PIN ci-dessus
+                       </motion.div>
+                     ) : confirmPin ? (
+                       <motion.div
+                         initial={{ opacity: 0, y: -5 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         className="mt-4 text-xs"
+                       >
+                         <div className="flex items-center gap-2">
+                           <span className={`text-xs ${
+                             isConfirmPinValid ? 'text-green-400' : 'text-red-400'
+                           }`}>
+                             {isConfirmPinValid ? '✓ Codes PIN identiques' : '✗ Codes PIN différents'}
+                           </span>
+                         </div>
+                       </motion.div>
+                     ) : (
+                       <motion.div
+                         initial={{ opacity: 0, y: -5 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         className="mt-4 text-xs text-white/60 text-center"
+                       >
+                         Maintenant, confirmez votre code PIN
+                       </motion.div>
+                     )}
+                   </motion.div>
+                 </motion.div>
 
-                  {/* Confirmation du mot de passe */}
-                  <motion.div 
-                    className={`relative ${focusedInput === "confirmPassword" ? 'z-10' : ''}`}
-                    whileFocus={{ scale: 1.02 }}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <div className="absolute -inset-[0.5px] bg-gradient-to-r from-white/10 via-white/5 to-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                    
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <Shield className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "confirmPassword" ? 'text-white' : 'text-white/40'
-                      }`} />
-                      
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirmer le mot de passe"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        onFocus={() => setFocusedInput("confirmPassword")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
-                      />
-                      
-                      <div 
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
-                        className="absolute right-3 cursor-pointer"
-                      >
-                        {showConfirmPassword ? (
-                          <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
-                        ) : (
-                          <EyeClosed className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
-                        )}
-                      </div>
-                      
-                      {focusedInput === "confirmPassword" && (
-                        <motion.div 
-                          layoutId="input-highlight"
-                          className="absolute inset-0 bg-white/5 -z-10"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        />
-                      )}
-                    </div>
-                    
-                    {/* Indicateur de correspondance */}
-                    {confirmPassword && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-2 text-xs"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs ${
-                            isConfirmPasswordValid ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {isConfirmPasswordValid ? '✓ Mots de passe identiques' : '✗ Mots de passe différents'}
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </motion.div>
-                </motion.div>
 
                 {/* Bouton de soumission */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  disabled={!isFormValid || status === 'loading' || status === 'success'}
-                  className="w-full relative group/button mt-5"
+                  disabled={!isFormValid || status === 'loading' || status === 'success' || !tokenValid}
+                  className="w-full relative group/button mt-6"
                 >
                   <div className="absolute inset-0 bg-white/10 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
                   
@@ -505,7 +680,7 @@ export default function SetupPasswordForm() {
                           className="flex items-center justify-center gap-1"
                         >
                           <CheckCircle className="w-4 h-4" />
-                          <span className="text-sm font-medium">Mot de passe défini !</span>
+                          <span className="text-sm font-medium">Code PIN défini !</span>
                         </motion.div>
                       ) : (
                         <motion.span
@@ -515,7 +690,7 @@ export default function SetupPasswordForm() {
                           exit={{ opacity: 0 }}
                           className="flex items-center justify-center gap-1 text-sm font-medium"
                         >
-                          Définir le mot de passe
+                          Définir le code PIN
                           <ArrowRight className="w-3 h-3 group-hover/button:translate-x-1 transition-transform duration-300" />
                         </motion.span>
                       )}
@@ -531,7 +706,7 @@ export default function SetupPasswordForm() {
                   transition={{ delay: 0.5 }}
                 >
                   <Shield className="w-4 h-4 mx-auto mb-2 text-white/40" />
-                  <p>Votre mot de passe doit contenir au moins 6 caractères</p>
+                  <p>Votre code PIN doit contenir exactement 6 chiffres</p>
                   <p className="mt-1">Ce lien ne peut être utilisé qu'une seule fois</p>
                 </motion.div>
               </form>
