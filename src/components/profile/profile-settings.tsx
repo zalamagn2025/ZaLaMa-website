@@ -25,7 +25,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useProfileImageUpload } from "@/hooks/useProfileImageUpload";
@@ -78,6 +78,8 @@ interface SecurityAlertPreference {
 
 export function ProfileSettings({ onClose, userData }: { onClose: () => void; userData?: UserData }) {
   const router = useRouter();
+  const pathname = usePathname();
+
   const { logout, employee, refreshProfile } = useEmployeeAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveButton, setShowSaveButton] = useState(false);
@@ -86,6 +88,13 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     language: 'fr',
     darkMode: theme === 'dark',
   });
+
+  // Précharger la page de changement de mot de passe pour réduire la latence de navigation
+  useEffect(() => {
+    try {
+      router.prefetch('/auth/change-password');
+    } catch {}
+  }, [router]);
 
   // États pour la modification de l'image de profil
   const [showImageUpload, setShowImageUpload] = useState(false);
@@ -468,9 +477,27 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
     }
   };
 
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   const handlePasswordChange = () => {
-    onClose();
-    router.push('/auth/change-password');
+    // Ne pas fermer la modale ici pour laisser visible le spinner
+    console.log('🔁 handlePasswordChange: start redirection');
+    setIsChangingPassword(true);
+    // Délayer légèrement la navigation pour laisser le temps au spinner d'apparaître
+    setTimeout(() => {
+      console.log('➡️ Navigating to /auth/change-password (full reload)...');
+      if (typeof window !== 'undefined') {
+        window.location.assign('/auth/change-password');
+      } else {
+        router.push('/auth/change-password');
+      }
+    }, 100);
+    // Mécanisme de secours: fermer la modale au bout de 2.5s au cas où
+    setTimeout(() => {
+      console.log('⏱️ Fallback close (timeout) if still redirecting');
+      setIsChangingPassword(false);
+      onClose();
+    }, 2500);
   };
 
   const handleLogout = async () => {
@@ -514,11 +541,23 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
+    // Pendant la redirection, empêcher la fermeture
+    if (isChangingPassword) return;
     // Fermer uniquement si on clique sur le fond
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
+
+  // Fermer automatiquement la modale quand la route a changé vers la page de changement de mot de passe
+  useEffect(() => {
+    console.log('🔎 pathname changed:', pathname, 'isChangingPassword=', isChangingPassword);
+    if (isChangingPassword && pathname === '/auth/change-password') {
+      onClose();
+      // Sécurité: réinitialiser l'état
+      setIsChangingPassword(false);
+    }
+  }, [pathname, isChangingPassword, onClose]);
 
   // Mettre à jour l'état local quand le thème change
   useEffect(() => {
@@ -572,8 +611,9 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                 </div>
               </div>
               <button 
-                onClick={onClose}
-                className="p-1 rounded-full hover:bg-white/20 transition-colors"
+                onClick={() => { if (!isChangingPassword) onClose(); }}
+                disabled={isChangingPassword}
+                className={`p-1 rounded-full transition-colors ${isChangingPassword ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/20'}`}
                 aria-label="Fermer"
               >
                 <IconX className="h-5 w-5 text-white" />
@@ -799,11 +839,21 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
                 
                 <Button 
                   variant="outline" 
-                  className={`w-full ${theme === 'dark' ? 'border-[#1A2B6B] text-white hover:bg-[#1A2B6B]' : 'border-gray-300 text-gray-700 hover:bg-gray-100'} mt-4`}
+                  className={`w-full ${theme === 'dark' ? 'border-[#1A2B6B] text-white hover:bg-[#1A2B6B]' : 'border-gray-300 text-gray-700 hover:bg-gray-100'} mt-4 relative`}
                   onClick={handlePasswordChange}
+                  disabled={isChangingPassword}
                 >
-                  <IconLock className="w-4 h-4 mr-2" />
-                  Changer le mot de passe
+                  {isChangingPassword ? (
+                    <div className="flex items-center justify-center w-full">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                      <span>Redirection en cours...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <IconLock className="w-4 h-4 mr-2" />
+                      Changer le mot de passe
+                    </>
+                  )}
                 </Button>
 
                 <Button 
