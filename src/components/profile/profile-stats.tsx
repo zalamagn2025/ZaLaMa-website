@@ -5,8 +5,8 @@ import { IconArrowUpRight, IconCreditCard, IconReceipt, IconSparkles, IconTrendi
 import { motion, useAnimation } from "framer-motion"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import { PasswordVerificationModal } from "@/components/ui/password-verification-modal"
-import { usePasswordVerification } from "@/hooks/usePasswordVerification"
+import { PinVerificationModal } from "@/components/ui/pin-verification-modal"
+import { usePinVerification } from "@/hooks/usePinVerification"
 
 
 // Type pour les demandes d'avance
@@ -251,21 +251,23 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     }
   }, [financialData])
   
-  // Hook pour la vérification par mot de passe
+  // Hook pour la vérification par PIN
   const {
     isModalOpen,
     isVerified,
     isLoading: isVerifying,
-    verifyPassword,
+    verifyPin,
     openVerificationModal,
     closeVerificationModal,
     resetVerification
-  } = usePasswordVerification({
+  } = usePinVerification({
     onSuccess: () => {
       // La vérification a réussi, on peut afficher les informations
+      console.log('✅ Vérification PIN réussie - affichage des informations sensibles');
     },
     onError: (error) => {
       // Gérer l'erreur si nécessaire
+      console.error('❌ Erreur de vérification PIN:', error);
     }
   });
 
@@ -572,16 +574,16 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
         ))}
       </div>
       
-      {/* Modal de vérification par mot de passe */}
-      <PasswordVerificationModal
+      {/* Modal de vérification par PIN */}
+      <PinVerificationModal
         isOpen={isModalOpen}
         onClose={closeVerificationModal}
         onSuccess={() => {
           // La vérification a réussi
         }}
-        onVerifyPassword={verifyPassword}
-        title="Vérification du mot de passe"
-        message="Entrez votre mot de passe pour afficher votre salaire et informations financières"
+        onVerifyPin={verifyPin}
+        title="Vérification du code PIN"
+        message="Entrez votre code PIN à 6 chiffres pour afficher votre salaire et informations financières"
       />
     </div>
   )
@@ -839,7 +841,7 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
                     >
                       <div className="flex items-center gap-1">
                         <IconShieldLock className="h-4 w-4 text-[#FF671E]" />
-                        <span className="text-xs text-gray-400 font-medium">Cliquez pour vérifier</span>
+                        <span className="text-xs text-gray-400 font-medium">Cliquez pour entrer votre code PIN</span>
                       </div>
                     </motion.div>
                   )}

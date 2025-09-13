@@ -3,6 +3,7 @@
 import { UserWithEmployeData } from "@/types/employe"
 import { RequestType, REQUEST_TYPES } from "@/types/salary-advance"
 import { IconCheck, IconCreditCard, IconEye, IconEyeOff, IconInfoCircle, IconLock, IconShieldCheck, IconX, IconCalendar, IconCalculator } from "@tabler/icons-react"
+import PinInput from "@/components/common/PinInput"
 import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -105,9 +106,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [financialData, setFinancialData] = useState<any>(null)
   
   // États de confirmation
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [passwordError, setPasswordError] = useState("")
+  const [pin, setPin] = useState("")
+  const [showPin, setShowPin] = useState(false)
+  const [pinError, setPinError] = useState("")
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
   
   const router = useRouter()
 
@@ -234,7 +236,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         salaireNet: salaireNet,
         avanceActive: avanceActive, // Total des avances actives depuis l'Edge Function
         salaireRestant: salaireRestant, // Salaire restant depuis l'Edge Function
-                 maxAvanceMonthly: Math.floor(salaireNet * 0.30), // 30% max pour auto-approbation
+        maxAvanceMonthly: Math.floor(salaireNet * 0.30), // 30% max pour auto-approbation
         totalAvancesApprouveesMonthly: avanceActive, // Total des avances approuvées depuis l'Edge Function
         avanceDisponible: avanceDisponible, // Avance disponible depuis l'Edge Function
         workingDaysElapsed: workingDaysElapsed,
@@ -401,15 +403,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     setCurrentStep('confirmation')
   }
 
-  // Étape 3: Validation du mot de passe et soumission
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
+  // Étape 3: Validation du PIN et soumission
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setPasswordError("")
+    setPinError("")
 
     try {
-      if (!password.trim()) {
-        throw new Error("Veuillez saisir votre mot de passe")
+      if (!pin.trim() || pin.length !== 6) {
+        throw new Error("Veuillez saisir un code PIN à 6 chiffres")
       }
 
       const validation = validateForm()
@@ -428,7 +430,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         dateCreation: new Date().toISOString(),
         statut: 'EN_ATTENTE',
         entrepriseId: user.partenaireId,
-        password: password
+        password: pin // Envoyer le PIN comme "password" pour la compatibilité backend
       }
 
       console.log('📤 Données envoyées à l\'API:', advanceRequest)
@@ -457,11 +459,34 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       }, 3000)
 
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite')
+      setPinError(err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite')
     } finally {
       setLoading(false)
     }
   }
+
+  // Fonctions de gestion du PIN
+  const handlePinChange = (value: string) => {
+    // Filtrer pour ne garder que les chiffres
+    const numericValue = value.replace(/\D/g, '');
+    // Limiter à 6 chiffres
+    const limitedValue = numericValue.slice(0, 6);
+    setPin(limitedValue);
+    setHasUserInteracted(true);
+    setPinError(''); // Effacer l'erreur quand l'utilisateur tape
+  };
+
+  const handlePinFocus = () => {
+    setHasUserInteracted(true);
+  };
+
+  const handlePinBlur = () => {
+    // Blur géré par le composant PinInput
+  };
+
+  const togglePinVisibility = () => {
+    setShowPin(!showPin);
+  };
 
   // Retour à l'étape précédente
   const goBack = () => {
@@ -983,13 +1008,13 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                   </motion.div>
                 )}
 
-                {/* Étape 3: Confirmation par mot de passe */}
+                {/* Étape 3: Confirmation par PIN */}
                 {currentStep === 'confirmation' && (
                   <motion.form
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    onSubmit={handlePasswordSubmit}
+                    onSubmit={handlePinSubmit}
                     autoComplete="off" // désactive l'autocomplétion au niveau du formulaire
                     className="space-y-6"
                   >
@@ -1002,45 +1027,33 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <IconLock className="h-8 w-8 text-white" />
                       </motion.div>
                       <h3 className="text-xl font-semibold text-white mb-2">Confirmation finale</h3>
-                      <p className="text-sm text-gray-300">Saisissez votre mot de passe pour confirmer la demande</p>
+                      <p className="text-sm text-gray-300">Saisissez votre code PIN à 6 chiffres pour confirmer la demande</p>
                     </div>
 
                     <div className="space-y-4">
-                      <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-                          Mot de passe
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            id="password"
-                            name="confirmPassword" // nom modifié pour ne pas déclencher l'autoremplissage
-                            autoComplete="new-password" // empêche le navigateur de proposer un mot de passe enregistré
-                            value={password}
-                            onChange={(e) => {
-                              setPassword(e.target.value)
-                              setPasswordError("")
-                            }}
-                            className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white pr-12"
-                            placeholder="Votre mot de passe"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3 text-gray-400 hover:text-white transition-colors"
-                          >
-                            {showPassword ? <IconEyeOff className="h-5 w-5" /> : <IconEye className="h-5 w-5" />}
-                          </button>
-                        </div>
-                        {passwordError && (
-                          <motion.p 
-                            initial={{ opacity: 0, y: -5 }}
+                      <div className="p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
+                        <PinInput
+                          value={pin}
+                          onChange={handlePinChange}
+                          onFocus={handlePinFocus}
+                          onBlur={handlePinBlur}
+                          placeholder="Code PIN (6 chiffres)"
+                          showValue={showPin}
+                          onToggleShow={togglePinVisibility}
+                          hasUserInteracted={hasUserInteracted}
+                          label="Code PIN de sécurité"
+                          disabled={loading}
+                        />
+                        
+                        {pinError && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-xs text-red-400 mt-1"
+                            className="mt-4 p-3 bg-red-900/20 border border-red-700 rounded-lg flex items-center gap-2"
                           >
-                            {passwordError}
-                          </motion.p>
+                            <div className="w-2 h-2 bg-red-400 rounded-full" />
+                            <p className="text-red-200 text-sm">{pinError}</p>
+                          </motion.div>
                         )}
                       </div>
 
@@ -1069,7 +1082,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || pin.length !== 6}
                         className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 disabled:opacity-70 transition-all duration-200 relative overflow-hidden"
                       >
                         {loading ? (
