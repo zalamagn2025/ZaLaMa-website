@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
 
     console.log('🔐 Demande de réinitialisation pour:', email);
 
-    // URL de redirection pour la réinitialisation
-    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`;
+    // URL de redirection pour la réinitialisation (alignée avec la page existante)
+    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`;
 
     // Utiliser Supabase Auth pour envoyer l'email de réinitialisation
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

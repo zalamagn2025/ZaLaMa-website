@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
+import { Resend } from 'resend';
 import crypto from 'crypto';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// Initialiser Resend pour l'envoi d'emails
+const resendApiKey = process.env.RESEND_API_KEY;
+const emailFrom = process.env.EMAIL_FROM || 'noreply@zalamagn.com';
+const adminEmail = process.env.ADMIN_EMAIL;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,6 +92,58 @@ export async function POST(request: NextRequest) {
       expiresAt: expiresAt,
       tokenHash: resetTokenHash.substring(0, 10) + '...'
     });
+
+    // Envoyer l'email si Resend est configuré
+    if (!resendApiKey) {
+      console.warn('⚠️ RESEND_API_KEY manquante: aucun email ne sera envoyé');
+    }
+    if (!process.env.EMAIL_FROM) {
+      console.warn('⚠️ EMAIL_FROM manquant, utilisation de la valeur par défaut:', emailFrom);
+    }
+    if (resend) {
+      try {
+        const subject = 'Réinitialisation de votre mot de passe ZaLaMa';
+        const html = `
+          <div style="font-family: Arial, sans-serif; color: #0F172A;">
+            <h2>Réinitialisation du mot de passe</h2>
+            ${userName ? `<p>Bonjour ${userName},</p>` : ''}
+            <p>Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte.</p>
+            <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe&nbsp;:</p>
+            <p style="margin: 24px 0;">
+              <a href="${resetLink}" style="background: #FF671E; color: white; padding: 10px 16px; text-decoration: none; border-radius: 6px; font-weight: 600;">Réinitialiser mon mot de passe</a>
+            </p>
+            <p>Ou copiez-collez ce lien dans votre navigateur&nbsp;:</p>
+            <p style="word-break: break-all; color: #334155;">${resetLink}</p>
+            <p style="font-size: 12px; color: #64748B;">Ce lien expire dans 1 heure. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
+          </div>
+        `;
+        const text = `Réinitialisation du mot de passe\n\n${userName ? `Bonjour ${userName},\n\n` : ''}Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte.\n\nLien: ${resetLink}\n\nCe lien expire dans 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.`;
+
+        const sendResult = await resend.emails.send({
+          from: `ZaLaMa <${emailFrom}>`,
+          to: email,
+          bcc: adminEmail ? [adminEmail] : undefined,
+          replyTo: adminEmail || undefined,
+          subject,
+          html,
+          text,
+          headers: {
+            'X-Entity-Ref-ID': tokenId,
+          },
+        });
+
+        console.log('📧 Email de réinitialisation envoyé via Resend:', {
+          id: sendResult.data?.id,
+          to: email,
+          bcc: adminEmail || 'none',
+        });
+      } catch (sendError) {
+        console.error('❌ Échec envoi email via Resend:', sendError);
+        // On continue tout de même à répondre succès pour ne pas révéler d'info sensible
+      }
+    } else {
+      console.warn('⚠️ RESEND_API_KEY non configurée, aucun email envoyé. Lien de reset généré:', resetLink);
+    }
 
     return NextResponse.json({
       message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.',
