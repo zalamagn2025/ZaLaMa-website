@@ -7,7 +7,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📝 Création d\'une nouvelle demande d\'avance...');
     
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -31,12 +30,8 @@ export async function POST(request: NextRequest) {
     // Récupérer les données de la demande
     const requestData = await request.json();
     
-    console.log('📋 Données de la demande:', requestData);
     
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-demands/create`;
-    
-    console.log('🔍 Appel Edge Function employee-demands/create...');
-    console.log('📍 URL:', edgeFunctionUrl);
     
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
@@ -50,7 +45,6 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
     
-    console.log('📋 Réponse Edge Function employee-demands/create:', response.status, result);
     
     if (!response.ok) {
       console.error('❌ Erreur Edge Function employee-demands/create:', response.status, result);
@@ -64,7 +58,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Demande créée avec succès');
     return createCorsResponse(result);
 
   } catch (error: unknown) {

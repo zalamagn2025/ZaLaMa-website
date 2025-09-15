@@ -1,4 +1,5 @@
 import { CreateAvisRequest, Avis, AvisListResponse, AvisResponse, LimitInfo } from '@/types/avis';
+import { debug, info, warn, error } from '@/lib/logger';
 
 export interface AvisQuery {
   page?: number;
@@ -98,7 +99,7 @@ export class AvisService {
         stats: result.stats
       };
     } catch (error) {
-      console.error('Erreur lors de la récupération des avis:', error);
+      error('Erreur lors de la récupération des avis:', error);
       throw error;
     }
   }
@@ -123,7 +124,7 @@ export class AvisService {
         limitInfo: result.limitInfo
       };
     } catch (error) {
-      console.error('Erreur lors de la création de l\'avis:', error);
+      error('Erreur lors de la création de l\'avis:', error);
       throw error;
     }
   }
@@ -144,7 +145,7 @@ export class AvisService {
       const result = await response.json();
       return result.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération de l\'avis:', error);
+      error('Erreur lors de la récupération de l\'avis:', error);
       throw error;
     }
   }
@@ -166,7 +167,7 @@ export class AvisService {
       const result = await response.json();
       return result.data;
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'avis:', error);
+      error('Erreur lors de la mise à jour de l\'avis:', error);
       throw error;
     }
   }
@@ -184,7 +185,7 @@ export class AvisService {
         throw new Error(errorData.error || 'Erreur lors de la suppression de l\'avis');
       }
     } catch (error) {
-      console.error('Erreur lors de la suppression de l\'avis:', error);
+      error('Erreur lors de la suppression de l\'avis:', error);
       throw error;
     }
   }
@@ -205,7 +206,7 @@ export class AvisService {
       const result = await response.json();
       return result.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
+      error('Erreur lors de la récupération des statistiques:', error);
       throw error;
     }
   }
@@ -234,7 +235,7 @@ export class AvisService {
         canPost: result.data.length < 3
       };
     } catch (error) {
-      console.error('Erreur lors de la vérification de la limite:', error);
+      error('Erreur lors de la vérification de la limite:', error);
       throw error;
     }
   }

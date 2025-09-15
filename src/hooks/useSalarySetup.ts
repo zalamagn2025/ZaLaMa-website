@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useEmployeeAuth } from '@/contexts/EmployeeAuthContext';
+import { debug, info, warn, error } from '@/lib/logger';
 
 interface UserInfo {
   id: string;
@@ -45,7 +46,7 @@ export function useSalarySetup() {
     setError(null);
 
     try {
-      console.log('🔍 Vérification du besoin de configuration du salaire via Edge Function...');
+      debug('🔍 Vérification du besoin de configuration du salaire via Edge Function...');
       const response = await fetch(`${EDGE_FUNCTION_URL}/check`, {
         method: 'GET',
         headers: {
@@ -55,19 +56,19 @@ export function useSalarySetup() {
       });
 
       const data = await response.json();
-      console.log('📊 Réponse Edge Function /check:', data);
+      debug('📊 Réponse Edge Function /check:', data);
 
       if (response.ok && data.success) {
         setNeedsSetup(data.needsSetup);
         setUserInfo(data.user);
-        console.log('✅ Vérification terminée - needsSetup:', data.needsSetup);
+        debug('✅ Vérification terminée - needsSetup:', data.needsSetup);
       } else {
         setError(data.error || 'Erreur lors de la vérification');
         setNeedsSetup(false);
-        console.error('❌ Erreur lors de la vérification:', data.error);
+        error('❌ Erreur lors de la vérification:', data.error);
       }
     } catch (err) {
-      console.error('💥 Erreur lors de la vérification du salaire:', err);
+      error('💥 Erreur lors de la vérification du salaire:', err);
       setError('Erreur de connexion');
       setNeedsSetup(false);
     } finally {
@@ -89,7 +90,7 @@ export function useSalarySetup() {
     setError(null);
 
     try {
-      console.log('🔧 Configuration du salaire via Edge Function...', salaryData);
+      debug('🔧 Configuration du salaire via Edge Function...', salaryData);
       const response = await fetch(`${EDGE_FUNCTION_URL}/configure`, {
         method: 'POST',
         headers: {
@@ -100,7 +101,7 @@ export function useSalarySetup() {
       });
 
       const data = await response.json();
-      console.log('📊 Réponse Edge Function /configure:', data);
+      debug('📊 Réponse Edge Function /configure:', data);
 
       if (response.ok && data.success) {
         setNeedsSetup(false);
@@ -111,15 +112,15 @@ export function useSalarySetup() {
             currentSalary: data.employee.salaire_net
           });
         }
-        console.log('✅ Salaire configuré avec succès');
+        debug('✅ Salaire configuré avec succès');
         return true;
       } else {
         setError(data.error || 'Erreur lors de la configuration');
-        console.error('❌ Erreur lors de la configuration:', data.error);
+        error('❌ Erreur lors de la configuration:', data.error);
         return false;
       }
     } catch (err) {
-      console.error('💥 Erreur lors de la configuration du salaire:', err);
+      error('💥 Erreur lors de la configuration du salaire:', err);
       setError('Erreur de connexion');
       return false;
     } finally {
@@ -130,15 +131,15 @@ export function useSalarySetup() {
   // Vérifier automatiquement au montage du composant
   useEffect(() => {
     if (employee && isAuthenticated) {
-      console.log('🔄 Hook useSalarySetup - Vérification automatique...');
-      console.log('   - employee.user_id:', employee.user_id);
-      console.log('   - employee.salaire_net:', employee.salaire_net);
-      console.log('   - employee.poste:', employee.poste);
+      debug('🔄 Hook useSalarySetup - Vérification automatique...');
+      debug('   - employee.user_id:', employee.user_id);
+      debug('   - employee.salaire_net:', employee.salaire_net);
+      debug('   - employee.poste:', employee.poste);
       
       // Utiliser directement l'Edge Function pour vérifier
       checkSalarySetup();
     } else {
-      console.log('🔄 Hook useSalarySetup - Pas d\'employé connecté');
+      debug('🔄 Hook useSalarySetup - Pas d\'employé connecté');
       setNeedsSetup(false);
     }
   }, [employee, isAuthenticated]);

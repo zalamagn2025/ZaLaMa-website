@@ -81,7 +81,7 @@ export function AdCarousel() {
               console.error(`Erreur de chargement: ${ad.src}`);
               e.currentTarget.style.display = 'none';
             }}
-            onLoadingComplete={() => console.log(`Image ${ad.src} chargée`)}
+            
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent" />
         </motion.div>

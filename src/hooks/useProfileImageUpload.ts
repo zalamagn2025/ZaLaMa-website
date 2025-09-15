@@ -29,70 +29,33 @@ export function useProfileImageUpload(
   const [imageError, setImageError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    console.log('🔍 useProfileImageUpload Debug:', {
-      userData: userData ? 'Présent' : 'Absent',
-      loading,
-      userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée',
-      userDataValues: userData ? {
-        employeId: userData.employeId || userData.id,
-        nom: userData.nom,
-        prenom: userData.prenom,
-        user_id: userData.user_id,
-        id: userData.id
-      } : 'Aucune donnée',
-    });
-
-    // Note: Le nouveau contexte EmployeeAuthContext gère automatiquement le chargement des données
-    if (!userData && !loading) {
-      console.log('⚠️ Aucune donnée utilisateur disponible');
-    }
-  }, [userData, loading]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
-    console.log('🔍 Debug handleAvatarChange:', {
-      file: file ? {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        sizeMB: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-      } : 'Aucun fichier sélectionné',
-    });
-
     if (!file) {
-      console.log('❌ Aucun fichier sélectionné');
       return;
     }
 
     if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) {
-      console.log('❌ Format non supporté:', file.type);
       setImageError('Format non supporté. Veuillez utiliser une image au format JPG, PNG ou WebP.');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      console.log('❌ Fichier trop volumineux:', file.size);
       setImageError('L\'image est trop volumineuse. Taille maximale : 5MB.');
       return;
     }
 
-    console.log('✅ Fichier validé, mise à jour des états');
     setImageError(null);
     setAvatarFile(file);
     const url = URL.createObjectURL(file);
     setAvatarPreview(url);
 
-    console.log('✅ États mis à jour:', {
-      avatarFile: 'Fichier défini',
-      avatarPreview: 'URL créée',
-    });
   };
 
   const handleImageUpload = async () => {
     if (loading) {
-      console.log('⏳ Attente du chargement des données...');
       setImageError('Veuillez patienter pendant le chargement des données...');
       return;
     }
@@ -112,8 +75,6 @@ export function useProfileImageUpload(
     setImageError(null);
 
     try {
-      console.log('🚀 Début de l\'upload de l\'image de profil...');
-
       // ✅ Utiliser l'API route via employeeAuthService
       const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token');
       if (!accessToken) {
@@ -124,7 +85,6 @@ export function useProfileImageUpload(
       const result = await employeeAuthService.uploadPhoto(accessToken, avatarFile);
 
       if (result.success) {
-        console.log('✅ Upload réussi via API route');
         toast.success('Photo de profil mise à jour avec succès !');
         setAvatarFile(null);
         

@@ -203,7 +203,6 @@ const generateCardImage = async (element: HTMLElement | null, requestData?: Disp
         properties.forEach((prop) => {
           const value = computedStyle.getPropertyValue(prop);
           if (value && (value.toLowerCase().includes('oklab') || value.toLowerCase().includes('oklch'))) {
-            console.log(`Couleur problématique détectée dans ${prop} pour`, el, `:`, value);
             try {
               const color = Color(value);
               el.style.setProperty(prop, color.rgb().string(), 'important');

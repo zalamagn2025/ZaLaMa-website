@@ -68,7 +68,6 @@ export function FeedbackSection() {
         setFeedbackType(null)
         setIsSubmitted(true)
         
-        console.log('✅ Avis créé avec SWR, mise à jour optimiste en cours...')
         
         // Réinitialiser le message de succès après 3 secondes
         setTimeout(() => {

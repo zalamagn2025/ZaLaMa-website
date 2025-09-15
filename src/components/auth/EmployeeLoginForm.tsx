@@ -150,13 +150,10 @@ export default function EmployeeLoginForm() {
 
   // Fonction pour basculer vers le mode mot de passe oublié
   const switchToForgotPassword = () => {
-    console.log('switchToForgotPassword called');
-    console.log('Current email:', email);
     setForgotPasswordEmail(email); // Pré-remplir avec l'email actuel
     setIsForgotPasswordMode(true);
     setForgotPasswordStatus('idle');
     setForgotPasswordMessage('');
-    console.log('State updated, isForgotPasswordMode should be true');
   };
 
   // Fonction pour revenir au mode connexion
@@ -177,7 +174,6 @@ export default function EmployeeLoginForm() {
 
   // Debug: Surveiller les changements d'état
   useEffect(() => {
-    console.log('isForgotPasswordMode changed:', isForgotPasswordMode);
   }, [isForgotPasswordMode]);
 
   // Fonction pour obtenir l'icône appropriée
@@ -521,13 +517,11 @@ export default function EmployeeLoginForm() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Button clicked!');
                         switchToForgotPassword();
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          console.log('Button pressed with keyboard!');
                           switchToForgotPassword();
                         }
                       }}

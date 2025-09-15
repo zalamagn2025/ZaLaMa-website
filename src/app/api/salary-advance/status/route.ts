@@ -44,8 +44,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`🔍 Recherche des avances actives pour l'employé: ${employeId}`)
-
     // Récupérer les avances actives (approuvées ou en cours de paiement)
     const { data: avancesActives, error: avancesError } = await supabase
       .from('salary_advance_requests')
@@ -72,13 +70,9 @@ export async function GET(request: NextRequest) {
       const montantRembourse = avance.montant_rembourse || 0
       const montantRestant = montantDemande - montantRembourse
       
-      console.log(`📊 Avance: ${montantDemande} GNF - Remboursé: ${montantRembourse} GNF = Restant: ${montantRestant} GNF`)
       
       return total + Math.max(0, montantRestant) // Éviter les valeurs négatives
     }, 0)
-
-    console.log(`💰 Total des avances actives pour l'employé ${employeId}: ${totalAvanceActive} GNF`)
-    console.log(`📋 Nombre d'avances actives trouvées: ${avancesActives?.length || 0}`)
 
     return NextResponse.json({
       success: true,

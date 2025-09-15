@@ -13,14 +13,11 @@ export function usePasswordVerification({ onSuccess, onError }: UsePasswordVerif
   const [isLoading, setIsLoading] = useState(false);
 
     const verifyPassword = useCallback(async (password: string) => {
-    console.log('🔐 Début de la vérification du mot de passe...');
     setIsLoading(true);
 
     try {
       // Récupérer le token d'accès des employés
-      const accessToken = localStorage.getItem('employee_access_token');
-      console.log('🔑 Token d\'accès trouvé:', accessToken ? 'Oui' : 'Non');
-      
+      const accessToken = localStorage.getItem('employee_access_token');   
       // Préparer les headers
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -29,7 +26,6 @@ export function usePasswordVerification({ onSuccess, onError }: UsePasswordVerif
       // Ajouter le token Bearer si disponible
       if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
-        console.log('🔑 Token Bearer ajouté aux headers');
       }
       
       // Utiliser l'API route pour la vérification du mot de passe
@@ -42,20 +38,15 @@ export function usePasswordVerification({ onSuccess, onError }: UsePasswordVerif
       const result = await response.json();
 
       if (result.success) {
-        console.log('✅ Vérification réussie!');
         setIsVerified(true);
-        console.log('🔓 isVerified mis à true');
         onSuccess?.();
         return true;
       } else {
-        console.log('❌ Vérification échouée:', result.message);
         throw new Error(result.message || 'Erreur de vérification');
       }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.log('❌ Erreur capturée:', errorMessage);
-      onError?.(errorMessage);
       return false;
     } finally {
       setIsLoading(false);
@@ -63,7 +54,6 @@ export function usePasswordVerification({ onSuccess, onError }: UsePasswordVerif
   }, [onSuccess, onError]);
 
   const openVerificationModal = useCallback(() => {
-    console.log('🚪 Ouverture du modal de vérification...');
     setIsModalOpen(true);
   }, []);
 
@@ -72,7 +62,6 @@ export function usePasswordVerification({ onSuccess, onError }: UsePasswordVerif
   }, []);
 
   const resetVerification = useCallback(() => {
-    console.log('🔄 Réinitialisation de la vérification');
     setIsVerified(false);
   }, []);
 

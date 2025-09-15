@@ -217,29 +217,7 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   const displayEmail = employeeData?.email || 'Email non disponible';
   const displayInitial = displayName.charAt(0).toUpperCase();
 
-  // Debug: Afficher les données de l'employé connecté
-  useEffect(() => {
-    console.log('🔍 ProfileSettings - Données employé connecté:');
-    console.log('userData reçu:', userData);
-    console.log('employee:', employee);
-    console.log('employeeData:', employeeData);
-    console.log('displayName:', displayName);
-    console.log('displayEmail:', displayEmail);
-    console.log('poste:', employeeData?.poste);
-    console.log('role:', employeeData?.role);
-    console.log('user_id:', employeeData?.user_id);
-    console.log('uid:', userData?.uid);
-    console.log('id:', userData?.id);
-  }, [userData, employee, employeeData, displayName, displayEmail]);
 
-  // Mettre à jour l'aperçu quand les données du contexte changent
-  useEffect(() => {
-    const newPhotoURL = employee?.photo_url || userData?.photoURL;
-    if (newPhotoURL && newPhotoURL !== avatarPreview) {
-      console.log('🔄 Mise à jour de l\'aperçu avec la nouvelle photo:', newPhotoURL);
-      // resetUpload(); // This will reset the file input, which is not ideal for preview
-    }
-  }, [employee?.photo_url, userData?.photoURL, avatarPreview]);
 
   // Nettoyer l'URL de l'aperçu lors du démontage du composant
   useEffect(() => {
@@ -321,11 +299,8 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
         return false;
       }
 
-      console.log('📝 Tentative de mise à jour du profil:', profileData);
-
       const result = await employeeAuthService.updateProfile(accessToken, profileData);
       
-      console.log('📥 Résultat de la mise à jour:', result);
       
       if (result.success) {
         toast.success('Profil mis à jour avec succès');
@@ -350,11 +325,9 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
         return false;
       }
 
-      console.log('📸 Tentative d\'upload de photo:', photoFile.name);
 
       const result = await employeeAuthService.uploadPhoto(accessToken, photoFile);
       
-      console.log('📥 Résultat de l\'upload:', result);
       
       if (result.success) {
         toast.success('Photo uploadée avec succès');
@@ -395,7 +368,6 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
 
       // ✅ Upload de photo si une nouvelle photo a été sélectionnée
       if (avatarFile) {
-        console.log('📸 Upload de photo détecté...');
         const photoSuccess = await handleUploadPhoto(avatarFile);
         if (!photoSuccess) {
           success = false;
@@ -404,7 +376,6 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
 
       // ✅ Mise à jour des données du profil si des modifications ont été apportées
       if (Object.keys(dataToUpdate).length > 0) {
-        console.log('📝 Mise à jour des données du profil...');
         const profileSuccess = await handleUpdateProfile(dataToUpdate);
         if (!profileSuccess) {
           success = false;
@@ -487,7 +458,6 @@ export function ProfileSettings({ onClose, userData }: { onClose: () => void; us
   // ✅ Fonction pour gérer l'upload de photo avec fermeture de la modal
   const handleImageUploadWithClose = async () => {
     if (avatarFile) {
-      console.log('📸 Début de l\'upload de photo...');
       const success = await handleUploadPhoto(avatarFile);
       if (success) {
         setShowImageUpload(false);

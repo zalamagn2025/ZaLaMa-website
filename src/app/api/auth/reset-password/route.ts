@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔐 Tentative de réinitialisation pour:', email);
 
     // Vérifier si l'utilisateur existe
     const { data: user, error: userError } = await supabase
@@ -37,7 +36,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !user) {
-      console.log('❌ Utilisateur non trouvé:', email);
       return NextResponse.json(
         { error: 'Lien de réinitialisation invalide' },
         { status: 400 }
@@ -57,7 +55,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (tokenError || !tokenData) {
-      console.log('❌ Token invalide ou déjà utilisé pour:', email);
       return NextResponse.json(
         { error: 'Lien de réinitialisation invalide ou expiré' },
         { status: 400 }
@@ -66,9 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier l'expiration
     const expiresAt = new Date(tokenData.expires_at);
-    if (expiresAt < new Date()) {
-      console.log('❌ Token expiré pour:', email);
-      
+    if (expiresAt < new Date()) {      
       // Nettoyer le token expiré
       await supabase
         .from('password_reset_tokens')
@@ -106,15 +101,7 @@ export async function POST(request: NextRequest) {
       // On continue même si ça échoue, le mot de passe a été changé
     }
 
-    console.log('✅ Mot de passe réinitialisé avec succès pour:', email);
-
     // Log de sécurité
-    console.log('🔒 Réinitialisation réussie:', {
-      userId: user.id,
-      email: email,
-      tokenId: tokenData.id,
-      timestamp: new Date().toISOString()
-    });
 
     return NextResponse.json({
       message: 'Mot de passe réinitialisé avec succès',

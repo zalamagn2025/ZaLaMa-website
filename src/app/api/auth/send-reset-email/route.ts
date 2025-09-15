@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔐 Demande de réinitialisation pour:', email);
 
     // Vérifier si l'utilisateur existe (plus robuste)
     const { data: user, error: userError } = await supabase
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
 
     if (userError || !user) {
       // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
-      console.log('📧 Email non trouvé ou erreur:', email);
       return NextResponse.json({
         message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.'
       });
@@ -76,16 +74,6 @@ export async function POST(request: NextRequest) {
     
     // Nom de l'utilisateur pour personnalisation (utiliser prenom et nom)
     const userName = user.prenom ? `${user.prenom} ${user.nom || ''}`.trim() : undefined;
-
-    console.log('✅ Token de réinitialisation généré pour:', email);
-
-    // Log de sécurité
-    console.log('🔒 Token de réinitialisation généré:', {
-      userId: user.id,
-      email: email,
-      expiresAt: expiresAt,
-      tokenHash: resetTokenHash.substring(0, 10) + '...'
-    });
 
     return NextResponse.json({
       message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.',

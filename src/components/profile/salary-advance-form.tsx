@@ -114,14 +114,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   // Hook pour les nouvelles APIs Edge Function
   const { demands, stats, createDemand, isLoadingDemands, isLoadingStats, isCreating } = useEmployeeDemands()
 
-  // Log des données utilisateur pour débogage
-  console.log('🔍 Données utilisateur dans SalaryAdvanceForm:', {
-    employeId: user.employeId,
-    partenaireId: user.partenaireId,
-    salaireNet: user.salaireNet,
-    nom: user.nom,
-    prenom: user.prenom
-  })
 
   // États pour les avances actives (maintenant gérés par le hook)
   const advanceRequests = demands || []
@@ -153,7 +145,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {
-          console.log('📊 Données financières récupérées dans le formulaire:', result.data)
           setFinancialData(result.data)
         } else {
           setError(result.error || 'Erreur lors du chargement des données')
@@ -169,11 +160,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     }
   }, [])
 
-  // Récupérer les avances actives (maintenant géré par le hook useEmployeeDemands)
-  const fetchAdvanceRequests = useCallback(async () => {
-    // Cette fonction n'est plus nécessaire car le hook gère automatiquement la récupération
-    console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')
-  }, [])
 
   // Calculer l'avance disponible en temps réel avec les données de l'Edge Function
   const calculateAdvanceData = useCallback(() => {
@@ -220,15 +206,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
        }
        
        const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
-       
-       console.log('📅 Calcul FORCÉ des jours ouvrables:', {
-         currentYear,
-         currentMonth,
-         currentDay,
-         workingDaysElapsed,
-         totalWorkingDays,
-         workingDaysPercentage
-       })
       
       setAvanceData({
         salaireNet: salaireNet,
@@ -243,14 +220,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         limiteAvance: avanceDisponible // Limite = avance disponible
       })
       
-      console.log('🔍 Données d\'avance calculées avec Edge Function:', {
-        salaireNet,
-        avanceActive,
-        salaireRestant,
-        avanceDisponible,
-        workingDaysElapsed,
-        totalWorkingDays
-      })
     } catch (error) {
       console.error('Erreur lors du calcul de l\'avance disponible:', error)
     } finally {
@@ -298,15 +267,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       }
       
       const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
-      
-      console.log('🚀 Calcul FORCÉ des jours ouvrables au chargement:', {
-        currentYear,
-        currentMonth,
-        currentDay,
-        workingDaysElapsed,
-        totalWorkingDays,
-        workingDaysPercentage
-      })
       
       // Mettre à jour l'état si avanceData existe déjà
       if (avanceData) {
@@ -431,8 +391,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         password: password
       }
 
-      console.log('📤 Données envoyées à l\'API:', advanceRequest)
-
       // Utiliser le hook createDemand pour soumettre la demande via Edge Function
       const demandData = {
         montant_demande: validation.requestedAmount,
@@ -440,12 +398,8 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         motif: reason.trim(),
         numero_reception: validation.cleanPhone
       }
-
-      console.log('📝 Création de la demande via Edge Function:', demandData)
       
       const result = await createDemand(demandData)
-      console.log("✅ Demande créée avec succès:", result)
-      
       // Actualiser la page
     router.refresh()
       

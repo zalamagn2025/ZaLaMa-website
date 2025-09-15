@@ -7,7 +7,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Test des variables d\'environnement côté serveur...');
     
          // Vérifier les variables d'environnement
      const envVars = {
@@ -24,7 +23,6 @@ export async function GET(request: NextRequest) {
        serviceRoleKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
      };
     
-    console.log('📊 Variables d\'environnement côté serveur:', envVars);
     
     // Test de création du client Supabase
     let supabaseTest = 'non testé';
@@ -52,7 +50,6 @@ export async function GET(request: NextRequest) {
       );
       
       supabaseTest = 'client créé avec succès';
-      console.log('✅ Client Supabase créé avec succès');
       
     } catch (error) {
       supabaseTest = `erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`;

@@ -30,9 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔐 Tentative de connexion via Edge Function...');
-    console.log('📍 URL:', `${supabaseUrl}/functions/v1/employee-auth/login`);
-
     const response = await fetch(`${supabaseUrl}/functions/v1/employee-auth/login`, {
       method: 'POST',
       headers: {
@@ -45,7 +42,6 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
     
-    console.log('📋 Réponse Edge Function:', response.status, result);
 
     if (!response.ok) {
       console.error('❌ Erreur Edge Function:', response.status, result);
@@ -60,7 +56,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Connexion réussie via Edge Function');
     return createCorsResponse(result, 200, request);
   } catch (error) {
     console.error('❌ Erreur dans la route /api/auth/login:', error);

@@ -6,9 +6,7 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  try {
-    console.log('🔄 Mise à jour du profil utilisateur...');
-    
+  try {    
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return createCorsResponse(
@@ -30,8 +28,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('📝 Données à mettre à jour:', body);
-
     // ✅ Utiliser l'Edge Function pour la mise à jour du profil
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/update-profile`;
     
@@ -45,13 +41,7 @@ export async function PUT(request: NextRequest) {
     });
 
     const result = await response.json();
-    
-    console.log('📥 Réponse de l\'Edge Function:', {
-      status: response.status,
-      success: result.success,
-      error: result.error,
-      data: result.data ? 'Présent' : 'Absent'
-    });
+
     
     if (!response.ok) {
       return createCorsResponse(

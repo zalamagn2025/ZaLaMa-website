@@ -73,7 +73,6 @@ class AdvanceNotificationService {
     const startTime = Date.now()
     
     try {
-      console.log('📧 Envoi e-mail confirmation employé pour:', data.employeeName)
       
       const htmlContent = getUserAdvanceEmailTemplate({
         employeeName: data.employeeName,
@@ -91,15 +90,6 @@ class AdvanceNotificationService {
           'X-Advance-ID': data.requestId,
           'X-Employee-Name': data.employeeName
         }
-      })
-
-      const duration = Date.now() - startTime
-      
-      console.log('✅ E-mail confirmation employé envoyé:', {
-        messageId: result.data?.id,
-        employee: data.employeeName,
-        amount: data.amount,
-        duration: `${duration}ms`
       })
 
       return {
@@ -138,7 +128,6 @@ class AdvanceNotificationService {
     const startTime = Date.now()
     
     try {
-      console.log('📱 Envoi SMS confirmation employé pour:', data.employeeName)
       
       const message = this.buildAdvanceSMSMessage(data)
       const formattedPhone = this.formatPhoneNumber(data.employeePhone)
@@ -149,14 +138,7 @@ class AdvanceNotificationService {
         sender_name: 'ZaLaMa'
       })
 
-      const duration = Date.now() - startTime
       
-      console.log('✅ SMS confirmation employé envoyé:', {
-        messageId: result.messageid,
-        employee: data.employeeName,
-        phone: formattedPhone,
-        duration: `${duration}ms`
-      })
 
       return {
         success: true,
@@ -188,7 +170,6 @@ class AdvanceNotificationService {
    * Envoie les notifications (email + SMS) pour une demande d'avance
    */
   async sendAdvanceNotifications(data: AdvanceNotificationData): Promise<NotificationResult> {
-    console.log('📧 Début envoi notifications avance pour:', data.employeeName)
     
     // Envoi parallèle des notifications
     const [emailResult, smsResult] = await Promise.allSettled([
@@ -219,15 +200,6 @@ class AdvanceNotificationService {
     }
 
     const overallSuccess = email.success && sms.success
-
-    console.log('📧 Résultats envoi notifications avance:', {
-      employee: data.employeeName,
-      requestId: data.requestId,
-      emailSuccess: email.success,
-      smsSuccess: sms.success,
-      overallSuccess,
-      summary
-    })
 
     return {
       success: overallSuccess,

@@ -53,15 +53,6 @@ export class ImageUploadService {
       const fileName = `${employeeId}.${fileExt}`;
       const filePath = fileName; // Directement à la racine du bucket
 
-      console.log('📤 Upload vers Supabase Storage:', {
-        bucket: 'profiles-images',
-        filePath,
-        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-        fileType: file.type,
-        employeeId,
-        oldPhotoUrl: oldPhotoUrl ? 'Existante' : 'Aucune'
-      });
-
       // 4. Upload vers le bucket profiles-images avec upsert pour remplacer l'ancienne
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('profiles-images')
@@ -78,8 +69,6 @@ export class ImageUploadService {
         };
       }
 
-      console.log('✅ Upload réussi:', uploadData);
-
       // 5. Obtenir l'URL publique avec cache buster
       const { data: urlData } = supabase.storage
         .from('profiles-images')
@@ -89,7 +78,6 @@ export class ImageUploadService {
       const timestamp = Date.now();
       const publicUrl = `${urlData.publicUrl}?t=${timestamp}`;
 
-      console.log('🔗 URL publique avec cache buster générée:', publicUrl);
 
       // 6. Mettre à jour la photo_url dans la table employees
       const { error: updateError } = await supabase
@@ -112,8 +100,6 @@ export class ImageUploadService {
           error: 'Erreur lors de la mise à jour du profil'
         };
       }
-
-      console.log('✅ Photo de profil mise à jour avec succès');
 
       return {
         success: true,
@@ -140,8 +126,6 @@ export class ImageUploadService {
       // Le fichier est directement à la racine du bucket profiles-images
       const filePath = fileName;
 
-      console.log('🗑️ Suppression de l\'ancienne image:', { imageUrl, fileName, filePath });
-
       // Supprimer le fichier du bucket profiles-images
       const { error } = await supabase.storage
         .from('profiles-images')
@@ -152,7 +136,6 @@ export class ImageUploadService {
         return false;
       }
 
-      console.log('✅ Ancienne image supprimée avec succès');
       return true;
     } catch (error) {
       console.error('💥 Erreur suppression image:', error);

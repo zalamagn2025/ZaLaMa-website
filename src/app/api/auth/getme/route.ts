@@ -7,7 +7,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('👤 Récupération du profil employé...');
     
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -30,9 +29,6 @@ export async function GET(request: NextRequest) {
 
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/getme`;
     
-    console.log('🔍 Appel Edge Function getme...');
-    console.log('📍 URL:', edgeFunctionUrl);
-    
     const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
       headers: {
@@ -44,7 +40,6 @@ export async function GET(request: NextRequest) {
 
     const result = await response.json();
     
-    console.log('📋 Réponse Edge Function getme:', response.status, result);
     
     if (!response.ok) {
       console.error('❌ Erreur Edge Function getme:', response.status, result);
@@ -59,7 +54,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('✅ Profil récupéré avec succès');
     return createCorsResponse({
       success: true,
       message: 'Profil employé récupéré avec succès',

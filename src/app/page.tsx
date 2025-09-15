@@ -10,6 +10,7 @@ import { generateMetadata } from '@/lib/metadata';
 import { SEOProvider } from "@/components/SEO/SEOProvider";
 import { generateOrganizationSchema } from "@/lib/structured-data";
 import { FAQStructuredData } from "@/components/SEO/FAQStructuredData";
+import { debug, info, warn, error } from '@/lib/logger';
 
 export const metadata: Metadata = generateMetadata('home');
 

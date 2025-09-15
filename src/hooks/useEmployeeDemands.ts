@@ -55,9 +55,7 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
   // Créer une nouvelle demande
   const createDemand = useCallback(async (demandData: CreateDemandRequest) => {
     setIsCreating(true);
-    try {
-      console.log('📝 Création d\'une nouvelle demande...', demandData);
-      
+    try {      
       const response = await employeeDemandsService.createDemand(demandData);
       
       // Rafraîchir les données
@@ -67,9 +65,7 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
         mutate('employee-demands-list-*') // Rafraîchir toutes les pages
       ]);
       
-      toast.success('Demande d\'avance créée avec succès !');
-      console.log('✅ Demande créée:', response);
-      
+      toast.success('Demande d\'avance créée avec succès !');      
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la création de la demande';
@@ -84,9 +80,7 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
   // Mettre à jour une demande
   const updateDemand = useCallback(async (demandId: string, updateData: Partial<CreateDemandRequest>) => {
     setIsUpdating(true);
-    try {
-      console.log('🔄 Mise à jour de la demande...', demandId, updateData);
-      
+    try {      
       const response = await employeeDemandsService.updateDemand(demandId, updateData);
       
       // Rafraîchir les données
@@ -96,9 +90,7 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
         mutate('employee-demands-list-*')
       ]);
       
-      toast.success('Demande mise à jour avec succès !');
-      console.log('✅ Demande mise à jour:', response);
-      
+      toast.success('Demande mise à jour avec succès !');      
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la mise à jour de la demande';
@@ -113,9 +105,7 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
   // Supprimer une demande
   const deleteDemand = useCallback(async (demandId: string) => {
     setIsDeleting(true);
-    try {
-      console.log('🗑️ Suppression de la demande...', demandId);
-      
+    try {      
       const response = await employeeDemandsService.deleteDemand(demandId);
       
       // Rafraîchir les données
@@ -125,9 +115,7 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
         mutate('employee-demands-list-*')
       ]);
       
-      toast.success('Demande supprimée avec succès !');
-      console.log('✅ Demande supprimée:', response);
-      
+      toast.success('Demande supprimée avec succès !');      
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la suppression de la demande';

@@ -5,6 +5,7 @@ import TeamSection from '@/components/sections/Team/TeamSection';
 // import TeamSection from '@/components/sections/Team/TeamSection';
 import { BackgroundEffects } from '@/components/ui/background-effects';
 import React from 'react';
+import { debug, info, warn, error } from '@/lib/logger';
 
 export default function AboutPage() {
   return (

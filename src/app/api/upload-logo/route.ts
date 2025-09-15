@@ -16,68 +16,35 @@ const supabase = createClient(
 );
 
 export async function POST(request: NextRequest) {
-  try {
-    console.log('🚀 API Route: Début upload logo via edge function Supabase');
-    console.log('📋 Headers de la requête:', Object.fromEntries(request.headers.entries()));
-    console.log('📋 Content-Type:', request.headers.get('content-type'));
-    
+  try {    
     // Récupérer le FormData de la requête
-    const formData = await request.formData();
-    console.log('📋 FormData reçu, clés disponibles:', Array.from(formData.keys()));
-    
+    const formData = await request.formData();    
     // Vérifier que le logo est présent
     const logo = formData.get('logo') as File;
     const partnerId = formData.get('partner_id') as string;
     
     if (!logo) {
-      console.log('❌ Fichier logo manquant');
       return NextResponse.json(
         { success: false, error: 'Fichier logo manquant' },
         { status: 400 }
       );
     }
 
-    console.log('📁 Fichier reçu:', {
-      name: logo.name,
-      size: logo.size,
-      type: logo.type,
-      partnerId
-    });
 
     // Générer un partner_id temporaire si non fourni
     const tempPartnerId = partnerId || `temp-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
     
-    console.log('🔍 Partner ID utilisé:', tempPartnerId);
     
     // Créer le FormData pour l'edge function déployée (elle attend 'logo' et 'partner_id')
     const edgeFormData = new FormData();
     edgeFormData.append('logo', logo);
     edgeFormData.append('partner_id', tempPartnerId);
+ 
     
-    console.log('📤 Préparation des données pour edge function Hono:', {
-      fileName: logo.name,
-      fileSize: logo.size,
-      fileType: logo.type,
-      partnerId: tempPartnerId
-    });
-    
-    // Debug: vérifier le contenu du FormData
-    console.log('🔍 Contenu du FormData:');
-    for (const [key, value] of edgeFormData.entries()) {
-      if (value instanceof File) {
-        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
-      } else {
-        console.log(`  ${key}: ${value}`);
-      }
-    }
 
-    console.log('📤 Envoi vers edge function Supabase...');
-    console.log('🔗 URL Edge Function:', EDGE_FUNCTION_URL);
     
     // Vérifier les variables d'environnement
     const authKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    console.log('🔑 Clé d\'authentification:', authKey ? 'Présente' : 'Manquante');
-
     if (!authKey) {
       console.error('❌ Aucune clé d\'authentification trouvée');
       return NextResponse.json(
@@ -97,18 +64,11 @@ export async function POST(request: NextRequest) {
 
     // Lire le contenu brut de la réponse
     const responseText = await response.text();
-    console.log('📥 Réponse edge function (brute):', responseText);
-    console.log('📥 Headers de réponse:', Object.fromEntries(response.headers.entries()));
-    console.log('📥 Status:', response.status, response.statusText);
     
     let result;
     try {
       result = JSON.parse(responseText);
-      console.log('📥 Réponse edge function (parsed):', {
-        status: response.status,
-        statusText: response.statusText,
-        result
-      });
+
     } catch (parseError) {
       console.error('❌ Erreur parsing JSON:', parseError);
       console.error('❌ Contenu brut (premiers 500 chars):', responseText.substring(0, 500));
@@ -151,11 +111,9 @@ export async function POST(request: NextRequest) {
       console.error('❌ Détails de l\'erreur:', result);
       
       // Fallback: utiliser directement Supabase Storage
-      console.log('🔄 Fallback: Upload direct vers Supabase Storage...');
       return await uploadDirectToSupabase(logo, tempPartnerId);
     }
 
-    console.log('✅ Upload réussi via edge function Supabase');
     
     // Adapter la réponse de l'edge function déployée pour le composant LogoUpload
     const adaptedResult = {
@@ -189,7 +147,6 @@ export async function POST(request: NextRequest) {
 // Fonction de fallback pour upload direct vers Supabase Storage
 async function uploadDirectToSupabase(logo: File, tempPartnerId: string) {
   try {
-    console.log('📤 Upload direct vers Supabase Storage...');
     
     // Générer un chemin unique pour le fichier
     const timestamp = Date.now();
@@ -197,7 +154,6 @@ async function uploadDirectToSupabase(logo: File, tempPartnerId: string) {
     const fileName = `${timestamp}_${logo.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const filePath = `${tempPartnerId}/${fileName}`;
     
-    console.log('📁 Chemin généré:', filePath);
 
     // Upload vers Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -218,7 +174,6 @@ async function uploadDirectToSupabase(logo: File, tempPartnerId: string) {
       );
     }
 
-    console.log('✅ Upload réussi vers Supabase Storage:', uploadData);
 
     // Obtenir l'URL publique
     const { data: publicUrlData } = supabase.storage
@@ -232,14 +187,6 @@ async function uploadDirectToSupabase(logo: File, tempPartnerId: string) {
     const uint8Array = new Uint8Array(arrayBuffer);
     const base64 = btoa(String.fromCharCode(...uint8Array));
     const base64DataUri = `data:${logo.type};base64,${base64}`;
-
-    console.log('✅ Upload direct complet:', {
-      fileName: logo.name,
-      filePath: filePath,
-      publicUrl: publicUrl,
-      fileSize: logo.size,
-      fileType: logo.type
-    });
     
     // Retourner la réponse au format attendu par le composant
     const result = {

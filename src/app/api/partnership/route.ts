@@ -56,8 +56,6 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json()
     
-    console.log('📥 Données reçues:', body)
-    console.log('📅 Payment Day reçu:', body.paymentDay)
 
     // Validation des données requises
     const requiredFields = [
@@ -124,10 +122,6 @@ export async function POST(request: NextRequest) {
       status: 'pending'
     }
 
-    console.log('📤 Tentative d\'insertion des données:', partnershipData)
-    console.log('🔗 URL Supabase:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('🔑 Clé Supabase configurée:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
 
     // Insertion dans Supabase
     const { data, error } = await supabase
@@ -154,8 +148,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    console.log('✅ Données insérées avec succès:', data)
 
     // Réponse immédiate à l'utilisateur
     const response = NextResponse.json({

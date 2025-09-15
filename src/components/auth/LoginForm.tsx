@@ -28,9 +28,7 @@ export default function LoginForm() {
 
     try {
       // Ici, vous intégrerez la logique d'authentification réelle
-      // Par exemple, avec Firebase ou votre API
-      console.log("Tentative de connexion avec:", { phone, password });
-      
+      // Par exemple, avec Firebase ou votre API      
       // Simulation d'une connexion réussie
       setTimeout(() => {
         router.push("/profile");

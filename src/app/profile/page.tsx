@@ -24,7 +24,8 @@ export default function ProfilePage() {
   const [isChatbotOpen] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const tabsRef = useRef<HTMLDivElement>(null)
-  const [activeTabRect, setActiveTabRect] = useState<{ left: number; width: number } | null>(null)
+  const [activeTabRect, setActiveTabRect] = useState<{ left: number;
+import { debug, info, warn, error } from '@/lib/logger'; width: number } | null>(null)
   
   // Utiliser le nouveau contexte d'authentification
   const { employee, loading, isAuthenticated } = useEmployeeAuth()
@@ -39,32 +40,32 @@ export default function ProfilePage() {
   }
 
   const handleSuccess = () => {
-    console.log('Salaire configuré avec succès')
+    debug('Salaire configuré avec succès')
     setShowModal(false)
   }
 
   // Debug: Logs pour comprendre pourquoi la modale ne s'affiche pas
   useEffect(() => {
-    console.log('🔍 DEBUG - Profile Page State:');
-    console.log('   - employee:', employee);
-    console.log('   - loading:', loading);
-    console.log('   - isAuthenticated:', isAuthenticated);
-    console.log('   - needsSetup:', needsSetup);
-    console.log('   - userInfo:', userInfo);
-    console.log('   - salaryLoading:', salaryLoading);
-    console.log('   - salaryError:', salaryError);
+    debug('🔍 DEBUG - Profile Page State:');
+    debug('   - employee:', employee);
+    debug('   - loading:', loading);
+    debug('   - isAuthenticated:', isAuthenticated);
+    debug('   - needsSetup:', needsSetup);
+    debug('   - userInfo:', userInfo);
+    debug('   - salaryLoading:', salaryLoading);
+    debug('   - salaryError:', salaryError);
     
     if (employee) {
-      console.log('   - employee.role:', employee.role);
-      console.log('   - employee.salaire_net:', employee.salaire_net);
-      console.log('   - employee.user_id:', employee.user_id);
+      debug('   - employee.role:', employee.role);
+      debug('   - employee.salaire_net:', employee.salaire_net);
+      debug('   - employee.user_id:', employee.user_id);
     }
   }, [employee, loading, isAuthenticated, needsSetup, userInfo, salaryLoading, salaryError]);
 
   // Fonction pour récupérer les informations de l'entreprise
   const fetchEntrepriseInfo = async (partenaireId: string) => {
     try {
-      console.log('🏢 Récupération des informations de l\'entreprise...')
+      debug('🏢 Récupération des informations de l\'entreprise...')
       const response = await fetch(`/api/partenaires/${partenaireId}`, {
         method: 'GET',
         credentials: 'include',
@@ -72,13 +73,13 @@ export default function ProfilePage() {
 
       if (response.ok) {
         const entrepriseData = await response.json()
-        console.log('✅ Informations entreprise récupérées:', entrepriseData.nom)
+        debug('✅ Informations entreprise récupérées:', entrepriseData.nom)
         setEntreprise(entrepriseData)
       } else {
-        console.error('❌ Erreur lors de la récupération de l\'entreprise')
+        error('❌ Erreur lors de la récupération de l\'entreprise')
       }
     } catch (error) {
-      console.error('💥 Erreur lors de la récupération de l\'entreprise:', error)
+      error('💥 Erreur lors de la récupération de l\'entreprise:', error)
     }
   }
 

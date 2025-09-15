@@ -80,13 +80,6 @@ export const LogoUpload = ({
         filename: uploadResult.data!.fileName // Utiliser fileName de l'API directe
       });
 
-      console.log('✅ Logo uploadé avec succès via API directe:', {
-        fileName: uploadResult.data!.fileName,
-        filePath: uploadResult.data!.filePath,
-        publicUrl: uploadResult.data!.publicUrl,
-        fileSize: uploadResult.data!.fileSize,
-        fileType: uploadResult.data!.fileType
-      });
 
     } catch (err) {
       console.error('❌ Erreur upload logo:', err);
@@ -117,13 +110,9 @@ export const LogoUpload = ({
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('🎯 handleFileInput appelé:', e.target.files);
     if (e.target.files && e.target.files[0]) {
-      console.log('📁 Fichier sélectionné:', e.target.files[0]);
       handleFileUpload(e.target.files[0]);
-    } else {
-      console.log('❌ Aucun fichier sélectionné');
-    }
+    } 
   };
 
   const removeFile = async () => {
@@ -134,7 +123,6 @@ export const LogoUpload = ({
         const urlParts = uploadedFile.url.split('/');
         const fileName = urlParts[urlParts.length - 1];
         
-        console.log('🗑️ Suppression du logo:', fileName);
         
         const deleteResult = await logoUploadService.deleteLogo(fileName);
         if (!deleteResult.success) {
@@ -157,7 +145,6 @@ export const LogoUpload = ({
         fileInputRef.current.value = '';
       }
       
-      console.log('✅ Logo supprimé avec succès');
     } catch (error) {
       console.error('❌ Erreur lors de la suppression:', error);
       // Nettoyer l'interface même en cas d'erreur
@@ -215,7 +202,6 @@ export const LogoUpload = ({
         />
 
         <div className="text-center" onClick={() => {
-          console.log('🎯 Clic sur la zone de texte, déclenchement de l\'input file');
           if (fileInputRef.current) {
             fileInputRef.current.click();
           }

@@ -13,7 +13,6 @@ export function useAvis() {
     setError(null)
     
     try {
-      console.log('🔍 Récupération des avis...')
       const response = await fetch('/api/avis', {
         credentials: 'include',
         headers: {
@@ -21,13 +20,10 @@ export function useAvis() {
         },
       })
       
-      console.log('📡 Réponse API avis:', response.status, response.statusText)
       
       const data: AvisListResponse = await response.json()
-      console.log('📋 Données reçues:', data)
       
       if (data.success && data.data) {
-        console.log('✅ Avis récupérés:', data.data.length)
         setAvis(data.data)
       } else {
         console.error('❌ Erreur API avis:', data.error)
@@ -47,7 +43,6 @@ export function useAvis() {
     setError(null)
     
     try {
-      console.log('📝 Création d\'un avis:', avisData)
       const response = await fetch('/api/avis', {
         method: 'POST',
         credentials: 'include',
@@ -57,16 +52,12 @@ export function useAvis() {
         body: JSON.stringify(avisData),
       })
       
-      console.log('📡 Réponse création avis:', response.status, response.statusText)
       
       const data: AvisResponse = await response.json()
-      console.log('📋 Données création:', data)
       
       if (data.success && data.data) {
-        console.log('✅ Avis créé avec succès:', data.data.id)
         
         // Forcer le rechargement des avis
-        console.log('🔄 Forçage du rechargement des avis...')
         setRefreshTrigger(prev => prev + 1)
         
         return true
@@ -86,7 +77,6 @@ export function useAvis() {
 
   // Charger les avis au montage du composant et quand refreshTrigger change
   useEffect(() => {
-    console.log('🚀 Hook useAvis - Rechargement des avis (trigger:', refreshTrigger, ')')
     fetchAvis()
   }, [fetchAvis, refreshTrigger])
 
