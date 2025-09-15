@@ -1,131 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import crypto from 'crypto';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(request: NextRequest) {
   try {
-    const { token, email, newPassword } = await request.json();
+    const body = await request.json();
+    const { token, newPassword, confirmPassword } = body;
 
     // Validation des données
-    if (!token || !email || !newPassword) {
+    if (!token) {
       return NextResponse.json(
-        { error: 'Toutes les données sont requises' },
+        { success: false, error: 'Token de réinitialisation requis' },
         { status: 400 }
       );
     }
 
-    // Validation du mot de passe
-    if (newPassword.length < 8) {
+    if (!newPassword || !confirmPassword) {
       return NextResponse.json(
-        { error: 'Le mot de passe doit contenir au moins 8 caractères' },
+        { success: false, error: 'Nouveau code PIN requis' },
         { status: 400 }
       );
     }
 
-    console.log('🔐 Tentative de réinitialisation pour:', email);
-
-    // Vérifier si l'utilisateur existe
-    const { data: user, error: userError } = await supabase
-      .from('employees')
-      .select('id, email, user_id')
-      .eq('email', email.toLowerCase())
-      .single();
-
-    if (userError || !user) {
-      console.log('❌ Utilisateur non trouvé:', email);
+    if (newPassword !== confirmPassword) {
       return NextResponse.json(
-        { error: 'Lien de réinitialisation invalide' },
+        { success: false, error: 'Les codes PIN ne correspondent pas' },
         { status: 400 }
       );
     }
 
-    // Hasher le token pour comparaison
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-
-    // Vérifier le token en base de données
-    const { data: tokenData, error: tokenError } = await supabase
-      .from('password_reset_tokens')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('token_hash', tokenHash)
-      .eq('used', false)
-      .single();
-
-    if (tokenError || !tokenData) {
-      console.log('❌ Token invalide ou déjà utilisé pour:', email);
+    // Validation du format PIN (6 chiffres)
+    if (!/^\d{6}$/.test(newPassword)) {
       return NextResponse.json(
-        { error: 'Lien de réinitialisation invalide ou expiré' },
+        { success: false, error: 'Le code PIN doit contenir exactement 6 chiffres' },
         { status: 400 }
       );
     }
 
-    // Vérifier l'expiration
-    const expiresAt = new Date(tokenData.expires_at);
-    if (expiresAt < new Date()) {
-      console.log('❌ Token expiré pour:', email);
-      
-      // Nettoyer le token expiré
-      await supabase
-        .from('password_reset_tokens')
-        .delete()
-        .eq('id', tokenData.id);
-      
-      return NextResponse.json(
-        { error: 'Le lien de réinitialisation a expiré' },
-        { status: 400 }
-      );
-    }
-
-    // Mettre à jour le mot de passe via Supabase Auth
-    const { error: updateError } = await supabase.auth.admin.updateUserById(
-      user.user_id || user.id, // Utiliser user_id si disponible, sinon id
-      { password: newPassword }
-    );
-
-    if (updateError) {
-      console.error('❌ Erreur mise à jour mot de passe:', updateError);
-      return NextResponse.json(
-        { error: 'Erreur lors de la mise à jour du mot de passe' },
-        { status: 500 }
-      );
-    }
-
-    // Marquer le token comme utilisé
-    const { error: markUsedError } = await supabase
-      .from('password_reset_tokens')
-      .update({ used: true })
-      .eq('id', tokenData.id);
-
-    if (markUsedError) {
-      console.error('❌ Erreur marquage token utilisé:', markUsedError);
-      // On continue même si ça échoue, le mot de passe a été changé
-    }
-
-    console.log('✅ Mot de passe réinitialisé avec succès pour:', email);
-
-    // Log de sécurité
-    console.log('🔒 Réinitialisation réussie:', {
-      userId: user.id,
-      email: email,
-      tokenId: tokenData.id,
-      timestamp: new Date().toISOString()
+    // Appel à l'edge function employe-auth pour la réinitialisation
+    const edgeFunctionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/employe-auth`;
+    
+    const response = await fetch(edgeFunctionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'reset_password_confirm',
+        token: token,
+        newPassword: newPassword
+      }),
     });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Erreur edge function:', data);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: data.error || 'Erreur lors de la réinitialisation du code PIN' 
+        },
+        { status: response.status }
+      );
+    }
+
     return NextResponse.json({
-      message: 'Mot de passe réinitialisé avec succès',
-      success: true
+      success: true,
+      message: 'Code PIN réinitialisé avec succès'
     });
 
   } catch (error) {
-    console.error('❌ Erreur API reset-password:', error);
+    console.error('Erreur dans reset-password:', error);
     return NextResponse.json(
-      { error: 'Erreur interne du serveur' },
+      { 
+        success: false, 
+        error: 'Erreur interne du serveur' 
+      },
       { status: 500 }
     );
   }
-} 
+}

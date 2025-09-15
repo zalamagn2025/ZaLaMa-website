@@ -38,12 +38,6 @@ export default function EmployeeLoginForm() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // États pour le mot de passe oublié
-  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
-  const [forgotPasswordStatus, setForgotPasswordStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
-  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
 
   // Utiliser le contexte d'authentification employé
   const { login, loading, error } = useEmployeeAuth();
@@ -132,57 +126,16 @@ export default function EmployeeLoginForm() {
     }
   };
 
-  // Fonction pour gérer la demande de mot de passe oublié
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsForgotPasswordLoading(true);
-    setForgotPasswordStatus('idle');
-    setForgotPasswordMessage('');
-
-    try {
-      const response = await fetch('/api/auth/send-reset-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: forgotPasswordEmail }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setForgotPasswordStatus('success');
-        setForgotPasswordMessage('Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.');
-      } else {
-        setForgotPasswordStatus('error');
-        setForgotPasswordMessage(data.error || 'Une erreur est survenue');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      setForgotPasswordStatus('error');
-      setForgotPasswordMessage('Erreur de connexion. Veuillez réessayer.');
-    } finally {
-      setIsForgotPasswordLoading(false);
-    }
-  };
 
   // Fonction pour basculer vers le mode mot de passe oublié
   const switchToForgotPassword = () => {
     console.log('switchToForgotPassword called');
     console.log('Current email:', email);
-    setForgotPasswordEmail(email); // Pré-remplir avec l'email actuel
-    setIsForgotPasswordMode(true);
-    setForgotPasswordStatus('idle');
-    setForgotPasswordMessage('');
-    console.log('State updated, isForgotPasswordMode should be true');
+    // Rediriger vers la page de réinitialisation avec l'email pré-rempli
+    const emailParam = email ? `?email=${encodeURIComponent(email)}` : '';
+    router.push(`/auth/reset-password${emailParam}`);
   };
 
-  // Fonction pour revenir au mode connexion
-  const switchToLogin = () => {
-    setIsForgotPasswordMode(false);
-    setForgotPasswordStatus('idle');
-    setForgotPasswordMessage('');
-  };
 
   // Charger l'email mémorisé au montage du composant
   useEffect(() => {
@@ -193,10 +146,6 @@ export default function EmployeeLoginForm() {
     }
   }, []);
 
-  // Debug: Surveiller les changements d'état
-  useEffect(() => {
-    console.log('isForgotPasswordMode changed:', isForgotPasswordMode);
-  }, [isForgotPasswordMode]);
 
   // Auto-dismiss des toasts d'erreur et de succès après 5 secondes
   useEffect(() => {
@@ -218,15 +167,6 @@ export default function EmployeeLoginForm() {
     }
   }, [loginStatus]);
 
-  useEffect(() => {
-    if (forgotPasswordStatus === 'error' || forgotPasswordStatus === 'success') {
-      const timer = setTimeout(() => {
-        setForgotPasswordStatus('idle');
-        setForgotPasswordMessage('');
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [forgotPasswordStatus]);
 
   const IdentifierIcon = email ? Mail : User;
 
@@ -252,25 +192,6 @@ export default function EmployeeLoginForm() {
         </motion.div>
       )}
 
-      {/* Toast d'erreur pour les erreurs de mot de passe oublié */}
-      {isForgotPasswordMode && forgotPasswordStatus === 'error' && (
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          className="absolute top-6 left-1/2 transform -translate-x-1/2 z-30"
-        >
-          <div className="bg-red-900/90 backdrop-blur-xl border border-red-700 rounded-xl px-6 py-4 shadow-2xl max-w-md">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-              <div>
-                <p className="text-red-100 font-medium text-sm">Erreur de réinitialisation</p>
-                <p className="text-red-200 text-xs mt-1">{forgotPasswordMessage}</p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Toast de succès pour la connexion */}
       {loginStatus === 'success' && (
@@ -292,25 +213,6 @@ export default function EmployeeLoginForm() {
         </motion.div>
       )}
 
-      {/* Toast de succès pour le mot de passe oublié */}
-      {isForgotPasswordMode && forgotPasswordStatus === 'success' && (
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          className="absolute top-6 left-1/2 transform -translate-x-1/2 z-30"
-        >
-          <div className="bg-green-900/90 backdrop-blur-xl border border-green-700 rounded-xl px-6 py-4 shadow-2xl max-w-md">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <div>
-                <p className="text-green-100 font-medium text-sm">Email envoyé</p>
-                <p className="text-green-200 text-xs mt-1">{forgotPasswordMessage}</p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Bouton Retour */}
       <button
@@ -438,7 +340,7 @@ export default function EmployeeLoginForm() {
                   transition={{ delay: 0.2 }}
                   className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80"
                 >
-                  {isForgotPasswordMode ? 'Code PIN oublié' : 'Connexion Employé'}
+                  Connexion Employé
                 </motion.h1>
                 
                 <motion.p
@@ -447,10 +349,7 @@ export default function EmployeeLoginForm() {
                   transition={{ delay: 0.3 }}
                   className="text-white/60 text-xs"
                 >
-                  {isForgotPasswordMode 
-                    ? 'Saisissez votre email pour recevoir un lien de réinitialisation'
-                    : 'Accédez à votre espace personnel'
-                  }
+                  Accédez à votre espace personnel
                 </motion.p>
               </div>
 
@@ -478,8 +377,7 @@ export default function EmployeeLoginForm() {
               </AnimatePresence>
 
               {/* Formulaire de connexion */}
-              {!isForgotPasswordMode ? (
-                <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-4">
                     {/* Email input */}
                     <div className="relative">
@@ -620,55 +518,6 @@ export default function EmployeeLoginForm() {
                      </p>
                    </motion.div>
                 </form>
-              ) : (
-                /* Formulaire de mot de passe oublié */
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div className="relative">
-                    <div className="relative flex items-center overflow-hidden rounded-lg bg-white/5 border border-white/10 focus-within:border-white/20 focus-within:bg-white/10 transition-all duration-300">
-                      <Mail className="absolute left-3 w-4 h-4 text-white/40" />
-                      
-                      <Input
-                        type="email"
-                        placeholder="Votre adresse email"
-                        value={forgotPasswordEmail}
-                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                        onFocus={() => {}}
-                        onBlur={() => {}}
-                        required
-                        className="w-full bg-transparent border-transparent text-white placeholder:text-white/30 h-10 pl-10 pr-4 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isForgotPasswordLoading}
-                    className="w-full bg-[#FF671E] hover:bg-[#FF671E]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center mt-6"
-                  >
-                    {isForgotPasswordLoading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="w-4 h-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin mr-2" />
-                        Envoi...
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center">
-                        Envoyer le lien de réinitialisation
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Bouton retour */}
-                  <button
-                    type="button"
-                    onClick={switchToLogin}
-                    className="w-full text-white/60 hover:text-white transition-colors text-sm mt-4 flex items-center justify-center gap-2"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Retour à la connexion
-                  </button>
-                </form>
-              )}
             </div>
           </div>
         </motion.div>
