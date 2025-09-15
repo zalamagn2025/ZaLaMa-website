@@ -443,6 +443,7 @@ export default function ResetPasswordPage() {
                         onChange={handleNewPinChange}
                         onFocus={handleNewPinFocus}
                         onBlur={handleNewPinBlur}
+                        placeholder="Nouveau code PIN"
                         showValue={showNewPin}
                         onToggleShow={toggleNewPinVisibility}
                         hasUserInteracted={hasUserInteractedWithNew}
@@ -462,6 +463,7 @@ export default function ResetPasswordPage() {
                         onChange={handleConfirmPinChange}
                         onFocus={handleConfirmPinFocus}
                         onBlur={handleConfirmPinBlur}
+                        placeholder="Confirmation du code PIN"
                         showValue={showConfirmPin}
                         onToggleShow={toggleConfirmPinVisibility}
                         hasUserInteracted={hasUserInteractedWithConfirm}
