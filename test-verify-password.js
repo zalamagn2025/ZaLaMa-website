@@ -6,7 +6,7 @@ async function testVerifyPassword() {
     // Récupérer le token d'accès depuis localStorage (simulation)
     const accessToken = 'VOTRE_TOKEN_ICI'; // Remplacez par un vrai token
     
-    console.log('🧪 Test de l\'API verify-password...');
+    /*console.log('🧪 Test de l\'API verify-password...')*/
     
     const response = await fetch('http://localhost:3000/api/auth/verify-password', {
       method: 'POST',
@@ -21,13 +21,13 @@ async function testVerifyPassword() {
 
     const result = await response.json();
     
-    console.log('📋 Statut:', response.status);
-    console.log('📋 Réponse:', result);
+    /*console.log('📋 Statut:', response.status)*/
+    /*console.log('📋 Réponse:', result)*/
     
     if (result.success) {
-      console.log('✅ Vérification réussie !');
+      /*console.log('✅ Vérification réussie !')*/
     } else {
-      console.log('❌ Échec de la vérification:', result.message);
+      /*console.log('❌ Échec de la vérification:', result.message)*/
     }
     
   } catch (error) {
@@ -36,11 +36,11 @@ async function testVerifyPassword() {
 }
 
 // Instructions d'utilisation
-console.log('📝 Instructions:');
-console.log('1. Remplacez VOTRE_TOKEN_ICI par le token d\'accès de l\'employé');
-console.log('2. Remplacez VOTRE_MOT_DE_PASSE par le mot de passe à tester');
-console.log('3. Exécutez: node test-verify-password.js');
-console.log('');
+/*console.log('📝 Instructions:')*/
+/*console.log('1. Remplacez VOTRE_TOKEN_ICI par le token d\'accès de l\'employé')*/
+/*console.log('2. Remplacez VOTRE_MOT_DE_PASSE par le mot de passe à tester')*/
+/*console.log('3. Exécutez: node test-verify-password.js')*/
+/*console.log('')*/
 
 // Décommenter la ligne suivante pour exécuter le test
 // testVerifyPassword();

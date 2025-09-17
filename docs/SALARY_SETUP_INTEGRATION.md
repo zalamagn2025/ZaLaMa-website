@@ -267,10 +267,10 @@ setTimeout(() => {
 
 ```typescript
 // Dans useSalarySetup.ts
-console.log('🔄 Hook useSalarySetup - Vérification automatique...');
-console.log('   - employee.user_id:', employee.user_id);
-console.log('   - employee.salaire_net:', employee.salaire_net);
-console.log('   - employee.poste:', employee.poste);
+/*console.log('🔄 Hook useSalarySetup - Vérification automatique...')*/
+/*console.log('   - employee.user_id:', employee.user_id)*/
+/*console.log('   - employee.salaire_net:', employee.salaire_net)*/
+/*console.log('   - employee.poste:', employee.poste)*/
 ```
 
 ## 📝 Notes importantes

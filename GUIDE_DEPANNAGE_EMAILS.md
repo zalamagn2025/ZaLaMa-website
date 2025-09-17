@@ -135,12 +135,12 @@ fetch('/api/partnership', {
 
 ```javascript
 // Dans les logs de l'application
-console.log('📧 Résultats envoi e-mails partenariat:', {
+/*console.log('📧 Résultats envoi e-mails partenariat:', {
   company: data.company_name,
   adminSuccess: emailResult.adminEmail.success,
   userSuccess: emailResult.userEmail.success,
   overallSuccess: emailResult.overallSuccess
-});
+})*/
 ```
 
 ### **Erreurs courantes dans les logs :**

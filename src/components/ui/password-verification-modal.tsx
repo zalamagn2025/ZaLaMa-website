@@ -25,7 +25,7 @@ export function PasswordVerificationModal({
   message = "Entrez votre mot de passe pour afficher les informations sensibles",
   onVerifyPassword
 }: PasswordVerificationModalProps) {
-  console.log('🔐 Modal - isOpen:', isOpen);
+  /*console.log('🔐 Modal - isOpen:', isOpen)*/
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,14 +33,14 @@ export function PasswordVerificationModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🔐 Début du handleSubmit dans le modal');
+    /*console.log('🔐 Début du handleSubmit dans le modal')*/
     
     if (!password.trim()) {
       setError('Veuillez entrer votre mot de passe');
       return;
     }
 
-    console.log('🔐 Mot de passe saisi:', password ? '***' : 'vide');
+    /*console.log('🔐 Mot de passe saisi:', password ? '***' : 'vide')*/
     setIsLoading(true);
     setError(''); // Réinitialiser l'erreur
 
@@ -48,12 +48,12 @@ export function PasswordVerificationModal({
       let success = false;
       
       if (onVerifyPassword) {
-        console.log('🔐 Appel de onVerifyPassword...');
+        /*console.log('🔐 Appel de onVerifyPassword...')*/
         // Utiliser la fonction de vérification fournie
         success = await onVerifyPassword(password);
-        console.log('🔐 Résultat de onVerifyPassword:', success);
+        /*console.log('🔐 Résultat de onVerifyPassword:', success)*/
       } else {
-        console.log('🔐 Utilisation de la vérification par défaut...');
+        /*console.log('🔐 Utilisation de la vérification par défaut...')*/
         // Vérification par défaut avec Supabase
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -77,20 +77,20 @@ export function PasswordVerificationModal({
         success = true;
       }
 
-      console.log('🔐 Success final:', success);
+      /*console.log('🔐 Success final:', success)*/
       if (success) {
-        console.log('✅ Vérification réussie dans le modal');
+        /*console.log('✅ Vérification réussie dans le modal')*/
         toast.success('Vérification réussie');
         onSuccess();
-        console.log('🚪 Fermeture du modal...');
+        /*console.log('🚪 Fermeture du modal...')*/
         handleClose();
       } else {
-        console.log('❌ Vérification échouée dans le modal');
+        /*console.log('❌ Vérification échouée dans le modal')*/
         setError('Mot de passe incorrect');
       }
       
     } catch (error) {
-      console.log('❌ Erreur dans handleSubmit:', error);
+      /*console.log('❌ Erreur dans handleSubmit:', error)*/
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
       setError(errorMessage);
     } finally {
@@ -198,7 +198,7 @@ export function PasswordVerificationModal({
                    className="flex-1 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF671E]/90 hover:to-[#FF8E53]/90 text-white"
                    disabled={isLoading}
                    onClick={() => {
-                     console.log('🔐 Clic sur le bouton Vérifier');
+                     /*console.log('🔐 Clic sur le bouton Vérifier')*/
                    }}
                  >
                   {isLoading ? (

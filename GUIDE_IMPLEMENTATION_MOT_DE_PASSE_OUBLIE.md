@@ -144,7 +144,7 @@ const success = await emailService.sendForgotPasswordEmail(
   'https://example.com/reset?token=test',
   'John Doe'
 );
-console.log('Email envoyé:', success);
+/*console.log('Email envoyé:', success)*/
 ```
 
 ### Étape 5 : Test de l'API

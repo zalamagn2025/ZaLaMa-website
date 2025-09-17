@@ -220,9 +220,9 @@ return 'https://zalamagn.com';
 
 ```typescript
 // Activer les logs de debug
-console.log('🌐 Origine demandée:', origin);
-console.log('✅ Origine autorisée:', isOriginAllowed(origin));
-console.log('📋 Headers CORS:', getCorsHeaders(request));
+/*console.log('🌐 Origine demandée:', origin)*/
+/*console.log('✅ Origine autorisée:', isOriginAllowed(origin)*/);
+/*console.log('📋 Headers CORS:', getCorsHeaders(request)*/);
 ```
 
 ## 📊 **Monitoring**

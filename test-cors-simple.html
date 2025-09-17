@@ -107,7 +107,7 @@
                     'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
                 };
 
-                console.log('Headers CORS reçus:', corsHeaders);
+                /*console.log('Headers CORS reçus:', corsHeaders)*/
                 
                 if (response.status === 200) {
                     updateResult('cors-result', 
@@ -213,9 +213,9 @@
 
         // Test automatique au chargement
         window.addEventListener('load', () => {
-            console.log('🧪 Page de test CORS chargée');
-            console.log('📍 Origine actuelle:', window.location.origin);
-            console.log('🎯 API Base:', API_BASE);
+            /*console.log('🧪 Page de test CORS chargée')*/
+            /*console.log('📍 Origine actuelle:', window.location.origin)*/
+            /*console.log('🎯 API Base:', API_BASE)*/
         });
     </script>
 </body>

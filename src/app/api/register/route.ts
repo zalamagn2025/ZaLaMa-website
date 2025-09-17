@@ -3,10 +3,10 @@ import { employeeNotificationService } from '@/services/employeeNotificationServ
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔗 Appel de l\'Edge Function employee-auth/register...');
+    /*console.log('🔗 Appel de l\'Edge Function employee-auth/register...')*/
 
     const body = await request.json();
-    console.log('📋 Données reçues pour inscription:', JSON.stringify(body, null, 2));
+    /*console.log('📋 Données reçues pour inscription:', JSON.stringify(body, null, 2)*/);
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('❌ Variables d\'environnement Supabase manquantes');
@@ -27,13 +27,13 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    console.log('📡 Réponse Edge Function (inscription):', response.status, response.statusText);
+    /*console.log('📡 Réponse Edge Function (inscription)*/:', response.status, response.statusText);
     const result = await response.json();
-    console.log('📋 Résultat inscription:', result);
+    /*console.log('📋 Résultat inscription:', result)*/
 
     // Si l'inscription est réussie, envoyer les notifications
     if (result.success && result.employee_id) {
-      console.log('✅ Inscription réussie, envoi des notifications...');
+      /*console.log('✅ Inscription réussie, envoi des notifications...')*/
       
       try {
         // Préparer les données pour les notifications
@@ -52,12 +52,12 @@ export async function POST(request: NextRequest) {
         // Envoyer les notifications (email + SMS)
         const notificationResult = await employeeNotificationService.sendRegistrationNotifications(notificationData);
         
-        console.log('📧📱 Résultat des notifications:', {
+        /*console.log('📧📱 Résultat des notifications:', {
           success: notificationResult.success,
           emailSuccess: notificationResult.email?.success,
           smsSuccess: notificationResult.sms?.success,
           errors: notificationResult.errors
-        });
+        })*/
 
         // Ajouter les informations de notification au résultat
         result.notifications = {

@@ -7,7 +7,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📸 Upload de photo de profil...');
+    /*console.log('📸 Upload de photo de profil...')*/
     
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📤 Envoi vers l\'Edge Function...');
+    /*console.log('📤 Envoi vers l\'Edge Function...')*/
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/upload-photo`;
     
     // Créer un nouveau FormData pour l'Edge Function
@@ -74,12 +74,12 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
     
-    console.log('📥 Réponse de l\'Edge Function:', {
+    /*console.log('📥 Réponse de l\'Edge Function:', {
       status: response.status,
       success: result.success,
       error: result.error,
       data: result.data ? 'Présent' : 'Absent'
-    });
+    })*/
     
     if (!response.ok) {
       return createCorsResponse(

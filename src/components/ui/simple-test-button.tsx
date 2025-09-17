@@ -6,12 +6,12 @@ export function SimpleTestButton() {
   const [email, setEmail] = useState('');
 
   const switchToForgotPassword = () => {
-    console.log('switchToForgotPassword called');
+    /*console.log('switchToForgotPassword called')*/
     setIsForgotPasswordMode(true);
   };
 
   const switchToLogin = () => {
-    console.log('switchToLogin called');
+    /*console.log('switchToLogin called')*/
     setIsForgotPasswordMode(false);
   };
 

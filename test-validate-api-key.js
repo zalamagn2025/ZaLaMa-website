@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 const BASE_URL = 'http://localhost:3000';
 
 async function testValidateApiKey() {
-  console.log('🧪 Test de l\'API de validation de clé API\n');
+  /*console.log('🧪 Test de l\'API de validation de clé API\n')*/
 
   const tests = [
     {
@@ -34,8 +34,8 @@ async function testValidateApiKey() {
   ];
 
   for (const test of tests) {
-    console.log(`\n📋 ${test.name}`);
-    console.log(`🔑 Clé API: ${test.api_key ? '***' + test.api_key.slice(-4) : 'null'}`);
+    /*console.log(`\n📋 ${test.name}`)*/
+    /*console.log(`🔑 Clé API: ${test.api_key ? '***' + test.api_key.slice(-4)*/ : 'null'}`);
     
     try {
       const response = await fetch(`${BASE_URL}/api/validate-api-key`, {
@@ -50,24 +50,24 @@ async function testValidateApiKey() {
 
       const result = await response.json();
       
-      console.log(`📊 Status: ${response.status}`);
-      console.log(`✅ Success: ${result.success}`);
+      /*console.log(`📊 Status: ${response.status}`)*/
+      /*console.log(`✅ Success: ${result.success}`)*/
       
       if (result.success) {
-        console.log(`🏢 Entreprise: ${result.data?.company_name || 'N/A'}`);
-        console.log(`🆔 Partner ID: ${result.data?.partner_id || 'N/A'}`);
-        console.log(`🖼️ Logo: ${result.data?.logo_url || 'N/A'}`);
-        console.log(`🟢 Actif: ${result.data?.is_active || 'N/A'}`);
+        /*console.log(`🏢 Entreprise: ${result.data?.company_name || 'N/A'}`)*/
+        /*console.log(`🆔 Partner ID: ${result.data?.partner_id || 'N/A'}`)*/
+        /*console.log(`🖼️ Logo: ${result.data?.logo_url || 'N/A'}`)*/
+        /*console.log(`🟢 Actif: ${result.data?.is_active || 'N/A'}`)*/
       } else {
-        console.log(`❌ Erreur: ${result.error || 'N/A'}`);
-        console.log(`💬 Message: ${result.message || 'N/A'}`);
+        /*console.log(`❌ Erreur: ${result.error || 'N/A'}`)*/
+        /*console.log(`💬 Message: ${result.message || 'N/A'}`)*/
       }
 
       // Vérification du test
       if (result.success === test.expectedSuccess) {
-        console.log('✅ Test réussi');
+        /*console.log('✅ Test réussi')*/
       } else {
-        console.log('❌ Test échoué');
+        /*console.log('❌ Test échoué')*/
       }
 
     } catch (error) {
@@ -75,12 +75,12 @@ async function testValidateApiKey() {
     }
   }
 
-  console.log('\n🎯 Tests terminés');
+  /*console.log('\n🎯 Tests terminés')*/
 }
 
 // Test CORS
 async function testCors() {
-  console.log('\n🌐 Test CORS');
+  /*console.log('\n🌐 Test CORS')*/
   
   try {
     const response = await fetch(`${BASE_URL}/api/validate-api-key`, {
@@ -92,10 +92,10 @@ async function testCors() {
       }
     });
 
-    console.log(`📊 Status CORS: ${response.status}`);
-    console.log(`🔗 Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin')}`);
-    console.log(`🔗 Access-Control-Allow-Methods: ${response.headers.get('Access-Control-Allow-Methods')}`);
-    console.log(`🔗 Access-Control-Allow-Headers: ${response.headers.get('Access-Control-Allow-Headers')}`);
+    /*console.log(`📊 Status CORS: ${response.status}`)*/
+    /*console.log(`🔗 Access-Control-Allow-Origin: ${response.headers.get('Access-Control-Allow-Origin')*/}`);
+    /*console.log(`🔗 Access-Control-Allow-Methods: ${response.headers.get('Access-Control-Allow-Methods')*/}`);
+    /*console.log(`🔗 Access-Control-Allow-Headers: ${response.headers.get('Access-Control-Allow-Headers')*/}`);
     
   } catch (error) {
     console.error('💥 Erreur CORS:', error.message);
@@ -104,12 +104,12 @@ async function testCors() {
 
 // Exécuter les tests
 async function runTests() {
-  console.log('🚀 Démarrage des tests de validation de clé API\n');
+  /*console.log('🚀 Démarrage des tests de validation de clé API\n')*/
   
   await testValidateApiKey();
   await testCors();
   
-  console.log('\n✨ Tous les tests sont terminés');
+  /*console.log('\n✨ Tous les tests sont terminés')*/
 }
 
 runTests().catch(console.error);

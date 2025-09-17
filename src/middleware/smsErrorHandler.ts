@@ -63,9 +63,9 @@ Action requise: Vérification immédiate des credentials SMS
     // Métriques pour monitoring
     const errorType = this.categorizeError(error);
     
-    console.log('📈 Error Metrics:', {
+    /*console.log('📈 Error Metrics:', {
       type: errorType,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date()*/.toISOString(),
       severity: this.getErrorSeverity(error)
     });
   }

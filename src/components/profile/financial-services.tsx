@@ -36,17 +36,17 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       try {
         setLoading(true)
         setError(null)
-        console.log("🔍 Récupération des services depuis Supabase...")
-        console.log("🔑 URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-        console.log("🔑 Clé anonyme présente:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+        /*console.log("🔍 Récupération des services depuis Supabase...")*/
+        /*console.log("🔑 URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL)*/
+        /*console.log("🔑 Clé anonyme présente:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)*/
         
         const { data, error } = await supabase
           .from('services')
           .select('*')
         
-        console.log("📊 Services récupérés:", data)
-        console.log("📊 Nombre de services:", data?.length || 0)
-        console.log("❌ Erreur services:", error)
+        /*console.log("📊 Services récupérés:", data)*/
+        /*console.log("📊 Nombre de services:", data?.length || 0)*/
+        /*console.log("❌ Erreur services:", error)*/
         
         if (error) {
           console.error("Erreur lors de la récupération des services:", error)
@@ -58,7 +58,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
           console.warn("⚠️ Aucun service trouvé dans la base de données")
           setError("Aucun service disponible")
         } else {
-          console.log("✅ Services chargés avec succès:", data.length, "services")
+          /*console.log("✅ Services chargés avec succès:", data.length, "services")*/
         }
         
         setServices(data || [])
@@ -75,7 +75,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
 
   // Map Supabase services to the format used in the component
   const mappedServices = services.map(service => {
-    console.log("🔄 Mapping service:", service.nom, service.disponible)
+    /*console.log("🔄 Mapping service:", service.nom, service.disponible)*/
     return {
       id: service.id,
       nom: service.nom,
@@ -129,8 +129,8 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
     }
   })
 
-  console.log("🎯 Services mappés:", mappedServices.length)
-  console.log("🎯 Services disponibles:", mappedServices.filter(s => s.eligibility === "Disponible").length)
+  /*console.log("🎯 Services mappés:", mappedServices.length)*/
+  /*console.log("🎯 Services disponibles:", mappedServices.filter(s => s.eligibility === "Disponible").length)*/
 
   return (
     <div className="py-8 bg-[#010D3E]">

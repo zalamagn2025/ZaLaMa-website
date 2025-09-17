@@ -45,7 +45,7 @@ export function useSalarySetup() {
     setError(null);
 
     try {
-      console.log('🔍 Vérification du besoin de configuration du salaire via Edge Function...');
+      /*console.log('🔍 Vérification du besoin de configuration du salaire via Edge Function...')*/
       const response = await fetch(`${EDGE_FUNCTION_URL}/check`, {
         method: 'GET',
         headers: {
@@ -55,12 +55,12 @@ export function useSalarySetup() {
       });
 
       const data = await response.json();
-      console.log('📊 Réponse Edge Function /check:', data);
+      /*console.log('📊 Réponse Edge Function /check:', data)*/
 
       if (response.ok && data.success) {
         setNeedsSetup(data.needsSetup);
         setUserInfo(data.user);
-        console.log('✅ Vérification terminée - needsSetup:', data.needsSetup);
+        /*console.log('✅ Vérification terminée - needsSetup:', data.needsSetup)*/
       } else {
         setError(data.error || 'Erreur lors de la vérification');
         setNeedsSetup(false);
@@ -89,7 +89,7 @@ export function useSalarySetup() {
     setError(null);
 
     try {
-      console.log('🔧 Configuration du salaire via Edge Function...', salaryData);
+      /*console.log('🔧 Configuration du salaire via Edge Function...', salaryData)*/
       const response = await fetch(`${EDGE_FUNCTION_URL}/configure`, {
         method: 'POST',
         headers: {
@@ -100,7 +100,7 @@ export function useSalarySetup() {
       });
 
       const data = await response.json();
-      console.log('📊 Réponse Edge Function /configure:', data);
+      /*console.log('📊 Réponse Edge Function /configure:', data)*/
 
       if (response.ok && data.success) {
         setNeedsSetup(false);
@@ -111,7 +111,7 @@ export function useSalarySetup() {
             currentSalary: data.employee.salaire_net
           });
         }
-        console.log('✅ Salaire configuré avec succès');
+        /*console.log('✅ Salaire configuré avec succès')*/
         return true;
       } else {
         setError(data.error || 'Erreur lors de la configuration');
@@ -130,15 +130,15 @@ export function useSalarySetup() {
   // Vérifier automatiquement au montage du composant
   useEffect(() => {
     if (employee && isAuthenticated) {
-      console.log('🔄 Hook useSalarySetup - Vérification automatique...');
-      console.log('   - employee.user_id:', employee.user_id);
-      console.log('   - employee.salaire_net:', employee.salaire_net);
-      console.log('   - employee.poste:', employee.poste);
+      /*console.log('🔄 Hook useSalarySetup - Vérification automatique...')*/
+      /*console.log('   - employee.user_id:', employee.user_id)*/
+      /*console.log('   - employee.salaire_net:', employee.salaire_net)*/
+      /*console.log('   - employee.poste:', employee.poste)*/
       
       // Utiliser directement l'Edge Function pour vérifier
       checkSalarySetup();
     } else {
-      console.log('🔄 Hook useSalarySetup - Pas d\'employé connecté');
+      /*console.log('🔄 Hook useSalarySetup - Pas d\'employé connecté')*/
       setNeedsSetup(false);
     }
   }, [employee, isAuthenticated]);

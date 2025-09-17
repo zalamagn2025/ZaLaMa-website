@@ -113,7 +113,7 @@ src/
 
 ```javascript
 // Dans les logs de l'application
-console.log('📧 Résultats envoi e-mails partenariat:', {
+/*console.log('📧 Résultats envoi e-mails partenariat:', {
   company: data.company_name,
   companySuccess: emailResult.companyEmail.success,
   repSuccess: emailResult.repEmail.success,
@@ -121,7 +121,7 @@ console.log('📧 Résultats envoi e-mails partenariat:', {
   contactSuccess: emailResult.contactEmail.success,
   overallSuccess: emailResult.overallSuccess,
   duration: `${emailDuration}ms`
-});
+})*/
 ```
 
 ## 📊 **MÉTRIQUES ET PERFORMANCE**

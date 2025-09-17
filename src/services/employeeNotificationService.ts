@@ -62,7 +62,7 @@ class EmployeeNotificationService {
     const startTime = Date.now();
     
     try {
-      console.log('📧 Envoi e-mail confirmation inscription employé pour:', data.email);
+      /*console.log('📧 Envoi e-mail confirmation inscription employé pour:', data.email)*/
       
       const htmlContent = this.getEmployeeRegistrationEmailTemplate(data);
       
@@ -79,12 +79,12 @@ class EmployeeNotificationService {
 
       const duration = Date.now() - startTime;
       
-      console.log('✅ E-mail confirmation inscription employé envoyé:', {
+      /*console.log('✅ E-mail confirmation inscription employé envoyé:', {
         messageId: result.data?.id,
         employee: `${data.prenom} ${data.nom}`,
         email: data.email,
         duration: `${duration}ms`
-      });
+      })*/
 
       return {
         success: true,
@@ -121,7 +121,7 @@ class EmployeeNotificationService {
     const startTime = Date.now();
     
     try {
-      console.log('📱 Envoi SMS confirmation inscription employé pour:', data.telephone);
+      /*console.log('📱 Envoi SMS confirmation inscription employé pour:', data.telephone)*/
       
       const message = this.buildEmployeeRegistrationSMSMessage(data);
       const formattedPhone = this.formatPhoneNumber(data.telephone);
@@ -134,12 +134,12 @@ class EmployeeNotificationService {
 
       const duration = Date.now() - startTime;
       
-      console.log('✅ SMS confirmation inscription employé envoyé:', {
+      /*console.log('✅ SMS confirmation inscription employé envoyé:', {
         messageId: result.messageid,
         employee: `${data.prenom} ${data.nom}`,
         phone: data.telephone,
         duration: `${duration}ms`
-      });
+      })*/
 
       return {
         success: true,
@@ -169,7 +169,7 @@ class EmployeeNotificationService {
    * Envoie les notifications complètes (email + SMS)
    */
   async sendRegistrationNotifications(data: EmployeeRegistrationData): Promise<NotificationResult> {
-    console.log('🚀 Envoi des notifications d\'inscription pour:', `${data.prenom} ${data.nom}`);
+    /*console.log('🚀 Envoi des notifications d\'inscription pour:', `${data.prenom} ${data.nom}`)*/
     
     const results: NotificationResult = {
       success: false,
@@ -178,7 +178,7 @@ class EmployeeNotificationService {
 
     try {
       // Envoi de l'email
-      console.log('📧 Envoi email de confirmation...');
+      /*console.log('📧 Envoi email de confirmation...')*/
       const emailResult = await this.sendEmployeeEmail(data);
       results.email = emailResult;
       
@@ -190,7 +190,7 @@ class EmployeeNotificationService {
       await this.delay(500);
 
       // Envoi du SMS
-      console.log('📱 Envoi SMS de confirmation...');
+      /*console.log('📱 Envoi SMS de confirmation...')*/
       const smsResult = await this.sendEmployeeSMS(data);
       results.sms = smsResult;
       
@@ -201,12 +201,12 @@ class EmployeeNotificationService {
       // Déterminer le succès global
       results.success = (emailResult.success || smsResult.success) && results.errors.length === 0;
 
-      console.log('✅ Notifications d\'inscription terminées:', {
+      /*console.log('✅ Notifications d\'inscription terminées:', {
         employee: `${data.prenom} ${data.nom}`,
         emailSuccess: emailResult.success,
         smsSuccess: smsResult.success,
         totalErrors: results.errors.length
-      });
+      })*/
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';

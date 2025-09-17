@@ -358,9 +358,9 @@ WHERE table_name = 'password_reset_tokens';
 Dans les fichiers API, les logs sont automatiquement activés :
 
 ```typescript
-console.log('🔐 Demande de réinitialisation pour:', email);
-console.log('🔒 Token de réinitialisation généré:', tokenData);
-console.log('✅ Email envoyé avec succès pour:', email);
+/*console.log('🔐 Demande de réinitialisation pour:', email)*/
+/*console.log('🔒 Token de réinitialisation généré:', tokenData)*/
+/*console.log('✅ Email envoyé avec succès pour:', email)*/
 ```
 
 #### Vérification des Logs
