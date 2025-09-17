@@ -4,6 +4,8 @@ import { UserWithEmployeData } from "@/types/employe"
 import { RequestType, REQUEST_TYPES } from "@/types/salary-advance"
 import { IconCheck, IconCreditCard, IconEye, IconEyeOff, IconInfoCircle, IconLock, IconShieldCheck, IconX, IconCalendar, IconCalculator, IconAlertCircle } from "@tabler/icons-react"
 import PinInput from "@/components/common/PinInput"
+import CurrencyInput from "@/components/ui/currency-input"
+import PhoneInput from "@/components/ui/phone-input"
 import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -120,7 +122,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [amount, setAmount] = useState("")
   const [requestType, setRequestType] = useState<RequestType>('aucune')
   const [reason, setReason] = useState("")
-  const [receivePhone, setReceivePhone] = useState(user.telephone)
+  const [receivePhone, setReceivePhone] = useState(user.telephone || '')
   const [useDefaultPhone, setUseDefaultPhone] = useState(true)
   
   // États pour la fonctionnalité multi-mois
@@ -156,6 +158,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   // État pour gérer le focus sur les champs
   const [isAmountFocused, setIsAmountFocused] = useState(false)
   const [isPhoneFocused, setIsPhoneFocused] = useState(false)
+  
+  // États pour la validation des composants
+  const [isAmountValid, setIsAmountValid] = useState(false)
+  const [isPhoneValid, setIsPhoneValid] = useState(false)
+  const [amountNumericValue, setAmountNumericValue] = useState(0)
   
   const router = useRouter()
 
@@ -414,38 +421,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [loadFinancialData, calculateAdvanceData])
 
-  // Validation en temps réel du montant avec toasts (seulement quand pas en focus)
-  useEffect(() => {
-    if (!amount || !avanceData || isAmountFocused) return
-
-    const requestedAmount = parseFloat(amount.replace(/,/g, ''))
-    if (isNaN(requestedAmount) || requestedAmount <= 0) return
-
-    const limiteAvance = avanceData.limiteAvance
-    const minimumMultiMonth = avanceData.minimumMultiMonth
-
-    // Validation multi-mois
-    if (enableMultiMonths && selectedMonths > 1) {
-      if (requestedAmount < minimumMultiMonth) {
-        showToast('warning', `Montant minimum pour ${selectedMonths} mois: ${minimumMultiMonth.toLocaleString()} GNF`)
-      } else if (requestedAmount > limiteAvance) {
-        showToast('error', `Montant maximum pour ${selectedMonths} mois: ${limiteAvance.toLocaleString()} GNF`)
-      }
-    } else {
-      // Validation normale
-      if (requestedAmount > limiteAvance) {
-        showToast('error', `Montant maximum autorisé: ${limiteAvance.toLocaleString()} GNF`)
-      }
-    }
-  }, [amount, avanceData, enableMultiMonths, selectedMonths, isAmountFocused, showToast])
 
   // Validation du formulaire
   const validateForm = () => {
-      const requestedAmount = parseFloat(amount.replace(/,/g, ''))
+      const requestedAmount = amountNumericValue
       const limiteAvance = avanceData?.limiteAvance || 0
       const minimumMultiMonth = avanceData?.minimumMultiMonth || 0
 
-      if (isNaN(requestedAmount) || requestedAmount <= 0) {
+      if (!isAmountValid || requestedAmount <= 0) {
         showToast('error', "Veuillez entrer un montant valide")
         throw new Error("Veuillez entrer un montant valide")
       }
@@ -481,21 +464,13 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         throw new Error("Veuillez indiquer le motif de votre demande")
       }
 
-      if (!receivePhone?.trim()) {
-        showToast('error', "Veuillez indiquer un numéro de téléphone")
-        throw new Error("Veuillez indiquer un numéro de téléphone")
+      if (!isPhoneValid || !receivePhone?.trim()) {
+        showToast('error', "Veuillez indiquer un numéro de téléphone valide")
+        throw new Error("Veuillez indiquer un numéro de téléphone valide")
       }
 
-      // Validation du numéro de téléphone (format guinéen)
-      const phoneRegex = /^(\+224|224)?[6-7][0-9]{8}$/
+      // Nettoyer le numéro de téléphone pour l'API
       const cleanPhone = receivePhone.replace(/\s+/g, '').replace(/[-()]/g, '')
-      if (!phoneRegex.test(cleanPhone)) {
-        // Ne pas afficher de toast si l'utilisateur est en train de taper
-        if (!isPhoneFocused) {
-          showToast('error', "Format de numéro de téléphone invalide")
-        }
-        throw new Error("Format de numéro de téléphone invalide")
-      }
 
     return {
       requestedAmount,
@@ -1024,91 +999,57 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
                       {/* Montant demandé */}
                       <div className="space-y-2">
-                        <label htmlFor="amount" className="text-sm font-medium text-gray-300">
-                          Montant demandé
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            id="amount"
-                            value={amount}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/[^0-9,]/g, '')
-                              setAmount(value)
-                              setError("")
-                            }}
-                            onFocus={() => {
-                              setIsAmountFocused(true)
-                              // Cacher le toast s'il est affiché
-                              if (toast.show) {
-                                hideToast()
-                              }
-                            }}
-                            onBlur={() => {
-                              setIsAmountFocused(false)
-                              // Déclencher la validation après un court délai
-                              setTimeout(() => {
-                                if (amount && avanceData) {
-                                  const requestedAmount = parseFloat(amount.replace(/,/g, ''))
-                                  if (!isNaN(requestedAmount) && requestedAmount > 0) {
-                                    const limiteAvance = avanceData.limiteAvance
-                                    const minimumMultiMonth = avanceData.minimumMultiMonth
+                        <CurrencyInput
+                          value={amount}
+                          onChange={(value) => {
+                            setAmount(value)
+                            setError("")
+                          }}
+                          onValidationChange={(isValid, numericValue) => {
+                            setIsAmountValid(isValid)
+                            setAmountNumericValue(numericValue)
+                            
+                            // Validation personnalisée pour les limites multi-mois
+                            if (isValid && avanceData) {
+                              const limiteAvance = avanceData.limiteAvance
+                              const minimumMultiMonth = avanceData.minimumMultiMonth
 
-                                    // Validation multi-mois
-                                    if (enableMultiMonths && selectedMonths > 1) {
-                                      if (requestedAmount < minimumMultiMonth) {
-                                        showToast('warning', `Montant minimum pour ${selectedMonths} mois: ${minimumMultiMonth.toLocaleString()} GNF`)
-                                      } else if (requestedAmount > limiteAvance) {
-                                        showToast('error', `Montant maximum pour ${selectedMonths} mois: ${limiteAvance.toLocaleString()} GNF`)
-                                      }
-                                    } else {
-                                      // Validation normale
-                                      if (requestedAmount > limiteAvance) {
-                                        showToast('error', `Montant maximum autorisé: ${limiteAvance.toLocaleString()} GNF`)
-                                      }
-                                    }
-                                  }
+                              // Validation multi-mois
+                              if (enableMultiMonths && selectedMonths > 1) {
+                                if (numericValue < minimumMultiMonth) {
+                                  showToast('warning', `Montant minimum pour ${selectedMonths} mois: ${minimumMultiMonth.toLocaleString()} GNF`)
+                                } else if (numericValue > limiteAvance) {
+                                  showToast('error', `Montant maximum pour ${selectedMonths} mois: ${limiteAvance.toLocaleString()} GNF`)
                                 }
-                              }, 100)
-                            }}
-                            className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white text-lg"
-                            placeholder="Ex: 500,000"
-                            required
-                          />
-                          <span className="absolute right-4 top-3.5 text-sm text-gray-400 font-medium">
-                            GNF
-                          </span>
-                        </div>
+                              } else {
+                                // Validation normale
+                                if (numericValue > limiteAvance) {
+                                  showToast('error', `Montant maximum autorisé: ${limiteAvance.toLocaleString()} GNF`)
+                                }
+                              }
+                            }
+                          }}
+                          placeholder="Ex: 500000"
+                          label="Montant demandé"
+                          required
+                          min={0}
+                          max={avanceData?.limiteAvance || 999999999999}
+                          className="text-white"
+                          showValidation={true}
+                        />
                         
-                        {/* Validation en temps réel */}
-                        {amount && avanceData && (
+                        {/* Informations sur les limites */}
+                        {avanceData && (
                           <motion.div
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center justify-between text-sm"
+                            className="text-sm flex justify-end"
                           >
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 font-medium">
                               {enableMultiMonths && selectedMonths > 1 
                                 ? `Limite ${selectedMonths} mois: ${avanceData.multiMonthLimit.toLocaleString()} GNF`
                                 : `Limite mensuelle: ${avanceData.limiteAvance.toLocaleString()} GNF`
                               }
-                            </span>
-                            <span className={`font-medium flex items-center space-x-1 ${
-                              parseFloat(amount.replace(/,/g, '')) > avanceData.limiteAvance 
-                                ? 'text-red-400' 
-                                : 'text-green-400'
-                            }`}>
-                              {parseFloat(amount.replace(/,/g, '')) > avanceData.limiteAvance ? (
-                                <>
-                                  <IconX className="h-4 w-4" />
-                                  <span>Montant trop élevé</span>
-                                </>
-                              ) : (
-                                <>
-                                  <IconCheck className="h-4 w-4" />
-                                  <span>Montant valide</span>
-                                </>
-                              )}
                             </span>
                           </motion.div>
                         )}
@@ -1127,19 +1068,27 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <label htmlFor="requestType" className="block text-sm font-medium text-gray-300 mb-2">
                           Type de motif
                         </label>
-                        <select
-                          id="requestType"
-                          value={requestType}
-                          onChange={(e) => setRequestType(e.target.value as RequestType)}
-                          className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 text-white"
-                          required
-                        >
-                          {REQUEST_TYPES.map((type) => (
-                            <option key={type.value} value={type.value}>
-                              {type.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            id="requestType"
+                            value={requestType}
+                            onChange={(e) => setRequestType(e.target.value as RequestType)}
+                            className="block w-full px-4 py-3 bg-[#0A1A5A] border border-[#1A2B6B] rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:border-[#FF671E] focus:ring-offset-2 transition-all duration-200 text-white appearance-none cursor-pointer hover:bg-[#142B7F]"
+                            required
+                          >
+                            {REQUEST_TYPES.map((type) => (
+                              <option key={type.value} value={type.value} className="bg-[#0A1A5A] text-white">
+                                {type.label}
+                              </option>
+                            ))}
+                          </select>
+                          {/* Icône de flèche personnalisée */}
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Détails du motif */}
@@ -1160,39 +1109,21 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
                       {/* Numéro de téléphone */}
                       <div>
-                        <label htmlFor="receivePhone" className="block text-sm font-medium text-gray-300 mb-2">
-                          Numéro de téléphone pour réception
-                        </label>
-                        <input
-                          type="tel"
-                          id="receivePhone"
-                          value={receivePhone}
-                          onChange={(e) => setReceivePhone(e.target.value)}
-                          onFocus={() => {
-                            setIsPhoneFocused(true)
-                            // Cacher le toast s'il est affiché
-                            if (toast.show) {
-                              hideToast()
+                        <PhoneInput
+                          value={receivePhone || ''}
+                          onChange={(value) => setReceivePhone(value)}
+                          onValidationChange={(isValid, formattedValue) => {
+                            setIsPhoneValid(isValid)
+                            if (!isValid && receivePhone.trim()) {
+                              showToast('error', "Format de numéro de téléphone invalide")
                             }
                           }}
-                          onBlur={() => {
-                            setIsPhoneFocused(false)
-                            // Validation du téléphone après un court délai
-                            setTimeout(() => {
-                              if (receivePhone?.trim()) {
-                                const phoneRegex = /^(\+224|224)?[6-7][0-9]{8}$/
-                                const cleanPhone = receivePhone.replace(/\s+/g, '').replace(/[-()]/g, '')
-                                if (!phoneRegex.test(cleanPhone)) {
-                                  showToast('error', "Format de numéro de téléphone invalide")
-                                }
-                              }
-                            }, 100)
-                          }}
-                          className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
-                          placeholder="Ex: +224 6 12 34 56 78"
+                          placeholder="+224 612 34 56 78"
+                          label="Numéro de téléphone pour réception"
                           required
+                          className="text-white"
+                          showValidation={true}
                         />
-                        <p className="mt-1 text-xs text-gray-400">Format: +224 6/7 XX XX XX XX</p>
                       </div>
                     </motion.div>
 
