@@ -1056,6 +1056,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       </div>
                     </motion.div>
 
+                    {/* Divider */}
+                    <div className="border-t border-gray-600/30 my-6"></div>
+
                     {/* Informations de la demande */}
                     <motion.div 
                       initial={{ opacity: 0, x: -10 }}
@@ -1107,6 +1110,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         />
                       </div>
 
+                      {/* Divider */}
+                      <div className="border-t border-gray-600/30 my-4"></div>
+
                       {/* Numéro de téléphone */}
                       <div>
                         <PhoneInput
@@ -1126,6 +1132,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         />
                       </div>
                     </motion.div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-600/30 my-6"></div>
 
                     {/* Conditions et boutons */}
                     <motion.div 
