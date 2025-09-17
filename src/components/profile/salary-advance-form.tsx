@@ -24,12 +24,22 @@ interface AvanceData {
   totalWorkingDays: number
   workingDaysPercentage: number
   limiteAvance: number
+  multiMonthLimit: number
+  minimumMultiMonth: number
 }
 
 type FormStep = 'form' | 'verification' | 'confirmation' | 'success';
 
 // Fonction pour calculer l'avance disponible pour les demandes d'avance sur salaire
-function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number; limiteAvance: number } {
+function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0, enableMultiMonths: boolean = false, months: number = 1): { 
+  avanceDisponible: number; 
+  workingDaysElapsed: number; 
+  totalWorkingDays: number; 
+  workingDaysPercentage: number; 
+  limiteAvance: number;
+  multiMonthLimit: number;
+  minimumMultiMonth: number;
+} {
   const today = new Date()
   const currentMonth = today.getMonth()
   const currentYear = today.getFullYear()
@@ -39,8 +49,23 @@ function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0)
   const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
   const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
   
-  // L'avance disponible = 50% du salaire net - avance active
-  const limiteAvanceBase = Math.floor(salaireNet * 0.50)
+  // Calculer les limites selon le mode (normal ou multi-mois)
+  let limiteAvanceBase: number
+  let multiMonthLimit = 0
+  let minimumMultiMonth = 0
+  
+  if (enableMultiMonths && months > 1) {
+    // Mode multi-mois : 30% du salaire net × nombre de mois
+    limiteAvanceBase = Math.floor(salaireNet * 0.30 * months)
+    multiMonthLimit = limiteAvanceBase
+    minimumMultiMonth = Math.floor(salaireNet * 0.30 * months) // Minimum requis
+  } else {
+    // Mode normal : 50% du salaire net
+    limiteAvanceBase = Math.floor(salaireNet * 0.50)
+    multiMonthLimit = 0
+    minimumMultiMonth = 0
+  }
+  
   const avanceDisponible = Math.max(0, limiteAvanceBase - avanceActive)
   const limiteAvance = avanceDisponible
   
@@ -49,7 +74,9 @@ function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0)
     workingDaysElapsed,
     totalWorkingDays,
     workingDaysPercentage,
-    limiteAvance
+    limiteAvance,
+    multiMonthLimit,
+    minimumMultiMonth
   }
 }
 
@@ -95,6 +122,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [reason, setReason] = useState("")
   const [receivePhone, setReceivePhone] = useState(user.telephone)
   const [useDefaultPhone, setUseDefaultPhone] = useState(true)
+  
+  // États pour la fonctionnalité multi-mois
+  const [enableMultiMonths, setEnableMultiMonths] = useState(false)
+  const [selectedMonths, setSelectedMonths] = useState(1)
   
   // États de l'interface
   const [currentStep, setCurrentStep] = useState<FormStep>('form')
@@ -232,6 +263,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
          workingDaysPercentage
        })
       
+      // Calculer les limites multi-mois
+      const multiMonthLimit = enableMultiMonths && selectedMonths > 1 
+        ? Math.floor(salaireNet * 0.30 * selectedMonths) 
+        : 0
+      const minimumMultiMonth = enableMultiMonths && selectedMonths > 1 
+        ? Math.floor(salaireNet * 0.30 * selectedMonths) 
+        : 0
+
       setAvanceData({
         salaireNet: salaireNet,
         avanceActive: avanceActive, // Total des avances actives depuis l'Edge Function
@@ -242,7 +281,9 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         workingDaysElapsed: workingDaysElapsed,
         totalWorkingDays: totalWorkingDays,
         workingDaysPercentage: workingDaysPercentage,
-        limiteAvance: avanceDisponible // Limite = avance disponible
+        limiteAvance: enableMultiMonths && selectedMonths > 1 ? multiMonthLimit : avanceDisponible,
+        multiMonthLimit: multiMonthLimit,
+        minimumMultiMonth: minimumMultiMonth
       })
       
       console.log('🔍 Données d\'avance calculées avec Edge Function:', {
@@ -258,7 +299,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     } finally {
       setLoadingAvance(false)
     }
-  }, [financialData])
+  }, [financialData, enableMultiMonths, selectedMonths])
 
   // Charger les données financières au chargement
   useEffect(() => {
@@ -349,13 +390,25 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const validateForm = () => {
       const requestedAmount = parseFloat(amount.replace(/,/g, ''))
       const limiteAvance = avanceData?.limiteAvance || 0
+      const minimumMultiMonth = avanceData?.minimumMultiMonth || 0
 
       if (isNaN(requestedAmount) || requestedAmount <= 0) {
         throw new Error("Veuillez entrer un montant valide")
       }
 
-      if (requestedAmount > limiteAvance) {
-        throw new Error(`Le montant demandé dépasse votre limite d'avance sur salaire ce mois-ci (${limiteAvance.toLocaleString()} GNF)`)
+      // Validation spécifique pour le mode multi-mois
+      if (enableMultiMonths && selectedMonths > 1) {
+        if (requestedAmount < minimumMultiMonth) {
+          throw new Error(`Le montant minimum pour ${selectedMonths} mois est de ${minimumMultiMonth.toLocaleString()} GNF (30% × ${selectedMonths} mois)`)
+        }
+        if (requestedAmount > limiteAvance) {
+          throw new Error(`Le montant demandé dépasse la limite pour ${selectedMonths} mois (${limiteAvance.toLocaleString()} GNF)`)
+        }
+      } else {
+        // Validation normale
+        if (requestedAmount > limiteAvance) {
+          throw new Error(`Le montant demandé dépasse votre limite d'avance sur salaire ce mois-ci (${limiteAvance.toLocaleString()} GNF)`)
+        }
       }
 
       if (!requestType || requestType === "aucune") {
@@ -440,7 +493,12 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         montant_demande: validation.requestedAmount,
         type_motif: requestType,
         motif: reason.trim(),
-        numero_reception: validation.cleanPhone
+        numero_reception: validation.cleanPhone,
+        // Ajouter les paramètres multi-mois si activés
+        ...(enableMultiMonths && selectedMonths > 1 && {
+          enable_multi_months: true,
+          months: selectedMonths
+        })
       }
 
       console.log('📝 Création de la demande via Edge Function:', demandData)
@@ -777,7 +835,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-gray-400">
-                          Limite d'avance: {avanceData?.limiteAvance.toLocaleString() || 0} GNF
+                          {enableMultiMonths && selectedMonths > 1 
+                            ? `Limite ${selectedMonths} mois: ${avanceData?.multiMonthLimit.toLocaleString() || 0} GNF`
+                            : `Limite d'avance: ${avanceData?.limiteAvance.toLocaleString() || 0} GNF`
+                          }
                         </span>
                         {amount && avanceData && (
                           <span className={`font-medium ${
@@ -793,6 +854,84 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         )}
                       </div>
                     
+                  </motion.div>
+
+                  {/* Option Multi-mois */}
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.15, duration: 0.3 }}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-gray-300">
+                        Avance sur plusieurs mois
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEnableMultiMonths(!enableMultiMonths)
+                          if (enableMultiMonths) {
+                            setSelectedMonths(1)
+                          }
+                        }}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                          enableMultiMonths ? 'bg-[#FF671E]' : 'bg-gray-600'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                            enableMultiMonths ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    
+                    {enableMultiMonths && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-3"
+                      >
+                        <div>
+                          <label className="text-xs text-gray-400 mb-2 block">
+                            Nombre de mois (2-3)
+                          </label>
+                          <select
+                            value={selectedMonths}
+                            onChange={(e) => setSelectedMonths(parseInt(e.target.value))}
+                            className="w-full px-3 py-2 bg-[#0A1A5A] border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-[#FF671E] focus:border-transparent"
+                          >
+                            <option value={2}>2 mois</option>
+                            <option value={3}>3 mois</option>
+                          </select>
+                        </div>
+                        
+                        {avanceData && (
+                          <div className="p-3 bg-[#0A1A5A]/50 rounded-lg border border-gray-600">
+                            <div className="text-xs text-gray-300 space-y-1">
+                              <div className="flex justify-between">
+                                <span>Montant minimum:</span>
+                                <span className="text-[#FF671E] font-medium">
+                                  {avanceData.minimumMultiMonth.toLocaleString()} GNF
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Montant maximum:</span>
+                                <span className="text-green-400 font-medium">
+                                  {avanceData.multiMonthLimit.toLocaleString()} GNF
+                                </span>
+                              </div>
+                              <div className="text-gray-400 text-xs mt-2">
+                                Règle: 30% du salaire net × {selectedMonths} mois
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
                   </motion.div>
 
                     {/* Type de motif et détails */}
