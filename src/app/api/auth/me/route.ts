@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('👤 Récupération des informations utilisateur...')
+    /*console.log('👤 Récupération des informations utilisateur...')*/
     
     const cookieStore = await cookies()
     
@@ -38,18 +38,18 @@ export async function GET(request: NextRequest) {
     }
     
     if (!session) {
-      console.log('❌ Aucune session trouvée')
+      /*console.log('❌ Aucune session trouvée')*/
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
       )
     }
 
-    console.log('✅ Session trouvée pour:', session.user.email)
-    console.log('🔍 User ID:', session.user.id)
+    /*console.log('✅ Session trouvée pour:', session.user.email)*/
+    /*console.log('🔍 User ID:', session.user.id)*/
 
     // Essayer d'abord de récupérer les données depuis la table users (responsables/RH)
-    console.log('🔍 Recherche dans la table users...')
+    /*console.log('🔍 Recherche dans la table users...')*/
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -57,13 +57,13 @@ export async function GET(request: NextRequest) {
       .maybeSingle() // Utiliser maybeSingle() au lieu de single() pour éviter l'erreur
 
     if (userError) {
-      console.log('❌ Erreur lors de la recherche dans users:', userError.message)
+      /*console.log('❌ Erreur lors de la recherche dans users:', userError.message)*/
       // Ne pas retourner d'erreur ici, continuer vers employees
     }
 
     // Si l'utilisateur est trouvé dans la table users
     if (userData) {
-      console.log('✅ Données utilisateur récupérées, type:', userData.type)
+      /*console.log('✅ Données utilisateur récupérées, type:', userData.type)*/
       
       // Combiner les données
       const user = {
@@ -76,13 +76,13 @@ export async function GET(request: NextRequest) {
         ...userData
       }
 
-      console.log('✅ Informations utilisateur complètes récupérées')
+      /*console.log('✅ Informations utilisateur complètes récupérées')*/
       return NextResponse.json({ user })
     }
 
     // Si l'utilisateur n'est pas dans users, essayer dans employees
-    console.log('🔍 Utilisateur non trouvé dans users, recherche dans employees...')
-    console.log('🔍 Recherche avec user_id:', session.user.id)
+    /*console.log('🔍 Utilisateur non trouvé dans users, recherche dans employees...')*/
+    /*console.log('🔍 Recherche avec user_id:', session.user.id)*/
     
     const { data: employeeData, error: employeeError } = await supabase
       .from('employees')
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (employeeError) {
-      console.log('❌ Erreur ou employé non trouvé:', employeeError.message)
+      /*console.log('❌ Erreur ou employé non trouvé:', employeeError.message)*/
       if (employeeError.code !== 'PGRST116') {
         console.error('❌ Erreur lors de la récupération des données employé:', employeeError)
         return NextResponse.json(
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (employeeData) {
-      console.log('✅ Données employé récupérées:', employeeData.nom_complet || `${employeeData.prenom} ${employeeData.nom}`)
+      /*console.log('✅ Données employé récupérées:', employeeData.nom_complet || `${employeeData.prenom} ${employeeData.nom}`)*/
       
       // Créer un objet utilisateur pour les employés
       const user = {
@@ -133,14 +133,14 @@ export async function GET(request: NextRequest) {
         photo_url: employeeData.photo_url
       }
 
-      console.log('✅ Informations employé complètes récupérées')
+      /*console.log('✅ Informations employé complètes récupérées')*/
       return NextResponse.json({ user })
     }
 
     // Si ni dans users ni dans employees
-    console.log('⚠️ Utilisateur non trouvé dans users ni employees')
-    console.log('🔍 Email de session:', session.user.email)
-    console.log('🔍 User ID de session:', session.user.id)
+    /*console.log('⚠️ Utilisateur non trouvé dans users ni employees')*/
+    /*console.log('🔍 Email de session:', session.user.email)*/
+    /*console.log('🔍 User ID de session:', session.user.id)*/
     
     // Vérifier s'il y a des employés avec cet email
     const { data: emailCheck, error: emailError } = await supabase
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       .eq('email', session.user.email)
     
     if (emailCheck && emailCheck.length > 0) {
-      console.log('🔍 Employés trouvés avec cet email:', emailCheck)
+      /*console.log('🔍 Employés trouvés avec cet email:', emailCheck)*/
     }
     
     return NextResponse.json(

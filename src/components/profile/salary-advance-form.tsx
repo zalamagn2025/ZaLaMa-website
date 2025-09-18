@@ -183,13 +183,13 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   }, [])
 
   // Log des données utilisateur pour débogage
-  console.log('🔍 Données utilisateur dans SalaryAdvanceForm:', {
+  /*console.log('🔍 Données utilisateur dans SalaryAdvanceForm:', {
     employeId: user.employeId,
     partenaireId: user.partenaireId,
     salaireNet: user.salaireNet,
     nom: user.nom,
     prenom: user.prenom
-  })
+  })*/
 
   // États pour les avances actives (maintenant gérés par le hook)
   const advanceRequests = demands || []
@@ -221,7 +221,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {
-          console.log('📊 Données financières récupérées dans le formulaire:', result.data)
+          /*console.log('📊 Données financières récupérées dans le formulaire:', result.data)*/
           setFinancialData(result.data)
         } else {
           setError(result.error || 'Erreur lors du chargement des données')
@@ -240,7 +240,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   // Récupérer les avances actives (maintenant géré par le hook useEmployeeDemands)
   const fetchAdvanceRequests = useCallback(async () => {
     // Cette fonction n'est plus nécessaire car le hook gère automatiquement la récupération
-    console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')
+    /*console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')*/
   }, [])
 
   // Calculer l'avance disponible en temps réel avec les données de l'Edge Function
@@ -289,14 +289,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
        
        const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
        
-       console.log('📅 Calcul FORCÉ des jours ouvrables:', {
+       /*console.log('📅 Calcul FORCÉ des jours ouvrables:', {
          currentYear,
          currentMonth,
          currentDay,
          workingDaysElapsed,
          totalWorkingDays,
          workingDaysPercentage
-       })
+       })*/
       
       // Calculer les limites multi-mois
       const multiMonthLimit = enableMultiMonths && selectedMonths > 1 
@@ -321,14 +321,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         minimumMultiMonth: minimumMultiMonth
       })
       
-      console.log('🔍 Données d\'avance calculées avec Edge Function:', {
+      /*console.log('🔍 Données d\'avance calculées avec Edge Function:', {
         salaireNet,
         avanceActive,
         salaireRestant,
         avanceDisponible,
         workingDaysElapsed,
         totalWorkingDays
-      })
+      })*/
     } catch (error) {
       console.error('Erreur lors du calcul de l\'avance disponible:', error)
     } finally {
@@ -377,14 +377,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       
       const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
       
-      console.log('🚀 Calcul FORCÉ des jours ouvrables au chargement:', {
+      /*console.log('🚀 Calcul FORCÉ des jours ouvrables au chargement:', {
         currentYear,
         currentMonth,
         currentDay,
         workingDaysElapsed,
         totalWorkingDays,
         workingDaysPercentage
-      })
+      })*/
       
       // Mettre à jour l'état si avanceData existe déjà
       if (avanceData) {
@@ -404,7 +404,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     const timer = setTimeout(calculateWorkingDays, 500)
     
     return () => clearTimeout(timer)
-  }, [avanceData])
+  }, []) // ✅ CORRECTION: Supprimer avanceData des dépendances pour éviter la boucle infinie
   
 
 
@@ -530,7 +530,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         password: pin // Envoyer le PIN comme "password" pour la compatibilité backend
       }
 
-      console.log('📤 Données envoyées à l\'API:', advanceRequest)
+      /*console.log('📤 Données envoyées à l\'API:', advanceRequest)*/
 
       // Utiliser le hook createDemand pour soumettre la demande via Edge Function
       const demandData = {
@@ -545,10 +545,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         })
       }
 
-      console.log('📝 Création de la demande via Edge Function:', demandData)
+      /*console.log('📝 Création de la demande via Edge Function:', demandData)*/
       
       const result = await createDemand(demandData)
-      console.log("✅ Demande créée avec succès:", result)
+      /*console.log("✅ Demande créée avec succès:", result)*/
       
       // Toast de succès
       showToast('success', `Demande d'avance de ${validation.requestedAmount.toLocaleString()} GNF envoyée avec succès !`)

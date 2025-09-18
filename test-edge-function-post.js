@@ -2,7 +2,7 @@
 const FormData = require('form-data');
 
 async function testEdgeFunctionPost() {
-  console.log('🧪 Test POST vers l\'edge function upload-logo...\n');
+  /*console.log('🧪 Test POST vers l\'edge function upload-logo...\n')*/
   
   try {
     // Créer un fichier de test simple (1x1 pixel PNG)
@@ -16,7 +16,7 @@ async function testEdgeFunctionPost() {
     });
     formData.append('partner_id', 'test-partner-123');
     
-    console.log('📤 Envoi POST vers l\'edge function...');
+    /*console.log('📤 Envoi POST vers l\'edge function...')*/
     const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/upload-logo', {
       method: 'POST',
       headers: {
@@ -26,19 +26,19 @@ async function testEdgeFunctionPost() {
       body: formData
     });
     
-    console.log(`Status: ${response.status} ${response.statusText}`);
-    console.log(`Headers:`, Object.fromEntries(response.headers.entries()));
+    /*console.log(`Status: ${response.status} ${response.statusText}`)*/
+    /*console.log(`Headers:`, Object.fromEntries(response.headers.entries()*/));
     
     const text = await response.text();
-    console.log(`Response:`, text);
+    /*console.log(`Response:`, text)*/
     
     if (response.ok) {
-      console.log('✅ Edge function fonctionne !');
+      /*console.log('✅ Edge function fonctionne !')*/
     } else {
-      console.log('❌ Edge function a un problème');
+      /*console.log('❌ Edge function a un problème')*/
     }
   } catch (error) {
-    console.log(`❌ Erreur: ${error.message}`);
+    /*console.log(`❌ Erreur: ${error.message}`)*/
   }
 }
 

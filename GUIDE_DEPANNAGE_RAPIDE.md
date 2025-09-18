@@ -16,13 +16,13 @@ window.profileDebug.runDiagnostic();
 ```javascript
 // Dans la console
 const token = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token');
-console.log('Token présent:', !!token);
+/*console.log('Token présent:', !!token)*/
 ```
 
 #### 2.2 Vérifier les données utilisateur
 ```javascript
 // Dans la console
-console.log('Données employé:', window.employeeData);
+/*console.log('Données employé:', window.employeeData)*/
 ```
 
 #### 2.3 Tester l'API de mise à jour
@@ -60,7 +60,7 @@ if (window.refreshProfile) {
 #### 3.3 Si l'API ne répond pas
 ```javascript
 // Vérifier la configuration
-console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+/*console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)*/
 ```
 
 ### Étape 4 : Test de l'upload de photo
@@ -87,7 +87,7 @@ fetch('/api/auth/upload-photo', {
 ```javascript
 // Dans la console, vérifier que les champs utilisent 'value' et non 'defaultValue'
 document.querySelectorAll('input[type="text"], input[type="tel"], textarea').forEach(input => {
-  console.log('Champ:', input.name || input.placeholder, 'Contrôlé:', input.hasAttribute('value'));
+  /*console.log('Champ:', input.name || input.placeholder, 'Contrôlé:', input.hasAttribute('value')*/);
 });
 ```
 
@@ -96,7 +96,7 @@ document.querySelectorAll('input[type="text"], input[type="tel"], textarea').for
 // Dans la console, vérifier que les boutons ont des événements
 document.querySelectorAll('button').forEach(button => {
   if (button.textContent.includes('Enregistrer')) {
-    console.log('Bouton Enregistrer trouvé:', button);
+    /*console.log('Bouton Enregistrer trouvé:', button)*/
   }
 });
 ```

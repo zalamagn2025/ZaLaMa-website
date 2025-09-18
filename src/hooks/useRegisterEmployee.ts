@@ -49,7 +49,7 @@ export const useRegisterEmployee = () => {
     }));
 
     try {
-      console.log('🚀 Appel de l\'API route /api/register...');
+      /*console.log('🚀 Appel de l\'API route /api/register...')*/
       
       // Appel de l'API Route Next.js
       const response = await fetch('/api/register', {
@@ -60,9 +60,9 @@ export const useRegisterEmployee = () => {
         body: JSON.stringify(data),
       });
 
-      console.log('📡 Réponse API:', response.status, response.statusText);
+      /*console.log('📡 Réponse API:', response.status, response.statusText)*/
       const result = await response.json();
-      console.log('📋 Résultat API:', result);
+      /*console.log('📋 Résultat API:', result)*/
 
       if (!response.ok) {
         console.error('Erreur API:', response.status, result);

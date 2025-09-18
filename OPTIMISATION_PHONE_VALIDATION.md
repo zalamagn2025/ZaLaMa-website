@@ -271,7 +271,7 @@ import { PhoneInput } from '@/components/ui/phone-input';
 ### **Callback de Validation :**
 ```typescript
 const handleValidationChange = (isValid: boolean, formattedValue: string) => {
-  console.log('Validation:', isValid, formattedValue);
+  /*console.log('Validation:', isValid, formattedValue)*/
 };
 ```
 

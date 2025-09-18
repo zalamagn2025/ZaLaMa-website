@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔐 Demande de réinitialisation pour:', email);
+    /*console.log('🔐 Demande de réinitialisation pour:', email)*/
 
     // URL de redirection pour la réinitialisation
     const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`;
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       switch (error.message) {
         case 'User not found':
           // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
-          console.log('📧 Utilisateur non trouvé:', email);
+          /*console.log('📧 Utilisateur non trouvé:', email)*/
           return NextResponse.json({
             message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.'
           });
@@ -61,14 +61,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Email de réinitialisation envoyé avec succès pour:', email);
+    /*console.log('✅ Email de réinitialisation envoyé avec succès pour:', email)*/
 
     // Log de sécurité
-    console.log('🔒 Demande de réinitialisation traitée:', {
+    /*console.log('🔒 Demande de réinitialisation traitée:', {
       email: email,
       redirectUrl: redirectUrl,
       timestamp: new Date().toISOString()
-    });
+    });*/
 
     return NextResponse.json({
       message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.',

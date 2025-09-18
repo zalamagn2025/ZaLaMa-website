@@ -4,7 +4,7 @@ const EDGE_FUNCTION_URL = 'https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1
 
 export async function DELETE(request: NextRequest) {
   try {
-    console.log('🗑️ API Route: Début suppression logo via edge function');
+    /*console.log('🗑️ API Route: Début suppression logo via edge function')*/
     
     // Récupérer le nom du fichier depuis les paramètres de requête
     const { searchParams } = new URL(request.url);
@@ -17,7 +17,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log('📁 Suppression du fichier:', fileName);
+    /*console.log('📁 Suppression du fichier:', fileName)*/
 
     // Appeler l'edge function Supabase pour la suppression
     const url = `${EDGE_FUNCTION_URL}?fileName=${encodeURIComponent(fileName)}`;
@@ -31,11 +31,11 @@ export async function DELETE(request: NextRequest) {
 
     const result = await response.json();
     
-    console.log('📥 Réponse suppression edge function:', {
+    /*console.log('📥 Réponse suppression edge function:', {
       status: response.status,
       statusText: response.statusText,
       result
-    });
+    })*/
 
     if (!response.ok) {
       console.error('❌ Erreur suppression edge function:', response.status, response.statusText);
@@ -49,7 +49,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log('✅ Suppression réussie via edge function');
+    /*console.log('✅ Suppression réussie via edge function')*/
     return NextResponse.json(result);
 
   } catch (error) {

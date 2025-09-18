@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  console.log('🔧 API send-reset-email appelée!', new Date().toISOString());
+  /*console.log('🔧 API send-reset-email appelée!', new Date().toISOString());*/
   
   try {
     const body = await request.json();
     const { email } = body;
-    console.log('📧 Email reçu:', email);
+    /*console.log('📧 Email reçu:', email)*/
 
     // Validation des données
     if (!email) {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Simulation d'envoi d'email pour tester
-    console.log('✅ Simulation d\'envoi d\'email pour:', email);
+    /*console.log('✅ Simulation d\'envoi d\'email pour:', email)*/
     
     return NextResponse.json({
       success: true,

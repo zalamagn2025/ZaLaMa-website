@@ -19,21 +19,21 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function setupPartnershipTable() {
   try {
-    console.log('🚀 Début de la configuration de la table partnership_requests...');
+    /*console.log('🚀 Début de la configuration de la table partnership_requests...')*/
     
     // Lire le fichier SQL
     const sqlPath = path.join(__dirname, '..', 'database', 'partnership_requests.sql');
     const sqlContent = fs.readFileSync(sqlPath, 'utf8');
     
-    console.log('📖 Fichier SQL lu avec succès');
+    /*console.log('📖 Fichier SQL lu avec succès')*/
     
     // Exécuter le SQL
-    console.log('⚡ Exécution du SQL...');
+    /*console.log('⚡ Exécution du SQL...')*/
     const { error } = await supabase.rpc('exec_sql', { sql: sqlContent });
     
     if (error) {
       // Si exec_sql n'existe pas, on essaie une approche différente
-      console.log('⚠️ exec_sql non disponible, tentative d\'exécution directe...');
+      /*console.log('⚠️ exec_sql non disponible, tentative d\'exécution directe...')*/
       
       // Diviser le SQL en commandes individuelles
       const commands = sqlContent
@@ -43,16 +43,16 @@ async function setupPartnershipTable() {
       
       for (const command of commands) {
         if (command.trim()) {
-          console.log(`⚡ Exécution: ${command.substring(0, 50)}...`);
+          /*console.log(`⚡ Exécution: ${command.substring(0, 50)*/}...`);
           const { error: cmdError } = await supabase.rpc('exec_sql', { sql: command + ';' });
           if (cmdError) {
-            console.log(`⚠️ Commande ignorée (probablement déjà exécutée): ${cmdError.message}`);
+            /*console.log(`⚠️ Commande ignorée (probablement déjà exécutée)*/: ${cmdError.message}`);
           }
         }
       }
     }
     
-    console.log('✅ Configuration terminée avec succès !');
+    /*console.log('✅ Configuration terminée avec succès !')*/
     
     // Vérifier que la table existe
     const { data: tables, error: tableError } = await supabase
@@ -62,9 +62,9 @@ async function setupPartnershipTable() {
       .eq('table_name', 'partnership_requests');
     
     if (tableError) {
-      console.log('⚠️ Impossible de vérifier l\'existence de la table:', tableError.message);
+      /*console.log('⚠️ Impossible de vérifier l\'existence de la table:', tableError.message)*/
     } else if (tables && tables.length > 0) {
-      console.log('✅ Table partnership_requests créée avec succès !');
+      /*console.log('✅ Table partnership_requests créée avec succès !')*/
       
       // Vérifier les données de test
       const { data: testData, error: dataError } = await supabase
@@ -73,12 +73,12 @@ async function setupPartnershipTable() {
         .limit(1);
       
       if (dataError) {
-        console.log('⚠️ Erreur lors de la vérification des données:', dataError.message);
+        /*console.log('⚠️ Erreur lors de la vérification des données:', dataError.message)*/
       } else {
-        console.log('✅ Données de test insérées avec succès !');
+        /*console.log('✅ Données de test insérées avec succès !')*/
       }
     } else {
-      console.log('❌ La table partnership_requests n\'a pas été créée');
+      /*console.log('❌ La table partnership_requests n\'a pas été créée')*/
     }
     
   } catch (error) {
@@ -88,10 +88,10 @@ async function setupPartnershipTable() {
 }
 
 // Instructions pour l'utilisateur
-console.log('📋 Instructions:');
-console.log('1. Assurez-vous que votre fichier .env.local contient les bonnes variables Supabase');
-console.log('2. Exécutez ce script avec: node scripts/setup-partnership-table.js');
-console.log('3. Ou copiez le contenu de database/partnership_requests.sql dans l\'éditeur SQL de Supabase');
-console.log('');
+/*console.log('📋 Instructions:')*/
+/*console.log('1. Assurez-vous que votre fichier .env.local contient les bonnes variables Supabase')*/
+/*console.log('2. Exécutez ce script avec: node scripts/setup-partnership-table.js')*/
+/*console.log('3. Ou copiez le contenu de database/partnership_requests.sql dans l\'éditeur SQL de Supabase')*/
+/*console.log('')*/
 
 setupPartnershipTable(); 

@@ -109,7 +109,7 @@ export default function SalarySetupModal({ isOpen, onClose, onSuccess, userInfo 
         return;
       }
 
-      console.log('🔧 Configuration du salaire via Edge Function...', formData);
+      /*console.log('🔧 Configuration du salaire via Edge Function...', formData)*/
       const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/salary-setup/configure', {
         method: 'POST',
         headers: {
@@ -120,7 +120,7 @@ export default function SalarySetupModal({ isOpen, onClose, onSuccess, userInfo 
       });
 
       const data = await response.json();
-      console.log('📊 Réponse Edge Function /configure:', data);
+      /*console.log('📊 Réponse Edge Function /configure:', data)*/
 
       if (response.ok && data.success) {
         setStatus('success');

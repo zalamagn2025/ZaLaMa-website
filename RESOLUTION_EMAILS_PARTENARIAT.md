@@ -48,7 +48,7 @@ const [companyResult, repResult, hrResult, contactResult] = await Promise.allSet
 const results = [];
 
 // Email 1: Entreprise
-console.log('📧 Envoi email entreprise...');
+/*console.log('📧 Envoi email entreprise...')*/
 const companyResult = await this.sendEmail(companyEmailData);
 results.push({
   status: 'fulfilled',
@@ -60,7 +60,7 @@ results.push({
 await new Promise(resolve => setTimeout(resolve, 500));
 
 // Email 2: Représentant légal
-console.log('📧 Envoi email représentant...');
+/*console.log('📧 Envoi email représentant...')*/
 const repResult = await this.sendEmail(repEmailData);
 // ... etc pour les autres emails
 ```
