@@ -117,7 +117,7 @@ export function useAvisSWR() {
     loading: isLoading,
     error: error ? (error.message || 'Erreur') : undefined,
     createAvis,
-    refresh: () => mutate(),
+    refresh: () => mutateAvis(),
   }
 }
 
