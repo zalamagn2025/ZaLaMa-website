@@ -42,13 +42,11 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
     }
     
     if (!authToken) {
-      console.log('❌ Aucun token d\'authentification trouvé')
       return null
     }
 
     // Si c'est un token Supabase (commence par eyJ), on l'utilise directement
     if (authToken.startsWith('eyJ')) {
-      console.log('✅ Token Supabase détecté, utilisation directe')
       return {
         uid: 'temp-uid', // Sera récupéré depuis le token Supabase
         email: 'temp@email.com', // Sera récupéré depuis le token Supabase
@@ -58,15 +56,12 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
     }
 
     if (!process.env.JWT_SECRET) {
-      console.error('❌ JWT_SECRET n\'est pas défini')
       return null
     }
 
     const decoded = jwt.verify(authToken, process.env.JWT_SECRET) as JWTPayload
-    console.log('✅ Token JWT vérifié pour:', decoded.email)
     return decoded
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification du token JWT:', error)
     return null
   }
 }
@@ -92,8 +87,6 @@ function createSupabaseClient() {
 // Fonction pour récupérer les informations de limite d'avis par jour
 async function getDailyAvisLimit(supabase: any, employeeId: string): Promise<{ currentCount: number; limit: number; remaining: number; canPost: boolean }> {
   try {
-    console.log('🔍 Récupération des informations de limite d\'avis quotidienne...')
-    
     // Obtenir la date d'aujourd'hui (début et fin de journée)
     const today = new Date()
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString()
@@ -108,15 +101,12 @@ async function getDailyAvisLimit(supabase: any, employeeId: string): Promise<{ c
       .lte('created_at', endOfDay)
     
     if (error) {
-      console.error('❌ Erreur lors du comptage des avis:', error)
       throw error
     }
     
     const currentCount = count || 0
     const remaining = Math.max(0, MAX_AVIS_PER_DAY - currentCount)
     const canPost = currentCount < MAX_AVIS_PER_DAY
-    
-    console.log(`📊 Limite d'avis: ${currentCount}/${MAX_AVIS_PER_DAY} - Restant: ${remaining} - Peut poster: ${canPost}`)
     
     return {
       currentCount,
@@ -125,7 +115,6 @@ async function getDailyAvisLimit(supabase: any, employeeId: string): Promise<{ c
       canPost
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération de la limite:', error)
     throw error
   }
 }
@@ -136,8 +125,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('🔧 GET /api/avis/limit - Début de la requête')
-    
     // Vérifier l'authentification via JWT
     const userData = verifyAuthToken(request)
     if (!userData) {
@@ -148,15 +135,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    console.log('✅ Utilisateur authentifié:', userData.email)
-
     // Créer le client Supabase
     let supabase
     try {
       supabase = createSupabaseClient()
-      console.log('✅ Client Supabase créé avec succès')
     } catch (error) {
-      console.error('❌ Erreur lors de la création du client Supabase:', error)
       return createCorsResponse(
         { success: false, error: 'Erreur de configuration Supabase' },
         500,
@@ -165,8 +148,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Récupérer l'employé
-    console.log('👤 Recherche de l\'employé...')
-    
     let employeeId: string
     
     try {
@@ -186,7 +167,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           })
           
           if (!response.ok) {
-            console.error('❌ Erreur vérification token Supabase:', response.status)
             return createCorsResponse(
               { success: false, error: 'Token invalide' },
               401,
@@ -196,7 +176,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           
           const userDataFromToken = await response.json()
           userData.uid = userDataFromToken.id
-          console.log('✅ User ID récupéré depuis token Supabase:', userData.uid)
         }
       }
       
@@ -207,7 +186,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .single()
 
       if (employeeError || !employee) {
-        console.error('❌ Erreur lors de la récupération de l\'employé:', employeeError)
         return createCorsResponse(
           { success: false, error: 'Employé non trouvé' },
           404,
@@ -216,7 +194,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
 
       employeeId = employee.id
-      console.log('✅ Employé trouvé:', employeeId)
 
       // Récupérer les informations de limite
       const limitInfo = await getDailyAvisLimit(supabase, employeeId)
@@ -231,7 +208,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       )
 
     } catch (error) {
-      console.error('💥 Erreur lors de la récupération des informations de limite:', error)
       return createCorsResponse(
         { success: false, error: 'Erreur interne du serveur' },
         500,
@@ -240,7 +216,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
   } catch (error) {
-    console.error('💥 Erreur générale:', error)
     return createCorsResponse(
       { success: false, error: 'Erreur interne du serveur' },
       500,
