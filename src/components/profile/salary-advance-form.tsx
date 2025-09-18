@@ -404,7 +404,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     const timer = setTimeout(calculateWorkingDays, 500)
     
     return () => clearTimeout(timer)
-  }, [avanceData])
+  }, []) // ✅ CORRECTION: Supprimer avanceData des dépendances pour éviter la boucle infinie
   
 
 

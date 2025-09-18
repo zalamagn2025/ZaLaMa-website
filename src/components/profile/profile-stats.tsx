@@ -249,7 +249,7 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       
       return () => clearTimeout(timer)
     }
-  }, [financialData])
+  }, []) // ✅ CORRECTION: Supprimer financialData des dépendances pour éviter la boucle infinie
   
   // Hook pour la vérification par PIN
   const {

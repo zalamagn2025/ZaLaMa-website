@@ -61,13 +61,13 @@ Action requise: Vérification immédiate des credentials SMS
 
   private static trackErrorMetrics(error: any): void {
     // Métriques pour monitoring
-    const errorType = this.categorizeError(error);
+    const errorType = SMSErrorHandler.categorizeError(error);
     
     /*console.log('📈 Error Metrics:', {
       type: errorType,
-      timestamp: new Date()*/.toISOString(),
-      severity: this.getErrorSeverity(error)
-    });
+      timestamp: new Date().toISOString(),
+      severity: SMSErrorHandler.getErrorSeverity(error)
+    });*/
   }
 
   private static categorizeError(error: any): string {

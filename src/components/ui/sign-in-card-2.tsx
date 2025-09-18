@@ -545,7 +545,7 @@ export function Component() {
                     <button
                       type="button"
                       onClick={() => {
-                        /*console.log('Test button clicked!')*/
+                        console.log('Test button clicked!');
                         switchToForgotPassword();
                       }}
                       className="bg-red-500 text-white px-4 py-2 rounded text-xs relative z-50"

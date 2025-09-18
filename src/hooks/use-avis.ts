@@ -86,7 +86,7 @@ export function useAvis() {
 
   // Charger les avis au montage du composant et quand refreshTrigger change
   useEffect(() => {
-    /*console.log('🚀 Hook useAvis - Rechargement des avis (trigger:', refreshTrigger, ')*/')
+    /*console.log('🚀 Hook useAvis - Rechargement des avis (trigger:', refreshTrigger, ')')*/
     fetchAvis()
   }, [fetchAvis, refreshTrigger])
 

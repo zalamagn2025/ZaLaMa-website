@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { SalaryAdvanceForm } from "./salary-advance-form"
 import { AI } from "@/components/profile/AI"
 import { UserWithEmployeData } from "@/types/employe"
-import { supabase } from '@/lib/supabase'
+import { apiService } from '@/services/api-service'
 
 interface Service {
   id: string
@@ -30,35 +30,35 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  // Fetch services from Supabase
+  // Fetch services from ZaLaMa API
   useEffect(() => {
     const fetchServices = async () => {
       try {
         setLoading(true)
         setError(null)
-        /*console.log("🔍 Récupération des services depuis Supabase...")*/
-        /*console.log("🔑 URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL)*/
-        /*console.log("🔑 Clé anonyme présente:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)*/
+        /*console.log("🔍 Récupération des services via API ZaLaMa...")*/
+        /*console.log("🔑 API ZaLaMa configurée")*/
         
-        const { data, error } = await supabase
-          .from('services')
-          .select('*')
+        // Utiliser notre service API au lieu de Supabase directement
+        const response = await apiService.getServices()
         
-        /*console.log("📊 Services récupérés:", data)*/
-        /*console.log("📊 Nombre de services:", data?.length || 0)*/
-        /*console.log("❌ Erreur services:", error)*/
+        /*console.log("📊 Réponse API services:", response)*/
+        /*console.log("📊 Nombre de services:", response.data?.length || 0)*/
+        /*console.log("❌ Erreur API:", response.error)*/
         
-        if (error) {
-          console.error("Erreur lors de la récupération des services:", error)
-          setError(error.message)
+        if (!response.success) {
+          console.error("Erreur API services:", response.error)
+          setError(response.message || response.error || "Erreur lors de la récupération des services")
           return
         }
         
+        const data = response.data
+        
         if (!data || data.length === 0) {
-          console.warn("⚠️ Aucun service trouvé dans la base de données")
+          console.warn("⚠️ Aucun service trouvé via l'API")
           setError("Aucun service disponible")
         } else {
-          /*console.log("✅ Services chargés avec succès:", data.length, "services")*/
+          /*console.log("✅ Services chargés avec succès via API:", data.length, "services")*/
         }
         
         setServices(data || [])
@@ -73,7 +73,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
     fetchServices()
   }, [])
 
-  // Map Supabase services to the format used in the component
+  // Map API services to the format used in the component
   const mappedServices = services.map(service => {
     /*console.log("🔄 Mapping service:", service.nom, service.disponible)*/
     return {

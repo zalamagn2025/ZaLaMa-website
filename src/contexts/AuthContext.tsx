@@ -51,7 +51,7 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       currentUserId: currentUser?.id,
       userData: userData ? 'Présent' : 'Absent',
       loading,
-      userDataKeys: userData ? Object.keys(userData)*/ : 'Aucune donnée',
+      userDataKeys: userData ? Object.keys(userData) : 'Aucune donnée',
       userDataValues: userData ? {
         employeId: userData.employeId,
         nom: userData.nom,

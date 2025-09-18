@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
     /*console.log('🔒 Demande de réinitialisation traitée:', {
       email: email,
       redirectUrl: redirectUrl,
-      timestamp: new Date()*/.toISOString()
-    });
+      timestamp: new Date().toISOString()
+    });*/
 
     return NextResponse.json({
       message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.',

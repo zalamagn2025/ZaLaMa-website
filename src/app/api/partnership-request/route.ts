@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
     if (missingFields.length > 0) {
       /*console.log('❌ Champs manquants ou vides:', missingFields)*/
       /*console.log('📊 Valeurs reçues:', Object.fromEntries(
-        requiredFields.map(field => [field, body[field]])*/
-      ));
+        requiredFields.map(field => [field, body[field]])
+      ));*/
       return NextResponse.json({
         success: false,
         error: 'Données invalides',

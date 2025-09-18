@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     /*console.log('🔗 Appel de l\'Edge Function employee-auth/register...')*/
 
     const body = await request.json();
-    /*console.log('📋 Données reçues pour inscription:', JSON.stringify(body, null, 2)*/);
+    /*console.log('📋 Données reçues pour inscription:', JSON.stringify(body, null, 2));*/
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('❌ Variables d\'environnement Supabase manquantes');
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    /*console.log('📡 Réponse Edge Function (inscription)*/:', response.status, response.statusText);
+    /*console.log('📡 Réponse Edge Function (inscription):', response.status, response.statusText);*/
     const result = await response.json();
     /*console.log('📋 Résultat inscription:', result)*/
 

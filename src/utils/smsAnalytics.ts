@@ -80,9 +80,9 @@ class SMSAnalyticsService {
   private logAnalytics(): void {
     /*console.log('📊 SMS Analytics:', {
       ...this.analytics,
-      successRate: `${this.analytics.successRate.toFixed(2)*/}%`,
+      successRate: `${this.analytics.successRate.toFixed(2)}%`,
       averageResponseTime: `${this.analytics.averageResponseTime.toFixed(2)}ms`
-    });
+    });*/
   }
 
   getAnalytics(): SMSAnalytics {

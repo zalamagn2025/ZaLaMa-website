@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  /*console.log('🔧 API send-reset-email appelée!', new Date()*/.toISOString());
+  /*console.log('🔧 API send-reset-email appelée!', new Date().toISOString());*/
   
   try {
     const body = await request.json();

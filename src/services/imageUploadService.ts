@@ -56,11 +56,11 @@ export class ImageUploadService {
       /*console.log('📤 Upload vers Supabase Storage:', {
         bucket: 'profiles-images',
         filePath,
-        fileSize: `${(file.size / 1024 / 1024)*/.toFixed(2)} MB`,
+        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         fileType: file.type,
         employeeId,
         oldPhotoUrl: oldPhotoUrl ? 'Existante' : 'Aucune'
-      });
+      });*/
 
       // 4. Upload vers le bucket profiles-images avec upsert pour remplacer l'ancienne
       const { data: uploadData, error: uploadError } = await supabase.storage

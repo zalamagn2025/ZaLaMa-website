@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    /*console.log('🔑 Token reçu:', token.substring(0, 20)*/ + '...');
+    /*console.log('🔑 Token reçu:', token.substring(0, 20) + '...');*/
 
     // Pour l'instant, on va utiliser une approche simplifiée
     // On va chercher directement dans la table employees avec le token comme user_id
