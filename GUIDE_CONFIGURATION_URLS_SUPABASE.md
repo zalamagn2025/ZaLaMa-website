@@ -90,9 +90,9 @@ Dans **Supabase Dashboard** → **Authentication** → **Email Templates** → *
 
 ```typescript
 // Ajouter des logs de debug dans l'API
-console.log('🔍 Debug - Email:', email);
-console.log('🔍 Debug - Redirect URL:', redirectUrl);
-console.log('🔍 Debug - Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+/*console.log('🔍 Debug - Email:', email)*/
+/*console.log('🔍 Debug - Redirect URL:', redirectUrl)*/
+/*console.log('🔍 Debug - Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)*/
 ```
 
 ## 🧪 Test de la fonctionnalité
@@ -147,7 +147,7 @@ const supabase = createClient(
 );
 
 async function diagnoseConfiguration() {
-  console.log('🔍 Diagnostic de la configuration Supabase');
+  /*console.log('🔍 Diagnostic de la configuration Supabase')*/
   
   // Test de connexion
   const { data, error } = await supabase
@@ -156,16 +156,16 @@ async function diagnoseConfiguration() {
     .limit(1);
   
   if (error) {
-    console.log('❌ Erreur de connexion:', error.message);
+    /*console.log('❌ Erreur de connexion:', error.message)*/
   } else {
-    console.log('✅ Connexion Supabase OK');
+    /*console.log('✅ Connexion Supabase OK')*/
   }
   
   // Vérifier les variables d'environnement
-  console.log('📋 Variables d\'environnement:');
-  console.log('- NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
-  console.log('- SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅' : '❌');
-  console.log('- NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
+  /*console.log('📋 Variables d\'environnement:')*/
+  /*console.log('- NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌')*/
+  /*console.log('- SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅' : '❌')*/
+  /*console.log('- NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)*/
 }
 
 diagnoseConfiguration();

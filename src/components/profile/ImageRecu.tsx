@@ -203,7 +203,7 @@ const generateCardImage = async (element: HTMLElement | null, requestData?: Disp
         properties.forEach((prop) => {
           const value = computedStyle.getPropertyValue(prop);
           if (value && (value.toLowerCase().includes('oklab') || value.toLowerCase().includes('oklch'))) {
-            console.log(`Couleur problématique détectée dans ${prop} pour`, el, `:`, value);
+            /*console.log(`Couleur problématique détectée dans ${prop} pour`, el, `:`, value)*/
             try {
               const color = Color(value);
               el.style.setProperty(prop, color.rgb().string(), 'important');
@@ -227,7 +227,7 @@ const generateCardImage = async (element: HTMLElement | null, requestData?: Disp
           if (el.hasAttribute(attr)) {
             const value = el.getAttribute(attr);
             if (value?.toLowerCase().includes('oklab') || value?.toLowerCase().includes('oklch')) {
-              console.log(`Couleur problématique détectée dans l'attribut ${attr} pour`, el, `:`, value);
+              /*console.log(`Couleur problématique détectée dans l'attribut ${attr} pour`, el, `:`, value)*/
               el.setAttribute(attr, 'rgb(255, 255, 255)');
             }
           }

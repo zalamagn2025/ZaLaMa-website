@@ -127,9 +127,9 @@ Toutes les dépendances nécessaires sont déjà présentes dans le projet :
 
 ```javascript
 // Ajoutez ces logs pour déboguer
-console.log('État de vérification:', isVerified);
-console.log('Modal ouvert:', isModalOpen);
-console.log('Utilisateur:', user);
+/*console.log('État de vérification:', isVerified)*/
+/*console.log('Modal ouvert:', isModalOpen)*/
+/*console.log('Utilisateur:', user)*/
 ```
 
 ## 📈 Améliorations Futures

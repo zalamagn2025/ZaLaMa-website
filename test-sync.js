@@ -1,5 +1,5 @@
 // Test de synchronisation des données
-console.log('🔄 Test de synchronisation des données:')
+/*console.log('🔄 Test de synchronisation des données:')*/
 
 // Simulation des données financières de l'Edge Function
 const financialData = {
@@ -16,7 +16,7 @@ const financialData = {
   workingDaysPercentage: 76
 }
 
-console.log('📊 Données financières originales:', financialData)
+/*console.log('📊 Données financières originales:', financialData)*/
 
 // Simulation de financialAmounts
 const financialAmounts = financialData?.financial ? {
@@ -30,22 +30,22 @@ const financialAmounts = financialData?.financial ? {
   totalWorkingDays: financialData.totalWorkingDays || 0
 } : null
 
-console.log('💰 financialAmounts calculé:', financialAmounts)
+/*console.log('💰 financialAmounts calculé:', financialAmounts)*/
 
 // Test de l'affichage de la carte
 const cardDisplay = `Basé sur ${financialAmounts?.workingDaysElapsed || 0} jours de travail écoulés`
-console.log('🎯 Affichage de la carte "Acompte disponible":')
-console.log('  - Titre: Acompte disponible')
-console.log('  - Valeur:', financialAmounts?.acompteDisponible.toLocaleString(), 'GNF')
-console.log('  - Change:', cardDisplay)
+/*console.log('🎯 Affichage de la carte "Acompte disponible":')*/
+/*console.log('  - Titre: Acompte disponible')*/
+/*console.log('  - Valeur:', financialAmounts?.acompteDisponible.toLocaleString()*/, 'GNF')
+/*console.log('  - Change:', cardDisplay)*/
 
 // Vérification
 if (financialAmounts?.workingDaysElapsed === 16) {
-  console.log('✅ SUCCÈS: Les jours ouvrables sont bien synchronisés!')
-  console.log('  - workingDaysElapsed:', financialAmounts.workingDaysElapsed)
-  console.log('  - totalWorkingDays:', financialAmounts.totalWorkingDays)
+  /*console.log('✅ SUCCÈS: Les jours ouvrables sont bien synchronisés!')*/
+  /*console.log('  - workingDaysElapsed:', financialAmounts.workingDaysElapsed)*/
+  /*console.log('  - totalWorkingDays:', financialAmounts.totalWorkingDays)*/
 } else {
-  console.log('❌ ÉCHEC: Les jours ouvrables ne sont pas synchronisés!')
-  console.log('  - workingDaysElapsed attendu: 16')
-  console.log('  - workingDaysElapsed reçu:', financialAmounts?.workingDaysElapsed)
+  /*console.log('❌ ÉCHEC: Les jours ouvrables ne sont pas synchronisés!')*/
+  /*console.log('  - workingDaysElapsed attendu: 16')*/
+  /*console.log('  - workingDaysElapsed reçu:', financialAmounts?.workingDaysElapsed)*/
 }

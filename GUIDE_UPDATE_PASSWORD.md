@@ -125,11 +125,11 @@ const supabase = createClient(
 );
 
 async function testUpdatePasswordFlow() {
-  console.log('🧪 Test du flux update-password');
+  /*console.log('🧪 Test du flux update-password')*/
   
   // 1. Demander une réinitialisation
   const email = 'test@example.com';
-  console.log(`📧 Demande de réinitialisation pour: ${email}`);
+  /*console.log(`📧 Demande de réinitialisation pour: ${email}`)*/
   
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -137,12 +137,12 @@ async function testUpdatePasswordFlow() {
     });
     
     if (error) {
-      console.log('❌ Erreur:', error.message);
+      /*console.log('❌ Erreur:', error.message)*/
     } else {
-      console.log('✅ Email de réinitialisation envoyé');
+      /*console.log('✅ Email de réinitialisation envoyé')*/
     }
   } catch (error) {
-    console.log('❌ Erreur:', error.message);
+    /*console.log('❌ Erreur:', error.message)*/
   }
 }
 

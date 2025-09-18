@@ -1,26 +1,26 @@
 require('dotenv').config({ path: '.env.local' });
 
-console.log('🔍 DIAGNOSTIC EMAILS PARTENARIAT');
-console.log('================================');
+/*console.log('🔍 DIAGNOSTIC EMAILS PARTENARIAT')*/
+/*console.log('================================')*/
 
 // 1. Vérification des variables d'environnement
-console.log('\n📋 VÉRIFICATION DES VARIABLES D\'ENVIRONNEMENT:');
-console.log('- RESEND_API_KEY:', process.env.RESEND_API_KEY ? '✅ Configuré' : '❌ Manquant');
-console.log('- EMAIL_FROM:', process.env.EMAIL_FROM || 'noreply@zalama.com');
-console.log('- ADMIN_EMAIL:', process.env.ADMIN_EMAIL || 'admin@zalamagn.com');
+/*console.log('\n📋 VÉRIFICATION DES VARIABLES D\'ENVIRONNEMENT:')*/
+/*console.log('- RESEND_API_KEY:', process.env.RESEND_API_KEY ? '✅ Configuré' : '❌ Manquant')*/
+/*console.log('- EMAIL_FROM:', process.env.EMAIL_FROM || 'noreply@zalama.com')*/
+/*console.log('- ADMIN_EMAIL:', process.env.ADMIN_EMAIL || 'admin@zalamagn.com')*/
 
 if (process.env.RESEND_API_KEY) {
-  console.log('  Format de la clé:', process.env.RESEND_API_KEY.startsWith('re_') ? '✅ Correct' : '❌ Incorrect');
-  console.log('  Longueur:', process.env.RESEND_API_KEY.length);
-  console.log('  Premiers caractères:', process.env.RESEND_API_KEY.substring(0, 10) + '...');
+  /*console.log('  Format de la clé:', process.env.RESEND_API_KEY.startsWith('re_')*/ ? '✅ Correct' : '❌ Incorrect');
+  /*console.log('  Longueur:', process.env.RESEND_API_KEY.length)*/
+  /*console.log('  Premiers caractères:', process.env.RESEND_API_KEY.substring(0, 10)*/ + '...');
 }
 
 // 2. Test simple avec Resend
 async function testResendDirect() {
-  console.log('\n🔌 TEST DIRECT RESEND:');
+  /*console.log('\n🔌 TEST DIRECT RESEND:')*/
   
   if (!process.env.RESEND_API_KEY) {
-    console.log('❌ RESEND_API_KEY manquante');
+    /*console.log('❌ RESEND_API_KEY manquante')*/
     return false;
   }
 
@@ -28,7 +28,7 @@ async function testResendDirect() {
     const { Resend } = require('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
     
-    console.log('  Tentative d\'envoi de test...');
+    /*console.log('  Tentative d\'envoi de test...')*/
     const { data, error } = await resend.emails.send({
       from: `ZaLaMa <${process.env.EMAIL_FROM || 'noreply@zalama.com'}>`,
       to: ['test@example.com'],
@@ -38,21 +38,21 @@ async function testResendDirect() {
     });
     
     if (error) {
-      console.log('❌ Erreur Resend:', error.message);
+      /*console.log('❌ Erreur Resend:', error.message)*/
       return false;
     }
     
-    console.log('✅ Connexion Resend OK');
+    /*console.log('✅ Connexion Resend OK')*/
     return true;
   } catch (error) {
-    console.log('❌ Erreur de connexion:', error.message);
+    /*console.log('❌ Erreur de connexion:', error.message)*/
     return false;
   }
 }
 
 // 3. Test du service d'email existant
 async function testEmailService() {
-  console.log('\n📧 TEST DU SERVICE D\'EMAIL:');
+  /*console.log('\n📧 TEST DU SERVICE D\'EMAIL:')*/
   
   try {
     // Simuler les données de test
@@ -80,26 +80,26 @@ async function testEmailService() {
       hr_phone: '+224123456789'
     };
 
-    console.log('  Données de test préparées');
-    console.log('  - Entreprise:', testData.company_name);
-    console.log('  - Email entreprise:', testData.email);
-    console.log('  - Email représentant:', testData.rep_email);
-    console.log('  - Email RH:', testData.hr_email);
-    console.log('  - Email admin: contact@zalamagn.com');
+    /*console.log('  Données de test préparées')*/
+    /*console.log('  - Entreprise:', testData.company_name)*/
+    /*console.log('  - Email entreprise:', testData.email)*/
+    /*console.log('  - Email représentant:', testData.rep_email)*/
+    /*console.log('  - Email RH:', testData.hr_email)*/
+    /*console.log('  - Email admin: contact@zalamagn.com')*/
     
     return true;
   } catch (error) {
-    console.log('❌ Erreur préparation données:', error.message);
+    /*console.log('❌ Erreur préparation données:', error.message)*/
     return false;
   }
 }
 
 // 4. Test d'envoi d'emails de partenariat
 async function testPartnershipEmails() {
-  console.log('\n🚀 TEST D\'ENVOI D\'EMAILS DE PARTENARIAT:');
+  /*console.log('\n🚀 TEST D\'ENVOI D\'EMAILS DE PARTENARIAT:')*/
   
   if (!process.env.RESEND_API_KEY) {
-    console.log('❌ Impossible de tester sans RESEND_API_KEY');
+    /*console.log('❌ Impossible de tester sans RESEND_API_KEY')*/
     return;
   }
 
@@ -152,7 +152,7 @@ async function testPartnershipEmails() {
 
     // Envoyer les emails
     for (const email of emails) {
-      console.log(`  Envoi ${email.name}...`);
+      /*console.log(`  Envoi ${email.name}...`)*/
       
       const { data, error } = await resend.emails.send({
         from: `ZaLaMa <${process.env.EMAIL_FROM || 'noreply@zalama.com'}>`,
@@ -163,35 +163,35 @@ async function testPartnershipEmails() {
       });
 
       if (error) {
-        console.log(`  ❌ Erreur ${email.name}:`, error.message);
+        /*console.log(`  ❌ Erreur ${email.name}:`, error.message)*/
       } else {
-        console.log(`  ✅ ${email.name} envoyé avec succès`);
+        /*console.log(`  ✅ ${email.name} envoyé avec succès`)*/
       }
     }
 
   } catch (error) {
-    console.log('❌ Erreur test emails:', error.message);
+    /*console.log('❌ Erreur test emails:', error.message)*/
   }
 }
 
 // 5. Exécution des tests
 async function runDiagnostic() {
-  console.log('\n🎯 RÉSULTATS DU DIAGNOSTIC:');
+  /*console.log('\n🎯 RÉSULTATS DU DIAGNOSTIC:')*/
   
   const resendOk = await testResendDirect();
   const serviceOk = await testEmailService();
   
   if (resendOk && serviceOk) {
-    console.log('\n✅ Configuration OK - Test d\'envoi...');
+    /*console.log('\n✅ Configuration OK - Test d\'envoi...')*/
     await testPartnershipEmails();
   } else {
-    console.log('\n❌ Problèmes détectés:');
+    /*console.log('\n❌ Problèmes détectés:')*/
     if (!resendOk) {
-      console.log('  - Problème de connexion Resend');
-      console.log('  - Vérifiez RESEND_API_KEY dans .env.local');
+      /*console.log('  - Problème de connexion Resend')*/
+      /*console.log('  - Vérifiez RESEND_API_KEY dans .env.local')*/
     }
     if (!serviceOk) {
-      console.log('  - Problème avec le service d\'email');
+      /*console.log('  - Problème avec le service d\'email')*/
     }
   }
 }

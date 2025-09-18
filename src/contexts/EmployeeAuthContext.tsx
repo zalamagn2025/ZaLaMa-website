@@ -42,7 +42,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       // Vérifier si un token d'accès existe (utiliser la même clé que le service)
       const accessToken = localStorage.getItem('employee_access_token');
       if (!accessToken) {
-        console.log('🔍 Aucun token d\'accès trouvé dans le localStorage');
+        /*console.log('🔍 Aucun token d\'accès trouvé dans le localStorage')*/
         setEmployee(null);
         setIsAuthenticated(false);
         return;
@@ -50,7 +50,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
 
       // Vérifier que le token n'est pas vide ou invalide
       if (accessToken.trim() === '' || accessToken === 'null' || accessToken === 'undefined') {
-        console.log('🔍 Token d\'accès invalide détecté, nettoyage...');
+        /*console.log('🔍 Token d\'accès invalide détecté, nettoyage...')*/
         localStorage.removeItem('employee_access_token');
         localStorage.removeItem('employee_refresh_token');
         setEmployee(null);
@@ -91,7 +91,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
         
         setEmployee(employeeData);
         setIsAuthenticated(true);
-        console.log('✅ Profil employé chargé dans le contexte:', response.data.nom, response.data.prenom);
+        /*console.log('✅ Profil employé chargé dans le contexte:', response.data.nom, response.data.prenom)*/
       } else {
         setEmployee(null);
         setIsAuthenticated(false);
@@ -103,7 +103,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
           response.error.includes('Token') || 
           response.error.includes('Unauthorized')
         )) {
-          console.log('🔒 Token invalide détecté, nettoyage de la session...');
+          /*console.log('🔒 Token invalide détecté, nettoyage de la session...')*/
         localStorage.removeItem('employee_access_token');
         localStorage.removeItem('employee_refresh_token');
         }
@@ -121,7 +121,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
         errorMessage.includes('401') ||
         errorMessage.includes('403')
       )) {
-        console.log('🔒 Erreur d\'authentification détectée, nettoyage de la session...');
+        /*console.log('🔒 Erreur d\'authentification détectée, nettoyage de la session...')*/
         setError(null); // Ne pas afficher l'erreur à l'utilisateur
         setEmployee(null);
         setIsAuthenticated(false);
@@ -143,7 +143,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       setLoading(true);
       setError(null);
       
-      console.log('🔐 Tentative de connexion via le contexte...');
+      /*console.log('🔐 Tentative de connexion via le contexte...')*/
       
       const response = await employeeAuthService.login(email, password);
       
@@ -157,7 +157,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
         // Charger le profil avec le nouveau token
         await loadProfile();
         
-        console.log('✅ Connexion réussie via le contexte');
+        /*console.log('✅ Connexion réussie via le contexte')*/
       } else {
         throw new Error(response.error || 'Échec de la connexion');
       }
@@ -184,7 +184,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       setEmployee(null);
       setIsAuthenticated(false);
       setError(null);
-      console.log('✅ Déconnexion réussie via le contexte');
+      /*console.log('✅ Déconnexion réussie via le contexte')*/
     } catch (err) {
       console.error('❌ Erreur lors de la déconnexion via le contexte:', err);
       // Même en cas d'erreur, nettoyer l'état local
@@ -212,7 +212,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       try {
         // Seulement vérifier si on n'a pas déjà un employé chargé
         if (!employee && employeeAuthService.isAuthenticated()) {
-          console.log('🔄 Vérification périodique du statut d\'authentification...');
+          /*console.log('🔄 Vérification périodique du statut d\'authentification...')*/
           const accessToken = localStorage.getItem('employee_access_token');
           if (accessToken) {
             const response = await employeeAuthService.getProfile(accessToken);
@@ -245,13 +245,13 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
                };
               setEmployee(employeeData);
             setIsAuthenticated(true);
-            console.log('✅ Profil récupéré lors de la vérification périodique');
+            /*console.log('✅ Profil récupéré lors de la vérification périodique')*/
           } else {
             // Token invalide, nettoyer l'état
             setEmployee(null);
             setIsAuthenticated(false);
             await employeeAuthService.logout();
-            console.log('🔒 Token invalide détecté, session nettoyée');
+            /*console.log('🔒 Token invalide détecté, session nettoyée')*/
             }
           }
         }
@@ -270,7 +270,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
 
   // Debug pour suivre l'état du contexte
   useEffect(() => {
-    console.log('🔍 EmployeeAuthContext Debug - État actuel:', {
+    /*console.log('🔍 EmployeeAuthContext Debug - État actuel:', {
       employee: employee ? 'Présent' : 'Absent',
       employeeName: employee ? `${employee.prenom} ${employee.nom}` : 'Aucun',
       employeeId: employee?.id,
@@ -290,7 +290,7 @@ export function EmployeeAuthProvider({ children }: EmployeeAuthProviderProps) {
       loading,
       isAuthenticated,
       error: error || 'Aucune erreur'
-    });
+    })*/
   }, [employee, loading, isAuthenticated, error]);
 
   const value = {

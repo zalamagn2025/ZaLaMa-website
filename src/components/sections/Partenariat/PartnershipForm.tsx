@@ -685,11 +685,11 @@ export const PartnershipForm = () => {
   // Script de diagnostic pour l'Edge Function
   useEffect(() => {
     // Script de test pour diagnostiquer le problème de création de demande
-    console.log('🔍 Diagnostic Edge Function - Problème de création...');
+    /*console.log('🔍 Diagnostic Edge Function - Problème de création...')*/
     
     // Fonction pour tester l'Edge Function avec différents scénarios
     (window as any).diagnoseEdgeFunctionIssue = async () => {
-      console.log('🚀 Diagnostic du problème de création de demande...');
+      /*console.log('🚀 Diagnostic du problème de création de demande...')*/
       
       // Test 1: Données exactes de la documentation
       const testData1 = {
@@ -735,7 +735,7 @@ export const PartnershipForm = () => {
         payment_date: new Date().toISOString().split('T')[0]
       };
 
-      console.log('📤 Test 2 - Données avec date actuelle:', testData2);
+      /*console.log('📤 Test 2 - Données avec date actuelle:', testData2)*/
       
       try {
         const response2 = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
@@ -745,15 +745,15 @@ export const PartnershipForm = () => {
         });
 
         const result2 = await response2.json();
-        console.log('📥 Réponse Test 2:', {
+        /*console.log('📥 Réponse Test 2:', {
           status: response2.status,
           success: result2.success,
           error: result2.error,
           details: result2.details,
           message: result2.message
-        });
+        })*/
               } catch (error) {
-          console.log('❌ Erreur Test 2:', (error as Error).message);
+          /*console.log('❌ Erreur Test 2:', (error as Error).message);*/
         }
 
       // Test 3: Sans payment_day
@@ -763,7 +763,7 @@ export const PartnershipForm = () => {
       };
       delete testData3.payment_day;
 
-      console.log('📤 Test 3 - Sans payment_day:', testData3);
+      /*console.log('📤 Test 3 - Sans payment_day:', testData3)*/
       
       try {
         const response3 = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
@@ -773,24 +773,24 @@ export const PartnershipForm = () => {
         });
 
         const result3 = await response3.json();
-        console.log('📥 Réponse Test 3:', {
+        /*console.log('📥 Réponse Test 3:', {
           status: response3.status,
           success: result3.success,
           error: result3.error,
           details: result3.details,
           message: result3.message
-        });
+        })*/
               } catch (error) {
-          console.log('❌ Erreur Test 3:', (error as Error).message);
+          /*console.log('❌ Erreur Test 3:', (error as Error).message);*/
         }
 
-      console.log('📝 Actions disponibles:');
-      console.log('- window.diagnoseEdgeFunctionIssue() : Diagnostic complet');
+      /*console.log('📝 Actions disponibles:')*/
+      /*console.log('- window.diagnoseEdgeFunctionIssue() : Diagnostic complet');*/
     };
 
     // Fonction pour tester avec les données exactes du formulaire
     (window as any).testWithFormData = async () => {
-      console.log('🎯 Test avec les données exactes du formulaire...');
+      /*console.log('🎯 Test avec les données exactes du formulaire...')*/
       
       // Données qui seraient envoyées par le formulaire pré-rempli
       const formData = {
@@ -818,7 +818,7 @@ export const PartnershipForm = () => {
         payment_day: 25
       };
 
-      console.log('📤 Données du formulaire:', formData);
+      /*console.log('📤 Données du formulaire:', formData)*/
       
       try {
         const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
@@ -828,35 +828,35 @@ export const PartnershipForm = () => {
         });
 
         const result = await response.json();
-        console.log('📥 Réponse Edge Function:', {
+        /*console.log('📥 Réponse Edge Function:', {
           status: response.status,
           success: result.success,
           error: result.error,
           details: result.details,
           message: result.message,
           requestId: result.requestId
-        });
+        })*/
 
         if (result.success) {
-          console.log('✅ Succès ! Request ID:', result.requestId);
+          /*console.log('✅ Succès ! Request ID:', result.requestId)*/
         } else {
-          console.log('❌ Échec:', result.error);
-          console.log('📋 Détails:', result.details);
+          /*console.log('❌ Échec:', result.error)*/
+          /*console.log('📋 Détails:', result.details)*/
         }
               } catch (error) {
-          console.log('❌ Erreur:', (error as Error).message);
+          /*console.log('❌ Erreur:', (error as Error).message);*/
         }
     };
 
-    console.log('📝 Fonctions disponibles:');
-    console.log('- window.diagnoseEdgeFunctionIssue() : Diagnostic complet');
-    console.log('- window.testWithFormData() : Test avec données du formulaire');
+    /*console.log('📝 Fonctions disponibles:')*/
+    /*console.log('- window.diagnoseEdgeFunctionIssue(): Diagnostic complet');*/ 
+    /*console.log('- window.testWithFormData() : Test avec données du formulaire');*/
   }, []);
 
   // Fonction pour uploader le logo lors de la soumission
   const uploadLogoOnSubmit = async (file: File): Promise<string | undefined> => {
     try {
-      console.log('🖼️ Upload du logo lors de la soumission...');
+      /*console.log('🖼️ Upload du logo lors de la soumission...')*/
       
       // Convertir le fichier en base64
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -882,7 +882,7 @@ export const PartnershipForm = () => {
 
       const result = await response.json();
       if (result.success && result.data?.publicUrl) {
-        console.log('✅ Logo uploadé avec succès:', result.data.publicUrl);
+        /*console.log('✅ Logo uploadé avec succès:', result.data.publicUrl)*/
         return result.data.publicUrl;
       } else {
         throw new Error(result.error || 'Erreur lors de l\'upload');
@@ -1219,7 +1219,7 @@ export const PartnershipForm = () => {
             <PaymentDaySelector
               value={formData.paymentDay?.toString() || ''}
               onChange={(value) => {
-                console.log('🔧 PaymentDay onChange:', value, typeof value);
+                /*console.log('🔧 PaymentDay onChange:', value, typeof value)*/
                 setFormData(prev => ({ ...prev, paymentDay: value }));
                 if (errors.paymentDay) {
                   setErrors(prev => ({ ...prev, paymentDay: '' }));
@@ -1244,7 +1244,7 @@ export const PartnershipForm = () => {
               </label>
               <LogoUpload
                 onFileUploaded={(url) => {
-                  console.log('🎯 Logo uploadé avec succès, URL:', url);
+                  /*console.log('🎯 Logo uploadé avec succès, URL:', url)*/
                   setFormData(prev => ({ ...prev, logoUrl: url }));
                   if (errors.logoUrl) {
                     setErrors(prev => ({ ...prev, logoUrl: '' }));
@@ -1256,13 +1256,13 @@ export const PartnershipForm = () => {
                   setLogoPreview(null);
                 }}
                 onFileDataChange={(fileData) => {
-                  console.log('📁 Données du fichier reçues:', fileData);
+                  /*console.log('📁 Données du fichier reçues:', fileData)*/
                   if (errors.logoUrl) {
                     setErrors(prev => ({ ...prev, logoUrl: '' }));
                   }
                 }}
                 onFileSelected={(file) => {
-                  console.log('📁 Fichier sélectionné pour upload différé:', file);
+                  /*console.log('📁 Fichier sélectionné pour upload différé:', file)*/
                   setLogoFile(file);
                   // Créer une preview
                   const preview = URL.createObjectURL(file);

@@ -87,7 +87,7 @@ export default function EmployeeLoginForm() {
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('handleSubmit appelé!', e);
+    /*console.log('handleSubmit appelé!', e)*/
     e.preventDefault();
     setLoginStatus('idle');
     setErrorMessage('');
@@ -129,8 +129,8 @@ export default function EmployeeLoginForm() {
 
   // Fonction pour basculer vers le mode mot de passe oublié
   const switchToForgotPassword = () => {
-    console.log('switchToForgotPassword called');
-    console.log('Current email:', email);
+    /*console.log('switchToForgotPassword called')*/
+    /*console.log('Current email:', email)*/
     // Rediriger vers la page de réinitialisation avec l'email pré-rempli
     const emailParam = email ? `?email=${encodeURIComponent(email)}` : '';
     router.push(`/auth/reset-password${emailParam}`);
@@ -440,13 +440,13 @@ export default function EmployeeLoginForm() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Button clicked!');
+                        /*console.log('Button clicked!')*/
                         switchToForgotPassword();
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          console.log('Button pressed with keyboard!');
+                          /*console.log('Button pressed with keyboard!')*/
                           switchToForgotPassword();
                         }
                       }}

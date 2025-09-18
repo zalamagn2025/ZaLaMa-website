@@ -130,7 +130,7 @@ const result = await resendEmailService.sendForgotPasswordEmail(
 );
 
 if (result.success) {
-  console.log('Email envoyé:', result.messageId);
+  /*console.log('Email envoyé:', result.messageId)*/
 } else {
   console.error('Erreur:', result.error);
 }

@@ -22,7 +22,7 @@ function removeConsoleLogs(filePath) {
     
     if (removedCount > 0) {
       fs.writeFileSync(filePath, content, 'utf8');
-      console.log(`✅ ${filePath}: ${removedCount} console.log supprimés`);
+      /*console.log(`✅ ${filePath}: ${removedCount} console.log supprimés`)*/
       return removedCount;
     }
     
@@ -55,7 +55,7 @@ function walkDir(dir, fileList = []) {
 }
 
 // Démarrer le processus
-console.log('🚀 Début de la suppression des console.log...\n');
+/*console.log('🚀 Début de la suppression des console.log...\n')*/
 
 const srcDir = path.join(__dirname, 'src');
 const files = walkDir(srcDir);
@@ -71,10 +71,10 @@ files.forEach(file => {
   }
 });
 
-console.log(`\n📊 Résumé:`);
-console.log(`- Fichiers modifiés: ${totalFiles}`);
-console.log(`- Total console.log supprimés: ${totalRemoved}`);
-console.log(`- Fichiers traités: ${files.length}`);
+/*console.log(`\n📊 Résumé:`)*/
+/*console.log(`- Fichiers modifiés: ${totalFiles}`)*/
+/*console.log(`- Total console.log supprimés: ${totalRemoved}`)*/
+/*console.log(`- Fichiers traités: ${files.length}`)*/
 
 
 

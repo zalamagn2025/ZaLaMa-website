@@ -10,7 +10,7 @@ interface LoginData {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔐 Tentative de connexion avec Supabase Auth...');
+    /*console.log('🔐 Tentative de connexion avec Supabase Auth...')*/
     
     const body: LoginData = await request.json();
     const { email, password } = body;
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Authentification Supabase pour:', email);
+    /*console.log('🔍 Authentification Supabase pour:', email)*/
 
     // Créer le client Supabase
     const cookieStore = await cookies();
@@ -90,10 +90,10 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseUser = authData.user;
-    console.log('✅ Authentification Supabase réussie pour UID:', supabaseUser.id);
+    /*console.log('✅ Authentification Supabase réussie pour UID:', supabaseUser.id)*/
 
     // Récupérer les informations complémentaires depuis la table employees par user_id
-    console.log('📋 Recherche des informations employé par user_id...');
+    /*console.log('📋 Recherche des informations employé par user_id...')*/
     const { data: employeeData, error: employeeError } = await supabase
       .from('employees')
       .select('*')
@@ -105,9 +105,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (employeeData) {
-      console.log('👤 Informations employé trouvées:', employeeData.nom_complet || `${employeeData.prenom} ${employeeData.nom}`);
+      /*console.log('👤 Informations employé trouvées:', employeeData.nom_complet || `${employeeData.prenom} ${employeeData.nom}`)*/
     } else {
-      console.log('⚠️ Aucune information employé trouvée pour user_id:', supabaseUser.id);
+      /*console.log('⚠️ Aucune information employé trouvée pour user_id:', supabaseUser.id)*/
     }
 
     // Créer un token JWT avec toutes les informations disponibles
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       if (updateError) {
         console.error('⚠️ Erreur lors de la mise à jour last_login:', updateError);
       } else {
-        console.log('✅ Dernière connexion mise à jour');
+        /*console.log('✅ Dernière connexion mise à jour')*/
       }
     }
 

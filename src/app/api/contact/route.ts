@@ -157,14 +157,14 @@ setInterval(
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("📧 Nouveau message de contact...");
+    /*console.log("📧 Nouveau message de contact...")*/
 
     // Récupérer l'IP du client
     const forwarded = request.headers.get("x-forwarded-for");
     const ip = forwarded
       ? forwarded.split(",")[0]
       : request.headers.get("x-real-ip") || "unknown";
-    console.log("🌐 IP du client:", ip);
+    /*console.log("🌐 IP du client:", ip)*/
 
     const body: ContactData = await request.json();
     const { firstName, lastName, email, subject, message } = body;
@@ -189,11 +189,11 @@ export async function POST(request: NextRequest) {
     // Validation de sécurité
     const securityCheck = validateSecurity(email, message, subject, ip);
     if (!securityCheck.valid) {
-      console.log("🚫 Validation de sécurité échouée:", securityCheck.error);
+      /*console.log("🚫 Validation de sécurité échouée:", securityCheck.error)*/
       return NextResponse.json({ error: securityCheck.error }, { status: 400 });
     }
 
-    console.log("✅ Validation réussie pour:", email);
+    /*console.log("✅ Validation réussie pour:", email)*/
 
     // Créer le client Supabase
     const cookieStore = await cookies();
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Stocker le message dans Supabase avec l'IP
-    console.log("💾 Stockage du message dans Supabase...");
+    /*console.log("💾 Stockage du message dans Supabase...")*/
     const contactData = {
       nom: firstName,
       prenom: lastName,
@@ -238,11 +238,11 @@ export async function POST(request: NextRequest) {
       console.error("❌ Erreur lors du stockage dans Supabase:", saveError);
       // On continue quand même pour envoyer l'email
     } else {
-      console.log("✅ Message stocké dans Supabase avec ID:", savedContact.id);
+      /*console.log("✅ Message stocké dans Supabase avec ID:", savedContact.id)*/
     }
 
     // Envoi de l'email avec protection anti-boucle
-    console.log("📤 Envoi de l'email...");
+    /*console.log("📤 Envoi de l'email...")*/
     const { data, error } = await resend.emails.send({
       from: "contact@zalamagn.com",
       to: ["support@zalamagn.com"], // Email de destination
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("✅ Email envoyé avec succès, ID:", data?.id);
+    /*console.log("✅ Email envoyé avec succès, ID:", data?.id)*/
 
     return NextResponse.json(
       {

@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
       }
     })
     
-    console.log('📅 Demandes du mois en cours:', demandesMonthly)
+    /*console.log('📅 Demandes du mois en cours:', demandesMonthly)*/
 
     // Vérifier si la nouvelle demande + total existant dépasse 30%
     const nouvelleDemande = parseFloat(montantDemande)
@@ -351,7 +351,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ Erreur lors de la création de la transaction:', transactionError)
       // Ne pas faire échouer la demande pour cette raison, mais logger l'erreur
     } else {
-      console.log('✅ Transaction créée:', transactionResult.id)
+      /*console.log('✅ Transaction créée:', transactionResult.id)*/
     }
 
     // Enregistrer l'activité de l'utilisateur (optionnel - commenté pour éviter les erreurs)
@@ -372,12 +372,12 @@ export async function POST(request: NextRequest) {
       // Ne pas faire échouer la demande pour cette raison
     }
 
-    console.log('✅ Demande d\'avance créée:', {
+    /*console.log('✅ Demande d\'avance créée:', {
       id: demandeAvanceResult.id,
       montant: montantDemande,
       employe: employeId,
       entreprise: entrepriseId
-    })
+    })*/
 
     // Envoi des notifications (email + SMS) en arrière-plan
     try {
@@ -405,13 +405,13 @@ export async function POST(request: NextRequest) {
         // Envoi non-bloquant des notifications
         advanceNotificationService.sendAdvanceNotifications(notificationData)
           .then(result => {
-            console.log('📧 Notifications avance envoyées:', {
+            /*console.log('📧 Notifications avance envoyées:', {
               employee: notificationData.employeeName,
               requestId: notificationData.requestId,
               emailSuccess: result.email.success,
               smsSuccess: result.sms.success,
               summary: result.summary
-            })
+            })*/
           })
           .catch(error => {
             console.error('❌ Erreur envoi notifications avance:', error)

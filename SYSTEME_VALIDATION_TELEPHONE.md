@@ -147,10 +147,10 @@ function validatePhone(phone: string) {
   const result = validateAndFormatPhone(phone);
   
   if (result.isValid) {
-    console.log('Numéro valide:', result.formattedNumber);
+    /*console.log('Numéro valide:', result.formattedNumber)*/
     return result.formattedNumber;
   } else {
-    console.log('Erreur:', result.errorMessage);
+    /*console.log('Erreur:', result.errorMessage)*/
     return null;
   }
 }
@@ -311,10 +311,10 @@ Le système peut être facilement intégré dans d'autres formulaires :
 
 ```javascript
 // Activer les logs de debug
-console.log('Validation result:', validateAndFormatPhone('61234567'));
+/*console.log('Validation result:', validateAndFormatPhone('61234567')*/);
 
 // Vérifier l'état du composant
-console.log('Phone validation state:', phoneValidation);
+/*console.log('Phone validation state:', phoneValidation)*/
 ```
 
 ## 📈 Évolutions Futures

@@ -128,7 +128,7 @@ function optimizedFormatPhoneWhileTyping(phone) {
 
 // Fonction de test de performance
 function runPerformanceTest(testNumbers, iterations = 1000) {
-  console.log(`\n🧪 Test de performance avec ${iterations} itérations...`);
+  /*console.log(`\n🧪 Test de performance avec ${iterations} itérations...`)*/
   
   // Test version originale
   const originalStart = performance.now();
@@ -182,22 +182,22 @@ const testNumbers = [
 // Tests avec différentes tailles
 const testSizes = [100, 500, 1000, 5000];
 
-console.log('🚀 Test de Performance - Validation des Numéros de Téléphone');
-console.log('=' .repeat(60));
+/*console.log('🚀 Test de Performance - Validation des Numéros de Téléphone')*/
+/*console.log('=' .repeat(60)*/);
 
 testSizes.forEach(size => {
   const results = runPerformanceTest(testNumbers, size);
   
-  console.log(`\n📊 Résultats pour ${size} itérations:`);
-  console.log(`   Version originale: ${results.original.toFixed(2)}ms`);
-  console.log(`   Version optimisée: ${results.optimized.toFixed(2)}ms`);
-  console.log(`   Amélioration: ${results.improvement.toFixed(1)}%`);
-  console.log(`   Accélération: ${results.speedup.toFixed(1)}x plus rapide`);
+  /*console.log(`\n📊 Résultats pour ${size} itérations:`)*/
+  /*console.log(`   Version originale: ${results.original.toFixed(2)*/}ms`);
+  /*console.log(`   Version optimisée: ${results.optimized.toFixed(2)*/}ms`);
+  /*console.log(`   Amélioration: ${results.improvement.toFixed(1)*/}%`);
+  /*console.log(`   Accélération: ${results.speedup.toFixed(1)*/}x plus rapide`);
 });
 
 // Test de validation en temps réel
-console.log('\n🎯 Test de validation en temps réel:');
-console.log('=' .repeat(40));
+/*console.log('\n🎯 Test de validation en temps réel:')*/
+/*console.log('=' .repeat(40)*/);
 
 const realTimeNumbers = [
   '6',
@@ -212,15 +212,15 @@ const realTimeNumbers = [
   '+224 612 34 56 78'
 ];
 
-console.log('\nValidation progressive:');
+/*console.log('\nValidation progressive:')*/
 realTimeNumbers.forEach(phone => {
   const start = performance.now();
   const result = optimizedFormatPhoneWhileTyping(phone);
   const end = performance.now();
   const time = end - start;
   
-  console.log(`   "${phone}" → "${result}" (${time.toFixed(3)}ms)`);
+  /*console.log(`   "${phone}" → "${result}" (${time.toFixed(3)*/}ms)`);
 });
 
-console.log('\n✨ Test terminé !');
-console.log('💡 La version optimisée devrait être significativement plus rapide.');
+/*console.log('\n✨ Test terminé !')*/
+/*console.log('💡 La version optimisée devrait être significativement plus rapide.')*/
