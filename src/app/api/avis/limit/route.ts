@@ -46,6 +46,17 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
       return null
     }
 
+    // Si c'est un token Supabase (commence par eyJ), on l'utilise directement
+    if (authToken.startsWith('eyJ')) {
+      console.log('✅ Token Supabase détecté, utilisation directe')
+      return {
+        uid: 'temp-uid', // Sera récupéré depuis le token Supabase
+        email: 'temp@email.com', // Sera récupéré depuis le token Supabase
+        emailVerified: true,
+        employeeId: 'temp-employee-id' // Sera récupéré depuis le token Supabase
+      } as JWTPayload
+    }
+
     if (!process.env.JWT_SECRET) {
       console.error('❌ JWT_SECRET n\'est pas défini')
       return null
@@ -156,7 +167,39 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Récupérer l'employé
     console.log('👤 Recherche de l\'employé...')
     
+    let employeeId: string
+    
     try {
+      // Si c'est un token Supabase, on doit d'abord récupérer l'user_id
+      if (userData.uid === 'temp-uid') {
+        // Récupérer l'user_id depuis le token Supabase
+        const authHeader = request.headers.get('authorization')
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const token = authHeader.replace('Bearer ', '')
+          
+          // Vérifier le token avec Supabase Auth
+          const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            }
+          })
+          
+          if (!response.ok) {
+            console.error('❌ Erreur vérification token Supabase:', response.status)
+            return createCorsResponse(
+              { success: false, error: 'Token invalide' },
+              401,
+              request
+            )
+          }
+          
+          const userDataFromToken = await response.json()
+          userData.uid = userDataFromToken.id
+          console.log('✅ User ID récupéré depuis token Supabase:', userData.uid)
+        }
+      }
+      
       const { data: employee, error: employeeError } = await supabase
         .from('employees')
         .select('id')
@@ -172,10 +215,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         )
       }
 
-      console.log('✅ Employé trouvé:', employee.id)
+      employeeId = employee.id
+      console.log('✅ Employé trouvé:', employeeId)
 
       // Récupérer les informations de limite
-      const limitInfo = await getDailyAvisLimit(supabase, employee.id)
+      const limitInfo = await getDailyAvisLimit(supabase, employeeId)
       
       return createCorsResponse(
         { 
