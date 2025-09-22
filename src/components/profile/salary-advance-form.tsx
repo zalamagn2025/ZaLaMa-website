@@ -138,11 +138,97 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [showAdvanceDetails, setShowAdvanceDetails] = useState(false)
   const [financialData, setFinancialData] = useState<any>(null)
   
-  // États de confirmation
+  // États pour la vérification PIN
   const [pin, setPin] = useState("")
   const [showPin, setShowPin] = useState(false)
-  const [pinError, setPinError] = useState("")
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
+  const [pinAttempts, setPinAttempts] = useState(0)
+  const [isPinBlocked, setIsPinBlocked] = useState(false)
+  const [pinBlockTime, setPinBlockTime] = useState(0)
+
+  // Fonctions pour gérer le blocage persistant avec gestion d'erreurs robuste
+  const getPinBlockInfo = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+
+      const blockInfo = localStorage.getItem('pin_block_info')
+      if (!blockInfo) {
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+
+      const { blockTime, attempts, userId } = JSON.parse(blockInfo)
+      const now = Date.now()
+      const remainingTime = Math.max(0, blockTime - now)
+      
+      // Vérifier si le blocage est encore valide
+      if (remainingTime > 0) {
+        return { 
+          isBlocked: true, 
+          blockTime, 
+          attempts, 
+          remainingTime,
+          userId: userId || 'default'
+        }
+      } else {
+        // Le blocage a expiré, nettoyer le localStorage
+        localStorage.removeItem('pin_block_info')
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors de la lecture du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+      return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+    }
+  }
+
+  const setPinBlockInfo = (blockTime: number, attempts: number) => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return
+      }
+
+      const blockInfo = {
+        blockTime,
+        attempts,
+        userId: user?.id || 'default',
+        timestamp: Date.now()
+      }
+      
+      localStorage.setItem('pin_block_info', JSON.stringify(blockInfo))
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors de la sauvegarde du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const clearPinBlockInfo = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return
+      }
+      localStorage.removeItem('pin_block_info')
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors du nettoyage du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  // Fonction pour vérifier le blocage en temps réel
+  const checkBlockStatus = () => {
+    const blockInfo = getPinBlockInfo()
+    if (blockInfo.isBlocked) {
+      setIsPinBlocked(true)
+      setPinBlockTime(blockInfo.blockTime)
+      setPinAttempts(blockInfo.attempts)
+      return true
+    } else {
+      setIsPinBlocked(false)
+      setPinAttempts(blockInfo.attempts)
+      return false
+    }
+  }
   
   // États pour les toasts
   const [toast, setToast] = useState<{
@@ -168,6 +254,169 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
   // Hook pour les nouvelles APIs Edge Function
   const { demands, stats, createDemand, isLoadingDemands, isLoadingStats, isCreating } = useEmployeeDemands()
+
+  // Gestionnaire d'erreur global pour éviter les erreurs d'extensions
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.message?.includes('disconnected port object') || 
+          event.message?.includes('Extension context invalidated')) {
+        // Ignorer silencieusement les erreurs d'extensions de navigateur
+        event.preventDefault()
+        event.stopPropagation()
+        return false
+      }
+    }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.message?.includes('disconnected port object') ||
+          event.reason?.message?.includes('Extension context invalidated')) {
+        // Ignorer silencieusement les erreurs d'extensions de navigateur
+        event.preventDefault()
+        return false
+      }
+    }
+
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
+  // Vérifier l'état de blocage au chargement du composant
+  useEffect(() => {
+    checkBlockStatus()
+  }, [])
+
+  // Vérifier le blocage à chaque fois qu'on arrive à l'étape de confirmation
+  useEffect(() => {
+    if (currentStep === 'confirmation') {
+      checkBlockStatus()
+    }
+  }, [currentStep])
+  
+  // Fonctions de gestion du PIN
+  const handlePinChange = (value: string) => {
+    // Filtrer pour ne garder que les chiffres
+    const numericValue = value.replace(/\D/g, '');
+    // Limiter à 6 chiffres
+    const limitedValue = numericValue.slice(0, 6);
+    setPin(limitedValue);
+    setHasUserInteracted(true);
+  };
+
+  const handlePinFocus = () => {
+    setHasUserInteracted(true);
+  };
+
+  const handlePinBlur = () => {
+    // Validation du PIN seulement après interaction
+    if (hasUserInteracted && pin.length > 0 && pin.length !== 6) {
+      showToast('error', "Le code PIN doit contenir exactement 6 chiffres");
+    }
+  };
+
+  const togglePinVisibility = () => {
+    setShowPin(!showPin);
+  };
+
+  // Fonction de vérification du PIN via l'API auth/verify-password
+  const verifyPin = async (pinValue: string): Promise<boolean> => {
+    try {
+      // Récupérer le token d'accès des employés
+      const accessToken = localStorage.getItem('employee_access_token');
+      
+      if (!accessToken) {
+        throw new Error('Token d\'accès non trouvé');
+      }
+      
+      // Préparer les headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      };
+      
+      // Utiliser l'API route pour la vérification du PIN
+      const response = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ password: pinValue }),
+      });
+
+      const result = await response.json();
+      return result.success;
+    } catch (error) {
+      console.error('❌ Erreur lors de la vérification PIN:', error);
+      return false;
+    }
+  };
+
+  // Fonction pour gérer les tentatives de PIN
+  const handlePinAttempt = async () => {
+    // Vérifier d'abord l'état de blocage dans le localStorage (vérification en temps réel)
+    const blockInfo = getPinBlockInfo()
+    if (blockInfo.isBlocked) {
+      const remainingMinutes = Math.ceil(blockInfo.remainingTime / 60000);
+      const remainingSeconds = Math.ceil(blockInfo.remainingTime / 1000);
+      
+      if (remainingMinutes > 1) {
+        showToast('error', `Trop de tentatives. Veuillez attendre ${remainingMinutes} minutes.`);
+      } else {
+        showToast('error', `Trop de tentatives. Veuillez attendre ${remainingSeconds} secondes.`);
+      }
+      
+      // Mettre à jour l'état local
+      checkBlockStatus()
+      return;
+    }
+
+    if (!pin.trim() || pin.length !== 6) {
+      showToast('error', "Veuillez saisir un code PIN à 6 chiffres");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const isValid = await verifyPin(pin);
+      
+      if (isValid) {
+        // PIN correct - réinitialiser les tentatives et procéder
+        setPinAttempts(0);
+        clearPinBlockInfo(); // Nettoyer le localStorage
+        showToast('success', "Code PIN correct ! Confirmation de la demande...");
+        setCurrentStep('success');
+        // Soumettre la demande
+        await submitAdvanceRequest();
+      } else {
+        // PIN incorrect - incrémenter les tentatives
+        const newAttempts = pinAttempts + 1;
+        setPinAttempts(newAttempts);
+        
+        if (newAttempts >= 3) {
+          // Bloquer pour 5 minutes (300 secondes)
+          const blockTime = Date.now() + (5 * 60 * 1000);
+          setIsPinBlocked(true);
+          setPinBlockTime(blockTime);
+          
+          // Sauvegarder dans le localStorage
+          setPinBlockInfo(blockTime, newAttempts);
+          
+          showToast('error', "Trop de tentatives incorrectes. Veuillez attendre 5 minutes avant de réessayer.");
+        } else {
+          // Sauvegarder les tentatives dans le localStorage
+          setPinBlockInfo(0, newAttempts);
+          showToast('warning', `Code PIN incorrect. ${3 - newAttempts} tentative(s) restante(s).`);
+        }
+      }
+    } catch (error) {
+      showToast('error', "Erreur de vérification. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fonctions pour gérer les toasts
   const showToast = useCallback((type: 'success' | 'error' | 'info' | 'warning', message: string) => {
@@ -305,7 +554,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       const minimumMultiMonth = enableMultiMonths && selectedMonths > 1 
         ? Math.floor(salaireNet * 0.30 * selectedMonths) 
         : 0
-
+      
       setAvanceData({
         salaireNet: salaireNet,
         avanceActive: avanceActive, // Total des avances actives depuis l'Edge Function
@@ -440,7 +689,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
           showToast('warning', errorMsg)
           throw new Error(errorMsg)
         }
-        if (requestedAmount > limiteAvance) {
+      if (requestedAmount > limiteAvance) {
           const errorMsg = `Le montant demandé dépasse la limite pour ${selectedMonths} mois (${limiteAvance.toLocaleString()} GNF)`
           showToast('error', errorMsg)
           throw new Error(errorMsg)
@@ -494,43 +743,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     }
   }
 
-  // Étape 2: Confirmation et passage à la saisie du mot de passe
+  // Étape 2: Confirmation et passage à la saisie du PIN
   const handleVerificationConfirm = () => {
     setCurrentStep('confirmation')
   }
 
-  // Étape 3: Validation du PIN et soumission
-  const handlePinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setPinError("")
-
+  // Fonction de soumission de la demande d'avance
+  const submitAdvanceRequest = async () => {
     try {
-      if (!pin.trim() || pin.length !== 6) {
-        showToast('error', "Veuillez saisir un code PIN à 6 chiffres")
-        throw new Error("Veuillez saisir un code PIN à 6 chiffres")
-      }
-
       const validation = validateForm()
-
-      // Données de la demande
-      const advanceRequest = {
-        employeId: user.employeId,
-        montantDemande: validation.requestedAmount,
-        typeMotif: requestType,
-        motif: reason.trim(),
-        numeroReception: validation.cleanPhone,
-        fraisService: validation.serviceFee,
-        montantTotal: validation.totalDeduction,
-        salaireDisponible: user.salaireNet,
-        avanceDisponible: avanceData?.avanceDisponible || 0,
-        dateCreation: new Date().toISOString(),
-        statut: 'EN_ATTENTE',
-        entrepriseId: user.partenaireId,
-        password: pin // Envoyer le PIN comme "password" pour la compatibilité backend
-      }
-
-      /*console.log('📤 Données envoyées à l\'API:', advanceRequest)*/
 
       // Utiliser le hook createDemand pour soumettre la demande via Edge Function
       const demandData = {
@@ -542,7 +763,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         ...(enableMultiMonths && selectedMonths > 1 && {
           enable_multi_months: true,
           months: selectedMonths
-        })
+        }),
       }
 
       /*console.log('📝 Création de la demande via Edge Function:', demandData)*/
@@ -556,8 +777,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       // Actualiser la page
       router.refresh()
       
-      setCurrentStep('success')
-      
       // Fermer le modal après 3 secondes
       setTimeout(() => {
         onClose()
@@ -566,34 +785,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite'
       showToast('error', errorMessage)
-      setPinError(errorMessage)
-    } finally {
-      setLoading(false)
+      setError(errorMessage)
     }
   }
 
-  // Fonctions de gestion du PIN
-  const handlePinChange = (value: string) => {
-    // Filtrer pour ne garder que les chiffres
-    const numericValue = value.replace(/\D/g, '');
-    // Limiter à 6 chiffres
-    const limitedValue = numericValue.slice(0, 6);
-    setPin(limitedValue);
-    setHasUserInteracted(true);
-    setPinError(''); // Effacer l'erreur quand l'utilisateur tape
-  };
+  // TODO: Fonction de vérification PIN supprimée - sera gérée par l'edge function
+  // La vérification PIN sera effectuée côté edge function pour plus de sécurité
 
-  const handlePinFocus = () => {
-    setHasUserInteracted(true);
-  };
-
-  const handlePinBlur = () => {
-    // Blur géré par le composant PinInput
-  };
-
-  const togglePinVisibility = () => {
-    setShowPin(!showPin);
-  };
+  // Fonctions de gestion du PIN supprimées - gérées par le modal PinVerificationModal
 
   // Retour à l'étape précédente
   const goBack = () => {
@@ -771,18 +970,18 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     className="space-y-6"
                   >
                     {/* Résumé financier simplifié */}
-                    {(loadingAvance || loadingAdvanceRequests) ? (
+                {(loadingAvance || loadingAdvanceRequests) ? (
                       <div className="mb-6 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
                         <div className="animate-pulse space-y-3">
                           <div className="h-4 bg-[#1A2B6B] rounded w-3/4"></div>
-                          <div className="h-3 bg-[#1A2B6B] rounded w-1/2"></div>
-                        </div>
-                      </div>
-                    ) : avanceData && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
+                      <div className="h-3 bg-[#1A2B6B] rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ) : avanceData && (
+                                     <motion.div 
+                     initial={{ opacity: 0, y: -10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.3 }}
                         className="mb-6 p-5 rounded-xl bg-gradient-to-br from-[#0A1A5A] to-[#142B7F] border border-[#1A2B6B] shadow-lg"
                       >
                         {/* Header simplifié */}
@@ -796,14 +995,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               <p className="text-xs text-gray-400">Montant maximum que vous pouvez demander</p>
                             </div>
                           </div>
-                          <button
+                       <button
                             type="button"
                             onClick={() => setShowAdvanceDetails(!showAdvanceDetails)}
                             className="px-3 py-1.5 text-xs text-gray-400 hover:text-[#FF8E53] hover:bg-[#1A2B6B] rounded-lg transition-all duration-200"
                           >
                             {showAdvanceDetails ? "Masquer" : "Détails"}
-                          </button>
-                        </div>
+                       </button>
+                     </div>
 
                         {/* Montant principal mis en évidence */}
                         <div className="text-center mb-4">
@@ -828,10 +1027,10 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           >
                             {enableMultiMonths && selectedMonths > 1 
                               ? `Limite ${selectedMonths} mois (30% × ${selectedMonths})`
-                              : "Limite mensuelle (50% du salaire)"
+                              : "Limite mensuelle (30% du salaire)"
                             }
                           </motion.div>
-                        </div>
+                       </div>
 
                         {/* Détails dépliables */}
                         <AnimatePresence>
@@ -865,34 +1064,34 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               {/* Informations financières */}
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div className="space-y-2">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Salaire net:</span>
-                                    <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
-                                  </div>
+                       <div className="flex justify-between">
+                                   <span className="text-gray-400">Salaire net:</span>
+                                   <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
+                      </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Avances actives:</span>
                                     <span className="text-red-400">-{avanceData.avanceActive.toLocaleString()} GNF</span>
-                                  </div>
-                                </div>
+                         </div>
+                         </div>
                                 <div className="space-y-2">
-                                  <div className="flex justify-between">
+                        <div className="flex justify-between">
                                     <span className="text-gray-400">Auto-approbation:</span>
                                     <span className="text-blue-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
-                                  </div>
+                        </div>
                                   <div className="flex justify-between border-t border-[#1A2B6B] pt-2">
                                     <span className="text-gray-300 font-medium">Disponible:</span>
                                     <span className="text-green-400 font-bold">{avanceData.avanceDisponible.toLocaleString()} GNF</span>
-                                  </div>
-                                </div>
+                      </div>
+                     </div>
                               </div>
                             </motion.div>
                           )}
-                        </AnimatePresence>
-                      </motion.div>
-                    )}
+                                                 </AnimatePresence>
+                     </motion.div>
+                  )}
 
                     {/* Section Montant et Options */}
-                    <motion.div 
+                     <motion.div 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1, duration: 0.3 }}
@@ -902,14 +1101,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       <div className="p-4 rounded-xl bg-gradient-to-r from-[#0A1A5A] to-[#142B7F] border border-[#1A2B6B]">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-3">
-                            <div className="p-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
+                         <div className="p-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
                               <IconCalendar className="h-4 w-4 text-white" />
-                            </div>
+                         </div>
                             <div>
                               <h4 className="text-sm font-semibold text-white">Avance sur plusieurs mois</h4>
                               <p className="text-xs text-gray-400">Étalez votre avance sur 2-3 mois</p>
-                            </div>
-                          </div>
+                       </div>
+                       </div>
                           <button
                             type="button"
                             onClick={() => {
@@ -935,7 +1134,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         </div>
                         
                         {enableMultiMonths && (
-                          <motion.div
+                  <motion.div 
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
@@ -945,7 +1144,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             <div>
                               <label className="text-xs text-gray-400 mb-2 block">
                                 Nombre de mois
-                              </label>
+                    </label>
                               <div className="grid grid-cols-2 gap-2">
                                 <button
                                   type="button"
@@ -972,7 +1171,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               </div>
                             </div>
                             
-                            {avanceData && (
+                            {/* {avanceData && (
                               <div className="p-3 bg-[#1A2B6B]/50 rounded-lg">
                                 <div className="text-xs text-gray-300 space-y-2">
                                   <div className="flex justify-between">
@@ -992,7 +1191,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                                   </div>
                                 </div>
                               </div>
-                            )}
+                            )} */}
                           </motion.div>
                         )}
                       </div>
@@ -1000,11 +1199,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       {/* Montant demandé */}
                       <div className="space-y-2">
                         <CurrencyInput
-                          value={amount}
+                        value={amount}
                           onChange={(value) => {
-                            setAmount(value)
+                          setAmount(value)
                             setError("")
-                          }}
+                        }}
                           onValidationChange={(isValid, numericValue) => {
                             setIsAmountValid(isValid)
                             setAmountNumericValue(numericValue)
@@ -1031,7 +1230,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           }}
                           placeholder="Ex: 500000"
                           label="Montant demandé"
-                          required
+                        required
                           min={0}
                           max={avanceData?.limiteAvance || 999999999999}
                           className="text-white"
@@ -1049,42 +1248,42 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               {enableMultiMonths && selectedMonths > 1 
                                 ? `Limite ${selectedMonths} mois: ${avanceData.multiMonthLimit.toLocaleString()} GNF`
                                 : `Limite mensuelle: ${avanceData.limiteAvance.toLocaleString()} GNF`
-                              }
-                            </span>
+                            }
+                          </span>
                           </motion.div>
                         )}
                       </div>
-                    </motion.div>
+                  </motion.div>
 
                     {/* Divider */}
                     <div className="border-t border-gray-600/30 my-6"></div>
 
                     {/* Informations de la demande */}
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.15, duration: 0.3 }}
-                      className="space-y-4"
-                    >
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.15, duration: 0.3 }}
+                    className="space-y-4"
+                  >
                       {/* Type de motif */}
-                      <div>
+                    <div>
                         <label htmlFor="requestType" className="block text-sm font-medium text-gray-300 mb-2">
-                          Type de motif
-                        </label>
+                        Type de motif
+                      </label>
                         <div className="relative">
-                          <select
-                            id="requestType"
-                            value={requestType}
-                            onChange={(e) => setRequestType(e.target.value as RequestType)}
+                      <select
+                        id="requestType"
+                        value={requestType}
+                        onChange={(e) => setRequestType(e.target.value as RequestType)}
                             className="block w-full px-4 py-3 bg-[#0A1A5A] border border-[#1A2B6B] rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:border-[#FF671E] focus:ring-offset-2 transition-all duration-200 text-white appearance-none cursor-pointer hover:bg-[#142B7F]"
-                            required
-                          >
-                            {REQUEST_TYPES.map((type) => (
+                        required
+                      >
+                        {REQUEST_TYPES.map((type) => (
                               <option key={type.value} value={type.value} className="bg-[#0A1A5A] text-white">
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
                           {/* Icône de flèche personnalisée */}
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1092,28 +1291,28 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                             </svg>
                           </div>
                         </div>
-                      </div>
+                    </div>
 
                       {/* Détails du motif */}
-                      <div>
+                    <div>
                         <label htmlFor="reason" className="block text-sm font-medium text-gray-300 mb-2">
-                          Détails du motif
-                        </label>
-                        <textarea
-                          id="reason"
-                          value={reason}
-                          onChange={(e) => setReason(e.target.value)}
-                          rows={3}
-                          className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
-                          placeholder="Expliquez pourquoi vous avez besoin de cette avance..."
-                          required
-                        />
-                      </div>
+                        Détails du motif
+                      </label>
+                      <textarea
+                        id="reason"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        rows={3}
+                        className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
+                        placeholder="Expliquez pourquoi vous avez besoin de cette avance..."
+                        required
+                      />
+                    </div>
 
                       {/* Divider */}
                       <div className="border-t border-gray-600/30 my-4"></div>
 
-                      {/* Numéro de téléphone */}
+                    {/* Numéro de téléphone */}
                       <div>
                         <PhoneInput
                           value={receivePhone || ''}
@@ -1126,18 +1325,18 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           }}
                           placeholder="+224 612 34 56 78"
                           label="Numéro de téléphone pour réception"
-                          required
+                      required
                           className="text-white"
                           showValidation={true}
-                        />
+                    />
                       </div>
-                    </motion.div>
-
+                  </motion.div>
+                  
                     {/* Divider */}
                     <div className="border-t border-gray-600/30 my-6"></div>
 
                     {/* Conditions et boutons */}
-                    <motion.div 
+                  <motion.div 
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2, duration: 0.3 }}
@@ -1145,37 +1344,37 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     >
                       {/* Conditions */}
                       <div className="flex items-start space-x-3 p-3 bg-[#0A1A5A]/50 rounded-lg border border-[#1A2B6B]">
-                        <input
-                          id="terms"
-                          type="checkbox"
-                          className="mt-1 h-4 w-4 rounded border-gray-600 text-[#FF671E] focus:ring-[#FF671E] focus:ring-offset-0"
-                          required
-                        />
+                    <input
+                      id="terms"
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-gray-600 text-[#FF671E] focus:ring-[#FF671E] focus:ring-offset-0"
+                      required
+                    />
                         <label htmlFor="terms" className="text-xs text-gray-300 leading-relaxed">
-                          J&apos;accepte que cette avance soit déduite de mon prochain salaire et je comprends les conditions générales.
-                        </label>
+                      J&apos;accepte que cette avance soit déduite de mon prochain salaire et je comprends les conditions générales.
+                    </label>
                       </div>
 
 
                       {/* Boutons d'action */}
                       <div className="flex justify-end space-x-3">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          type="button"
-                          onClick={onClose}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={onClose}
                           className="px-6 py-3 rounded-xl text-sm font-medium text-white bg-[#0A1A5A] hover:bg-[#142B7F] transition-colors duration-200"
-                        >
-                          Annuler
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          type="submit"
+                    >
+                      Annuler
+                    </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="submit"
                           className="px-6 py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 transition-all duration-200"
-                        >
-                          Continuer
-                        </motion.button>
+                      >
+                        Continuer
+                      </motion.button>
                       </div>
                     </motion.div>
                   </motion.form>
@@ -1189,19 +1388,35 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     exit={{ opacity: 0, x: 20 }}
                     className="space-y-6"
                   >
-                    <div className="text-center mb-6">
-                      <motion.div
+                    <div className="text-center">
+                      {/* <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg mb-4"
                       >
                         <IconShieldCheck className="h-8 w-8 text-white" />
-                      </motion.div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Détails de la demande</h3>
-                      <p className="text-sm text-gray-300">Assurez-vous que toutes les informations sont correctes avant de continuer</p>
+                      </motion.div> */}
+                      <h3 className="text-xl font-semibold text-white mb-1">Détails de la demande</h3>
+                     
                     </div>
 
                     <div className="space-y-4 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
+                      {/* Informations multi-mois si activé */}
+                      {/* {enableMultiMonths && selectedMonths > 1 && (
+                        <div className="p-3 rounded-lg bg-gradient-to-r from-[#FF671E]/10 to-[#FF8E53]/10 border border-[#FF671E]/30">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <IconCalendar className="h-4 w-4 text-[#FF671E]" />
+                            <span className="text-sm font-medium text-[#FF671E]">Avance Multi-Mois</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <span className="text-gray-400">Période:</span>
+                              <p className="text-white font-medium">{selectedMonths} mois</p>
+                            </div>
+                          </div>
+                        </div>
+                      )} */}
+
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-gray-400">Montant demandé:</span>
@@ -1211,13 +1426,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           <span className="text-gray-400">Frais de service (6.5%):</span>
                           <p className="text-red-400">-{serviceFee.toLocaleString()} GNF</p>
                         </div>
-                        <div className="col-span-2">
+                        <div className="col-span-2 text-center">
                           <span className="text-gray-400">Total à recevoir:</span>
                           <p className="text-green-400 font-bold text-lg">{(Number(requestedAmount || 0) - Number(serviceFee || 0)).toLocaleString('fr-FR')} GNF</p>
                         </div>
                       </div>
                       
                       <div className="border-t border-[#1A2B6B] pt-4 space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="text-gray-400">Type de motif:</span>
                           <p className="text-white">{REQUEST_TYPES.find(t => t.value === requestType)?.label}</p>
@@ -1229,6 +1445,29 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <div>
                           <span className="text-gray-400">Numéro de réception:</span>
                           <p className="text-white">{useDefaultPhone ? user.telephone : receivePhone}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Informations de déduction */}
+                      <div className="border-t border-[#1A2B6B] pt-4">
+                        <div className="p-3 rounded-lg bg-[#1A2B6B]/30">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <IconInfoCircle className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm font-medium text-blue-400">Mode de déduction</span>
+                          </div>
+                          <p className="text-xs text-gray-300 leading-relaxed">
+                            {enableMultiMonths && selectedMonths > 1 ? (
+                              <>
+                                Cette avance sera déduite de vos salaires des <strong>{selectedMonths} prochains mois</strong> 
+                                à raison de <strong>{Math.round(Number(requestedAmount || 0) / selectedMonths).toLocaleString()} GNF par mois</strong>.
+                              </>
+                            ) : (
+                              <>
+                                Cette avance sera déduite de votre <strong>prochain salaire</strong> 
+                              </>
+                            )}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1254,21 +1493,23 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                   </motion.div>
                 )}
 
-                {/* Étape 3: Confirmation par PIN */}
+                {/* Étape 3: Confirmation avec saisie du PIN */}
                 {currentStep === 'confirmation' && (
                   <motion.form
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    onSubmit={handlePinSubmit}
-                    autoComplete="off" // désactive l'autocomplétion au niveau du formulaire
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handlePinAttempt();
+                    }}
                     className="space-y-6"
                   >
                     <div className="text-center mb-6">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 shadow-lg mb-4"
+                        className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] shadow-lg mb-4"
                       >
                         <IconLock className="h-8 w-8 text-white" />
                       </motion.div>
@@ -1288,29 +1529,44 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           onToggleShow={togglePinVisibility}
                           hasUserInteracted={hasUserInteracted}
                           label="Code PIN de sécurité"
-                          disabled={loading}
+                          disabled={loading || isPinBlocked}
                         />
                         
-                        {pinError && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-4 p-3 bg-red-900/20 border border-red-700 rounded-lg flex items-center gap-2"
-                          >
-                            <div className="w-2 h-2 bg-red-400 rounded-full" />
-                            <p className="text-red-200 text-sm">{pinError}</p>
-                          </motion.div>
-                        )}
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-yellow-900/20 border border-yellow-600/30">
-                        <div className="flex items-start space-x-3">
-                          <IconInfoCircle className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                          <div className="text-sm text-yellow-200">
-                            <p className="font-medium mb-1">⚠️ Attention</p>
-                            <p>En confirmant, vous acceptez que {requestedAmount.toLocaleString()} GNF soit déduit de votre prochain salaire.</p>
+                        {/* Indicateur d'état du PIN */}
+                        {pinAttempts > 0 && pinAttempts < 3 && !isPinBlocked && (
+                          <div className="mt-3 text-center">
+                            <span className="text-yellow-400 text-sm">
+                              ⚠️ {3 - pinAttempts} tentative(s) restante(s)
+                            </span>
                           </div>
-                        </div>
+                        )}
+                        
+                        {isPinBlocked && (
+                          <div className="mt-3 text-center">
+                            <div className="p-3 bg-red-900/20 border border-red-600/30 rounded-lg">
+                              <div className="flex items-center justify-center gap-2 text-red-400 mb-2">
+                                <span className="text-lg">🔒</span>
+                                <span className="text-sm font-medium">Compte temporairement bloqué</span>
+                              </div>
+                              <div className="text-red-300 text-xs">
+                                {(() => {
+                                  const blockInfo = getPinBlockInfo()
+                                  if (blockInfo.isBlocked) {
+                                    const remainingMinutes = Math.ceil(blockInfo.remainingTime / 60000)
+                                    const remainingSeconds = Math.ceil(blockInfo.remainingTime / 1000)
+                                    
+                                    if (remainingMinutes > 1) {
+                                      return `Temps restant: ${remainingMinutes} minutes`
+                                    } else {
+                                      return `Temps restant: ${remainingSeconds} secondes`
+                                    }
+                                  }
+                                  return "Veuillez attendre 5 minutes"
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1319,7 +1575,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="button"
-                        onClick={goBack}
+                        onClick={() => setCurrentStep('verification')}
                         className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-[#0A1A5A] hover:bg-[#142B7F] transition-colors duration-200"
                       >
                         Retour
@@ -1328,7 +1584,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="submit"
-                        disabled={loading || pin.length !== 6}
+                        disabled={loading || pin.length !== 6 || isPinBlocked}
                         className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 disabled:opacity-70 transition-all duration-200 relative overflow-hidden"
                       >
                         {loading ? (
@@ -1339,7 +1595,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg>
                             </span>
-                            <span className="opacity-0">Confirmation...</span>
+                            <span className="opacity-0">Vérification...</span>
                           </>
                         ) : (
                           "Confirmer la demande"
@@ -1355,6 +1611,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#010D3E] to-transparent pointer-events-none" />
       </motion.div>
+      
     </div>
   )
 }

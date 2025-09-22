@@ -507,12 +507,12 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       hideable: true
     },
     {
-      title: "Acompte disponible",
-      value: financialAmounts?.acompteDisponible.toLocaleString() || "0",
+      title: "Avance disponible",
+      value: financialAmounts?.remainingMonthlyAdvance.toLocaleString() || "0",
       remaining: "",
       currency: "GNF",
       icon: <IconCreditCard className="h-6 w-6" />,
-      change: `Basé sur ${financialAmounts?.workingDaysElapsed || 0} jours de travail écoulés`,
+      change: `Limite mensuelle: ${financialAmounts?.monthlyLimit.toLocaleString() || 0} GNF`,
       trend: "neutral" as const,
       color: "from-[#010D3E] to-[#1A3A8F]",
       pulse: false,

@@ -47,9 +47,9 @@ export default function ResetPasswordPage() {
 
   // Vérifier si on a un token de réinitialisation
   useEffect(() => {
-    const token = searchParams.get('token');
-    const emailParam = searchParams.get('email');
-    
+  const token = searchParams.get('token');
+  const emailParam = searchParams.get('email');
+  
     if (token && emailParam) {
       setEmail(emailParam);
       setCurrentStep('pin');
@@ -118,14 +118,14 @@ export default function ResetPasswordPage() {
 
     try {
       const response = await fetch('/api/auth/send-reset-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         body: JSON.stringify({ email }),
-      });
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
       if (response.ok && data.success) {
         setStatus('success');
@@ -135,14 +135,14 @@ export default function ResetPasswordPage() {
         setTimeout(() => {
           router.push('/login?message=reset_email_sent');
         }, 3000);
-      } else {
-        setStatus('error');
+        } else {
+          setStatus('error');
         setMessage(data.error || 'Une erreur est survenue');
-      }
-    } catch (error) {
+        }
+      } catch (error) {
       console.error('Erreur:', error);
-      setStatus('error');
-      setMessage('Erreur de connexion. Veuillez réessayer.');
+        setStatus('error');
+        setMessage('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }
@@ -160,24 +160,24 @@ export default function ResetPasswordPage() {
       setStatus('error');
       setMessage('Veuillez vérifier vos codes PIN');
       setIsLoading(false);
-      return;
-    }
+        return;
+      }
 
-    try {
+      try {
       const token = searchParams.get('token');
       const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
           token,
           newPassword: newPin,
           confirmPassword: confirmPin
-        }),
-      });
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
       if (response.ok && data.success) {
         setStatus('success');
@@ -265,7 +265,7 @@ export default function ResetPasswordPage() {
         <ArrowLeft className="h-5 w-5" />
         Retour
       </button>
-      
+
       {/* Background gradient effect */}
       <div className="absolute inset-0" />
       
@@ -356,11 +356,11 @@ export default function ResetPasswordPage() {
                   className="mx-auto w-10 h-10 rounded-full border border-white/10 flex items-center justify-center relative overflow-hidden"
                 >
                   <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/70">
-                    <Image 
+            <Image
                       src="/images/zalamaLoginLogo.png" 
-                      alt="ZaLaMa Logo" 
+              alt="ZaLaMa Logo"
                       width={40}
-                      height={40}
+              height={40}
                     />
                   </span>
                   
@@ -388,7 +388,7 @@ export default function ResetPasswordPage() {
                     : 'Définissez votre nouveau code PIN à 6 chiffres'
                   }
                 </motion.p>
-              </div>
+          </div>
 
               {/* Formulaire d'email */}
               {currentStep === 'email' && (
@@ -405,10 +405,10 @@ export default function ResetPasswordPage() {
                         required
                         className="w-full bg-transparent border-transparent text-white placeholder:text-white/30 h-10 pl-10 pr-4 focus:outline-none"
                       />
-                    </div>
-                  </div>
+              </div>
+            </div>
 
-                  <button
+                <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full bg-[#FF671E] hover:bg-[#FF671E]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center mt-6 relative z-50 cursor-pointer"
@@ -422,8 +422,8 @@ export default function ResetPasswordPage() {
                     ) : (
                       <div className="flex items-center justify-center">
                         Envoyer le lien de réinitialisation
-                      </div>
-                    )}
+                  </div>
+          )}
                   </button>
                 </form>
               )}
@@ -488,29 +488,29 @@ export default function ResetPasswordPage() {
                             <div className="flex items-center gap-2 text-red-400 text-sm">
                               <AlertCircle className="w-4 h-4" />
                               <span>Codes PIN différents</span>
-                            </div>
+                    </div>
                           )}
                         </motion.div>
                       )}
                     </motion.div>
-                  </div>
+              </div>
 
-                  <button
-                    type="submit"
+              <button
+                type="submit"
                     disabled={isLoading || !isNewPinValid || !isConfirmPinValid || !isPinMatching}
                     className="w-full bg-[#FF671E] hover:bg-[#FF671E]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center mt-6"
                   >
                     {isLoading ? (
                       <div className="flex items-center justify-center">
                         <div className="w-4 h-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin mr-2" />
-                        Réinitialisation...
+                    Réinitialisation...
                       </div>
                     ) : (
                       <div className="flex items-center justify-center">
                         Réinitialiser le code PIN
                       </div>
-                    )}
-                  </button>
+                )}
+              </button>
                 </form>
               )}
 
@@ -548,10 +548,10 @@ export default function ResetPasswordPage() {
                     <li>• Ne partagez jamais votre code PIN</li>
                     <li>• Changez-le régulièrement</li>
                   </ul>
-                </div>
-              )}
-            </div>
           </div>
+              )}
+        </div>
+      </div>
         </motion.div>
       </motion.div>
     </div>

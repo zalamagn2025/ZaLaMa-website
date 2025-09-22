@@ -181,66 +181,66 @@ export default function ChangePasswordPage() {
     } else if (currentStep === 'set-new') {
       // Étape 2: Définition du nouveau PIN
       if (!newPin || !confirmPin) {
-        setStatus('error');
-        setMessage('Veuillez remplir tous les champs');
-        return;
-      }
+      setStatus('error');
+      setMessage('Veuillez remplir tous les champs');
+      return;
+    }
 
       if (newPin.length !== 6) {
-        setStatus('error');
+      setStatus('error');
         setMessage('Le nouveau code PIN doit contenir 6 chiffres');
-        return;
-      }
+      return;
+    }
 
       if (confirmPin.length !== 6) {
-        setStatus('error');
+      setStatus('error');
         setMessage('La confirmation du code PIN doit contenir 6 chiffres');
-        return;
-      }
+      return;
+    }
 
       if (newPin !== confirmPin) {
-        setStatus('error');
+      setStatus('error');
         setMessage('Les nouveaux codes PIN ne correspondent pas');
-        return;
-      }
+      return;
+    }
 
-      // Vérifier que l'utilisateur est toujours authentifié
-      if (!employeeAuthService.isAuthenticated()) {
-        setStatus('error');
-        setMessage('Votre session a expiré. Veuillez vous reconnecter.');
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-        return;
-      }
+    // Vérifier que l'utilisateur est toujours authentifié
+    if (!employeeAuthService.isAuthenticated()) {
+      setStatus('error');
+      setMessage('Votre session a expiré. Veuillez vous reconnecter.');
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+      return;
+    }
 
-      setIsLoading(true);
-      setStatus('idle');
+    setIsLoading(true);
+    setStatus('idle');
 
-      try {
+    try {
         // Appeler l'API de changement de mot de passe (en envoyant les PINs comme "passwords")
         // Pour l'API, on utilise le PIN actuel vérifié et le nouveau PIN
         const response = await employeeAuthService.changePassword(verifiedCurrentPin, newPin, confirmPin);
-        
-        if (response.success) {
-          setStatus('success');
+      
+      if (response.success) {
+        setStatus('success');
           setMessage('Code PIN modifié avec succès ! Vous allez être redirigé...');
           setCurrentStep('success');
-          
+        
           // Redirection après 3 secondes pour laisser le temps de voir le message
-          setTimeout(() => {
-            router.push('/profile');
+        setTimeout(() => {
+          router.push('/profile');
           }, 3000);
-        } else {
-          setStatus('error');
-          setMessage(response.error || 'Erreur lors du changement de code PIN');
-        }
-      } catch (error) {
-        console.error('Erreur changement code PIN:', error);
+      } else {
         setStatus('error');
+          setMessage(response.error || 'Erreur lors du changement de code PIN');
+      }
+    } catch (error) {
+        console.error('Erreur changement code PIN:', error);
+      setStatus('error');
         setMessage('Erreur lors du changement de code PIN');
-      } finally {
-        setIsLoading(false);
+    } finally {
+      setIsLoading(false);
       }
     }
   };
@@ -256,7 +256,7 @@ export default function ChangePasswordPage() {
       setStatus('idle');
       setMessage('');
     } else {
-      router.push('/profile');
+    router.push('/profile');
     }
   };
 
@@ -451,9 +451,9 @@ export default function ChangePasswordPage() {
                 <motion.div className="space-y-6">
                   {currentStep === 'verify-current' && (
                     /* Étape 1: Vérification du PIN actuel */
-                    <motion.div 
+                  <motion.div
                       initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 }}
                       className="p-4 rounded-xl bg-white/5 border border-white/10"
                     >
@@ -469,15 +469,15 @@ export default function ChangePasswordPage() {
                         label="Code PIN actuel"
                         disabled={isLoading}
                       />
-                    </motion.div>
-                  )}
+                  </motion.div>
+                )}
 
                   {currentStep === 'set-new' && (
                     <>
                       {/* Nouveau code PIN */}
-                      <motion.div 
+                  <motion.div
                         initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
                         className="p-4 rounded-xl bg-white/5 border border-white/10"
                       >
@@ -493,10 +493,10 @@ export default function ChangePasswordPage() {
                           label="Nouveau code PIN"
                           disabled={isLoading}
                         />
-                      </motion.div>
+                  </motion.div>
 
                       {/* Confirmation du nouveau code PIN */}
-                      <motion.div 
+                  <motion.div 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
@@ -517,7 +517,7 @@ export default function ChangePasswordPage() {
                         
                         {/* Indicateur de correspondance */}
                         {confirmPin && (
-                          <motion.div 
+                        <motion.div 
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="mt-4 flex items-center gap-2 text-xs"
@@ -526,16 +526,16 @@ export default function ChangePasswordPage() {
                               <>
                                 <div className="w-2 h-2 rounded-full bg-green-400"></div>
                                 <span className="text-green-400">Les codes PIN correspondent</span>
-                              </>
-                            ) : (
-                              <>
+                          </>
+                        ) : (
+                          <>
                                 <div className="w-2 h-2 rounded-full bg-red-400"></div>
                                 <span className="text-red-400">Les codes PIN ne correspondent pas</span>
-                              </>
-                            )}
-                          </motion.div>
+                          </>
                         )}
-                      </motion.div>
+                          </motion.div>
+                    )}
+                  </motion.div>
                     </>
                   )}
 
@@ -578,18 +578,18 @@ export default function ChangePasswordPage() {
 
                 {/* Bouton de soumission */}
                 {currentStep !== 'success' && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
                     disabled={
                       isLoading || 
                       status === 'success' || 
                       (currentStep === 'verify-current' && (!currentPin || currentPin.length !== 6)) ||
                       (currentStep === 'set-new' && (!newPin || !confirmPin || newPin.length !== 6 || confirmPin.length !== 6 || newPin !== confirmPin))
                     }
-                    className="w-full relative group/button mt-5"
-                  >
+                  className="w-full relative group/button mt-5"
+                >
                   <div className="absolute inset-0 bg-white/10 rounded-lg blur-lg opacity-0 group-hover/button:opacity-70 transition-opacity duration-300" />
                   
                   <div className="relative overflow-hidden bg-[#FF671E] text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center">
@@ -647,11 +647,11 @@ export default function ChangePasswordPage() {
 
                 {/* Informations de sécurité */}
                 {currentStep !== 'success' && (
-                  <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
                     <h3 className="text-white/90 text-xs font-medium mb-2">
                       {currentStep === 'verify-current' ? 'Sécurité' : 'Conseils de sécurité'}
                     </h3>
-                    <ul className="text-white/60 text-xs space-y-1">
+                  <ul className="text-white/60 text-xs space-y-1">
                       {currentStep === 'verify-current' ? (
                         <>
                           <li>• Saisissez votre code PIN actuel pour continuer</li>
@@ -667,8 +667,8 @@ export default function ChangePasswordPage() {
                           <li>• N'utilisez pas des informations personnelles (date de naissance, téléphone)</li>
                         </>
                       )}
-                    </ul>
-                  </div>
+                  </ul>
+                </div>
                 )}
               </form>
             </div>

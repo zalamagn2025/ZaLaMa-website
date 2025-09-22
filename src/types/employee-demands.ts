@@ -19,6 +19,11 @@ export interface CreateDemandRequest {
   type_motif: string;
   motif: string;
   numero_reception?: string;
+  // Paramètres multi-mois
+  enable_multi_months?: boolean;
+  months?: number;
+  // PIN pour vérification côté edge function
+  pin?: string;
 }
 
 export interface CreateDemandResponse {
