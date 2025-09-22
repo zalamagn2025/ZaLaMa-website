@@ -44,7 +44,7 @@ export function useAccountSession() {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
       throw err
     }
-  }, [loadAccounts])
+  }, []) // Retiré loadAccounts des dépendances
 
   // Supprimer un compte
   const removeAccount = useCallback(async (accountId: string) => {
@@ -77,15 +77,17 @@ export function useAccountSession() {
   const updateLastLogin = useCallback(async (accountId: string) => {
     try {
       await accountSessionService.updateLastLogin(accountId)
+      // Recharger les comptes pour mettre à jour l'interface
+      await loadAccounts()
     } catch (err) {
       console.error('Erreur updateLastLogin:', err)
       // Ne pas faire échouer pour cette opération
     }
-  }, [])
+  }, [loadAccounts])
 
   useEffect(() => {
     loadAccounts()
-  }, [loadAccounts])
+  }, []) // Retiré loadAccounts des dépendances
 
   return {
     accounts,

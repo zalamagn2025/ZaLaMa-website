@@ -36,6 +36,13 @@ export class AccountSessionService {
 
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`
+      console.log('🔑 Token envoyé dans la requête:', accessToken.substring(0, 20) + '...')
+    } else {
+      // Ne pas afficher de warning pour les actions publiques
+      const publicActions = ['get_accounts', 'verify_pin', 'update_last_login']
+      if (!publicActions.includes(action)) {
+        console.warn('⚠️ Aucun token d\'accès fourni pour l\'action:', action)
+      }
     }
 
     const response = await fetch(this.API_BASE_URL, {
@@ -169,6 +176,9 @@ export class AccountSessionService {
         'update_last_login',
         { deviceId, userId: accountId }
       )
+      
+      // Mettre à jour le cache local
+      this.updateLocalAccountLastLogin(accountId)
     } catch (error) {
       console.error('Erreur updateLastLogin:', error)
       // Ne pas faire échouer pour cette opération
@@ -198,6 +208,31 @@ export class AccountSessionService {
       localStorage.setItem(this.STORAGE_KEY, encrypted)
     } catch (error) {
       console.warn('Erreur lors de la sauvegarde locale:', error)
+    }
+  }
+
+  private updateLocalAccountLastLogin(userId: string): void {
+    try {
+      const data = this.getLocalDeviceAccounts()
+      const accountIndex = data.accounts.findIndex(acc => acc.user_id === userId)
+      
+      if (accountIndex >= 0) {
+        data.accounts[accountIndex].last_login = new Date().toISOString()
+        data.updated_at = new Date().toISOString()
+        
+        // Mettre à jour le lastUsedAccount si c'est le même compte
+        if (data.last_used_account_id === data.accounts[accountIndex].id) {
+          data.accounts[accountIndex].last_login = new Date().toISOString()
+        }
+        
+        const encrypted = WebEncryption.encrypt(JSON.stringify(data))
+        localStorage.setItem(this.STORAGE_KEY, encrypted)
+        console.log('✅ Dernière connexion mise à jour localement pour user_id:', userId)
+      } else {
+        console.warn('⚠️ Compte non trouvé pour user_id:', userId)
+      }
+    } catch (error) {
+      console.warn('Erreur mise à jour locale last_login:', error)
     }
   }
 

@@ -110,8 +110,8 @@ export default function EmployeeLoginForm() {
       console.log('✅ quickLogin réussi');
       setLoginStatus('success');
       
-      // Redirection immédiate vers /dashboard
-      console.log('🔄 Redirection immédiate vers /dashboard');
+      // Redirection immédiate vers /profile
+      console.log('🔄 Redirection immédiate vers /profile');
       router.push('/profile');
     } catch (error) {
       console.log('❌ Erreur dans quickLogin:', error);
@@ -123,6 +123,7 @@ export default function EmployeeLoginForm() {
   };
 
   const handleNewAccount = () => {
+    console.log('🆕 handleNewAccount appelé !');
     setCurrentStep('full-login');
     setEmail('');
     setPin('');
@@ -204,7 +205,7 @@ export default function EmployeeLoginForm() {
       
       // Redirection après succès
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/profile");
       }, 1500);
     } catch (err) {
       setLoginStatus('error');
@@ -313,10 +314,10 @@ export default function EmployeeLoginForm() {
       </button>
       
       {/* Background gradient effect */}
-      <div className="absolute inset-0" />
+      <div className="absolute inset-0 pointer-events-none" />
       
       {/* Subtle noise texture overlay */}
-      <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light" 
+      <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light pointer-events-none" 
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           backgroundSize: '200px 200px'
@@ -324,9 +325,9 @@ export default function EmployeeLoginForm() {
       />
 
       {/* Top radial glow */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px]" />
+      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px] pointer-events-none" />
       <motion.div 
-        className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[100vh] h-[60vh] rounded-b-full bg-[#FF671E]/20 blur-[60px]"
+        className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[100vh] h-[60vh] rounded-b-full bg-[#FF671E]/20 blur-[60px] pointer-events-none"
         animate={{ 
           opacity: [0.15, 0.3, 0.15],
           scale: [0.98, 1.02, 0.98]
@@ -338,7 +339,7 @@ export default function EmployeeLoginForm() {
         }}
       />
       <motion.div 
-        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[90vh] h-[90vh] rounded-t-full bg-[#FF671E]/20 blur-[60px]"
+        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[90vh] h-[90vh] rounded-t-full bg-[#FF671E]/20 blur-[60px] pointer-events-none"
         animate={{ 
           opacity: [0.3, 0.5, 0.3],
           scale: [1, 1.1, 1]
@@ -352,8 +353,8 @@ export default function EmployeeLoginForm() {
       />
 
       {/* Animated glow spots */}
-      <div className="absolute left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40" />
-      <div className="absolute right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40" />
+      <div className="absolute left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40 pointer-events-none" />
+      <div className="absolute right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -393,7 +394,7 @@ export default function EmployeeLoginForm() {
             {/* Glass card background */}
             <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl overflow-hidden">
               {/* Subtle card inner patterns */}
-              <div className="absolute inset-0 opacity-[0.03]" 
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
                 style={{
                   backgroundImage: `linear-gradient(135deg, white 0.5px, transparent 0.5px), linear-gradient(45deg, white 0.5px, transparent 0.5px)`,
                   backgroundSize: '30px 30px'
@@ -472,6 +473,7 @@ export default function EmployeeLoginForm() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
+                    style={{ pointerEvents: 'auto' }}
                   >
                     <AccountSelectorCard
                       accounts={accounts}

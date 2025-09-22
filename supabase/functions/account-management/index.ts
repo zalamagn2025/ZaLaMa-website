@@ -34,10 +34,10 @@ serve(async (req) => {
     const { action, data } = await req.json()
 
     // Actions qui ne nécessitent pas d'authentification utilisateur
-    const publicActions = ['get_accounts', 'verify_pin']
+    const publicActions = ['get_accounts', 'verify_pin', 'update_last_login']
     
     // Actions qui nécessitent une authentification utilisateur
-    const protectedActions = ['save_account', 'remove_account', 'update_last_login']
+    const protectedActions = ['save_account', 'remove_account']
 
     if (publicActions.includes(action)) {
       // Actions publiques - pas d'authentification utilisateur requise
@@ -47,6 +47,9 @@ serve(async (req) => {
         
         case 'verify_pin':
           return await verifyPin(supabase, data as PinVerification)
+        
+        case 'update_last_login':
+          return await updateLastLogin(supabase, data.deviceId, data.userId)
       }
     } else if (protectedActions.includes(action)) {
       // Actions protégées - authentification utilisateur requise

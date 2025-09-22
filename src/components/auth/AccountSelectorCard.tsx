@@ -168,7 +168,10 @@ export default function AccountSelectorCard({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        onClick={onNewAccount}
+        onClick={() => {
+          console.log('🆕 Bouton "Nouveau compte" cliqué !');
+          onNewAccount();
+        }}
         className="w-full p-4 rounded-lg bg-gradient-to-r from-[#FF671E]/20 to-[#FF8A4C]/20 border border-[#FF671E]/30 hover:from-[#FF671E]/30 hover:to-[#FF8A4C]/30 hover:border-[#FF671E]/50 transition-all duration-300"
       >
         <div className="flex items-center justify-center space-x-3">

@@ -93,7 +93,7 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
       console.log('✅ Connexion rapide réussie')
       
       // Mettre à jour la dernière connexion
-      await updateLastLogin(account.id)
+      await updateLastLogin(account.user_id)
       
       console.log('✅ Dernière connexion mise à jour')
     } catch (error) {
@@ -116,25 +116,56 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
   // Sauvegarder automatiquement le compte quand l'utilisateur se connecte
   useEffect(() => {
     const saveCurrentAccount = async () => {
+      console.log('🔄 useEffect saveCurrentAccount déclenché:', {
+        isAuthenticated,
+        hasCurrentEmployee: !!currentEmployee,
+        currentEmployeeEmail: currentEmployee?.email,
+        accountsLoading,
+        accountsCount: accounts.length
+      })
+      
       if (isAuthenticated && currentEmployee && !accountsLoading) {
-        try {
-          console.log('💾 Sauvegarde automatique du compte:', currentEmployee.email)
-          
-          const userData = {
-            ...currentEmployee,
-            access_token: localStorage.getItem('employee_access_token')
+        // Vérifier si le compte existe déjà
+        const existingAccount = accounts.find(acc => acc.email === currentEmployee.email)
+        
+        if (!existingAccount) {
+          try {
+            const accessToken = localStorage.getItem('employee_access_token')
+            console.log('💾 Sauvegarde automatique du compte:', currentEmployee.email)
+            console.log('🔑 Token d\'accès:', accessToken ? 'Présent' : 'Absent')
+            
+            if (!accessToken) {
+              console.warn('⚠️ Aucun token d\'accès trouvé, impossible de sauvegarder le compte')
+              return
+            }
+            
+            const userData = {
+              ...currentEmployee,
+              access_token: accessToken
+            }
+            
+            console.log('📤 Envoi des données utilisateur:', {
+              email: userData.email,
+              nom: userData.nom,
+              prenom: userData.prenom,
+              hasAccessToken: !!userData.access_token
+            })
+            
+            await saveAccount(userData)
+            console.log('✅ Compte sauvegardé avec succès')
+          } catch (error) {
+            console.error('❌ Erreur lors de la sauvegarde automatique du compte:', error)
           }
-          
-          await saveAccount(userData)
-          console.log('✅ Compte sauvegardé avec succès')
-        } catch (error) {
-          console.error('❌ Erreur lors de la sauvegarde automatique du compte:', error)
+        } else {
+          console.log('ℹ️ Compte déjà existant, pas de sauvegarde nécessaire:', currentEmployee.email)
         }
+      } else {
+        console.log('⏳ Conditions non remplies pour la sauvegarde automatique')
       }
     }
 
     saveCurrentAccount()
-  }, [isAuthenticated, currentEmployee, accountsLoading, saveAccount])
+  }, [isAuthenticated, currentEmployee, accountsLoading, accounts]) // Ajouté accounts pour vérifier l'existence
 
   const value: AccountAuthContextType = {
     // État des comptes
