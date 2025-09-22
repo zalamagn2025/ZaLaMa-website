@@ -145,6 +145,90 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [pinAttempts, setPinAttempts] = useState(0)
   const [isPinBlocked, setIsPinBlocked] = useState(false)
   const [pinBlockTime, setPinBlockTime] = useState(0)
+
+  // Fonctions pour gérer le blocage persistant avec gestion d'erreurs robuste
+  const getPinBlockInfo = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+
+      const blockInfo = localStorage.getItem('pin_block_info')
+      if (!blockInfo) {
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+
+      const { blockTime, attempts, userId } = JSON.parse(blockInfo)
+      const now = Date.now()
+      const remainingTime = Math.max(0, blockTime - now)
+      
+      // Vérifier si le blocage est encore valide
+      if (remainingTime > 0) {
+        return { 
+          isBlocked: true, 
+          blockTime, 
+          attempts, 
+          remainingTime,
+          userId: userId || 'default'
+        }
+      } else {
+        // Le blocage a expiré, nettoyer le localStorage
+        localStorage.removeItem('pin_block_info')
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors de la lecture du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+      return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+    }
+  }
+
+  const setPinBlockInfo = (blockTime: number, attempts: number) => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return
+      }
+
+      const blockInfo = {
+        blockTime,
+        attempts,
+        userId: user?.id || 'default',
+        timestamp: Date.now()
+      }
+      
+      localStorage.setItem('pin_block_info', JSON.stringify(blockInfo))
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors de la sauvegarde du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const clearPinBlockInfo = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return
+      }
+      localStorage.removeItem('pin_block_info')
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors du nettoyage du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  // Fonction pour vérifier le blocage en temps réel
+  const checkBlockStatus = () => {
+    const blockInfo = getPinBlockInfo()
+    if (blockInfo.isBlocked) {
+      setIsPinBlocked(true)
+      setPinBlockTime(blockInfo.blockTime)
+      setPinAttempts(blockInfo.attempts)
+      return true
+    } else {
+      setIsPinBlocked(false)
+      setPinAttempts(blockInfo.attempts)
+      return false
+    }
+  }
   
   // États pour les toasts
   const [toast, setToast] = useState<{
@@ -170,6 +254,48 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
   // Hook pour les nouvelles APIs Edge Function
   const { demands, stats, createDemand, isLoadingDemands, isLoadingStats, isCreating } = useEmployeeDemands()
+
+  // Gestionnaire d'erreur global pour éviter les erreurs d'extensions
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.message?.includes('disconnected port object') || 
+          event.message?.includes('Extension context invalidated')) {
+        // Ignorer silencieusement les erreurs d'extensions de navigateur
+        event.preventDefault()
+        event.stopPropagation()
+        return false
+      }
+    }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.message?.includes('disconnected port object') ||
+          event.reason?.message?.includes('Extension context invalidated')) {
+        // Ignorer silencieusement les erreurs d'extensions de navigateur
+        event.preventDefault()
+        return false
+      }
+    }
+
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
+  // Vérifier l'état de blocage au chargement du composant
+  useEffect(() => {
+    checkBlockStatus()
+  }, [])
+
+  // Vérifier le blocage à chaque fois qu'on arrive à l'étape de confirmation
+  useEffect(() => {
+    if (currentStep === 'confirmation') {
+      checkBlockStatus()
+    }
+  }, [currentStep])
   
   // Fonctions de gestion du PIN
   const handlePinChange = (value: string) => {
@@ -229,9 +355,20 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
   // Fonction pour gérer les tentatives de PIN
   const handlePinAttempt = async () => {
-    if (isPinBlocked) {
-      const remainingTime = Math.ceil((pinBlockTime - Date.now()) / 1000);
-      showToast('error', `Trop de tentatives. Veuillez attendre ${remainingTime} secondes.`);
+    // Vérifier d'abord l'état de blocage dans le localStorage (vérification en temps réel)
+    const blockInfo = getPinBlockInfo()
+    if (blockInfo.isBlocked) {
+      const remainingMinutes = Math.ceil(blockInfo.remainingTime / 60000);
+      const remainingSeconds = Math.ceil(blockInfo.remainingTime / 1000);
+      
+      if (remainingMinutes > 1) {
+        showToast('error', `Trop de tentatives. Veuillez attendre ${remainingMinutes} minutes.`);
+      } else {
+        showToast('error', `Trop de tentatives. Veuillez attendre ${remainingSeconds} secondes.`);
+      }
+      
+      // Mettre à jour l'état local
+      checkBlockStatus()
       return;
     }
 
@@ -248,6 +385,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       if (isValid) {
         // PIN correct - réinitialiser les tentatives et procéder
         setPinAttempts(0);
+        clearPinBlockInfo(); // Nettoyer le localStorage
         showToast('success', "Code PIN correct ! Confirmation de la demande...");
         setCurrentStep('success');
         // Soumettre la demande
@@ -262,15 +400,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
           const blockTime = Date.now() + (5 * 60 * 1000);
           setIsPinBlocked(true);
           setPinBlockTime(blockTime);
-          showToast('error', "Trop de tentatives incorrectes. Veuillez attendre 5 minutes avant de réessayer.");
           
-          // Démarrer le timer de déblocage
-          setTimeout(() => {
-            setIsPinBlocked(false);
-            setPinAttempts(0);
-            showToast('info', "Vous pouvez maintenant réessayer de saisir votre code PIN.");
-          }, 5 * 60 * 1000);
+          // Sauvegarder dans le localStorage
+          setPinBlockInfo(blockTime, newAttempts);
+          
+          showToast('error', "Trop de tentatives incorrectes. Veuillez attendre 5 minutes avant de réessayer.");
         } else {
+          // Sauvegarder les tentatives dans le localStorage
+          setPinBlockInfo(0, newAttempts);
           showToast('warning', `Code PIN incorrect. ${3 - newAttempts} tentative(s) restante(s).`);
         }
       }
@@ -1406,9 +1543,28 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         
                         {isPinBlocked && (
                           <div className="mt-3 text-center">
-                            <span className="text-red-400 text-sm">
-                              🔒 Compte temporairement bloqué
-                            </span>
+                            <div className="p-3 bg-red-900/20 border border-red-600/30 rounded-lg">
+                              <div className="flex items-center justify-center gap-2 text-red-400 mb-2">
+                                <span className="text-lg">🔒</span>
+                                <span className="text-sm font-medium">Compte temporairement bloqué</span>
+                              </div>
+                              <div className="text-red-300 text-xs">
+                                {(() => {
+                                  const blockInfo = getPinBlockInfo()
+                                  if (blockInfo.isBlocked) {
+                                    const remainingMinutes = Math.ceil(blockInfo.remainingTime / 60000)
+                                    const remainingSeconds = Math.ceil(blockInfo.remainingTime / 1000)
+                                    
+                                    if (remainingMinutes > 1) {
+                                      return `Temps restant: ${remainingMinutes} minutes`
+                                    } else {
+                                      return `Temps restant: ${remainingSeconds} secondes`
+                                    }
+                                  }
+                                  return "Veuillez attendre 5 minutes"
+                                })()}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
