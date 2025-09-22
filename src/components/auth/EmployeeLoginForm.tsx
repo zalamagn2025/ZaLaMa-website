@@ -3,11 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeClosed, ArrowRight, Mail, CheckCircle, AlertCircle, User, ArrowLeft } from 'lucide-react';
+import { Lock, Eye, EyeClosed, ArrowRight, Mail, CheckCircle, AlertCircle, User, ArrowLeft, Users, Plus, Trash2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { useEmployeeAuth } from "@/contexts/EmployeeAuthContext";
+import { useAccountAuth } from "@/contexts/AccountAuthContext";
+import { AccountSession } from "@/types/account-session";
 import PinInput from "@/components/common/PinInput";
+import AccountSelectorCard from "./AccountSelectorCard";
+import QuickPinVerificationCard from "./QuickPinVerificationCard";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -38,9 +42,24 @@ export default function EmployeeLoginForm() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
+  // États pour la gestion multi-comptes
+  const [currentStep, setCurrentStep] = useState<'account-select' | 'pin-verification' | 'full-login'>('account-select');
+  const [selectedAccount, setSelectedAccount] = useState<AccountSession | null>(null);
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [quickLoginLoading, setQuickLoginLoading] = useState(false);
 
-  // Utiliser le contexte d'authentification employé
-  const { login, loading, error } = useEmployeeAuth();
+  // Utiliser les contextes d'authentification
+  const { loading, error } = useEmployeeAuth();
+  const {
+    accounts,
+    lastUsedAccount,
+    accountsLoading,
+    accountsError,
+    removeAccount,
+    verifyPin,
+    quickLogin,
+    login // Utiliser la fonction login du AccountAuthContext
+  } = useAccountAuth();
 
   // Fonction pour gérer la saisie du PIN
   const handlePinChange = (value: string) => {
@@ -67,6 +86,65 @@ export default function EmployeeLoginForm() {
     setShowPin(!showPin);
   };
 
+  // Fonctions pour la gestion multi-comptes
+  const handleAccountSelect = (account: AccountSession) => {
+    setSelectedAccount(account);
+    setEmail(account.email);
+    setCurrentStep('pin-verification');
+  };
+
+  const handleQuickLogin = async (account: AccountSession, pin: string) => {
+    console.log('🚀 handleQuickLogin appelé !', {
+      account: account.email,
+      pin: pin,
+      pinLength: pin.length
+    });
+    
+    setQuickLoginLoading(true);
+    setErrorMessage('');
+    setLoginStatus('idle');
+    
+    try {
+      console.log('🔄 Appel de quickLogin...');
+      await quickLogin(account, pin);
+      console.log('✅ quickLogin réussi');
+      setLoginStatus('success');
+      
+      // Redirection immédiate vers /dashboard
+      console.log('🔄 Redirection immédiate vers /dashboard');
+      router.push('/profile');
+    } catch (error) {
+      console.log('❌ Erreur dans quickLogin:', error);
+      setErrorMessage('Connexion échouée. Vérifiez votre PIN.');
+      setLoginStatus('error');
+    } finally {
+      setQuickLoginLoading(false);
+    }
+  };
+
+  const handleNewAccount = () => {
+    setCurrentStep('full-login');
+    setEmail('');
+    setPin('');
+    setSelectedAccount(null);
+  };
+
+  const handleRemoveAccount = async (accountId: string) => {
+    try {
+      await removeAccount(accountId);
+    } catch (error) {
+      setErrorMessage('Erreur lors de la suppression du compte.');
+      setLoginStatus('error');
+    }
+  };
+
+  const handleBackToAccountSelect = () => {
+    setCurrentStep('account-select');
+    setSelectedAccount(null);
+    setEmail('');
+    setPin('');
+  };
+
   // Vérifier si l'utilisateur arrive après un changement de mot de passe
   useEffect(() => {
     const message = searchParams.get('message');
@@ -86,8 +164,16 @@ export default function EmployeeLoginForm() {
     }
   }, [searchParams]);
 
+  // Initialiser l'état en fonction des comptes disponibles
+  useEffect(() => {
+    if (!accountsLoading && accounts.length > 0) {
+      setCurrentStep('account-select');
+    } else if (!accountsLoading && accounts.length === 0) {
+      setCurrentStep('full-login');
+    }
+  }, [accountsLoading, accounts.length]);
+
   const handleSubmit = async (e: React.FormEvent) => {
-    /*console.log('handleSubmit appelé!', e)*/
     e.preventDefault();
     setLoginStatus('idle');
     setErrorMessage('');
@@ -104,6 +190,7 @@ export default function EmployeeLoginForm() {
     }
 
     try {
+      // Connexion complète
       await login(email, pin);
       
       // Stocker l'email si "Se souvenir de moi" est coché
@@ -117,7 +204,7 @@ export default function EmployeeLoginForm() {
       
       // Redirection après succès
       setTimeout(() => {
-        router.push("/profile");
+        router.push("/dashboard");
       }, 1500);
     } catch (err) {
       setLoginStatus('error');
@@ -376,8 +463,54 @@ export default function EmployeeLoginForm() {
 
               </AnimatePresence>
 
-              {/* Formulaire de connexion */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Contenu conditionnel selon l'étape */}
+              <AnimatePresence mode="wait">
+                {currentStep === 'account-select' && (
+                  <motion.div
+                    key="account-select"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AccountSelectorCard
+                      accounts={accounts}
+                      lastUsedAccount={lastUsedAccount}
+                      loading={accountsLoading}
+                      onAccountSelect={handleAccountSelect}
+                      onNewAccount={handleNewAccount}
+                      onRemoveAccount={handleRemoveAccount}
+                    />
+                  </motion.div>
+                )}
+
+                {currentStep === 'pin-verification' && selectedAccount && (
+                  <motion.div
+                    key="pin-verification"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <QuickPinVerificationCard
+                      account={selectedAccount}
+                      onSuccess={(pin) => handleQuickLogin(selectedAccount, pin)}
+                      onCancel={handleBackToAccountSelect}
+                      onError={setErrorMessage}
+                      loading={quickLoginLoading}
+                    />
+                  </motion.div>
+                )}
+
+                {currentStep === 'full-login' && (
+                  <motion.div
+                    key="full-login"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-4">
                     {/* Email input */}
                     <div className="relative">
@@ -517,7 +650,10 @@ export default function EmployeeLoginForm() {
                        </button>
                      </p>
                    </motion.div>
-                </form>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </motion.div>

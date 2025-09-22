@@ -1,0 +1,66 @@
+### Tests API Account Management - Version Simple
+### Pour tester rapidement les fonctionnalités de base
+
+### Variables
+@baseUrl = http://localhost:3000
+@deviceId = test-device-123
+
+### 1. Test basique - Récupérer les comptes
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "{{deviceId}}"
+  }
+}
+
+###
+
+### 2. Test de sauvegarde (sans token)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "test@example.com",
+    "nom": "Test",
+    "prenom": "User"
+  }
+}
+
+###
+
+### 3. Test de vérification PIN
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "verify_pin",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "test@example.com",
+    "pin": "123456"
+  }
+}
+
+###
+
+### 4. Test d'action invalide
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "invalid_action",
+  "data": {}
+}
+
+###
+
+### 5. Test de méthode GET (non autorisée)
+GET {{baseUrl}}/api/account-management
+
+###
