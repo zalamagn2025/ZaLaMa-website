@@ -83,7 +83,9 @@ export default function QuickPinVerificationCard({
       >
         <div className="w-full p-4 rounded-lg bg-white/5 border border-white/10 text-left">
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8A4C] flex items-center justify-center overflow-hidden">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center overflow-hidden ${
+              account.profile_image ? 'bg-transparent' : 'bg-gradient-to-br from-[#FF671E] to-[#FF8A4C]'
+            }`}>
               {account.profile_image ? (
                 <Image
                   src={account.profile_image}
