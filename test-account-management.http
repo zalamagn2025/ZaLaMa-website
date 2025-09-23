@@ -1,0 +1,255 @@
+### Test de l'API Account Management
+### Utiliser avec VS Code REST Client ou IntelliJ HTTP Client
+
+### Variables
+@baseUrl = http://localhost:3000
+@edgeFunctionUrl = https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/account-management
+@deviceId = test-device-123
+@testToken = your_test_token_here
+
+### 1. Test de l'API Route Next.js - Récupérer les comptes
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "{{deviceId}}"
+  }
+}
+
+### 2. Test de l'Edge Function directe - Récupérer les comptes
+POST {{edgeFunctionUrl}}
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "{{deviceId}}"
+  }
+}
+
+### 3. Test de sauvegarde de compte (sans token - devrait échouer)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "test@example.com",
+    "nom": "Test",
+    "prenom": "User",
+    "poste": "Développeur",
+    "entreprise": "ZaLaMa",
+    "profileImage": "https://example.com/avatar.jpg"
+  }
+}
+
+### 4. Test de sauvegarde de compte (avec token)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+Authorization: Bearer {{testToken}}
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "john.doe@example.com",
+    "nom": "Doe",
+    "prenom": "John",
+    "poste": "Développeur Full Stack",
+    "entreprise": "ZaLaMa Technologies",
+    "profileImage": "https://example.com/john-avatar.jpg"
+  }
+}
+
+### 5. Test de vérification PIN
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "verify_pin",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "user-123",
+    "pin": "123456"
+  }
+}
+
+### 6. Test de suppression de compte
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "remove_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "user-123"
+  }
+}
+
+### 7. Test de mise à jour dernière connexion
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "update_last_login",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "user-123"
+  }
+}
+
+### 8. Test d'action invalide (devrait échouer)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "invalid_action",
+  "data": {}
+}
+
+### 9. Test de méthode GET (devrait échouer)
+GET {{baseUrl}}/api/account-management
+
+### 10. Test de requête malformée (devrait échouer)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts"
+  // Données manquantes
+}
+
+### 11. Test avec données complètes pour un compte
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+Authorization: Bearer {{testToken}}
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "marie.martin@example.com",
+    "nom": "Martin",
+    "prenom": "Marie",
+    "poste": "Chef de Projet",
+    "entreprise": "ZaLaMa Solutions",
+    "profileImage": "https://example.com/marie-avatar.jpg"
+  }
+}
+
+### 12. Test de récupération après sauvegarde
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "{{deviceId}}"
+  }
+}
+
+### 13. Test de l'Edge Function avec données complètes
+POST {{edgeFunctionUrl}}
+Content-Type: application/json
+Authorization: Bearer {{testToken}}
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "pierre.durand@example.com",
+    "nom": "Durand",
+    "prenom": "Pierre",
+    "poste": "Analyste Financier",
+    "entreprise": "ZaLaMa Finance",
+    "profileImage": "https://example.com/pierre-avatar.jpg"
+  }
+}
+
+### 14. Test de vérification PIN avec l'Edge Function
+POST {{edgeFunctionUrl}}
+Content-Type: application/json
+
+{
+  "action": "verify_pin",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "pierre.durand@example.com",
+    "pin": "654321"
+  }
+}
+
+### 15. Test de performance - Requête multiple
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "performance-test-device"
+  }
+}
+
+### 16. Test avec deviceId spécial
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "device_with_special_chars_123!@#"
+  }
+}
+
+### 17. Test avec email invalide (devrait échouer)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+Authorization: Bearer {{testToken}}
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "email-invalide",
+    "nom": "Test",
+    "prenom": "Invalid"
+  }
+}
+
+### 18. Test de nettoyage - Supprimer tous les comptes de test
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "remove_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "test@example.com"
+  }
+}
+
+### 19. Test final - Vérifier que les comptes sont supprimés
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "{{deviceId}}"
+  }
+}
+
+### 20. Test de l'API avec timeout (optionnel)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+Timeout: 5000
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "{{deviceId}}"
+  }
+}

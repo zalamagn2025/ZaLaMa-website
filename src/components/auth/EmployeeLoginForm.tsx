@@ -3,11 +3,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeClosed, ArrowRight, Mail, CheckCircle, AlertCircle, User, ArrowLeft } from 'lucide-react';
+import { Lock, Eye, EyeClosed, ArrowRight, Mail, CheckCircle, AlertCircle, User, ArrowLeft, Users, Plus, Trash2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { useEmployeeAuth } from "@/contexts/EmployeeAuthContext";
+import { useAccountAuth } from "@/contexts/AccountAuthContext";
+import { AccountSession } from "@/types/account-session";
 import PinInput from "@/components/common/PinInput";
+import AccountSelectorCard from "./AccountSelectorCard";
+import QuickPinVerificationCard from "./QuickPinVerificationCard";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -38,9 +42,24 @@ export default function EmployeeLoginForm() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
+  // États pour la gestion multi-comptes
+  const [currentStep, setCurrentStep] = useState<'account-select' | 'pin-verification' | 'full-login'>('account-select');
+  const [selectedAccount, setSelectedAccount] = useState<AccountSession | null>(null);
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [quickLoginLoading, setQuickLoginLoading] = useState(false);
 
-  // Utiliser le contexte d'authentification employé
-  const { login, loading, error } = useEmployeeAuth();
+  // Utiliser les contextes d'authentification
+  const { loading, error } = useEmployeeAuth();
+  const {
+    accounts,
+    lastUsedAccount,
+    accountsLoading,
+    accountsError,
+    removeAccount,
+    verifyPin,
+    quickLogin,
+    login // Utiliser la fonction login du AccountAuthContext
+  } = useAccountAuth();
 
   // Fonction pour gérer la saisie du PIN
   const handlePinChange = (value: string) => {
@@ -67,6 +86,66 @@ export default function EmployeeLoginForm() {
     setShowPin(!showPin);
   };
 
+  // Fonctions pour la gestion multi-comptes
+  const handleAccountSelect = (account: AccountSession) => {
+    setSelectedAccount(account);
+    setEmail(account.email);
+    setCurrentStep('pin-verification');
+  };
+
+  const handleQuickLogin = async (account: AccountSession, pin: string) => {
+    // console.log('🚀 handleQuickLogin appelé !', {
+    //   account: account.email,
+    //   pin: pin,
+    //   pinLength: pin.length
+    // });
+    
+    setQuickLoginLoading(true);
+    setErrorMessage('');
+    setLoginStatus('idle');
+    
+    try {
+      // console.log('🔄 Appel de quickLogin...');
+      await quickLogin(account, pin);
+      // console.log('✅ quickLogin réussi');
+      setLoginStatus('success');
+      
+      // Redirection immédiate vers /profile
+      // console.log('🔄 Redirection immédiate vers /profile');
+      router.push('/profile');
+    } catch (error) {
+      // console.log('❌ Erreur dans quickLogin:', error);
+      setErrorMessage('Connexion échouée. Vérifiez votre PIN.');
+      setLoginStatus('error');
+    } finally {
+      setQuickLoginLoading(false);
+    }
+  };
+
+  const handleNewAccount = () => {
+    // console.log('🆕 handleNewAccount appelé !');
+    setCurrentStep('full-login');
+    setEmail('');
+    setPin('');
+    setSelectedAccount(null);
+  };
+
+  const handleRemoveAccount = async (accountId: string) => {
+    try {
+      await removeAccount(accountId);
+    } catch (error) {
+      setErrorMessage('Erreur lors de la suppression du compte.');
+      setLoginStatus('error');
+    }
+  };
+
+  const handleBackToAccountSelect = () => {
+    setCurrentStep('account-select');
+    setSelectedAccount(null);
+    setEmail('');
+    setPin('');
+  };
+
   // Vérifier si l'utilisateur arrive après un changement de mot de passe
   useEffect(() => {
     const message = searchParams.get('message');
@@ -86,8 +165,16 @@ export default function EmployeeLoginForm() {
     }
   }, [searchParams]);
 
+  // Initialiser l'état en fonction des comptes disponibles
+  useEffect(() => {
+    if (!accountsLoading && accounts.length > 0) {
+      setCurrentStep('account-select');
+    } else if (!accountsLoading && accounts.length === 0) {
+      setCurrentStep('full-login');
+    }
+  }, [accountsLoading, accounts.length]);
+
   const handleSubmit = async (e: React.FormEvent) => {
-    /*console.log('handleSubmit appelé!', e)*/
     e.preventDefault();
     setLoginStatus('idle');
     setErrorMessage('');
@@ -104,6 +191,7 @@ export default function EmployeeLoginForm() {
     }
 
     try {
+      // Connexion complète
       await login(email, pin);
       
       // Stocker l'email si "Se souvenir de moi" est coché
@@ -226,10 +314,10 @@ export default function EmployeeLoginForm() {
       </button>
       
       {/* Background gradient effect */}
-      <div className="absolute inset-0" />
+      <div className="absolute inset-0 pointer-events-none" />
       
       {/* Subtle noise texture overlay */}
-      <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light" 
+      <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light pointer-events-none" 
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           backgroundSize: '200px 200px'
@@ -237,9 +325,9 @@ export default function EmployeeLoginForm() {
       />
 
       {/* Top radial glow */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px]" />
+      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120vh] h-[60vh] rounded-b-[50%] bg-[#FF671E]/20 blur-[80px] pointer-events-none" />
       <motion.div 
-        className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[100vh] h-[60vh] rounded-b-full bg-[#FF671E]/20 blur-[60px]"
+        className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[100vh] h-[60vh] rounded-b-full bg-[#FF671E]/20 blur-[60px] pointer-events-none"
         animate={{ 
           opacity: [0.15, 0.3, 0.15],
           scale: [0.98, 1.02, 0.98]
@@ -251,7 +339,7 @@ export default function EmployeeLoginForm() {
         }}
       />
       <motion.div 
-        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[90vh] h-[90vh] rounded-t-full bg-[#FF671E]/20 blur-[60px]"
+        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[90vh] h-[90vh] rounded-t-full bg-[#FF671E]/20 blur-[60px] pointer-events-none"
         animate={{ 
           opacity: [0.3, 0.5, 0.3],
           scale: [1, 1.1, 1]
@@ -265,8 +353,8 @@ export default function EmployeeLoginForm() {
       />
 
       {/* Animated glow spots */}
-      <div className="absolute left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40" />
-      <div className="absolute right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40" />
+      <div className="absolute left-1/4 top-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse opacity-40 pointer-events-none" />
+      <div className="absolute right-1/4 bottom-1/4 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000 opacity-40 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -306,7 +394,7 @@ export default function EmployeeLoginForm() {
             {/* Glass card background */}
             <div className="relative bg-black/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.05] shadow-2xl overflow-hidden">
               {/* Subtle card inner patterns */}
-              <div className="absolute inset-0 opacity-[0.03]" 
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
                 style={{
                   backgroundImage: `linear-gradient(135deg, white 0.5px, transparent 0.5px), linear-gradient(45deg, white 0.5px, transparent 0.5px)`,
                   backgroundSize: '30px 30px'
@@ -376,8 +464,56 @@ export default function EmployeeLoginForm() {
 
               </AnimatePresence>
 
-              {/* Formulaire de connexion */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Contenu conditionnel selon l'étape */}
+              <AnimatePresence mode="wait">
+                {currentStep === 'account-select' && (
+                  <motion.div
+                    key="account-select"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    <AccountSelectorCard
+                      accounts={accounts}
+                      lastUsedAccount={lastUsedAccount}
+                      loading={accountsLoading}
+                      onAccountSelect={handleAccountSelect}
+                      onNewAccount={handleNewAccount}
+                      onRemoveAccount={handleRemoveAccount}
+                    />
+                  </motion.div>
+                )}
+
+                {currentStep === 'pin-verification' && selectedAccount && (
+                  <motion.div
+                    key="pin-verification"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <QuickPinVerificationCard
+                      account={selectedAccount}
+                      onSuccess={(pin) => handleQuickLogin(selectedAccount, pin)}
+                      onCancel={handleBackToAccountSelect}
+                      onError={setErrorMessage}
+                      onRemoveAccount={handleRemoveAccount}
+                      loading={quickLoginLoading}
+                    />
+                  </motion.div>
+                )}
+
+                {currentStep === 'full-login' && (
+                  <motion.div
+                    key="full-login"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-4">
                     {/* Email input */}
                     <div className="relative">
@@ -482,7 +618,22 @@ export default function EmployeeLoginForm() {
                     )}
                   </button>
 
-
+                  {/* Bouton retour vers sélection des comptes */}
+                  {accounts.length > 0 && (
+                    <motion.button
+                      type="button"
+                      onClick={handleBackToAccountSelect}
+                      className="w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <div className="flex items-center justify-center space-x-2">
+                        <ArrowLeft className="w-4 h-4 text-white/60" />
+                        <span className="text-white/60 text-sm">Retour aux comptes</span>
+                      </div>
+                    </motion.button>
+                  )}
 
                   {/* Minimal Divider */}
                   <div className="relative mt-2 mb-5 flex items-center">
@@ -517,7 +668,10 @@ export default function EmployeeLoginForm() {
                        </button>
                      </p>
                    </motion.div>
-                </form>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </motion.div>
