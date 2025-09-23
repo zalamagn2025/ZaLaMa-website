@@ -94,27 +94,27 @@ export default function EmployeeLoginForm() {
   };
 
   const handleQuickLogin = async (account: AccountSession, pin: string) => {
-    console.log('🚀 handleQuickLogin appelé !', {
-      account: account.email,
-      pin: pin,
-      pinLength: pin.length
-    });
+    // console.log('🚀 handleQuickLogin appelé !', {
+    //   account: account.email,
+    //   pin: pin,
+    //   pinLength: pin.length
+    // });
     
     setQuickLoginLoading(true);
     setErrorMessage('');
     setLoginStatus('idle');
     
     try {
-      console.log('🔄 Appel de quickLogin...');
+      // console.log('🔄 Appel de quickLogin...');
       await quickLogin(account, pin);
-      console.log('✅ quickLogin réussi');
+      // console.log('✅ quickLogin réussi');
       setLoginStatus('success');
       
       // Redirection immédiate vers /profile
-      console.log('🔄 Redirection immédiate vers /profile');
+      // console.log('🔄 Redirection immédiate vers /profile');
       router.push('/profile');
     } catch (error) {
-      console.log('❌ Erreur dans quickLogin:', error);
+      // console.log('❌ Erreur dans quickLogin:', error);
       setErrorMessage('Connexion échouée. Vérifiez votre PIN.');
       setLoginStatus('error');
     } finally {
@@ -123,7 +123,7 @@ export default function EmployeeLoginForm() {
   };
 
   const handleNewAccount = () => {
-    console.log('🆕 handleNewAccount appelé !');
+    // console.log('🆕 handleNewAccount appelé !');
     setCurrentStep('full-login');
     setEmail('');
     setPin('');
@@ -499,6 +499,7 @@ export default function EmployeeLoginForm() {
                       onSuccess={(pin) => handleQuickLogin(selectedAccount, pin)}
                       onCancel={handleBackToAccountSelect}
                       onError={setErrorMessage}
+                      onRemoveAccount={handleRemoveAccount}
                       loading={quickLoginLoading}
                     />
                   </motion.div>

@@ -36,10 +36,10 @@ export class AccountSessionService {
 
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`
-      console.log('🔑 Token envoyé dans la requête:', accessToken.substring(0, 20) + '...')
+      // console.log('🔑 Token envoyé dans la requête:', accessToken.substring(0, 20) + '...')
     } else {
       // Ne pas afficher de warning pour les actions publiques
-      const publicActions = ['get_accounts', 'verify_pin', 'update_last_login']
+      const publicActions = ['get_accounts', 'verify_pin', 'update_last_login', 'remove_account']
       if (!publicActions.includes(action)) {
         console.warn('⚠️ Aucun token d\'accès fourni pour l\'action:', action)
       }
@@ -69,6 +69,16 @@ export class AccountSessionService {
   async saveAccountSession(userData: any): Promise<AccountSession> {
     const deviceId = this.generateDeviceId()
     
+    // console.log('🔍 Données utilisateur reçues:', {
+    //   email: userData.email,
+    //   nom: userData.nom,
+    //   prenom: userData.prenom,
+    //   profile_image: userData.profile_image,
+    //   poste: userData.poste,
+    //   entreprise: userData.entreprise,
+    //   hasAccessToken: !!userData.access_token
+    // })
+    
     const accountData: AccountData = {
       deviceId,
       email: userData.email,
@@ -78,6 +88,8 @@ export class AccountSessionService {
       poste: userData.poste,
       entreprise: userData.entreprise
     }
+    
+    // console.log('📤 Données envoyées à l\'API:', accountData)
 
     try {
       const result = await this.makeRequest<AccountManagementResponse>(
@@ -152,17 +164,46 @@ export class AccountSessionService {
   // Supprimer un compte
   async removeAccount(accountId: string): Promise<void> {
     const deviceId = this.generateDeviceId()
+    // console.log('🔄 Service removeAccount appelé:', { accountId, deviceId });
     
     try {
-      await this.makeRequest<AccountManagementResponse>(
-        'remove_account',
-        { deviceId, userId: accountId }
-      )
+      // Récupérer les informations du compte pour avoir le user_id
+      const localAccounts = this.getLocalAccounts()
+      const accountToDelete = localAccounts.find(acc => acc.id === accountId)
       
-      // Supprimer aussi du cache local
+      if (!accountToDelete) {
+        // console.warn('⚠️ Compte non trouvé localement:', accountId)
+        // Supprimer quand même du cache local au cas où
+        this.removeAccountLocally(accountId)
+        return
+      }
+      
+      // console.log('📋 Compte trouvé:', { 
+      //   id: accountToDelete.id, 
+      //   user_id: accountToDelete.user_id, 
+      //   email: accountToDelete.email 
+      // })
+      
+      // D'abord supprimer du cache local (plus fiable)
+      // console.log('🗑️ Suppression locale...');
       this.removeAccountLocally(accountId)
+      // console.log('✅ Suppression locale terminée');
+      
+      // Ensuite essayer la suppression serveur (non bloquante)
+      try {
+        // console.log('📡 Appel API remove_account...');
+        await this.makeRequest<AccountManagementResponse>(
+          'remove_account',
+          { deviceId, userId: accountToDelete.user_id }
+        )
+        // console.log('✅ API remove_account réussie');
+      } catch (apiError) {
+        console.warn('⚠️ Erreur API remove_account (non bloquante):', apiError)
+        // Ne pas faire échouer la suppression locale
+      }
+      
     } catch (error) {
-      console.error('Erreur removeAccount:', error)
+      console.error('❌ Erreur removeAccount:', error)
       throw error
     }
   }
@@ -227,7 +268,7 @@ export class AccountSessionService {
         
         const encrypted = WebEncryption.encrypt(JSON.stringify(data))
         localStorage.setItem(this.STORAGE_KEY, encrypted)
-        console.log('✅ Dernière connexion mise à jour localement pour user_id:', userId)
+        // console.log('✅ Dernière connexion mise à jour localement pour user_id:', userId)
       } else {
         console.warn('⚠️ Compte non trouvé pour user_id:', userId)
       }

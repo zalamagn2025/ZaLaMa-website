@@ -45,10 +45,22 @@ export async function POST(request: NextRequest) {
       'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
     }
 
-    // Transmettre le token d'authentification utilisateur si présent
+    // Transmettre le token d'authentification utilisateur si présent et si nécessaire
     const userAuthHeader = request.headers.get('Authorization')
-    if (userAuthHeader) {
+    const publicActions = ['get_accounts', 'verify_pin', 'update_last_login', 'remove_account']
+    
+    console.log('🔍 API Route Debug:', {
+      action,
+      hasUserAuthHeader: !!userAuthHeader,
+      isPublicAction: publicActions.includes(action),
+      willSendUserAuth: userAuthHeader && !publicActions.includes(action)
+    })
+    
+    if (userAuthHeader && !publicActions.includes(action)) {
       headers['X-User-Authorization'] = userAuthHeader
+      console.log('🔑 Envoi du token utilisateur vers Edge Function')
+    } else {
+      console.log('🚫 Pas d\'envoi du token utilisateur (action publique)')
     }
 
     let response

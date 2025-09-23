@@ -29,9 +29,14 @@ export default function AccountSelectorCard({
 
   const handleRemoveAccount = async (accountId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    // console.log('🗑️ Tentative de suppression du compte:', accountId);
     setRemovingAccount(accountId);
     try {
+      // console.log('🔄 Appel de onRemoveAccount...');
       await onRemoveAccount(accountId);
+      // console.log('✅ Suppression réussie');
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression:', error);
     } finally {
       setRemovingAccount(null);
     }

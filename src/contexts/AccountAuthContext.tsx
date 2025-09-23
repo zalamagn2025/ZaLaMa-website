@@ -116,13 +116,13 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
   // Sauvegarder automatiquement le compte quand l'utilisateur se connecte
   useEffect(() => {
     const saveCurrentAccount = async () => {
-      console.log('🔄 useEffect saveCurrentAccount déclenché:', {
-        isAuthenticated,
-        hasCurrentEmployee: !!currentEmployee,
-        currentEmployeeEmail: currentEmployee?.email,
-        accountsLoading,
-        accountsCount: accounts.length
-      })
+      // console.log('🔄 useEffect saveCurrentAccount déclenché:', {
+      //   isAuthenticated,
+      //   hasCurrentEmployee: !!currentEmployee,
+      //   currentEmployeeEmail: currentEmployee?.email,
+      //   accountsLoading,
+      //   accountsCount: accounts.length
+      // })
       
       if (isAuthenticated && currentEmployee && !accountsLoading) {
         // Vérifier si le compte existe déjà
@@ -131,8 +131,8 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
         if (!existingAccount) {
           try {
             const accessToken = localStorage.getItem('employee_access_token')
-            console.log('💾 Sauvegarde automatique du compte:', currentEmployee.email)
-            console.log('🔑 Token d\'accès:', accessToken ? 'Présent' : 'Absent')
+            // console.log('💾 Sauvegarde automatique du compte:', currentEmployee.email)
+            // console.log('🔑 Token d\'accès:', accessToken ? 'Présent' : 'Absent')
             
             if (!accessToken) {
               console.warn('⚠️ Aucun token d\'accès trouvé, impossible de sauvegarder le compte')
@@ -141,26 +141,30 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
             
             const userData = {
               ...currentEmployee,
+              profile_image: currentEmployee.photo_url, // Mapper photo_url vers profile_image
+              entreprise: currentEmployee.partner_info?.company_name, // Mapper company_name vers entreprise
               access_token: accessToken
             }
             
-            console.log('📤 Envoi des données utilisateur:', {
-              email: userData.email,
-              nom: userData.nom,
-              prenom: userData.prenom,
-              hasAccessToken: !!userData.access_token
-            })
+            // console.log('📤 Envoi des données utilisateur:', {
+            //   email: userData.email,
+            //   nom: userData.nom,
+            //   prenom: userData.prenom,
+            //   profile_image: userData.profile_image,
+            //   entreprise: userData.entreprise,
+            //   hasAccessToken: !!userData.access_token
+            // })
             
             await saveAccount(userData)
-            console.log('✅ Compte sauvegardé avec succès')
+            // console.log('✅ Compte sauvegardé avec succès')
           } catch (error) {
             console.error('❌ Erreur lors de la sauvegarde automatique du compte:', error)
           }
         } else {
-          console.log('ℹ️ Compte déjà existant, pas de sauvegarde nécessaire:', currentEmployee.email)
+          // console.log('ℹ️ Compte déjà existant, pas de sauvegarde nécessaire:', currentEmployee.email)
         }
       } else {
-        console.log('⏳ Conditions non remplies pour la sauvegarde automatique')
+        // console.log('⏳ Conditions non remplies pour la sauvegarde automatique')
       }
     }
 

@@ -32,12 +32,19 @@ serve(async (req) => {
     )
 
     const { action, data } = await req.json()
+    
+    const userAuthHeader = req.headers.get('X-User-Authorization')
+    // console.log('🔍 Edge Function Debug:', {
+    //   action,
+    //   hasUserAuthHeader: !!userAuthHeader,
+    //   userAuthHeader: userAuthHeader ? userAuthHeader.substring(0, 20) + '...' : 'none'
+    // })
 
     // Actions qui ne nécessitent pas d'authentification utilisateur
-    const publicActions = ['get_accounts', 'verify_pin', 'update_last_login']
+    const publicActions = ['get_accounts', 'verify_pin', 'update_last_login', 'remove_account']
     
     // Actions qui nécessitent une authentification utilisateur
-    const protectedActions = ['save_account', 'remove_account']
+    const protectedActions = ['save_account']
 
     if (publicActions.includes(action)) {
       // Actions publiques - pas d'authentification utilisateur requise
@@ -50,6 +57,9 @@ serve(async (req) => {
         
         case 'update_last_login':
           return await updateLastLogin(supabase, data.deviceId, data.userId)
+        
+        case 'remove_account':
+          return await removeAccount(supabase, data.deviceId, data.userId)
       }
     } else if (protectedActions.includes(action)) {
       // Actions protégées - authentification utilisateur requise
@@ -68,12 +78,6 @@ serve(async (req) => {
       switch (action) {
         case 'save_account':
           return await saveAccount(supabase, data as AccountData, req, userAuthHeader)
-        
-        case 'remove_account':
-          return await removeAccount(supabase, data.deviceId, data.userId)
-        
-        case 'update_last_login':
-          return await updateLastLogin(supabase, data.deviceId, data.userId)
       }
     } else {
       // Action non reconnue
@@ -102,6 +106,16 @@ serve(async (req) => {
 // Sauvegarder un compte
 async function saveAccount(supabase: any, data: AccountData, req: Request, userAuthHeader?: string) {
   try {
+    // console.log('🔍 saveAccount reçu:', {
+    //   deviceId: data.deviceId,
+    //   email: data.email,
+    //   nom: data.nom,
+    //   prenom: data.prenom,
+    //   profileImage: data.profileImage,
+    //   poste: data.poste,
+    //   entreprise: data.entreprise
+    // })
+    
     // Vérifier que l'utilisateur est authentifié
     const authHeader = userAuthHeader || req.headers.get('Authorization')
     if (!authHeader) {
@@ -289,25 +303,65 @@ async function verifyPin(supabase: any, data: PinVerification) {
 // Supprimer un compte
 async function removeAccount(supabase: any, deviceId: string, userId: string) {
   try {
-    const { error } = await supabase
+    // console.log('🔍 removeAccount appelé avec:', { deviceId, userId })
+    
+    // Vérifier d'abord si le compte existe
+    const { data: existingAccount, error: selectError } = await supabase
+      .from('device_accounts')
+      .select('id, email')
+      .eq('device_id', deviceId)
+      .eq('user_id', userId)
+      .single()
+
+    if (selectError && selectError.code !== 'PGRST116') {
+      console.error('❌ Erreur lors de la vérification du compte:', selectError)
+      throw selectError
+    }
+
+    if (!existingAccount) {
+      // console.log('⚠️ Compte non trouvé pour suppression:', { deviceId, userId })
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Compte non trouvé ou déjà supprimé'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // console.log('✅ Compte trouvé, suppression en cours:', existingAccount.email)
+
+    // Supprimer le compte
+    const { error: deleteError, count } = await supabase
       .from('device_accounts')
       .delete()
       .eq('device_id', deviceId)
       .eq('user_id', userId)
+      .select('id')
 
-    if (error) throw error
+    if (deleteError) {
+      console.error('❌ Erreur lors de la suppression:', deleteError)
+      throw deleteError
+    }
+
+    // console.log('✅ Compte supprimé avec succès, lignes affectées:', count)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Compte supprimé avec succès'
+        message: 'Compte supprimé avec succès',
+        deletedCount: count
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Erreur removeAccount:', error)
+    console.error('❌ Erreur removeAccount:', error)
     return new Response(
-      JSON.stringify({ error: 'Erreur lors de la suppression du compte' }),
+      JSON.stringify({ 
+        success: false,
+        error: 'Erreur lors de la suppression du compte',
+        details: error.message || 'Erreur inconnue'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

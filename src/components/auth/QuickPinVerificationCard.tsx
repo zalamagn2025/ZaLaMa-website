@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion } from 'framer-motion';
-import { ArrowLeft, User, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, User, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { AccountSession } from "@/types/account-session";
 import Image from 'next/image';
 import PinInput from "@/components/common/PinInput";
@@ -12,6 +12,7 @@ interface QuickPinVerificationCardProps {
   onSuccess: (pin: string) => void;
   onCancel: () => void;
   onError: (error: string) => void;
+  onRemoveAccount?: (accountId: string) => void;
   loading?: boolean;
 }
 
@@ -20,6 +21,7 @@ export default function QuickPinVerificationCard({
   onSuccess,
   onCancel,
   onError,
+  onRemoveAccount,
   loading = false
 }: QuickPinVerificationCardProps) {
   const [pin, setPin] = useState("");
@@ -49,24 +51,24 @@ export default function QuickPinVerificationCard({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🔘 Bouton cliqué !', {
-      pin: pin,
-      pinLength: pin.length,
-      loading: loading,
-      disabled: loading || pin.length !== 6
-    });
+    // console.log('🔘 Bouton cliqué !', {
+    //   pin: pin,
+    //   pinLength: pin.length,
+    //   loading: loading,
+    //   disabled: loading || pin.length !== 6
+    // });
     
     if (!pin || pin.length !== 6) {
-      console.log('❌ PIN invalide:', pin);
+      // console.log('❌ PIN invalide:', pin);
       onError('Veuillez entrer un code PIN valide (6 chiffres)');
       return;
     }
 
-    console.log('✅ PIN valide, appel de onSuccess');
+    // console.log('✅ PIN valide, appel de onSuccess');
     try {
       onSuccess(pin);
     } catch (error) {
-      console.log('❌ Erreur dans onSuccess:', error);
+      // console.log('❌ Erreur dans onSuccess:', error);
       onError('Erreur lors de la vérification du PIN');
     }
   };
@@ -77,31 +79,37 @@ export default function QuickPinVerificationCard({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center space-y-3"
+        className="relative group"
       >
-        <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8A4C] flex items-center justify-center overflow-hidden">
-          {account.profile_image ? (
-            <Image
-              src={account.profile_image}
-              alt={`${account.prenom} ${account.nom}`}
-              width={64}
-              height={64}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <User className="w-8 h-8 text-white" />
-          )}
-        </div>
-        <div>
-          <h3 className="text-white font-semibold text-lg">
-            {account.prenom} {account.nom}
-          </h3>
-          <p className="text-white/60 text-sm">{account.email}</p>
-          {account.poste && (
-            <p className="text-white/40 text-xs mt-1">
-              {account.poste} • {account.entreprise}
-            </p>
-          )}
+        <div className="w-full p-4 rounded-lg bg-white/5 border border-white/10 text-left">
+          <div className="flex items-center space-x-4">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8A4C] flex items-center justify-center overflow-hidden">
+              {account.profile_image ? (
+                <Image
+                  src={account.profile_image}
+                  alt={`${account.prenom} ${account.nom}`}
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-7 h-7 text-white" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-medium text-lg truncate">
+                {account.prenom} {account.nom}
+              </p>
+              <p className="text-white/60 text-sm truncate">
+                {account.email}
+              </p>
+              {account.poste && (
+                <p className="text-white/40 text-xs truncate">
+                  {account.poste} • {account.entreprise}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -160,7 +168,7 @@ export default function QuickPinVerificationCard({
             whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Changer de compte</span>
+            <span>Sélectionner un autre compte</span>
           </motion.button>
         </div>
       </motion.form>
