@@ -618,7 +618,22 @@ export default function EmployeeLoginForm() {
                     )}
                   </button>
 
-
+                  {/* Bouton retour vers sélection des comptes */}
+                  {accounts.length > 0 && (
+                    <motion.button
+                      type="button"
+                      onClick={handleBackToAccountSelect}
+                      className="w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <div className="flex items-center justify-center space-x-2">
+                        <ArrowLeft className="w-4 h-4 text-white/60" />
+                        <span className="text-white/60 text-sm">Retour aux comptes</span>
+                      </div>
+                    </motion.button>
+                  )}
 
                   {/* Minimal Divider */}
                   <div className="relative mt-2 mb-5 flex items-center">
