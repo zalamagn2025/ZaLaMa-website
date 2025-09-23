@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import { twMerge } from "tailwind-merge";
 import "./globals.css";
 import { EmployeeAuthProvider } from "../contexts/EmployeeAuthContext";
+import { AccountAuthProvider } from "../contexts/AccountAuthContext";
 import { ThemeProvider } from "@/components/providers";
 import { AutocompleteDisabler } from "@/components/auth/AutocompleteDisabler";
 import { defaultMetadata } from "@/lib/metadata";
@@ -54,10 +55,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <EmployeeAuthProvider>
-            <AutocompleteDisabler />
-            <SEOProvider canonicalUrl="https://www.zalamagn.com">
-              {children}
-            </SEOProvider>
+            <AccountAuthProvider>
+              <AutocompleteDisabler />
+              <SEOProvider canonicalUrl="https://www.zalamagn.com">
+                {children}
+              </SEOProvider>
+            </AccountAuthProvider>
           </EmployeeAuthProvider>
         </ThemeProvider>
       </body>
