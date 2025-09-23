@@ -161,7 +161,48 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
             console.error('❌ Erreur lors de la sauvegarde automatique du compte:', error)
           }
         } else {
-          // console.log('ℹ️ Compte déjà existant, pas de sauvegarde nécessaire:', currentEmployee.email)
+          // Vérifier si les données ont changé (notamment la photo de profil)
+          const accessToken = localStorage.getItem('employee_access_token')
+          
+          if (!accessToken) {
+            console.warn('⚠️ Aucun token d\'accès trouvé, impossible de mettre à jour le compte')
+            return
+          }
+          
+          const userData = {
+            ...currentEmployee,
+            profile_image: currentEmployee.photo_url,
+            entreprise: currentEmployee.partner_info?.company_name,
+            access_token: accessToken
+          }
+          
+          const hasProfileImageChanged = existingAccount.profile_image !== userData.profile_image
+          const hasOtherDataChanged = 
+            existingAccount.nom !== userData.nom ||
+            existingAccount.prenom !== userData.prenom ||
+            existingAccount.entreprise !== userData.entreprise ||
+            existingAccount.poste !== userData.poste
+          
+          if (hasProfileImageChanged || hasOtherDataChanged) {
+            try {
+              // console.log('🔄 Mise à jour du compte existant:', {
+              //   email: currentEmployee.email,
+              //   profileImageChanged: hasProfileImageChanged,
+              //   otherDataChanged: hasOtherDataChanged,
+              //   oldProfileImage: existingAccount.profile_image,
+              //   newProfileImage: userData.profile_image
+              // })
+              
+              // Supprimer l'ancien compte et sauvegarder avec les nouvelles données
+              await removeAccount(existingAccount.id)
+              await saveAccount(userData)
+              // console.log('✅ Compte existant mis à jour avec succès')
+            } catch (error) {
+              console.error('❌ Erreur lors de la mise à jour du compte:', error)
+            }
+          } else {
+            // console.log('ℹ️ Compte déjà existant et à jour:', currentEmployee.email)
+          }
         }
       } else {
         // console.log('⏳ Conditions non remplies pour la sauvegarde automatique')
