@@ -109,9 +109,14 @@ export function QuickPinVerification({
         <PinInput
           value={pin}
           onChange={setPin}
-          length={6}
-          error={!!error}
+          onFocus={() => {}}
+          onBlur={() => {}}
+          placeholder="Code PIN"
+          showValue={false}
+          onToggleShow={() => {}}
           disabled={loading}
+          hasUserInteracted={true}
+          label="Code PIN"
         />
 
         {error && (
