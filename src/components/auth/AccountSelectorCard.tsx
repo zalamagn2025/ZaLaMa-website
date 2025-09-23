@@ -69,7 +69,9 @@ export default function AccountSelectorCard({
               className="w-full p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 text-left"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF671E] to-[#FF8A4C] flex items-center justify-center overflow-hidden">
+                <div className={`w-10 h-10 rounded-full 
+                  ${lastUsedAccount.profile_image ? 'bg-transparent' : 'bg-gradient-to-br from-[#FF671E] to-[#FF8A4C]'}
+                  flex items-center justify-center overflow-hidden`}>
                   {lastUsedAccount.profile_image ? (
                     <Image
                       src={lastUsedAccount.profile_image}
@@ -127,7 +129,9 @@ export default function AccountSelectorCard({
                       className="w-full p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 text-left"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center overflow-hidden">
+                        <div className={`w-8 h-8 rounded-full 
+                          ${account.profile_image ? "bg-transparent" : "bg-gradient-to-br from-white/20 to-white/10"}
+                          flex items-center justify-center overflow-hidden`}>
                           {account.profile_image ? (
                             <Image
                               src={account.profile_image}
