@@ -8,53 +8,73 @@ import { PaymentServiceCard, PaymentData } from "./payment-service-card"
 interface PendingPaymentsProps {
   userId: string
   onClose: () => void
+  salaireDisponible?: number
 }
 
-export function PendingPayments({ userId, onClose }: PendingPaymentsProps) {
+export function PendingPayments({ userId, onClose, salaireDisponible = 0 }: PendingPaymentsProps) {
   const [payments, setPayments] = useState<PaymentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Données de démonstration - SEULEMENT les paiements en attente
-  const mockPendingPayments: PaymentData[] = [
-    {
-      id: "user-1",
-      clientName: "Entreprise ABC",
-      clientEmail: "contact@entreprise-abc.com",
-      amount: 150000,
-      currency: "GNF",
-      status: "pending",
-      createdAt: "2024-01-15T10:30:00Z",
-      reference: "PAY-USER-001"
-    },
-    {
-      id: "user-4",
-      clientName: "Nouveau Client",
-      clientEmail: "nouveau@client.com",
-      amount: 200000,
-      currency: "GNF",
-      status: "pending",
-      createdAt: "2024-01-16T09:15:00Z",
-      reference: "PAY-USER-004"
-    }
-  ]
-
-  // Charger les paiements en attente
+  // Charger les paiements en attente dynamiquement
   useEffect(() => {
     const loadPendingPayments = async () => {
       try {
         setIsLoading(true)
-        // Simuler un appel API
+        console.log("📋 Chargement des paiements en attente...")
+        
+        // Récupérer les paiements depuis l'API
+        const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
+        if (!accessToken) {
+          console.warn("⚠️ Token d'authentification manquant")
+          setPayments([])
+          return
+        }
+
+        // TODO: Remplacer par un vrai appel API pour récupérer les paiements en attente
+        // const response = await fetch('/api/payments/pending', {
+        //   method: 'GET',
+        //   headers: {
+        //     'Authorization': `Bearer ${accessToken}`,
+        //     'Content-Type': 'application/json',
+        //   },
+        // })
+        
+        // Pour l'instant, on simule un appel API
         await new Promise(resolve => setTimeout(resolve, 1000))
-        setPayments(mockPendingPayments)
+        
+        // Créer la liste des paiements dynamiquement
+        const allPayments: PaymentData[] = []
+        
+        // Ajouter le paiement de salaire si disponible
+        if (salaireDisponible > 0) {
+          const salaryPayment: PaymentData = {
+            id: "salary-payment",
+            clientName: "Paiement de salaire",
+            clientEmail: "salaire@zalama.gn",
+            amount: salaireDisponible,
+            currency: "GNF",
+            status: "pending",
+            createdAt: new Date().toISOString(),
+            reference: `SAL-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}`
+          }
+          allPayments.push(salaryPayment)
+        }
+        
+        // TODO: Ajouter ici les autres paiements récupérés depuis l'API
+        // allPayments.push(...apiPayments)
+        
+        console.log("✅ Paiements en attente chargés:", allPayments.length)
+        setPayments(allPayments)
       } catch (error) {
         console.error('Erreur lors du chargement des paiements en attente:', error)
+        setPayments([])
       } finally {
         setIsLoading(false)
       }
     }
 
     loadPendingPayments()
-  }, [userId])
+  }, [userId, salaireDisponible])
 
   const handleStatusChange = (paymentId: string, newStatus: PaymentData['status']) => {
     setPayments(prev => prev.map(payment => 
@@ -82,22 +102,6 @@ export function PendingPayments({ userId, onClose }: PendingPaymentsProps) {
     }
   }
 
-  const handleShare = (paymentId: string) => {
-    const payment = payments.find(p => p.id === paymentId)
-    if (payment) {
-      const shareText = `Paiement de ${payment.amount.toLocaleString()} GNF de ${payment.clientName}`
-      if (navigator.share) {
-        navigator.share({
-          title: 'Paiement ZaLaMa',
-          text: shareText,
-          url: window.location.href
-        })
-      } else {
-        navigator.clipboard.writeText(shareText)
-        alert('Lien copié dans le presse-papiers!')
-      }
-    }
-  }
 
   return (
     <div className="bg-[#010D3E] rounded-2xl shadow-xl border border-gray-100/10 max-h-[80vh] overflow-hidden">
@@ -155,7 +159,6 @@ export function PendingPayments({ userId, onClose }: PendingPaymentsProps) {
                   payment={payment}
                   onStatusChange={handleStatusChange}
                   onDownload={handleDownload}
-                  onShare={handleShare}
                 />
               </motion.div>
             ))}

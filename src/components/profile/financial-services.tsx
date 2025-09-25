@@ -6,7 +6,6 @@ import { AI } from "@/components/profile/AI"
 import { UserWithEmployeData } from "@/types/employe"
 import { supabase } from '@/lib/supabase'
 import { PendingPayments } from "./pending-payments"
-import { PaymentList } from "./payment-list"
 import { PaymentData } from "./payment-service-card"
 
 interface Service {
@@ -30,13 +29,59 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // État local pour la simulation du service de paiement (retard salaire)
+  // État local pour le service de paiement (retard salaire) - basé sur salaire_disponible
   const [isPaymentActive, setIsPaymentActive] = useState<boolean>(false)
+  const [salaireDisponible, setSalaireDisponible] = useState<number>(0)
   // État pour la gestion des paiements
   const [showPaymentManagement, setShowPaymentManagement] = useState(false)
-  const [showAllPayments, setShowAllPayments] = useState(false)
-  const [activeTab, setActiveTab] = useState<'services' | 'history' | 'reviews' | 'payments'>('services')
   
+  // Récupérer les données financières de l'utilisateur pour vérifier salaire_disponible
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      try {
+        console.log("💰 Récupération des données financières...")
+        
+        // Récupérer les données via l'edge function employee-auth
+        const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
+        if (!accessToken) {
+          console.warn("⚠️ Token d'authentification manquant")
+          return
+        }
+
+        const response = await fetch('/api/auth/getme', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          console.log("📊 Données financières récupérées:", result.data)
+          
+          if (result.data?.financial?.salaire_disponible) {
+            const salaireDispo = result.data.financial.salaire_disponible
+            setSalaireDisponible(salaireDispo)
+            // Activer automatiquement le service si salaire_disponible > 0
+            setIsPaymentActive(salaireDispo > 0)
+            console.log("✅ Service de paiement:", salaireDispo > 0 ? "Activé" : "Désactivé", "- Montant:", salaireDispo)
+          } else {
+            console.log("ℹ️ Aucun salaire disponible trouvé")
+            setSalaireDisponible(0)
+            setIsPaymentActive(false)
+          }
+        } else {
+          console.error("❌ Erreur lors de la récupération des données financières:", response.status)
+        }
+      } catch (error) {
+        console.error("❌ Erreur lors de la récupération des données financières:", error)
+      }
+    }
+
+    fetchFinancialData()
+  }, [])
+
   // Fetch services from Supabase
   useEffect(() => {
     const fetchServices = async () => {
@@ -192,10 +237,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
     switch (action) {
       case 'manage':
         setShowPaymentManagement(true)
-        break
-      case 'all-payments':
-        setActiveTab('payments')
-        setShowAllPayments(true)
         break
     }
   }
@@ -355,46 +396,34 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
                   <circle cx="16" cy="15" r="1" />
                 </svg>
               </motion.div>
-              <h3 className="ml-3 text-lg font-semibold text-white">Paiement de salaire (retard)</h3>
+              <h3 className="ml-3 text-lg font-semibold text-white">Paiement de salaire</h3>
             </div>
             <p className="text-white/80 text-sm mb-4 flex-grow">
-              En cas de retard de paiement, votre entreprise peut vous payer via ZaLaMa. Utilisez le bouton ci-dessous pour simuler l'activation.
+              Votre entreprise peut vous payer via ZaLaMa. Le service s'active automatiquement quand un salaire est disponible.
             </p>
             <div className="flex justify-between items-center mt-auto">
               <div>
-                <p className="text-xs text-white/60">Statut</p>
-                <p className="font-semibold text-white">{isPaymentActive ? "Activé" : "Désactivé"}</p>
+                <p className="text-xs text-white/60">Salaire disponible</p>
+                <p className="font-semibold text-white">
+                  {salaireDisponible > 0 
+                    ? `${salaireDisponible.toLocaleString('fr-FR')} GNF`
+                    : "Aucun salaire disponible"
+                  }
+                </p>
               </div>
-              <div className="flex space-x-2">
+              {isPaymentActive && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={(e) => {
                     e.stopPropagation()
-                    setIsPaymentActive(prev => !prev)
+                    handlePaymentAction('manage')
                   }}
-                  className={`inline-flex items-center text-sm font-medium text-white px-3 py-2 rounded-lg transition-all duration-300 ${
-                    !isPaymentActive
-                      ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
-                      : "bg-gray-500 hover:bg-gray-600"
-                  }`}
+                  className="inline-flex items-center text-sm font-medium text-white px-3 py-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] rounded-lg transition-all duration-300"
                 >
-                  {isPaymentActive ? "Désactiver" : "Activer"}
+                  Retirer <IconArrowRight className="ml-1 h-4 w-4" />
                 </motion.button>
-                {isPaymentActive && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handlePaymentAction('manage')
-                    }}
-                    className="inline-flex items-center text-sm font-medium text-white px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-all duration-300"
-                  >
-                    Gérer <IconArrowRight className="ml-1 h-4 w-4" />
-                  </motion.button>
-                )}
-              </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -474,6 +503,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               <PendingPayments
                 userId={user.id || 'default-user'}
                 onClose={() => setShowPaymentManagement(false)}
+                salaireDisponible={salaireDisponible}
               />
             </motion.div>
           </motion.div>

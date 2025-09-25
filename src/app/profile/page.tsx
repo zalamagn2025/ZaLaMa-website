@@ -34,54 +34,118 @@ export default function ProfilePage() {
   // Hook pour la configuration du salaire
   const { needsSetup, userInfo, configureSalary, loading: salaryLoading, error: salaryError } = useSalarySetup()
   const [showModal, setShowModal] = useState(true)
+  const [salaireDisponible, setSalaireDisponible] = useState<number>(0)
 
-  // Données de démonstration pour les paiements
-  const allPayments: PaymentData[] = [
-    {
-      id: "user-1",
-      clientName: "Entreprise ABC",
-      clientEmail: "contact@entreprise-abc.com",
-      amount: 150000,
-      currency: "GNF",
-      status: "pending",
-      createdAt: "2024-01-15T10:30:00Z",
-      reference: "PAY-USER-001"
-    },
-    {
-      id: "user-2",
-      clientName: "Société XYZ",
-      clientEmail: "admin@societe-xyz.com",
-      amount: 250000,
-      currency: "GNF",
-      status: "received",
-      createdAt: "2024-01-14T14:20:00Z",
-      receivedAt: "2024-01-14T16:45:00Z",
-      reference: "PAY-USER-002",
-      notes: "Paiement reçu via virement"
-    },
-    {
-      id: "user-3",
-      clientName: "Client Direct",
-      clientEmail: "client@direct.com",
-      amount: 75000,
-      currency: "GNF",
-      status: "received",
-      createdAt: "2024-01-13T09:15:00Z",
-      receivedAt: "2024-01-13T11:30:00Z",
-      reference: "PAY-USER-003",
-      notes: "Paiement en espèces"
-    },
-    {
-      id: "user-4",
-      clientName: "Nouveau Client",
-      clientEmail: "nouveau@client.com",
-      amount: 200000,
-      currency: "GNF",
-      status: "pending",
-      createdAt: "2024-01-16T09:15:00Z",
-      reference: "PAY-USER-004"
+  // Récupérer les données financières de l'utilisateur
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      try {
+        console.log("💰 Récupération des données financières dans profile...")
+        
+        const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
+        if (!accessToken) {
+          console.warn("⚠️ Token d'authentification manquant")
+          return
+        }
+
+        const response = await fetch('/api/auth/getme', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          console.log("📊 Données financières récupérées dans profile:", result.data)
+          
+          if (result.data?.financial?.salaire_disponible) {
+            const salaireDispo = result.data.financial.salaire_disponible
+            setSalaireDisponible(salaireDispo)
+            console.log("✅ Salaire disponible dans profile:", salaireDispo)
+          } else {
+            console.log("ℹ️ Aucun salaire disponible trouvé dans profile")
+            setSalaireDisponible(0)
+          }
+        } else {
+          console.error("❌ Erreur lors de la récupération des données financières dans profile:", response.status)
+        }
+      } catch (error) {
+        console.error("❌ Erreur lors de la récupération des données financières dans profile:", error)
+      }
     }
-  ]
+
+    if (isAuthenticated && employee) {
+      fetchFinancialData()
+    }
+  }, [isAuthenticated, employee])
+
+  // État pour les paiements dynamiques
+  const [allPayments, setAllPayments] = useState<PaymentData[]>([])
+  const [paymentsLoading, setPaymentsLoading] = useState(true)
+
+  // Charger tous les paiements dynamiquement
+  useEffect(() => {
+    const loadAllPayments = async () => {
+      try {
+        setPaymentsLoading(true)
+        console.log("📋 Chargement de tous les paiements...")
+        
+        const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
+        if (!accessToken) {
+          console.warn("⚠️ Token d'authentification manquant")
+          setAllPayments([])
+          return
+        }
+
+        // TODO: Remplacer par un vrai appel API pour récupérer tous les paiements
+        // const response = await fetch('/api/payments/all', {
+        //   method: 'GET',
+        //   headers: {
+        //     'Authorization': `Bearer ${accessToken}`,
+        //     'Content-Type': 'application/json',
+        //   },
+        // })
+        
+        // Pour l'instant, on simule un appel API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Créer la liste des paiements dynamiquement
+        const payments: PaymentData[] = []
+        
+        // Ajouter le paiement de salaire si disponible
+        if (salaireDisponible > 0) {
+          const salaryPayment: PaymentData = {
+            id: "salary-payment",
+            clientName: "Paiement de salaire",
+            clientEmail: "salaire@zalama.gn",
+            amount: salaireDisponible,
+      currency: "GNF",
+      status: "pending",
+            createdAt: new Date().toISOString(),
+            reference: `SAL-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}`
+          }
+          payments.push(salaryPayment)
+        }
+        
+        // TODO: Ajouter ici les autres paiements récupérés depuis l'API
+        // payments.push(...apiPayments)
+        
+        console.log("✅ Tous les paiements chargés:", payments.length)
+        setAllPayments(payments)
+      } catch (error) {
+        console.error('Erreur lors du chargement des paiements:', error)
+        setAllPayments([])
+      } finally {
+        setPaymentsLoading(false)
+      }
+    }
+
+    if (isAuthenticated && employee) {
+      loadAllPayments()
+    }
+  }, [isAuthenticated, employee, salaireDisponible])
 
   const handleStatusChange = (paymentId: string, newStatus: PaymentData['status']) => {
     console.log('Status change:', paymentId, newStatus)
@@ -376,6 +440,7 @@ export default function ProfilePage() {
                                 onDownload={handleDownload}
                                 onShare={handleShare}
                                 onRefresh={() => console.log('Refresh payments')}
+                                isLoading={paymentsLoading}
                               />
                             </div>
                           )}

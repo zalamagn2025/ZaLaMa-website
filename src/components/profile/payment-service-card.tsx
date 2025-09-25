@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { IconDownload, IconShare, IconCheck, IconClock, IconX, IconEye } from "@tabler/icons-react"
+import { IconDownload, IconCheck, IconClock, IconX, IconEye } from "@tabler/icons-react"
 import { PaymentReceiveModal } from "./payment-receive-modal"
 
 export interface PaymentData {
@@ -22,14 +22,12 @@ interface PaymentServiceCardProps {
   payment: PaymentData
   onStatusChange?: (paymentId: string, newStatus: PaymentData['status']) => void
   onDownload?: (paymentId: string) => void
-  onShare?: (paymentId: string) => void
 }
 
 export function PaymentServiceCard({ 
   payment, 
   onStatusChange, 
-  onDownload, 
-  onShare 
+  onDownload
 }: PaymentServiceCardProps) {
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -111,11 +109,6 @@ export function PaymentServiceCard({
     }
   }
 
-  const handleShare = () => {
-    if (onShare) {
-      onShare(payment.id)
-    }
-  }
 
   const handleReceiveConfirm = async (receivedAmount: number, notes?: string) => {
     setIsLoading(true)
@@ -206,7 +199,7 @@ export function PaymentServiceCard({
               whileTap={{ scale: 0.95 }}
               onClick={handleReceive}
               disabled={isLoading}
-              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Traitement...' : 'Recevoir'}
             </motion.button>
@@ -223,16 +216,6 @@ export function PaymentServiceCard({
             </motion.button>
           )}
           
-          {canShare && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShare}
-              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-all duration-300"
-            >
-              <IconShare className="h-4 w-4" />
-            </motion.button>
-          )}
         </div>
       </motion.div>
 
