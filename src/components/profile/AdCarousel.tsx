@@ -237,12 +237,12 @@ export function AdCarousel() {
              initial={{ opacity: 0 }}
              animate={{ opacity: 1 }}
              exit={{ opacity: 0 }}
-             className="fixed inset-0 z-[9999] overflow-hidden"
+             className="fixed inset-0 z-[9999] overflow-hidden bg-black"
              onClick={() => setIsModalOpen(false)}
            >
              {/* Fond avec image floutée style Spotify */}
-             {currentBackgroundImage && (
-               <div className="absolute inset-0">
+             <div className="absolute inset-0">
+               {currentBackgroundImage ? (
                  <Image
                    src={currentBackgroundImage}
                    alt="Background"
@@ -254,19 +254,18 @@ export function AdCarousel() {
                    }}
                    priority
                  />
-                 {/* Overlay sombre pour améliorer la lisibilité */}
-                 <div className="absolute inset-0 bg-black/30" />
-               </div>
-             )}
+               ) : (
+                 <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black" />
+               )}
+               {/* Overlay sombre pour améliorer la lisibilité */}
+               <div className="absolute inset-0 bg-black/40" />
+             </div>
              <motion.div
                initial={{ y: "100%" }}
                animate={{ y: 0 }}
                exit={{ y: "100%" }}
                transition={{ type: "spring", damping: 25, stiffness: 200 }}
                className="relative w-full h-full"
-               style={{
-                 background: `radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 100%)`
-               }}
                onClick={(e) => e.stopPropagation()}
              >
               {MARKETING_CAMPAIGNS[currentStoryIndex] && (
