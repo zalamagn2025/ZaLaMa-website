@@ -184,7 +184,7 @@ export function AdCarousel() {
     <>
       {/* Carousel Principal */}
       <div 
-        className="absolute inset-0 z-[15] w-full h-full overflow-hidden cursor-pointer"
+        className="absolute inset-0 z-[20] w-full h-full overflow-hidden cursor-pointer"
         onClick={handleCarouselClick}
       >
         {MARKETING_CAMPAIGNS.map((campaign, index) => (
