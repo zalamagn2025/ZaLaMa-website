@@ -67,23 +67,24 @@ export async function generatePayslipPDF(payslipData: PayslipData): Promise<Buff
     tempDiv.style.position = 'absolute'
     tempDiv.style.left = '-9999px'
     tempDiv.style.top = '0'
-    tempDiv.style.width = '600px'
+    tempDiv.style.width = '480px'
     tempDiv.style.backgroundColor = '#f5f7fa'
     document.body.appendChild(tempDiv)
     
     try {
       // Convertir HTML en canvas avec une meilleure qualité
       const canvas = await html2canvas(tempDiv, {
-        scale: 1.2, // Échelle optimisée pour une page
+        scale: 2, // Augmenter l'échelle pour plus de netteté
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#f5f7fa',
-        width: 600, // Largeur fixe pour un meilleur contrôle
-        height: tempDiv.scrollHeight
+        width: 600,
+        height: tempDiv.scrollHeight,
+        logging: false
       })
       
       // Créer le PDF
-      const imgData = canvas.toDataURL('image/png', 0.9)
+      const imgData = canvas.toDataURL('image/png', 1.0) // Qualité maximale
       const pdf = new jsPDF('p', 'mm', 'a4')
       
       // Dimensions A4
@@ -99,12 +100,12 @@ export async function generatePayslipPDF(payslipData: PayslipData): Promise<Buff
       const imgWidth = maxWidth
       const imgHeight = (canvas.height * imgWidth) / canvas.width
       
-      // Centrer parfaitement
-      const xOffset = (pageWidth - imgWidth) / 2
-      const yOffset = (pageHeight - Math.min(imgHeight, maxHeight)) / 2
+      // Centrer parfaitement - calcul précis
+      const xOffset = margin
+      const yOffset = margin + (maxHeight - Math.min(imgHeight, maxHeight)) / 2
       
       // Ajouter l'image centrée sur une seule page
-      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, Math.min(imgHeight, maxHeight))
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, Math.min(imgHeight, maxHeight), '', 'MEDIUM')
       
       // Retourner le PDF comme Buffer
       const pdfBuffer = pdf.output('arraybuffer')
@@ -141,19 +142,19 @@ function generatePayslipHTML(payslipData: PayslipData): string {
         .img-fluid { max-width: 100% !important; height: auto !important; display: block !important; }
         .logo { height: auto !important; }
         .cta-table { margin-left: auto; margin-right: auto; max-width: 320px; }
-        body { margin:0; padding:0; background-color:#f5f7fa; font-family: Arial, Helvetica, sans-serif; }
-        .container { width:500px; max-width:100%; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e6ebf1; box-shadow:0 6px 20px rgba(2,6,23,0.06); margin: 0 auto; }
-        .header { padding:14px 16px; background:#0D18B0; text-align: center; }
-        .brand-name { color:#ffffff; font-weight:700; font-size:20px; line-height:1; margin-top:6px; }
-        .title { margin:0; font-size:22px; line-height:28px; color:#0D18B0; font-weight:700; border-bottom:3px solid #FF6922; padding-bottom:8px; }
-        .content { padding:20px 24px 8px 24px; }
-        .intro { padding:0 24px 12px 24px; }
-        .info-section { padding:0 24px 12px 24px; }
-        .payroll-section { padding:0 24px 12px 24px; }
-        .action-section { padding:8px 24px 16px 24px; text-align: center; }
-        .separator { padding:8px 24px; }
-        .signature { padding:12px 24px 16px 24px; }
-        .footer { padding:12px 24px 16px 24px; background:#f8fafc; text-align: center; }
+        body { margin:0; padding:0; background-color:#f5f7fa; font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width:480px; max-width:100%; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e6ebf1; box-shadow:0 6px 20px rgba(2,6,23,0.06); margin: 0 auto; }
+        .header { padding:12px 16px; background:#0D18B0; text-align: center; }
+        .brand-name { color:#ffffff; font-weight:700; font-size:18px; line-height:1; margin-top:4px; }
+        .title { margin:0; font-size:20px; line-height:26px; color:#0D18B0; font-weight:700; border-bottom:3px solid #FF6922; padding-bottom:6px; }
+        .content { padding:16px 20px 6px 20px; }
+        .intro { padding:0 20px 10px 20px; }
+        .info-section { padding:0 20px 10px 20px; }
+        .payroll-section { padding:0 20px 10px 20px; }
+        .action-section { padding:6px 20px 12px 20px; text-align: center; }
+        .separator { padding:6px 20px; }
+        .signature { padding:10px 20px 12px 20px; }
+        .footer { padding:10px 20px 12px 20px; background:#f8fafc; text-align: center; }
         .payroll-table { width:100%; max-width:500px; border:1px solid #0D18B0; margin: 0 auto; border-collapse: collapse; }
         .payroll-table th { padding:10px 8px; font-size:14px; background-color:#0D18B0; color:#ffffff; text-align:left; font-weight:600; }
         .payroll-table td { padding:8px; font-size:13px; color:#334155; border-bottom: 1px solid #e6ebf1; }
