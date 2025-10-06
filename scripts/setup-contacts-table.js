@@ -14,7 +14,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function setupContactsTable() {
   try {
-    console.log('🔧 Configuration de la table contacts...');
+    /*console.log('🔧 Configuration de la table contacts...')*/
     
     // Lire le fichier SQL
     const fs = require('fs');
@@ -29,21 +29,21 @@ async function setupContactsTable() {
     const sqlContent = fs.readFileSync(sqlPath, 'utf8');
     
     // Exécuter le script SQL
-    console.log('📝 Exécution du script SQL...');
+    /*console.log('📝 Exécution du script SQL...')*/
     const { data, error } = await supabase.rpc('exec_sql', { sql: sqlContent });
     
     if (error) {
       console.error('❌ Erreur lors de l\'exécution du script SQL:', error);
       
       // Fallback: essayer de créer la table manuellement
-      console.log('🔄 Tentative de création manuelle de la table...');
+      /*console.log('🔄 Tentative de création manuelle de la table...')*/
       await createTableManually();
     } else {
-      console.log('✅ Script SQL exécuté avec succès');
+      /*console.log('✅ Script SQL exécuté avec succès')*/
     }
     
     // Vérifier que la table existe
-    console.log('🔍 Vérification de la table contacts...');
+    /*console.log('🔍 Vérification de la table contacts...')*/
     const { data: contacts, error: checkError } = await supabase
       .from('contacts')
       .select('*')
@@ -51,17 +51,17 @@ async function setupContactsTable() {
     
     if (checkError) {
       console.error('❌ Erreur lors de la vérification:', checkError);
-      console.log('💡 Veuillez exécuter manuellement le script SQL dans votre dashboard Supabase');
-      console.log('📁 Fichier: scripts/create-contacts-table.sql');
+      /*console.log('💡 Veuillez exécuter manuellement le script SQL dans votre dashboard Supabase')*/
+      /*console.log('📁 Fichier: scripts/create-contacts-table.sql')*/
     } else {
-      console.log('✅ Table contacts créée et accessible!');
-      console.log(`📊 Nombre de contacts de test: ${contacts.length}`);
+      /*console.log('✅ Table contacts créée et accessible!')*/
+      /*console.log(`📊 Nombre de contacts de test: ${contacts.length}`)*/
     }
     
   } catch (error) {
     console.error('💥 Erreur:', error);
-    console.log('💡 Veuillez exécuter manuellement le script SQL dans votre dashboard Supabase');
-    console.log('📁 Fichier: scripts/create-contacts-table.sql');
+    /*console.log('💡 Veuillez exécuter manuellement le script SQL dans votre dashboard Supabase')*/
+    /*console.log('📁 Fichier: scripts/create-contacts-table.sql')*/
   }
 }
 
@@ -90,7 +90,7 @@ async function createTableManually() {
       return;
     }
     
-    console.log('✅ Table contacts créée manuellement');
+    /*console.log('✅ Table contacts créée manuellement')*/
     
     // Insérer des données de test
     const { error: insertError } = await supabase
@@ -109,7 +109,7 @@ async function createTableManually() {
     if (insertError) {
       console.error('❌ Erreur insertion test:', insertError);
     } else {
-      console.log('✅ Données de test insérées');
+      /*console.log('✅ Données de test insérées')*/
     }
     
   } catch (error) {

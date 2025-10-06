@@ -2,7 +2,10 @@
 
 import { UserWithEmployeData } from "@/types/employe"
 import { RequestType, REQUEST_TYPES } from "@/types/salary-advance"
-import { IconCheck, IconCreditCard, IconEye, IconEyeOff, IconInfoCircle, IconLock, IconShieldCheck, IconX, IconCalendar, IconCalculator } from "@tabler/icons-react"
+import { IconCheck, IconCreditCard, IconEye, IconEyeOff, IconInfoCircle, IconLock, IconShieldCheck, IconX, IconCalendar, IconCalculator, IconAlertCircle } from "@tabler/icons-react"
+import PinInput from "@/components/common/PinInput"
+import CurrencyInput from "@/components/ui/currency-input"
+import PhoneInput from "@/components/ui/phone-input"
 import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -23,12 +26,22 @@ interface AvanceData {
   totalWorkingDays: number
   workingDaysPercentage: number
   limiteAvance: number
+  multiMonthLimit: number
+  minimumMultiMonth: number
 }
 
 type FormStep = 'form' | 'verification' | 'confirmation' | 'success';
 
 // Fonction pour calculer l'avance disponible pour les demandes d'avance sur salaire
-function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0): { avanceDisponible: number; workingDaysElapsed: number; totalWorkingDays: number; workingDaysPercentage: number; limiteAvance: number } {
+function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0, enableMultiMonths: boolean = false, months: number = 1): { 
+  avanceDisponible: number; 
+  workingDaysElapsed: number; 
+  totalWorkingDays: number; 
+  workingDaysPercentage: number; 
+  limiteAvance: number;
+  multiMonthLimit: number;
+  minimumMultiMonth: number;
+} {
   const today = new Date()
   const currentMonth = today.getMonth()
   const currentYear = today.getFullYear()
@@ -38,8 +51,23 @@ function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0)
   const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
   const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
   
-  // L'avance disponible = 50% du salaire net - avance active
-  const limiteAvanceBase = Math.floor(salaireNet * 0.50)
+  // Calculer les limites selon le mode (normal ou multi-mois)
+  let limiteAvanceBase: number
+  let multiMonthLimit = 0
+  let minimumMultiMonth = 0
+  
+  if (enableMultiMonths && months > 1) {
+    // Mode multi-mois : 30% du salaire net × nombre de mois
+    limiteAvanceBase = Math.floor(salaireNet * 0.30 * months)
+    multiMonthLimit = limiteAvanceBase
+    minimumMultiMonth = Math.floor(salaireNet * 0.30 * months) // Minimum requis
+  } else {
+    // Mode normal : 50% du salaire net
+    limiteAvanceBase = Math.floor(salaireNet * 0.50)
+    multiMonthLimit = 0
+    minimumMultiMonth = 0
+  }
+  
   const avanceDisponible = Math.max(0, limiteAvanceBase - avanceActive)
   const limiteAvance = avanceDisponible
   
@@ -48,7 +76,9 @@ function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0)
     workingDaysElapsed,
     totalWorkingDays,
     workingDaysPercentage,
-    limiteAvance
+    limiteAvance,
+    multiMonthLimit,
+    minimumMultiMonth
   }
 }
 
@@ -92,8 +122,12 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [amount, setAmount] = useState("")
   const [requestType, setRequestType] = useState<RequestType>('aucune')
   const [reason, setReason] = useState("")
-  const [receivePhone, setReceivePhone] = useState(user.telephone)
+  const [receivePhone, setReceivePhone] = useState(user.telephone || '')
   const [useDefaultPhone, setUseDefaultPhone] = useState(true)
+  
+  // États pour la fonctionnalité multi-mois
+  const [enableMultiMonths, setEnableMultiMonths] = useState(false)
+  const [selectedMonths, setSelectedMonths] = useState(2) // 2 mois par défaut quand multi-mois activé
   
   // États de l'interface
   const [currentStep, setCurrentStep] = useState<FormStep>('form')
@@ -104,24 +138,307 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [showAdvanceDetails, setShowAdvanceDetails] = useState(false)
   const [financialData, setFinancialData] = useState<any>(null)
   
-  // États de confirmation
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [passwordError, setPasswordError] = useState("")
+  // États pour la vérification PIN
+  const [pin, setPin] = useState("")
+  const [showPin, setShowPin] = useState(false)
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
+  const [pinAttempts, setPinAttempts] = useState(0)
+  const [isPinBlocked, setIsPinBlocked] = useState(false)
+  const [pinBlockTime, setPinBlockTime] = useState(0)
+
+  // Fonctions pour gérer le blocage persistant avec gestion d'erreurs robuste
+  const getPinBlockInfo = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+
+      const blockInfo = localStorage.getItem('pin_block_info')
+      if (!blockInfo) {
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+
+      const { blockTime, attempts, userId } = JSON.parse(blockInfo)
+      const now = Date.now()
+      const remainingTime = Math.max(0, blockTime - now)
+      
+      // Vérifier si le blocage est encore valide
+      if (remainingTime > 0) {
+        return { 
+          isBlocked: true, 
+          blockTime, 
+          attempts, 
+          remainingTime,
+          userId: userId || 'default'
+        }
+      } else {
+        // Le blocage a expiré, nettoyer le localStorage
+        localStorage.removeItem('pin_block_info')
+        return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+      }
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors de la lecture du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+      return { isBlocked: false, blockTime: 0, attempts: 0, remainingTime: 0 }
+    }
+  }
+
+  const setPinBlockInfo = (blockTime: number, attempts: number) => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return
+      }
+
+      const blockInfo = {
+        blockTime,
+        attempts,
+        userId: user?.id || 'default',
+        timestamp: Date.now()
+      }
+      
+      localStorage.setItem('pin_block_info', JSON.stringify(blockInfo))
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors de la sauvegarde du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const clearPinBlockInfo = () => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return
+      }
+      localStorage.removeItem('pin_block_info')
+    } catch (error) {
+      // Gérer silencieusement les erreurs d'extensions de navigateur
+      console.warn('Erreur lors du nettoyage du blocage PIN (extension de navigateur):', error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  // Fonction pour vérifier le blocage en temps réel
+  const checkBlockStatus = () => {
+    const blockInfo = getPinBlockInfo()
+    if (blockInfo.isBlocked) {
+      setIsPinBlocked(true)
+      setPinBlockTime(blockInfo.blockTime)
+      setPinAttempts(blockInfo.attempts)
+      return true
+    } else {
+      setIsPinBlocked(false)
+      setPinAttempts(blockInfo.attempts)
+      return false
+    }
+  }
+  
+  // États pour les toasts
+  const [toast, setToast] = useState<{
+    type: 'success' | 'error' | 'info' | 'warning'
+    message: string
+    show: boolean
+  }>({
+    type: 'info',
+    message: '',
+    show: false
+  })
+  
+  // État pour gérer le focus sur les champs
+  const [isAmountFocused, setIsAmountFocused] = useState(false)
+  const [isPhoneFocused, setIsPhoneFocused] = useState(false)
+  
+  // États pour la validation des composants
+  const [isAmountValid, setIsAmountValid] = useState(false)
+  const [isPhoneValid, setIsPhoneValid] = useState(false)
+  const [amountNumericValue, setAmountNumericValue] = useState(0)
   
   const router = useRouter()
 
   // Hook pour les nouvelles APIs Edge Function
   const { demands, stats, createDemand, isLoadingDemands, isLoadingStats, isCreating } = useEmployeeDemands()
 
+  // Gestionnaire d'erreur global pour éviter les erreurs d'extensions
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.message?.includes('disconnected port object') || 
+          event.message?.includes('Extension context invalidated')) {
+        // Ignorer silencieusement les erreurs d'extensions de navigateur
+        event.preventDefault()
+        event.stopPropagation()
+        return false
+      }
+    }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.message?.includes('disconnected port object') ||
+          event.reason?.message?.includes('Extension context invalidated')) {
+        // Ignorer silencieusement les erreurs d'extensions de navigateur
+        event.preventDefault()
+        return false
+      }
+    }
+
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
+  // Vérifier l'état de blocage au chargement du composant
+  useEffect(() => {
+    checkBlockStatus()
+  }, [])
+
+  // Vérifier le blocage à chaque fois qu'on arrive à l'étape de confirmation
+  useEffect(() => {
+    if (currentStep === 'confirmation') {
+      checkBlockStatus()
+    }
+  }, [currentStep])
+  
+  // Fonctions de gestion du PIN
+  const handlePinChange = (value: string) => {
+    // Filtrer pour ne garder que les chiffres
+    const numericValue = value.replace(/\D/g, '');
+    // Limiter à 6 chiffres
+    const limitedValue = numericValue.slice(0, 6);
+    setPin(limitedValue);
+    setHasUserInteracted(true);
+  };
+
+  const handlePinFocus = () => {
+    setHasUserInteracted(true);
+  };
+
+  const handlePinBlur = () => {
+    // Validation du PIN seulement après interaction
+    if (hasUserInteracted && pin.length > 0 && pin.length !== 6) {
+      showToast('error', "Le code PIN doit contenir exactement 6 chiffres");
+    }
+  };
+
+  const togglePinVisibility = () => {
+    setShowPin(!showPin);
+  };
+
+  // Fonction de vérification du PIN via l'API auth/verify-password
+  const verifyPin = async (pinValue: string): Promise<boolean> => {
+    try {
+      // Récupérer le token d'accès des employés
+      const accessToken = localStorage.getItem('employee_access_token');
+      
+      if (!accessToken) {
+        throw new Error('Token d\'accès non trouvé');
+      }
+      
+      // Préparer les headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      };
+      
+      // Utiliser l'API route pour la vérification du PIN
+      const response = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ password: pinValue }),
+      });
+
+      const result = await response.json();
+      return result.success;
+    } catch (error) {
+      console.error('❌ Erreur lors de la vérification PIN:', error);
+      return false;
+    }
+  };
+
+  // Fonction pour gérer les tentatives de PIN
+  const handlePinAttempt = async () => {
+    // Vérifier d'abord l'état de blocage dans le localStorage (vérification en temps réel)
+    const blockInfo = getPinBlockInfo()
+    if (blockInfo.isBlocked) {
+      const remainingMinutes = Math.ceil(blockInfo.remainingTime / 60000);
+      const remainingSeconds = Math.ceil(blockInfo.remainingTime / 1000);
+      
+      if (remainingMinutes > 1) {
+        showToast('error', `Trop de tentatives. Veuillez attendre ${remainingMinutes} minutes.`);
+      } else {
+        showToast('error', `Trop de tentatives. Veuillez attendre ${remainingSeconds} secondes.`);
+      }
+      
+      // Mettre à jour l'état local
+      checkBlockStatus()
+      return;
+    }
+
+    if (!pin.trim() || pin.length !== 6) {
+      showToast('error', "Veuillez saisir un code PIN à 6 chiffres");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const isValid = await verifyPin(pin);
+      
+      if (isValid) {
+        // PIN correct - réinitialiser les tentatives et procéder
+        setPinAttempts(0);
+        clearPinBlockInfo(); // Nettoyer le localStorage
+        showToast('success', "Code PIN correct ! Confirmation de la demande...");
+        setCurrentStep('success');
+        // Soumettre la demande
+        await submitAdvanceRequest();
+      } else {
+        // PIN incorrect - incrémenter les tentatives
+        const newAttempts = pinAttempts + 1;
+        setPinAttempts(newAttempts);
+        
+        if (newAttempts >= 3) {
+          // Bloquer pour 5 minutes (300 secondes)
+          const blockTime = Date.now() + (5 * 60 * 1000);
+          setIsPinBlocked(true);
+          setPinBlockTime(blockTime);
+          
+          // Sauvegarder dans le localStorage
+          setPinBlockInfo(blockTime, newAttempts);
+          
+          showToast('error', "Trop de tentatives incorrectes. Veuillez attendre 5 minutes avant de réessayer.");
+        } else {
+          // Sauvegarder les tentatives dans le localStorage
+          setPinBlockInfo(0, newAttempts);
+          showToast('warning', `Code PIN incorrect. ${3 - newAttempts} tentative(s) restante(s).`);
+        }
+      }
+    } catch (error) {
+      showToast('error', "Erreur de vérification. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonctions pour gérer les toasts
+  const showToast = useCallback((type: 'success' | 'error' | 'info' | 'warning', message: string) => {
+    setToast({ type, message, show: true })
+    // Auto-dismiss après 5 secondes
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }))
+    }, 5000)
+  }, [])
+
+  const hideToast = useCallback(() => {
+    setToast(prev => ({ ...prev, show: false }))
+  }, [])
+
   // Log des données utilisateur pour débogage
-  console.log('🔍 Données utilisateur dans SalaryAdvanceForm:', {
+  /*console.log('🔍 Données utilisateur dans SalaryAdvanceForm:', {
     employeId: user.employeId,
     partenaireId: user.partenaireId,
     salaireNet: user.salaireNet,
     nom: user.nom,
     prenom: user.prenom
-  })
+  })*/
 
   // États pour les avances actives (maintenant gérés par le hook)
   const advanceRequests = demands || []
@@ -153,7 +470,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {
-          console.log('📊 Données financières récupérées dans le formulaire:', result.data)
+          /*console.log('📊 Données financières récupérées dans le formulaire:', result.data)*/
           setFinancialData(result.data)
         } else {
           setError(result.error || 'Erreur lors du chargement des données')
@@ -172,7 +489,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   // Récupérer les avances actives (maintenant géré par le hook useEmployeeDemands)
   const fetchAdvanceRequests = useCallback(async () => {
     // Cette fonction n'est plus nécessaire car le hook gère automatiquement la récupération
-    console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')
+    /*console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')*/
   }, [])
 
   // Calculer l'avance disponible en temps réel avec les données de l'Edge Function
@@ -221,42 +538,52 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
        
        const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
        
-       console.log('📅 Calcul FORCÉ des jours ouvrables:', {
+       /*console.log('📅 Calcul FORCÉ des jours ouvrables:', {
          currentYear,
          currentMonth,
          currentDay,
          workingDaysElapsed,
          totalWorkingDays,
          workingDaysPercentage
-       })
+       })*/
+      
+      // Calculer les limites multi-mois
+      const multiMonthLimit = enableMultiMonths && selectedMonths > 1 
+        ? Math.floor(salaireNet * 0.30 * selectedMonths) 
+        : 0
+      const minimumMultiMonth = enableMultiMonths && selectedMonths > 1 
+        ? Math.floor(salaireNet * 0.30 * selectedMonths) 
+        : 0
       
       setAvanceData({
         salaireNet: salaireNet,
         avanceActive: avanceActive, // Total des avances actives depuis l'Edge Function
         salaireRestant: salaireRestant, // Salaire restant depuis l'Edge Function
-                 maxAvanceMonthly: Math.floor(salaireNet * 0.30), // 30% max pour auto-approbation
+        maxAvanceMonthly: Math.floor(salaireNet * 0.30), // 30% max pour auto-approbation
         totalAvancesApprouveesMonthly: avanceActive, // Total des avances approuvées depuis l'Edge Function
         avanceDisponible: avanceDisponible, // Avance disponible depuis l'Edge Function
         workingDaysElapsed: workingDaysElapsed,
         totalWorkingDays: totalWorkingDays,
         workingDaysPercentage: workingDaysPercentage,
-        limiteAvance: avanceDisponible // Limite = avance disponible
+        limiteAvance: enableMultiMonths && selectedMonths > 1 ? multiMonthLimit : avanceDisponible,
+        multiMonthLimit: multiMonthLimit,
+        minimumMultiMonth: minimumMultiMonth
       })
       
-      console.log('🔍 Données d\'avance calculées avec Edge Function:', {
+      /*console.log('🔍 Données d\'avance calculées avec Edge Function:', {
         salaireNet,
         avanceActive,
         salaireRestant,
         avanceDisponible,
         workingDaysElapsed,
         totalWorkingDays
-      })
+      })*/
     } catch (error) {
       console.error('Erreur lors du calcul de l\'avance disponible:', error)
     } finally {
       setLoadingAvance(false)
     }
-  }, [financialData])
+  }, [financialData, enableMultiMonths, selectedMonths])
 
   // Charger les données financières au chargement
   useEffect(() => {
@@ -299,14 +626,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       
       const workingDaysPercentage = Math.round((workingDaysElapsed / totalWorkingDays) * 100)
       
-      console.log('🚀 Calcul FORCÉ des jours ouvrables au chargement:', {
+      /*console.log('🚀 Calcul FORCÉ des jours ouvrables au chargement:', {
         currentYear,
         currentMonth,
         currentDay,
         workingDaysElapsed,
         totalWorkingDays,
         workingDaysPercentage
-      })
+      })*/
       
       // Mettre à jour l'état si avanceData existe déjà
       if (avanceData) {
@@ -326,7 +653,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     const timer = setTimeout(calculateWorkingDays, 500)
     
     return () => clearTimeout(timer)
-  }, [avanceData])
+  }, []) // ✅ CORRECTION: Supprimer avanceData des dépendances pour éviter la boucle infinie
   
 
 
@@ -343,37 +670,56 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [loadFinancialData, calculateAdvanceData])
 
+
   // Validation du formulaire
   const validateForm = () => {
-      const requestedAmount = parseFloat(amount.replace(/,/g, ''))
+      const requestedAmount = amountNumericValue
       const limiteAvance = avanceData?.limiteAvance || 0
+      const minimumMultiMonth = avanceData?.minimumMultiMonth || 0
 
-      if (isNaN(requestedAmount) || requestedAmount <= 0) {
+      if (!isAmountValid || requestedAmount <= 0) {
+        showToast('error', "Veuillez entrer un montant valide")
         throw new Error("Veuillez entrer un montant valide")
       }
 
+      // Validation spécifique pour le mode multi-mois
+      if (enableMultiMonths && selectedMonths > 1) {
+        if (requestedAmount < minimumMultiMonth) {
+          const errorMsg = `Le montant minimum pour ${selectedMonths} mois est de ${minimumMultiMonth.toLocaleString()} GNF (30% × ${selectedMonths} mois)`
+          showToast('warning', errorMsg)
+          throw new Error(errorMsg)
+        }
       if (requestedAmount > limiteAvance) {
-        throw new Error(`Le montant demandé dépasse votre limite d'avance sur salaire ce mois-ci (${limiteAvance.toLocaleString()} GNF)`)
+          const errorMsg = `Le montant demandé dépasse la limite pour ${selectedMonths} mois (${limiteAvance.toLocaleString()} GNF)`
+          showToast('error', errorMsg)
+          throw new Error(errorMsg)
+        }
+      } else {
+        // Validation normale
+        if (requestedAmount > limiteAvance) {
+          const errorMsg = `Le montant demandé dépasse votre limite d'avance sur salaire ce mois-ci (${limiteAvance.toLocaleString()} GNF)`
+          showToast('error', errorMsg)
+          throw new Error(errorMsg)
+        }
       }
 
       if (!requestType || requestType === "aucune") {
+        showToast('error', "Veuillez sélectionner un type de motif")
         throw new Error("Veuillez sélectionner un type de motif")
       }
 
       if (!reason.trim()) {
+        showToast('error', "Veuillez indiquer le motif de votre demande")
         throw new Error("Veuillez indiquer le motif de votre demande")
       }
 
-      if (!receivePhone?.trim()) {
-        throw new Error("Veuillez indiquer un numéro de téléphone")
+      if (!isPhoneValid || !receivePhone?.trim()) {
+        showToast('error', "Veuillez indiquer un numéro de téléphone valide")
+        throw new Error("Veuillez indiquer un numéro de téléphone valide")
       }
 
-      // Validation du numéro de téléphone (format guinéen)
-      const phoneRegex = /^(\+224|224)?[6-7][0-9]{8}$/
+      // Nettoyer le numéro de téléphone pour l'API
       const cleanPhone = receivePhone.replace(/\s+/g, '').replace(/[-()]/g, '')
-      if (!phoneRegex.test(cleanPhone)) {
-        throw new Error("Format de numéro de téléphone invalide")
-      }
 
     return {
       requestedAmount,
@@ -392,64 +738,44 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       validateForm()
       setCurrentStep('verification')
     } catch (err) {
+      // L'erreur est déjà gérée par validateForm avec showToast
       setError(err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite')
     }
   }
 
-  // Étape 2: Confirmation et passage à la saisie du mot de passe
+  // Étape 2: Confirmation et passage à la saisie du PIN
   const handleVerificationConfirm = () => {
     setCurrentStep('confirmation')
   }
 
-  // Étape 3: Validation du mot de passe et soumission
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setPasswordError("")
-
+  // Fonction de soumission de la demande d'avance
+  const submitAdvanceRequest = async () => {
     try {
-      if (!password.trim()) {
-        throw new Error("Veuillez saisir votre mot de passe")
-      }
-
       const validation = validateForm()
-
-      // Données de la demande
-      const advanceRequest = {
-        employeId: user.employeId,
-        montantDemande: validation.requestedAmount,
-        typeMotif: requestType,
-        motif: reason.trim(),
-        numeroReception: validation.cleanPhone,
-        fraisService: validation.serviceFee,
-        montantTotal: validation.totalDeduction,
-        salaireDisponible: user.salaireNet,
-        avanceDisponible: avanceData?.avanceDisponible || 0,
-        dateCreation: new Date().toISOString(),
-        statut: 'EN_ATTENTE',
-        entrepriseId: user.partenaireId,
-        password: password
-      }
-
-      console.log('📤 Données envoyées à l\'API:', advanceRequest)
 
       // Utiliser le hook createDemand pour soumettre la demande via Edge Function
       const demandData = {
         montant_demande: validation.requestedAmount,
         type_motif: requestType,
         motif: reason.trim(),
-        numero_reception: validation.cleanPhone
+        numero_reception: validation.cleanPhone,
+        // Ajouter les paramètres multi-mois si activés
+        ...(enableMultiMonths && selectedMonths > 1 && {
+          enable_multi_months: true,
+          months: selectedMonths
+        }),
       }
 
-      console.log('📝 Création de la demande via Edge Function:', demandData)
+      /*console.log('📝 Création de la demande via Edge Function:', demandData)*/
       
       const result = await createDemand(demandData)
-      console.log("✅ Demande créée avec succès:", result)
+      /*console.log("✅ Demande créée avec succès:", result)*/
+      
+      // Toast de succès
+      showToast('success', `Demande d'avance de ${validation.requestedAmount.toLocaleString()} GNF envoyée avec succès !`)
       
       // Actualiser la page
-    router.refresh()
-      
-      setCurrentStep('success')
+      router.refresh()
       
       // Fermer le modal après 3 secondes
       setTimeout(() => {
@@ -457,11 +783,16 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       }, 3000)
 
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite')
-    } finally {
-      setLoading(false)
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite'
+      showToast('error', errorMessage)
+      setError(errorMessage)
     }
   }
+
+  // TODO: Fonction de vérification PIN supprimée - sera gérée par l'edge function
+  // La vérification PIN sera effectuée côté edge function pour plus de sécurité
+
+  // Fonctions de gestion du PIN supprimées - gérées par le modal PinVerificationModal
 
   // Retour à l'étape précédente
   const goBack = () => {
@@ -486,6 +817,67 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
   return (
     <div className="flex items-start justify-center min-h-screen pt-16">
+      {/* Toast System */}
+      <AnimatePresence>
+        {toast.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="absolute top-6 left-1/2 transform -translate-x-1/2 z-50"
+          >
+            <div className={`backdrop-blur-xl border rounded-xl px-6 py-4 shadow-2xl max-w-md ${
+              toast.type === 'success' 
+                ? 'bg-green-900/90 border-green-700' 
+                : toast.type === 'error'
+                ? 'bg-red-900/90 border-red-700'
+                : toast.type === 'warning'
+                ? 'bg-yellow-900/90 border-yellow-700'
+                : 'bg-blue-900/90 border-blue-700'
+            }`}>
+              <div className="flex items-center gap-3">
+                {toast.type === 'success' && <IconCheck className="w-5 h-5 text-green-400 flex-shrink-0" />}
+                {toast.type === 'error' && <IconX className="w-5 h-5 text-red-400 flex-shrink-0" />}
+                {toast.type === 'warning' && <IconAlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" />}
+                {toast.type === 'info' && <IconInfoCircle className="w-5 h-5 text-blue-400 flex-shrink-0" />}
+                <div>
+                  <p className={`font-medium text-sm ${
+                    toast.type === 'success' 
+                      ? 'text-green-100' 
+                      : toast.type === 'error'
+                      ? 'text-red-100'
+                      : toast.type === 'warning'
+                      ? 'text-yellow-100'
+                      : 'text-blue-100'
+                  }`}>
+                    {toast.type === 'success' ? 'Succès' : 
+                     toast.type === 'error' ? 'Erreur' :
+                     toast.type === 'warning' ? 'Attention' : 'Information'}
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    toast.type === 'success' 
+                      ? 'text-green-200' 
+                      : toast.type === 'error'
+                      ? 'text-red-200'
+                      : toast.type === 'warning'
+                      ? 'text-yellow-200'
+                      : 'text-blue-200'
+                  }`}>
+                    {toast.message}
+                  </p>
+                </div>
+                <button
+                  onClick={hideToast}
+                  className="ml-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <IconX className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -577,11 +969,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     onSubmit={handleFormSubmit}
                     className="space-y-6"
                   >
-                    {/* Affichage des informations d'avance */}
+                    {/* Résumé financier simplifié */}
                 {(loadingAvance || loadingAdvanceRequests) ? (
-                  <div className="mb-4 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-[#1A2B6B] rounded w-3/4 mb-2"></div>
+                      <div className="mb-6 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
+                        <div className="animate-pulse space-y-3">
+                          <div className="h-4 bg-[#1A2B6B] rounded w-3/4"></div>
                       <div className="h-3 bg-[#1A2B6B] rounded w-1/2"></div>
                     </div>
                   </div>
@@ -590,40 +982,54 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                      initial={{ opacity: 0, y: -10 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ duration: 0.3 }}
-                        className="mb-4 p-4 rounded-xl bg-gradient-to-br from-[#0A1A5A] to-[#142B7F] border border-[#1A2B6B] shadow-lg"
+                        className="mb-6 p-5 rounded-xl bg-gradient-to-br from-[#0A1A5A] to-[#142B7F] border border-[#1A2B6B] shadow-lg"
                       >
-                        {/* Header avec icône et titre */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            <div className="p-1.5 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53]">
-                              <IconCalculator className="h-4 w-4 text-white" />
+                        {/* Header simplifié */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 rounded-lg bg-gradient-to-r from-[#FF671E] to-[#FF8E53]">
+                              <IconCalculator className="h-5 w-5 text-white" />
                             </div>
-                                                         <h4 className="text-sm font-semibold text-[#FF8E53]">Avance Disponible (50%)</h4>
+                            <div>
+                              <h4 className="text-lg font-semibold text-white">Avance Disponible</h4>
+                              <p className="text-xs text-gray-400">Montant maximum que vous pouvez demander</p>
+                            </div>
                           </div>
                        <button
                             type="button"
                             onClick={() => setShowAdvanceDetails(!showAdvanceDetails)}
-                            className="text-xs text-gray-400 hover:text-[#FF8E53] transition-colors"
-                            title={showAdvanceDetails ? "Masquer les détails" : "Voir les détails"}
+                            className="px-3 py-1.5 text-xs text-gray-400 hover:text-[#FF8E53] hover:bg-[#1A2B6B] rounded-lg transition-all duration-200"
                           >
-                            {showAdvanceDetails ? "−" : "+"}
+                            {showAdvanceDetails ? "Masquer" : "Détails"}
                        </button>
                      </div>
 
-                       {/* Montant principal */}
-                       <div className="text-center mb-3">
-                         <div className="text-2xl font-bold text-white">
-                            {avanceData.avanceDisponible.toLocaleString('de-DE')} GNF
-                         </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            Disponible après déduction des avances actives
-                          </div>
-                          {/* <div className="text-xs text-blue-400 mt-1">
-                            Salaire restant: {avanceData.salaireRestant.toLocaleString()} GNF (Salaire net - Avances actives)
-                          </div> */}
-                          <div className="text-xs text-blue-400 mt-1">
-                            Progression du mois: {avanceData.workingDaysElapsed}/{avanceData.totalWorkingDays} jours ({avanceData.workingDaysPercentage}%)
-                          </div>
+                        {/* Montant principal mis en évidence */}
+                        <div className="text-center mb-4">
+                          <motion.div 
+                            key={`${enableMultiMonths}-${selectedMonths}`}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 20 }}
+                            className="text-3xl font-bold text-white mb-1"
+                          >
+                            {enableMultiMonths && selectedMonths > 1 
+                              ? avanceData.multiMonthLimit.toLocaleString('fr-FR')
+                              : avanceData.avanceDisponible.toLocaleString('fr-FR')
+                            } GNF
+                          </motion.div>
+                          <motion.div 
+                            key={`desc-${enableMultiMonths}-${selectedMonths}`}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            className="text-sm text-gray-300"
+                          >
+                            {enableMultiMonths && selectedMonths > 1 
+                              ? `Limite ${selectedMonths} mois (30% × ${selectedMonths})`
+                              : "Limite mensuelle (30% du salaire)"
+                            }
+                          </motion.div>
                        </div>
 
                         {/* Détails dépliables */}
@@ -634,13 +1040,13 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.3 }}
-                              className="border-t border-[#1A2B6B] pt-3 space-y-2"
+                              className="border-t border-[#1A2B6B] pt-4 space-y-3"
                             >
-                              {/* Barre de progression */}
-                              <div className="space-y-1">
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-gray-400">Progression du mois</span>
-                                  <span className="text-white">{avanceData.workingDaysPercentage}%</span>
+                              {/* Barre de progression du mois */}
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-300">Progression du mois</span>
+                                  <span className="text-white font-medium">{avanceData.workingDaysPercentage}%</span>
                                 </div>
                                 <div className="w-full bg-[#1A2B6B] rounded-full h-2">
                                   <motion.div
@@ -650,51 +1056,33 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                                     className="h-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] rounded-full"
                                   />
                                 </div>
+                                <div className="text-xs text-gray-400 text-center">
+                                  {avanceData.workingDaysElapsed} jours écoulés sur {avanceData.totalWorkingDays}
+                                </div>
                               </div>
 
-                              {/* Informations détaillées */}
-                              <div className="grid grid-cols-2 gap-3 text-xs">
-                               <div className="space-y-1">
+                              {/* Informations financières */}
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="space-y-2">
                        <div className="flex justify-between">
                                    <span className="text-gray-400">Salaire net:</span>
                                    <span className="text-white font-medium">{avanceData.salaireNet.toLocaleString()} GNF</span>
                       </div>
-                                               <div className="flex justify-between">
-                                     <span className="text-gray-400">Limite auto-approbation (30%):</span>
-                                     <span className="text-blue-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
-                        </div>
-                      <div className="flex justify-between">
-                                   <span className="text-gray-400">Jours écoulés:</span>
-                                   <span className="text-blue-400">{avanceData.workingDaysElapsed} jours</span>
-                      </div>
-                      </div>
-                               <div className="space-y-1">
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Avances actives:</span>
                                     <span className="text-red-400">-{avanceData.avanceActive.toLocaleString()} GNF</span>
                          </div>
-                         <div className="flex justify-between border-t border-[#1A2B6B] pt-1">
-                            <span className="text-gray-400 font-medium">Disponible:</span>
-                            <span className="text-green-400 font-bold">{avanceData.avanceDisponible.toLocaleString()} GNF</span>
                          </div>
+                                <div className="space-y-2">
                         <div className="flex justify-between">
-                                   <span className="text-gray-400">Salaire restant:</span>
-                                   <span className="text-green-400 font-medium">{avanceData.salaireRestant.toLocaleString()} GNF</span>
+                                    <span className="text-gray-400">Auto-approbation:</span>
+                                    <span className="text-blue-400">{avanceData.maxAvanceMonthly.toLocaleString()} GNF</span>
                         </div>
+                                  <div className="flex justify-between border-t border-[#1A2B6B] pt-2">
+                                    <span className="text-gray-300 font-medium">Disponible:</span>
+                                    <span className="text-green-400 font-bold">{avanceData.avanceDisponible.toLocaleString()} GNF</span>
                       </div>
                      </div>
-
-                              {/* Indicateur de statut */}
-                              <div className="flex items-center justify-center space-x-2 pt-2">
-                                <IconCalendar className="h-3 w-3 text-gray-400" />
-                                <span className="text-xs text-gray-400">
-                                  Mis à jour le {new Date().toLocaleDateString('fr-FR', { 
-                                    day: 'numeric', 
-                                    month: 'short', 
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                  })}
-                                </span>
                               </div>
                             </motion.div>
                           )}
@@ -702,112 +1090,212 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                      </motion.div>
                   )}
 
-                     {/* Information sur l'approbation RH */}
+                    {/* Section Montant et Options */}
                      <motion.div 
-                       initial={{ opacity: 0, y: -10 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       transition={{ duration: 0.3, delay: 0.1 }}
-                       className="mb-4 p-4 rounded-xl bg-gradient-to-br from-blue-900/30 to-blue-800/30 border border-blue-600/30 shadow-lg"
-                     >
-                       <div className="flex items-center space-x-2 mb-2">
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1, duration: 0.3 }}
+                      className="space-y-6"
+                    >
+                      {/* Option Multi-mois - Mise en avant */}
+                      <div className="p-4 rounded-xl bg-gradient-to-r from-[#0A1A5A] to-[#142B7F] border border-[#1A2B6B]">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
                          <div className="p-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
-                           <IconInfoCircle className="h-4 w-4 text-white" />
+                              <IconCalendar className="h-4 w-4 text-white" />
                          </div>
-                         <h4 className="text-sm font-semibold text-blue-300">Processus d'approbation</h4>
+                            <div>
+                              <h4 className="text-sm font-semibold text-white">Avance sur plusieurs mois</h4>
+                              <p className="text-xs text-gray-400">Étalez votre avance sur 2-3 mois</p>
                        </div>
-                       <div className="text-xs text-blue-200 space-y-1">
-                         <p>• <strong>Jusqu'à 30%</strong> : Approbation automatique par ZaLaMa</p>
-                         <p>• <strong>30% à 50%</strong> : Approbation RH/Représentant entreprise requise avant décaissement</p>
-                         <p className="text-yellow-200 mt-2">💡 L'avance disponible affichée (50%) inclut les montants nécessitant une approbation RH</p>
                        </div>
-                     </motion.div>
-
-                    {/* Montant demandé */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEnableMultiMonths(!enableMultiMonths)
+                              if (!enableMultiMonths) {
+                                // Quand on active le mode multi-mois, définir 2 mois par défaut
+                                setSelectedMonths(2)
+                              } else {
+                                // Quand on désactive, revenir au mode normal
+                                setSelectedMonths(1)
+                              }
+                            }}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                              enableMultiMonths ? 'bg-[#FF671E]' : 'bg-gray-600'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                                enableMultiMonths ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                        
+                        {enableMultiMonths && (
                   <motion.div 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1, duration: 0.3 }}
-                    className="space-y-1"
-                  >
-                    <label htmlFor="amount" className="text-sm font-medium text-gray-300">
-                      Montant demandé
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="space-y-4"
+                          >
+                            <div>
+                              <label className="text-xs text-gray-400 mb-2 block">
+                                Nombre de mois
                     </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        id="amount"
+                              <div className="grid grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedMonths(2)}
+                                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                    selectedMonths === 2
+                                      ? 'bg-[#FF671E] text-white shadow-lg'
+                                      : 'bg-[#1A2B6B] text-gray-300 hover:bg-[#2A3B8B]'
+                                  }`}
+                                >
+                                  2 mois
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedMonths(3)}
+                                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                    selectedMonths === 3
+                                      ? 'bg-[#FF671E] text-white shadow-lg'
+                                      : 'bg-[#1A2B6B] text-gray-300 hover:bg-[#2A3B8B]'
+                                  }`}
+                                >
+                                  3 mois
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* {avanceData && (
+                              <div className="p-3 bg-[#1A2B6B]/50 rounded-lg">
+                                <div className="text-xs text-gray-300 space-y-2">
+                                  <div className="flex justify-between">
+                                    <span>Montant minimum:</span>
+                                    <span className="text-[#FF671E] font-medium">
+                                      {avanceData.minimumMultiMonth.toLocaleString()} GNF
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Montant maximum:</span>
+                                    <span className="text-green-400 font-medium">
+                                      {avanceData.multiMonthLimit.toLocaleString()} GNF
+                                    </span>
+                                  </div>
+                                  <div className="text-center text-gray-400 text-xs pt-1 border-t border-gray-600">
+                                    30% du salaire × {selectedMonths} mois
+                                  </div>
+                                </div>
+                              </div>
+                            )} */}
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Montant demandé */}
+                      <div className="space-y-2">
+                        <CurrencyInput
                         value={amount}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9,]/g, '')
+                          onChange={(value) => {
                           setAmount(value)
                             setError("")
                         }}
-                        className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
-                        placeholder="Ex: 500,000"
+                          onValidationChange={(isValid, numericValue) => {
+                            setIsAmountValid(isValid)
+                            setAmountNumericValue(numericValue)
+                            
+                            // Validation personnalisée pour les limites multi-mois
+                            if (isValid && avanceData) {
+                              const limiteAvance = avanceData.limiteAvance
+                              const minimumMultiMonth = avanceData.minimumMultiMonth
+
+                              // Validation multi-mois
+                              if (enableMultiMonths && selectedMonths > 1) {
+                                if (numericValue < minimumMultiMonth) {
+                                  showToast('warning', `Montant minimum pour ${selectedMonths} mois: ${minimumMultiMonth.toLocaleString()} GNF`)
+                                } else if (numericValue > limiteAvance) {
+                                  showToast('error', `Montant maximum pour ${selectedMonths} mois: ${limiteAvance.toLocaleString()} GNF`)
+                                }
+                              } else {
+                                // Validation normale
+                                if (numericValue > limiteAvance) {
+                                  showToast('error', `Montant maximum autorisé: ${limiteAvance.toLocaleString()} GNF`)
+                                }
+                              }
+                            }
+                          }}
+                          placeholder="Ex: 500000"
+                          label="Montant demandé"
                         required
-                      />
-                      <span className="absolute right-3 top-3 text-xs text-gray-400">
-                        GNF
-                      </span>
-                    </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-400">
-                          Limite d'avance: {avanceData?.limiteAvance.toLocaleString() || 0} GNF
-                        </span>
-                        {amount && avanceData && (
-                          <span className={`font-medium ${
-                            parseFloat(amount.replace(/,/g, '')) > avanceData.limiteAvance 
-                              ? 'text-red-400' 
-                              : 'text-green-400'
-                          }`}>
-                            {parseFloat(amount.replace(/,/g, '')) > avanceData.limiteAvance 
-                              ? 'Montant trop élevé' 
-                              : 'Montant valide'
+                          min={0}
+                          max={avanceData?.limiteAvance || 999999999999}
+                          className="text-white"
+                          showValidation={true}
+                        />
+                        
+                        {/* Informations sur les limites */}
+                        {avanceData && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-sm flex justify-end"
+                          >
+                            <span className="text-gray-400 font-medium">
+                              {enableMultiMonths && selectedMonths > 1 
+                                ? `Limite ${selectedMonths} mois: ${avanceData.multiMonthLimit.toLocaleString()} GNF`
+                                : `Limite mensuelle: ${avanceData.limiteAvance.toLocaleString()} GNF`
                             }
                           </span>
+                          </motion.div>
                         )}
                       </div>
-                    
                   </motion.div>
 
-                    {/* Type de motif et détails */}
+                    {/* Divider */}
+                    <div className="border-t border-gray-600/30 my-6"></div>
+
+                    {/* Informations de la demande */}
                   <motion.div 
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.15, duration: 0.3 }}
                     className="space-y-4"
                   >
+                      {/* Type de motif */}
                     <div>
-                      <label htmlFor="requestType" className="block text-sm font-medium text-gray-300 mb-1">
+                        <label htmlFor="requestType" className="block text-sm font-medium text-gray-300 mb-2">
                         Type de motif
                       </label>
+                        <div className="relative">
                       <select
                         id="requestType"
                         value={requestType}
                         onChange={(e) => setRequestType(e.target.value as RequestType)}
-                        className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 text-white"
+                            className="block w-full px-4 py-3 bg-[#0A1A5A] border border-[#1A2B6B] rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:border-[#FF671E] focus:ring-offset-2 transition-all duration-200 text-white appearance-none cursor-pointer hover:bg-[#142B7F]"
                         required
                       >
                         {REQUEST_TYPES.map((type) => (
-                          <option key={type.value} value={type.value}>
+                              <option key={type.value} value={type.value} className="bg-[#0A1A5A] text-white">
                             {type.label}
                           </option>
                         ))}
                       </select>
-                      <p className="mt-1 text-xs text-gray-400 ml-1">Sélectionnez la catégorie de votre demande</p>
-                      {error && (
-                        <motion.p 
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-xs text-red-400"
-                        >
-                          {error}
-                        </motion.p>
-                      )}
+                          {/* Icône de flèche personnalisée */}
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
                     </div>
 
+                      {/* Détails du motif */}
                     <div>
-                      <label htmlFor="reason" className="block text-sm font-medium text-gray-300 mb-1">
+                        <label htmlFor="reason" className="block text-sm font-medium text-gray-300 mb-2">
                         Détails du motif
                       </label>
                       <textarea
@@ -820,81 +1308,62 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         required
                       />
                     </div>
-                  </motion.div>
+
+                      {/* Divider */}
+                      <div className="border-t border-gray-600/30 my-4"></div>
 
                     {/* Numéro de téléphone */}
-                  <motion.div 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2, duration: 0.3 }}
-                    className="space-y-3"
-                  >
-                      {/* <div className="flex items-start space-x-3">
-                        <input
-                          id="useDefaultPhone"
-                          type="checkbox"
-                          checked={useDefaultPhone}
-                          onChange={(e) => setUseDefaultPhone(e.target.checked)}
-                          className="mt-1 h-4 w-4 rounded border-gray-600 text-[#FF671E] focus:ring-[#FF671E] focus:ring-offset-0"
-                        />
-                        <label htmlFor="useDefaultPhone" className="text-sm text-gray-300">
-                          Utiliser mon numéro de téléphone par défaut ({user.telephone})
-                        </label>
-                      </div> */}
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-1"
-                  >
-                    <label htmlFor="receivePhone" className="text-sm font-medium text-gray-300">
-                      Numéro de téléphone pour réception
-                    </label>
-                    <input
-                      type="tel"
-                            id="receivePhone"
-                      value={receivePhone}
-                      onChange={(e) => setReceivePhone(e.target.value)}
-                            className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white"
-                            placeholder="Ex: +224 6 12 34 56 78"
+                      <div>
+                        <PhoneInput
+                          value={receivePhone || ''}
+                          onChange={(value) => setReceivePhone(value)}
+                          onValidationChange={(isValid, formattedValue) => {
+                            setIsPhoneValid(isValid)
+                            if (!isValid && receivePhone.trim()) {
+                              showToast('error', "Format de numéro de téléphone invalide")
+                            }
+                          }}
+                          placeholder="+224 612 34 56 78"
+                          label="Numéro de téléphone pour réception"
                       required
+                          className="text-white"
+                          showValidation={true}
                     />
-                          <p className="text-xs text-gray-400">Format: +224 6/7 XX XX XX XX</p>
+                      </div>
                   </motion.div>
                   
-                  </motion.div>
+                    {/* Divider */}
+                    <div className="border-t border-gray-600/30 my-6"></div>
 
-                    {/* Conditions */}
+                    {/* Conditions et boutons */}
                   <motion.div 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3, duration: 0.3 }}
-                    className="flex items-start space-x-3"
-                  >
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.3 }}
+                      className="space-y-4 pt-4"
+                    >
+                      {/* Conditions */}
+                      <div className="flex items-start space-x-3 p-3 bg-[#0A1A5A]/50 rounded-lg border border-[#1A2B6B]">
                     <input
                       id="terms"
                       type="checkbox"
                       className="mt-1 h-4 w-4 rounded border-gray-600 text-[#FF671E] focus:ring-[#FF671E] focus:ring-offset-0"
                       required
                     />
-                    <label htmlFor="terms" className="text-xs text-gray-400">
+                        <label htmlFor="terms" className="text-xs text-gray-300 leading-relaxed">
                       J&apos;accepte que cette avance soit déduite de mon prochain salaire et je comprends les conditions générales.
                     </label>
-                  </motion.div>
+                      </div>
 
-                    {/* Boutons */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35, duration: 0.3 }}
-                    className="flex justify-end space-x-3 pt-4"
-                  >
+
+                      {/* Boutons d'action */}
+                      <div className="flex justify-end space-x-3">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       type="button"
                       onClick={onClose}
-                      className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-[#0A1A5A] hover:bg-[#142B7F] transition-colors duration-200"
+                          className="px-6 py-3 rounded-xl text-sm font-medium text-white bg-[#0A1A5A] hover:bg-[#142B7F] transition-colors duration-200"
                     >
                       Annuler
                     </motion.button>
@@ -902,10 +1371,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="submit"
-                        className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 transition-all duration-200"
+                          className="px-6 py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 transition-all duration-200"
                       >
                         Continuer
                       </motion.button>
+                      </div>
                     </motion.div>
                   </motion.form>
                 )}
@@ -918,19 +1388,35 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                     exit={{ opacity: 0, x: 20 }}
                     className="space-y-6"
                   >
-                    <div className="text-center mb-6">
-                      <motion.div
+                    <div className="text-center">
+                      {/* <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg mb-4"
                       >
                         <IconShieldCheck className="h-8 w-8 text-white" />
-                      </motion.div>
-                      <h3 className="text-xl font-semibold text-white mb-2">Détails de la demande</h3>
-                      <p className="text-sm text-gray-300">Assurez-vous que toutes les informations sont correctes avant de continuer</p>
+                      </motion.div> */}
+                      <h3 className="text-xl font-semibold text-white mb-1">Détails de la demande</h3>
+                     
                     </div>
 
                     <div className="space-y-4 p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
+                      {/* Informations multi-mois si activé */}
+                      {/* {enableMultiMonths && selectedMonths > 1 && (
+                        <div className="p-3 rounded-lg bg-gradient-to-r from-[#FF671E]/10 to-[#FF8E53]/10 border border-[#FF671E]/30">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <IconCalendar className="h-4 w-4 text-[#FF671E]" />
+                            <span className="text-sm font-medium text-[#FF671E]">Avance Multi-Mois</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <span className="text-gray-400">Période:</span>
+                              <p className="text-white font-medium">{selectedMonths} mois</p>
+                            </div>
+                          </div>
+                        </div>
+                      )} */}
+
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-gray-400">Montant demandé:</span>
@@ -940,13 +1426,14 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           <span className="text-gray-400">Frais de service (6.5%):</span>
                           <p className="text-red-400">-{serviceFee.toLocaleString()} GNF</p>
                         </div>
-                        <div className="col-span-2">
+                        <div className="col-span-2 text-center">
                           <span className="text-gray-400">Total à recevoir:</span>
                           <p className="text-green-400 font-bold text-lg">{(Number(requestedAmount || 0) - Number(serviceFee || 0)).toLocaleString('fr-FR')} GNF</p>
                         </div>
                       </div>
                       
                       <div className="border-t border-[#1A2B6B] pt-4 space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="text-gray-400">Type de motif:</span>
                           <p className="text-white">{REQUEST_TYPES.find(t => t.value === requestType)?.label}</p>
@@ -958,6 +1445,29 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         <div>
                           <span className="text-gray-400">Numéro de réception:</span>
                           <p className="text-white">{useDefaultPhone ? user.telephone : receivePhone}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Informations de déduction */}
+                      <div className="border-t border-[#1A2B6B] pt-4">
+                        <div className="p-3 rounded-lg bg-[#1A2B6B]/30">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <IconInfoCircle className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm font-medium text-blue-400">Mode de déduction</span>
+                          </div>
+                          <p className="text-xs text-gray-300 leading-relaxed">
+                            {enableMultiMonths && selectedMonths > 1 ? (
+                              <>
+                                Cette avance sera déduite de vos salaires des <strong>{selectedMonths} prochains mois</strong> 
+                                à raison de <strong>{Math.round(Number(requestedAmount || 0) / selectedMonths).toLocaleString()} GNF par mois</strong>.
+                              </>
+                            ) : (
+                              <>
+                                Cette avance sera déduite de votre <strong>prochain salaire</strong> 
+                              </>
+                            )}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -983,75 +1493,80 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                   </motion.div>
                 )}
 
-                {/* Étape 3: Confirmation par mot de passe */}
+                {/* Étape 3: Confirmation avec saisie du PIN */}
                 {currentStep === 'confirmation' && (
                   <motion.form
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    onSubmit={handlePasswordSubmit}
-                    autoComplete="off" // désactive l'autocomplétion au niveau du formulaire
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handlePinAttempt();
+                    }}
                     className="space-y-6"
                   >
                     <div className="text-center mb-6">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 shadow-lg mb-4"
+                        className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-[#FF671E] to-[#FF8E53] shadow-lg mb-4"
                       >
                         <IconLock className="h-8 w-8 text-white" />
                       </motion.div>
                       <h3 className="text-xl font-semibold text-white mb-2">Confirmation finale</h3>
-                      <p className="text-sm text-gray-300">Saisissez votre mot de passe pour confirmer la demande</p>
+                      <p className="text-sm text-gray-300">Saisissez votre code PIN à 6 chiffres pour confirmer la demande</p>
                     </div>
 
                     <div className="space-y-4">
-                      <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-                          Mot de passe
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            id="password"
-                            name="confirmPassword" // nom modifié pour ne pas déclencher l'autoremplissage
-                            autoComplete="new-password" // empêche le navigateur de proposer un mot de passe enregistré
-                            value={password}
-                            onChange={(e) => {
-                              setPassword(e.target.value)
-                              setPasswordError("")
-                            }}
-                            className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white pr-12"
-                            placeholder="Votre mot de passe"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3 text-gray-400 hover:text-white transition-colors"
-                          >
-                            {showPassword ? <IconEyeOff className="h-5 w-5" /> : <IconEye className="h-5 w-5" />}
-                          </button>
-                        </div>
-                        {passwordError && (
-                          <motion.p 
-                            initial={{ opacity: 0, y: -5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-xs text-red-400 mt-1"
-                          >
-                            {passwordError}
-                          </motion.p>
-                        )}
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-yellow-900/20 border border-yellow-600/30">
-                        <div className="flex items-start space-x-3">
-                          <IconInfoCircle className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                          <div className="text-sm text-yellow-200">
-                            <p className="font-medium mb-1">⚠️ Attention</p>
-                            <p>En confirmant, vous acceptez que {requestedAmount.toLocaleString()} GNF soit déduit de votre prochain salaire.</p>
+                      <div className="p-4 rounded-xl bg-[#0A1A5A] border border-[#1A2B6B]">
+                        <PinInput
+                          value={pin}
+                          onChange={handlePinChange}
+                          onFocus={handlePinFocus}
+                          onBlur={handlePinBlur}
+                          placeholder="Code PIN (6 chiffres)"
+                          showValue={showPin}
+                          onToggleShow={togglePinVisibility}
+                          hasUserInteracted={hasUserInteracted}
+                          label="Code PIN de sécurité"
+                          disabled={loading || isPinBlocked}
+                        />
+                        
+                        {/* Indicateur d'état du PIN */}
+                        {pinAttempts > 0 && pinAttempts < 3 && !isPinBlocked && (
+                          <div className="mt-3 text-center">
+                            <span className="text-yellow-400 text-sm">
+                              ⚠️ {3 - pinAttempts} tentative(s) restante(s)
+                            </span>
                           </div>
-                        </div>
+                        )}
+                        
+                        {isPinBlocked && (
+                          <div className="mt-3 text-center">
+                            <div className="p-3 bg-red-900/20 border border-red-600/30 rounded-lg">
+                              <div className="flex items-center justify-center gap-2 text-red-400 mb-2">
+                                <span className="text-lg">🔒</span>
+                                <span className="text-sm font-medium">Compte temporairement bloqué</span>
+                              </div>
+                              <div className="text-red-300 text-xs">
+                                {(() => {
+                                  const blockInfo = getPinBlockInfo()
+                                  if (blockInfo.isBlocked) {
+                                    const remainingMinutes = Math.ceil(blockInfo.remainingTime / 60000)
+                                    const remainingSeconds = Math.ceil(blockInfo.remainingTime / 1000)
+                                    
+                                    if (remainingMinutes > 1) {
+                                      return `Temps restant: ${remainingMinutes} minutes`
+                                    } else {
+                                      return `Temps restant: ${remainingSeconds} secondes`
+                                    }
+                                  }
+                                  return "Veuillez attendre 5 minutes"
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1060,7 +1575,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="button"
-                        onClick={goBack}
+                        onClick={() => setCurrentStep('verification')}
                         className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-[#0A1A5A] hover:bg-[#142B7F] transition-colors duration-200"
                       >
                         Retour
@@ -1069,7 +1584,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || pin.length !== 6 || isPinBlocked}
                         className="px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 disabled:opacity-70 transition-all duration-200 relative overflow-hidden"
                       >
                         {loading ? (
@@ -1080,7 +1595,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg>
                             </span>
-                            <span className="opacity-0">Confirmation...</span>
+                            <span className="opacity-0">Vérification...</span>
                           </>
                         ) : (
                           "Confirmer la demande"
@@ -1096,6 +1611,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#010D3E] to-transparent pointer-events-none" />
       </motion.div>
+      
     </div>
   )
 }

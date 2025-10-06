@@ -13,13 +13,13 @@
 1. **Vérifier l'authentification:**
    ```javascript
    // Dans la console du navigateur
-   console.log('Token:', localStorage.getItem('access_token') || localStorage.getItem('employee_access_token'));
+   /*console.log('Token:', localStorage.getItem('access_token')*/ || localStorage.getItem('employee_access_token'));
    ```
 
 2. **Vérifier les données utilisateur:**
    ```javascript
    // Dans la console du navigateur
-   console.log('Données employé:', window.employeeData);
+   /*console.log('Données employé:', window.employeeData)*/
    ```
 
 3. **Tester l'API de mise à jour:**
@@ -83,7 +83,7 @@
 2. **Vérifier la mise à jour du contexte:**
    ```javascript
    // Vérifier que le contexte EmployeeAuthContext est bien mis à jour
-   console.log('Contexte employé:', window.employeeContext);
+   /*console.log('Contexte employé:', window.employeeContext)*/
    ```
 
 ### 🔧 Problème 4: Erreurs de CORS ou de réseau
@@ -102,7 +102,7 @@
        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
      },
    }).then(r => {
-     console.log('Headers CORS:', r.headers);
+     /*console.log('Headers CORS:', r.headers)*/
      return r.json();
    }).then(console.log);
    ```
@@ -110,7 +110,7 @@
 2. **Vérifier les variables d'environnement:**
    ```javascript
    // Vérifier que NEXT_PUBLIC_SUPABASE_URL est défini
-   console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+   /*console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)*/
    ```
 
 ### 🔧 Problème 5: Problèmes d'affichage des données
@@ -124,23 +124,23 @@
 1. **Vérifier la structure des données:**
    ```javascript
    // Afficher la structure complète des données utilisateur
-   console.log('Structure des données:', {
+   /*console.log('Structure des données:', {
      employee: window.employeeData,
      userData: window.userData,
      currentUserData: window.currentUserData
-   });
+   })*/
    ```
 
 2. **Vérifier les propriétés utilisées:**
    ```javascript
    // Vérifier les propriétés spécifiques
    const user = window.employeeData || window.userData;
-   console.log('Propriétés utilisateur:', {
+   /*console.log('Propriétés utilisateur:', {
      nom: user?.nom,
      prenom: user?.prenom,
      photo_url: user?.photo_url,
      photoURL: user?.photoURL
-   });
+   })*/
    ```
 
 ## Tests de diagnostic
@@ -155,7 +155,7 @@ window.testProfileSettings();
 ```javascript
 // 1. Test d'authentification
 const token = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token');
-console.log('Token présent:', !!token);
+/*console.log('Token présent:', !!token)*/
 
 // 2. Test de récupération du profil
 fetch('/api/auth/getme', {
@@ -179,7 +179,7 @@ fetch('/api/auth/update-profile', {
 ```javascript
 // Dans la console du navigateur
 localStorage.setItem('debug', 'true');
-console.log('Logs de débogage activés');
+/*console.log('Logs de débogage activés')*/
 ```
 
 ### Vérifier les logs du serveur
@@ -210,10 +210,10 @@ if (window.refreshProfile) {
 ### Vérifier la configuration
 ```javascript
 // Vérifier toutes les variables d'environnement
-console.log('Configuration:', {
+/*console.log('Configuration:', {
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Défini' : 'Manquant'
-});
+})*/
 ```
 
 ## Contact et support

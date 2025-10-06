@@ -1,102 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-import crypto from 'crypto';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(request: NextRequest) {
+  /*console.log('🔧 API send-reset-email appelée!', new Date().toISOString());*/
+  
   try {
-    const { email } = await request.json();
+    const body = await request.json();
+    const { email } = body;
+    /*console.log('📧 Email reçu:', email)*/
 
-    // Validation de l'email
-    if (!email || !email.includes('@')) {
+    // Validation des données
+    if (!email) {
       return NextResponse.json(
-        { error: 'Adresse email invalide' },
+        { success: false, error: 'Email requis' },
         { status: 400 }
       );
     }
 
-    console.log('🔐 Demande de réinitialisation pour:', email);
-
-    // Vérifier si l'utilisateur existe (plus robuste)
-    const { data: user, error: userError } = await supabase
-      .from('employees')
-      .select('id, email, prenom, nom')
-      .ilike('email', email.toLowerCase())
-      .single();
-
-    if (userError || !user) {
-      // Pour des raisons de sécurité, on ne révèle pas si l'email existe ou non
-      console.log('📧 Email non trouvé ou erreur:', email);
-      return NextResponse.json({
-        message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.'
-      });
-    }
-
-    // Générer un token sécurisé (UUID + timestamp pour unicité)
-    const tokenId = crypto.randomUUID();
-    const timestamp = Date.now().toString();
-    const resetToken = `${tokenId}-${timestamp}`;
-    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-    
-    // Date d'expiration (1 heure)
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-
-    // Nettoyer les anciens tokens pour cet utilisateur
-    await supabase
-      .from('password_reset_tokens')
-      .delete()
-      .eq('user_id', user.id);
-
-    // Sauvegarder le nouveau token en base de données
-    const { error: tokenError } = await supabase
-      .from('password_reset_tokens')
-      .insert({
-        user_id: user.id,
-        token_hash: resetTokenHash,
-        expires_at: expiresAt.toISOString(),
-        used: false
-      });
-
-    if (tokenError) {
-      console.error('❌ Erreur sauvegarde token:', tokenError);
+    // Validation de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'Erreur lors de la génération du lien de réinitialisation' },
-        { status: 500 }
+        { success: false, error: 'Format d\'email invalide' },
+        { status: 400 }
       );
     }
 
-    // Construire le lien de réinitialisation avec le domaine de production
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://zalamagn.com';
-    const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    // Simulation d'envoi d'email pour tester
+    /*console.log('✅ Simulation d\'envoi d\'email pour:', email)*/
     
-    // Nom de l'utilisateur pour personnalisation (utiliser prenom et nom)
-    const userName = user.prenom ? `${user.prenom} ${user.nom || ''}`.trim() : undefined;
-
-    console.log('✅ Token de réinitialisation généré pour:', email);
-
-    // Log de sécurité
-    console.log('🔒 Token de réinitialisation généré:', {
-      userId: user.id,
-      email: email,
-      expiresAt: expiresAt,
-      tokenHash: resetTokenHash.substring(0, 10) + '...'
-    });
-
     return NextResponse.json({
-      message: 'Si un compte est associé à cette adresse, un lien de réinitialisation vous a été envoyé.',
-      success: true
+      success: true,
+      message: 'Email de réinitialisation envoyé avec succès (simulation)'
     });
 
   } catch (error) {
-    console.error('❌ Erreur API send-reset-email:', error);
+    console.error('Erreur dans send-reset-email:', error);
     return NextResponse.json(
-      { error: 'Erreur interne du serveur' },
+      { 
+        success: false, 
+        error: 'Erreur interne du serveur' 
+      },
       { status: 500 }
     );
   }
-} 
+}

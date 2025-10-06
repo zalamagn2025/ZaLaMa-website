@@ -44,12 +44,6 @@ class LogoUploadService {
    */
   async uploadLogo(file: File, partnerId?: string): Promise<LogoUploadResponse> {
     try {
-      console.log('🚀 Début upload logo partenaire:', {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        partnerId: partnerId || 'auto-generated'
-      });
 
       const formData = new FormData();
       formData.append('logo', file); // L'API route attend 'logo'
@@ -60,12 +54,12 @@ class LogoUploadService {
       });
 
       const result = await response.json();
-      console.log('📥 Réponse upload logo partenaire:', {
+      /*console.log('📥 Réponse upload logo partenaire:', {
         status: response.status,
         statusText: response.statusText,
         headers: Object.fromEntries(response.headers.entries()),
         result
-      });
+      });*/
 
       if (!response.ok) {
         console.error('❌ Erreur HTTP:', response.status, response.statusText);
@@ -91,12 +85,12 @@ class LogoUploadService {
    */
   async uploadLogoForPartner(file: File, partnerId: string): Promise<LogoUploadResponse> {
     try {
-      console.log('🚀 Début upload logo pour partenaire:', {
+      /*console.log('🚀 Début upload logo pour partenaire:', {
         name: file.name,
         size: file.size,
         type: file.type,
         partnerId
-      });
+      })*/
 
       const formData = new FormData();
       formData.append('logo', file); // L'API route attend 'logo'
@@ -107,12 +101,12 @@ class LogoUploadService {
       });
 
       const result = await response.json();
-      console.log('📥 Réponse upload logo partenaire:', {
+      /*console.log('📥 Réponse upload logo partenaire:', {
         status: response.status,
         statusText: response.statusText,
         headers: Object.fromEntries(response.headers.entries()),
         result
-      });
+      });*/
 
       if (!response.ok) {
         console.error('❌ Erreur HTTP:', response.status, response.statusText);
@@ -137,7 +131,7 @@ class LogoUploadService {
    */
   async deleteLogo(fileName: string): Promise<LogoDeleteResponse> {
     try {
-      console.log('🗑️ Début suppression logo:', fileName);
+      /*console.log('🗑️ Début suppression logo:', fileName)*/
 
       const url = `/api/delete-logo?fileName=${encodeURIComponent(fileName)}`;
       
@@ -146,7 +140,7 @@ class LogoUploadService {
       });
 
       const result = await response.json();
-      console.log('📥 Réponse suppression logo:', result);
+      /*console.log('📥 Réponse suppression logo:', result)*/
 
       if (!response.ok) {
         throw new Error(result.error || 'Erreur lors de la suppression');

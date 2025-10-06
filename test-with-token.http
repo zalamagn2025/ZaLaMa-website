@@ -1,0 +1,84 @@
+### Test avec Token d'Authentification
+### Remplace YOUR_TOKEN par un vrai token d'authentification
+
+### Variables
+@baseUrl = http://localhost:3000
+@deviceId = test-device-123
+@testToken = YOUR_TOKEN_HERE
+
+### 1. Test de sauvegarde avec token (devrait fonctionner)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+Authorization: Bearer {{testToken}}
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "test@example.com",
+    "nom": "Test",
+    "prenom": "User",
+    "poste": "Développeur",
+    "entreprise": "ZaLaMa"
+  }
+}
+
+###
+
+### 2. Test de récupération des comptes (devrait fonctionner)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "get_accounts",
+  "data": {
+    "deviceId": "{{deviceId}}"
+  }
+}
+
+###
+
+### 3. Test de sauvegarde sans token (devrait échouer avec 401)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "save_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "email": "test2@example.com",
+    "nom": "Test2",
+    "prenom": "User2"
+  }
+}
+
+###
+
+### 4. Test de vérification PIN (devrait fonctionner)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "verify_pin",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "test@example.com",
+    "pin": "123456"
+  }
+}
+
+###
+
+### 5. Test de suppression de compte (devrait fonctionner)
+POST {{baseUrl}}/api/account-management
+Content-Type: application/json
+
+{
+  "action": "remove_account",
+  "data": {
+    "deviceId": "{{deviceId}}",
+    "userId": "test@example.com"
+  }
+}
+
+###

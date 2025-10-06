@@ -141,10 +141,10 @@ export default function EmployeeRegisterForm() {
 
   // Fonction pour valider la clé API via l'API route
   const validateApiKey = async () => {
-    console.log('validateApiKey appelé avec:', apiKey);
+    /*console.log('validateApiKey appelé avec:', apiKey)*/
     
     if (!apiKey.trim()) {
-      console.log('ApiKey vide');
+      /*console.log('ApiKey vide')*/
       setApiKeyError("Le code entreprise est requis");
       return false;
     }
@@ -153,7 +153,7 @@ export default function EmployeeRegisterForm() {
     setApiKeyError(null);
 
     try {
-      console.log('🔍 Validation via API route...');
+      /*console.log('🔍 Validation via API route...')*/
       
       const response = await fetch('/api/validate-api-key', {
         method: 'POST',
@@ -163,12 +163,12 @@ export default function EmployeeRegisterForm() {
         body: JSON.stringify({ api_key: apiKey }),
       });
 
-      console.log('📡 Réponse validation:', response.status);
+      /*console.log('📡 Réponse validation:', response.status)*/
       const result = await response.json();
-      console.log('📋 Résultat validation:', result);
+      /*console.log('📋 Résultat validation:', result)*/
 
              if (result.success) {
-          console.log('✅ Validation réussie pour:', result.data?.company_name);
+          /*console.log('✅ Validation réussie pour:', result.data?.company_name)*/
           setPartnerInfo({
             company_name: result.data?.company_name || 'Entreprise inconnue',
             logo_url: result.data?.logo_url,
@@ -194,7 +194,7 @@ export default function EmployeeRegisterForm() {
          setApiKeyError(null);
          return true;
        } else {
-        console.log('❌ Validation échouée:', result.error);
+        /*console.log('❌ Validation échouée:', result.error)*/
         setApiKeyError(result.message || result.error || "Code entreprise invalide");
         setPartnerInfo(null);
         return false;
@@ -232,9 +232,9 @@ export default function EmployeeRegisterForm() {
 
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleStep1Submit appelé avec apiKey:', apiKey);
+    /*console.log('handleStep1Submit appelé avec apiKey:', apiKey)*/
     const isValid = await validateApiKey();
-    console.log('Résultat validation:', isValid);
+    /*console.log('Résultat validation:', isValid)*/
     if (isValid) {
       setFormData(prev => ({ ...prev, api_key: apiKey }));
       setStep(2);

@@ -1,12 +1,12 @@
 // Script de diagnostic avancé pour les emails
 require('dotenv').config();
 
-console.log('🔍 DIAGNOSTIC AVANCÉ - EMAILS ZALAMA');
-console.log('=====================================');
+/*console.log('🔍 DIAGNOSTIC AVANCÉ - EMAILS ZALAMA')*/
+/*console.log('=====================================')*/
 
 // Vérifier la configuration
 function checkConfiguration() {
-  console.log('\n📋 VÉRIFICATION DE LA CONFIGURATION :');
+  /*console.log('\n📋 VÉRIFICATION DE LA CONFIGURATION :')*/
   
   const config = {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
@@ -14,13 +14,13 @@ function checkConfiguration() {
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@zalamagn.com'
   };
   
-  console.log('RESEND_API_KEY:', config.RESEND_API_KEY ? '✅ Configuré' : '❌ Manquant');
-  console.log('EMAIL_FROM:', config.EMAIL_FROM);
-  console.log('ADMIN_EMAIL:', config.ADMIN_EMAIL);
+  /*console.log('RESEND_API_KEY:', config.RESEND_API_KEY ? '✅ Configuré' : '❌ Manquant')*/
+  /*console.log('EMAIL_FROM:', config.EMAIL_FROM)*/
+  /*console.log('ADMIN_EMAIL:', config.ADMIN_EMAIL)*/
   
   if (config.RESEND_API_KEY) {
-    console.log('Longueur de la clé:', config.RESEND_API_KEY.length);
-    console.log('Format de la clé:', config.RESEND_API_KEY.startsWith('re_') ? '✅ Correct' : '❌ Incorrect');
+    /*console.log('Longueur de la clé:', config.RESEND_API_KEY.length)*/
+    /*console.log('Format de la clé:', config.RESEND_API_KEY.startsWith('re_')*/ ? '✅ Correct' : '❌ Incorrect');
   }
   
   return config;
@@ -32,13 +32,13 @@ async function testResendConnection() {
     const { Resend } = require('resend');
     
     if (!process.env.RESEND_API_KEY) {
-      console.log('\n❌ RESEND_API_KEY manquante');
+      /*console.log('\n❌ RESEND_API_KEY manquante')*/
       return false;
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     
-    console.log('\n🔗 Test de connexion Resend...');
+    /*console.log('\n🔗 Test de connexion Resend...')*/
     
     // Test simple d'envoi
     const testEmail = {
@@ -52,16 +52,16 @@ async function testResendConnection() {
     const result = await resend.emails.send(testEmail);
     
     if (result.error) {
-      console.log('❌ Erreur Resend:', result.error);
+      /*console.log('❌ Erreur Resend:', result.error)*/
       return false;
     } else {
-      console.log('✅ Connexion Resend réussie');
-      console.log('ID Email:', result.data?.id);
+      /*console.log('✅ Connexion Resend réussie')*/
+      /*console.log('ID Email:', result.data?.id)*/
       return true;
     }
     
   } catch (error) {
-    console.log('\n❌ ERREUR Connexion Resend:', error.message);
+    /*console.log('\n❌ ERREUR Connexion Resend:', error.message)*/
     return false;
   }
 }
@@ -77,7 +77,7 @@ async function testWithValidEmails() {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     
-    console.log('\n📧 Test avec emails valides...');
+    /*console.log('\n📧 Test avec emails valides...')*/
     
     // Emails de test valides (remplacer par vos vrais emails)
     const testEmails = [
@@ -105,18 +105,18 @@ async function testWithValidEmails() {
         const result = await resend.emails.send(testEmail);
         
         if (result.error) {
-          console.log(`❌ Échec pour ${email}:`, result.error.message);
+          /*console.log(`❌ Échec pour ${email}:`, result.error.message)*/
         } else {
-          console.log(`✅ Succès pour ${email} - ID: ${result.data?.id}`);
+          /*console.log(`✅ Succès pour ${email} - ID: ${result.data?.id}`)*/
         }
         
       } catch (error) {
-        console.log(`❌ Erreur pour ${email}:`, error.message);
+        /*console.log(`❌ Erreur pour ${email}:`, error.message)*/
       }
     }
     
   } catch (error) {
-    console.log('\n❌ ERREUR Test emails valides:', error.message);
+    /*console.log('\n❌ ERREUR Test emails valides:', error.message)*/
   }
 }
 
@@ -131,75 +131,75 @@ async function checkResendDomains() {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     
-    console.log('\n🌐 Vérification des domaines Resend...');
+    /*console.log('\n🌐 Vérification des domaines Resend...')*/
     
     try {
       const domains = await resend.domains.list();
-      console.log('📧 Domaines configurés:', domains.data?.length || 0);
+      /*console.log('📧 Domaines configurés:', domains.data?.length || 0)*/
       
       if (domains.data && domains.data.length > 0) {
         domains.data.forEach(domain => {
-          console.log(`  - ${domain.name} (${domain.status})`);
+          /*console.log(`  - ${domain.name} (${domain.status})*/`);
         });
       } else {
-        console.log('  ❌ Aucun domaine configuré');
+        /*console.log('  ❌ Aucun domaine configuré')*/
       }
       
     } catch (error) {
-      console.log('❌ Erreur récupération domaines:', error.message);
+      /*console.log('❌ Erreur récupération domaines:', error.message)*/
     }
     
   } catch (error) {
-    console.log('\n❌ ERREUR Vérification domaines:', error.message);
+    /*console.log('\n❌ ERREUR Vérification domaines:', error.message)*/
   }
 }
 
 // Exécuter tous les diagnostics
 async function runDiagnostics() {
-  console.log('🚀 DÉMARRAGE DES DIAGNOSTICS...');
+  /*console.log('🚀 DÉMARRAGE DES DIAGNOSTICS...')*/
   
   // Vérifier la configuration
   const config = checkConfiguration();
   
   if (!config.RESEND_API_KEY) {
-    console.log('\n❌ Configuration incomplète. Arrêt des diagnostics.');
+    /*console.log('\n❌ Configuration incomplète. Arrêt des diagnostics.')*/
     return;
   }
   
   // Test connexion Resend
-  console.log('\n' + '='.repeat(50));
+  /*console.log('\n' + '='.repeat(50)*/);
   const resendOk = await testResendConnection();
   
   // Vérifier les domaines
-  console.log('\n' + '='.repeat(50));
+  /*console.log('\n' + '='.repeat(50)*/);
   await checkResendDomains();
   
   // Test avec emails valides
   if (resendOk) {
-    console.log('\n' + '='.repeat(50));
+    /*console.log('\n' + '='.repeat(50)*/);
     await testWithValidEmails();
   }
   
   // Recommandations
-  console.log('\n📝 RECOMMANDATIONS :');
+  /*console.log('\n📝 RECOMMANDATIONS :')*/
   
   if (!config.RESEND_API_KEY.startsWith('re_')) {
-    console.log('❌ Clé API Resend invalide');
-    console.log('   - Obtenez une nouvelle clé depuis https://resend.com/api-keys');
-    console.log('   - La clé doit commencer par "re_"');
+    /*console.log('❌ Clé API Resend invalide')*/
+    /*console.log('   - Obtenez une nouvelle clé depuis https://resend.com/api-keys')*/
+    /*console.log('   - La clé doit commencer par "re_"')*/
   }
   
   if (!resendOk) {
-    console.log('❌ Problème de connexion Resend');
-    console.log('   - Vérifiez votre clé API');
-    console.log('   - Vérifiez votre compte Resend');
+    /*console.log('❌ Problème de connexion Resend')*/
+    /*console.log('   - Vérifiez votre clé API')*/
+    /*console.log('   - Vérifiez votre compte Resend')*/
   }
   
-  console.log('\n🔧 Étapes de résolution :');
-  console.log('1. Vérifiez votre clé API Resend');
-  console.log('2. Configurez le domaine zalama.com dans Resend');
-  console.log('3. Testez avec des emails valides');
-  console.log('4. Vérifiez les spams');
+  /*console.log('\n🔧 Étapes de résolution :')*/
+  /*console.log('1. Vérifiez votre clé API Resend')*/
+  /*console.log('2. Configurez le domaine zalama.com dans Resend')*/
+  /*console.log('3. Testez avec des emails valides')*/
+  /*console.log('4. Vérifiez les spams')*/
 }
 
 // Exécuter les diagnostics

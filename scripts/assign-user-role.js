@@ -15,20 +15,20 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function assignUserRole() {
   try {
-    console.log('🔍 Script d\'assignation de rôle utilisateur\n');
+    /*console.log('🔍 Script d\'assignation de rôle utilisateur\n')*/
     
     // Informations de l'utilisateur (à modifier selon vos besoins)
     const userEmail = 'dfdsfqsdf22@gmail.com'; // Email de l'utilisateur RH
     const userRole = 'rh'; // ou 'responsable'
     const partenaireId = 'cc336e4e-a9de-408a-81bb-1177d1e5ebc5'; // ID du partenaire
     
-    console.log('📋 Informations utilisateur:');
-    console.log(`   - Email: ${userEmail}`);
-    console.log(`   - Rôle: ${userRole}`);
-    console.log(`   - Partenaire ID: ${partenaireId}\n`);
+    /*console.log('📋 Informations utilisateur:')*/
+    /*console.log(`   - Email: ${userEmail}`)*/
+    /*console.log(`   - Rôle: ${userRole}`)*/
+    /*console.log(`   - Partenaire ID: ${partenaireId}\n`)*/
     
     // 1. Récupérer l'utilisateur depuis la table employees
-    console.log('🔍 1. Récupération de l\'utilisateur depuis employees...');
+    /*console.log('🔍 1. Récupération de l\'utilisateur depuis employees...')*/
     const { data: employee, error: employeeError } = await supabase
       .from('employees')
       .select('id, user_id, email, nom, prenom')
@@ -40,16 +40,16 @@ async function assignUserRole() {
       return;
     }
     
-    console.log('✅ Employé trouvé:', {
+    /*console.log('✅ Employé trouvé:', {
       id: employee.id,
       user_id: employee.user_id,
       email: employee.email,
       nom: employee.nom,
       prenom: employee.prenom
-    });
+    })*/
     
     // 2. Vérifier si l'utilisateur existe déjà dans admin_users
-    console.log('\n🔍 2. Vérification dans admin_users...');
+    /*console.log('\n🔍 2. Vérification dans admin_users...')*/
     const { data: existingAdminUser, error: checkError } = await supabase
       .from('admin_users')
       .select('*')
@@ -62,10 +62,10 @@ async function assignUserRole() {
     }
     
     if (existingAdminUser) {
-      console.log('⚠️  Utilisateur existe déjà dans admin_users:', existingAdminUser);
+      /*console.log('⚠️  Utilisateur existe déjà dans admin_users:', existingAdminUser)*/
       
       // Mettre à jour le rôle
-      console.log('🔄 Mise à jour du rôle...');
+      /*console.log('🔄 Mise à jour du rôle...')*/
       const { data: updatedUser, error: updateError } = await supabase
         .from('admin_users')
         .update({ 
@@ -82,10 +82,10 @@ async function assignUserRole() {
         return;
       }
       
-      console.log('✅ Rôle mis à jour avec succès:', updatedUser);
+      /*console.log('✅ Rôle mis à jour avec succès:', updatedUser)*/
     } else {
       // 3. Insérer l'utilisateur dans admin_users
-      console.log('🔄 3. Insertion dans admin_users...');
+      /*console.log('🔄 3. Insertion dans admin_users...')*/
       const { data: newAdminUser, error: insertError } = await supabase
         .from('admin_users')
         .insert({
@@ -107,11 +107,11 @@ async function assignUserRole() {
         return;
       }
       
-      console.log('✅ Utilisateur ajouté avec succès dans admin_users:', newAdminUser);
+      /*console.log('✅ Utilisateur ajouté avec succès dans admin_users:', newAdminUser)*/
     }
     
     // 4. Vérifier que le salaire est à 0
-    console.log('\n🔍 4. Vérification du salaire...');
+    /*console.log('\n🔍 4. Vérification du salaire...')*/
     const { data: salaryCheck, error: salaryError } = await supabase
       .from('employees')
       .select('salaire_net')
@@ -123,10 +123,10 @@ async function assignUserRole() {
       return;
     }
     
-    console.log('💰 Salaire actuel:', salaryCheck.salaire_net);
+    /*console.log('💰 Salaire actuel:', salaryCheck.salaire_net)*/
     
     if (salaryCheck.salaire_net !== 0) {
-      console.log('🔄 Mise à jour du salaire à 0...');
+      /*console.log('🔄 Mise à jour du salaire à 0...')*/
       const { error: updateSalaryError } = await supabase
         .from('employees')
         .update({ salaire_net: 0 })
@@ -137,17 +137,17 @@ async function assignUserRole() {
         return;
       }
       
-      console.log('✅ Salaire mis à jour à 0');
+      /*console.log('✅ Salaire mis à jour à 0')*/
     }
     
-    console.log('\n🎉 Configuration terminée avec succès !');
-    console.log('📋 Résumé:');
-    console.log(`   - Utilisateur: ${employee.prenom} ${employee.nom}`);
-    console.log(`   - Email: ${employee.email}`);
-    console.log(`   - Rôle: ${userRole}`);
-    console.log(`   - Partenaire ID: ${partenaireId}`);
-    console.log(`   - Salaire: 0`);
-    console.log('\n🔄 Maintenant, reconnectez-vous et allez sur /profile pour voir la modale !');
+    /*console.log('\n🎉 Configuration terminée avec succès !')*/
+    /*console.log('📋 Résumé:')*/
+    /*console.log(`   - Utilisateur: ${employee.prenom} ${employee.nom}`)*/
+    /*console.log(`   - Email: ${employee.email}`)*/
+    /*console.log(`   - Rôle: ${userRole}`)*/
+    /*console.log(`   - Partenaire ID: ${partenaireId}`)*/
+    /*console.log(`   - Salaire: 0`)*/
+    /*console.log('\n🔄 Maintenant, reconnectez-vous et allez sur /profile pour voir la modale !')*/
     
   } catch (error) {
     console.error('💥 Erreur générale:', error);

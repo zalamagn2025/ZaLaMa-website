@@ -9,6 +9,7 @@ interface LogoUploadProps {
   onFileUploaded: (url: string) => void;
   onFileRemoved: () => void;
   onFileDataChange: (fileData: { base64: string; filename: string } | null) => void;
+  onFileSelected?: (file: File) => void; // Nouveau callback pour le fichier sélectionné
   label?: string;
   placeholder?: string;
   className?: string;
@@ -21,6 +22,7 @@ export const LogoUpload = ({
   onFileUploaded,
   onFileRemoved,
   onFileDataChange,
+  onFileSelected,
   label = "Logo de l'entreprise",
   placeholder = "Glissez votre logo ici ou cliquez pour sélectionner",
   className = "",
@@ -28,10 +30,8 @@ export const LogoUpload = ({
   isValid = false,
   errorMessage = ""
 }: LogoUploadProps) => {
-  const [uploadedFile, setUploadedFile] = useState<{
-    name: string;
-    url: string;
-    size: number;
+  const [selectedFile, setSelectedFile] = useState<{
+    file: File;
     preview: string;
   } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -42,9 +42,18 @@ export const LogoUpload = ({
   const acceptedTypes = ['.jpg', '.jpeg', '.png', '.webp', '.svg'];
   const maxSize = 2 * 1024 * 1024; // 2MB selon la documentation de l'edge function
 
+  // Fonction pour convertir un fichier en base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUpload = async (file: File) => {
     setError(null);
-    setIsUploading(true);
 
     try {
       // Validation du fichier
@@ -56,43 +65,28 @@ export const LogoUpload = ({
       // Créer un aperçu de l'image
       const preview = URL.createObjectURL(file);
 
-      // Upload vers l'Edge Function upload-partner-logo
-      const uploadResult = await logoUploadService.uploadLogo(file);
-      
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error || 'Erreur lors de l\'upload');
+      // Stocker le fichier en local pour upload différé
+      setSelectedFile({
+        file,
+        preview
+      });
+
+      // Notifier le parent que le fichier est sélectionné
+      if (onFileSelected) {
+        onFileSelected(file);
       }
 
-      // Mettre à jour l'état avec les informations du fichier uploadé
-      setUploadedFile({
-        name: file.name,
-        url: uploadResult.data!.publicUrl, // Utiliser publicUrl de l'API directe
-        size: file.size,
-        preview: preview
-      });
-
-      // Notifier le parent avec l'URL du fichier uploadé
-      onFileUploaded(uploadResult.data!.publicUrl);
-
-      // Utiliser les données de l'API directe
+      // Convertir en base64 pour les données du formulaire
+      const base64 = await convertToBase64(file);
       onFileDataChange({
-        base64: '', // L'API directe ne fournit pas de base64
-        filename: uploadResult.data!.fileName // Utiliser fileName de l'API directe
+        base64,
+        filename: file.name
       });
 
-      console.log('✅ Logo uploadé avec succès via API directe:', {
-        fileName: uploadResult.data!.fileName,
-        filePath: uploadResult.data!.filePath,
-        publicUrl: uploadResult.data!.publicUrl,
-        fileSize: uploadResult.data!.fileSize,
-        fileType: uploadResult.data!.fileType
-      });
 
     } catch (err) {
-      console.error('❌ Erreur upload logo:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'upload');
-    } finally {
-      setIsUploading(false);
+      console.error('❌ Erreur sélection fichier:', err);
+      setError(err instanceof Error ? err.message : 'Erreur lors de la sélection du fichier');
     }
   };
 
@@ -117,37 +111,18 @@ export const LogoUpload = ({
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('🎯 handleFileInput appelé:', e.target.files);
     if (e.target.files && e.target.files[0]) {
-      console.log('📁 Fichier sélectionné:', e.target.files[0]);
       handleFileUpload(e.target.files[0]);
-    } else {
-      console.log('❌ Aucun fichier sélectionné');
     }
   };
 
-  const removeFile = async () => {
+  const removeFile = () => {
     try {
-      // Si on a un fichier uploadé, le supprimer du stockage
-      if (uploadedFile?.url) {
-        // Extraire le nom du fichier de l'URL
-        const urlParts = uploadedFile.url.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        
-        console.log('🗑️ Suppression du logo:', fileName);
-        
-        const deleteResult = await logoUploadService.deleteLogo(fileName);
-        if (!deleteResult.success) {
-          console.error('❌ Erreur suppression logo:', deleteResult.error);
-          // On continue quand même pour nettoyer l'interface
-        }
+      // Nettoyer l'interface (fichier local seulement)
+      if (selectedFile?.preview) {
+        URL.revokeObjectURL(selectedFile.preview);
       }
-
-      // Nettoyer l'interface
-      if (uploadedFile?.preview) {
-        URL.revokeObjectURL(uploadedFile.preview);
-      }
-      setUploadedFile(null);
+      setSelectedFile(null);
       setError(null);
       onFileRemoved();
       if (onFileDataChange) {
@@ -157,14 +132,13 @@ export const LogoUpload = ({
         fileInputRef.current.value = '';
       }
       
-      console.log('✅ Logo supprimé avec succès');
     } catch (error) {
       console.error('❌ Erreur lors de la suppression:', error);
       // Nettoyer l'interface même en cas d'erreur
-      if (uploadedFile?.preview) {
-        URL.revokeObjectURL(uploadedFile.preview);
+      if (selectedFile?.preview) {
+        URL.revokeObjectURL(selectedFile.preview);
       }
-      setUploadedFile(null);
+      setSelectedFile(null);
       setError(null);
       onFileRemoved();
       if (onFileDataChange) {
@@ -191,7 +165,7 @@ export const LogoUpload = ({
         className={`relative border-2 border-dashed rounded-xl p-6 transition-all duration-200 ${
           dragActive 
             ? 'border-orange-500 bg-orange-500/5' 
-            : uploadedFile 
+            : selectedFile 
               ? 'border-green-500/70 bg-green-500/5' 
               : hasError
               ? 'border-red-500/70 bg-red-500/5'
@@ -215,12 +189,11 @@ export const LogoUpload = ({
         />
 
         <div className="text-center" onClick={() => {
-          console.log('🎯 Clic sur la zone de texte, déclenchement de l\'input file');
           if (fileInputRef.current) {
             fileInputRef.current.click();
           }
         }}>
-          {uploadedFile ? (
+          {selectedFile ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -228,7 +201,7 @@ export const LogoUpload = ({
             >
               <div className="relative mx-auto w-20 h-20">
                 <img
-                  src={uploadedFile.preview}
+                  src={selectedFile.preview}
                   alt="Aperçu du logo"
                   className="w-full h-full object-cover rounded-lg border-2 border-green-500/30"
                 />
@@ -236,10 +209,10 @@ export const LogoUpload = ({
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                  {uploadedFile.name}
+                  {selectedFile?.file.name}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatFileSize(uploadedFile.size)}
+                  {selectedFile?.file.size ? formatFileSize(selectedFile.file.size) : '0 Bytes'}
                 </p>
               </div>
               <button
@@ -249,7 +222,7 @@ export const LogoUpload = ({
               >
                 <X className="h-3 w-3" />
                 Supprimer
-              </button>
+              </button>le bouton de préremplissage
             </motion.div>
           ) : (
             <motion.div
@@ -280,7 +253,7 @@ export const LogoUpload = ({
         </div>
 
         {/* Indicateur de drag & drop */}
-        {!uploadedFile && !isUploading && (
+        {!selectedFile && !isUploading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: dragActive ? 1 : 0 }}

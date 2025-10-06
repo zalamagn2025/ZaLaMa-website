@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       .from('partnership-files')
       .getPublicUrl(`${folder}/${fileName}`)
 
-    console.log('✅ Fichier uploadé avec succès:', urlData.publicUrl)
+    /*console.log('✅ Fichier uploadé avec succès:', urlData.publicUrl)*/
 
     return NextResponse.json({
       success: true,

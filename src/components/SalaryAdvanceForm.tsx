@@ -68,8 +68,8 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
         if (result.user) {
           const userData = result.user
           
-          console.log('📊 Données utilisateur récupérées:', userData)
-          console.log('🏢 Partenaire ID:', userData.partenaireId)
+          /*console.log('📊 Données utilisateur récupérées:', userData)*/
+          /*console.log('🏢 Partenaire ID:', userData.partenaireId)*/
 
           // Utiliser la même logique que le profil pour calculer l'avance disponible
           const salaireNet = userData.salaireNet || 0
@@ -85,13 +85,13 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
           // L'avance sur salaire est limitée à 30% du salaire net (pas de calcul de jours)
           const availableAdvance = Math.floor(salaireNet * 0.30)
           
-          console.log('💰 Calcul avance sur salaire:', {
+          /*console.log('💰 Calcul avance sur salaire:', {
             salaireNet,
             availableAdvance,
             workingDaysElapsed,
             totalWorkingDays,
             partenaireId: userData.partenaireId
-          })
+          })*/
 
           setFormData(prev => ({
             ...prev,
@@ -200,7 +200,7 @@ export default function SalaryAdvanceForm({ onClose }: SalaryAdvanceFormProps) {
         password: password
       }
 
-      console.log('📤 Données envoyées à l\'API:', requestData)
+      /*console.log('📤 Données envoyées à l\'API:', requestData)*/
 
       const response = await fetch('/api/salary-advance/request', {
         method: 'POST',

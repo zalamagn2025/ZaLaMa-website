@@ -14,10 +14,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function testPartnershipAPI() {
-  console.log('🧪 Test de l\'API Partnership\n');
+  /*console.log('🧪 Test de l\'API Partnership\n')*/
 
   // Test 1: Vérifier que la table existe
-  console.log('1️⃣ Vérification de l\'existence de la table...');
+  /*console.log('1️⃣ Vérification de l\'existence de la table...')*/
   try {
     const { data, error } = await supabase
       .from('partnership_requests')
@@ -25,33 +25,33 @@ async function testPartnershipAPI() {
       .limit(1);
 
     if (error) {
-      console.log('❌ Erreur:', error.message);
+      /*console.log('❌ Erreur:', error.message)*/
       return;
     }
-    console.log('✅ Table partnership_requests accessible\n');
+    /*console.log('✅ Table partnership_requests accessible\n')*/
   } catch (error) {
-    console.log('❌ Erreur de connexion:', error.message);
+    /*console.log('❌ Erreur de connexion:', error.message)*/
     return;
   }
 
   // Test 2: Compter les demandes existantes
-  console.log('2️⃣ Comptage des demandes existantes...');
+  /*console.log('2️⃣ Comptage des demandes existantes...')*/
   try {
     const { count, error } = await supabase
       .from('partnership_requests')
       .select('*', { count: 'exact', head: true });
 
     if (error) {
-      console.log('❌ Erreur:', error.message);
+      /*console.log('❌ Erreur:', error.message)*/
     } else {
-      console.log(`✅ ${count} demandes trouvées dans la base\n`);
+      /*console.log(`✅ ${count} demandes trouvées dans la base\n`)*/
     }
   } catch (error) {
-    console.log('❌ Erreur:', error.message);
+    /*console.log('❌ Erreur:', error.message)*/
   }
 
   // Test 3: Récupérer les demandes de test
-  console.log('3️⃣ Récupération des demandes de test...');
+  /*console.log('3️⃣ Récupération des demandes de test...')*/
   try {
     const { data, error } = await supabase
       .from('partnership_requests')
@@ -60,20 +60,20 @@ async function testPartnershipAPI() {
       .limit(5);
 
     if (error) {
-      console.log('❌ Erreur:', error.message);
+      /*console.log('❌ Erreur:', error.message)*/
     } else {
-      console.log('✅ Demandes récupérées:');
+      /*console.log('✅ Demandes récupérées:')*/
       data.forEach((request, index) => {
-        console.log(`   ${index + 1}. ${request.company_name} - ${request.status}`);
+        /*console.log(`   ${index + 1}. ${request.company_name} - ${request.status}`)*/
       });
-      console.log('');
+      /*console.log('')*/
     }
   } catch (error) {
-    console.log('❌ Erreur:', error.message);
+    /*console.log('❌ Erreur:', error.message)*/
   }
 
   // Test 4: Test d'insertion (simulation)
-  console.log('4️⃣ Test d\'insertion (simulation)...');
+  /*console.log('4️⃣ Test d\'insertion (simulation)*/...');
   const testData = {
     company_name: 'Test Company API',
     legal_status: 'SARL',
@@ -107,35 +107,35 @@ async function testPartnershipAPI() {
       .single();
 
     if (error) {
-      console.log('❌ Erreur d\'insertion:', error.message);
+      /*console.log('❌ Erreur d\'insertion:', error.message)*/
     } else {
-      console.log('✅ Test d\'insertion réussi!');
-      console.log(`   ID: ${data.id}`);
-      console.log(`   Entreprise: ${data.company_name}`);
-      console.log(`   Statut: ${data.status}\n`);
+      /*console.log('✅ Test d\'insertion réussi!')*/
+      /*console.log(`   ID: ${data.id}`)*/
+      /*console.log(`   Entreprise: ${data.company_name}`)*/
+      /*console.log(`   Statut: ${data.status}\n`)*/
 
       // Nettoyer le test
-      console.log('5️⃣ Nettoyage du test...');
+      /*console.log('5️⃣ Nettoyage du test...')*/
       const { error: deleteError } = await supabase
         .from('partnership_requests')
         .delete()
         .eq('company_name', 'Test Company API');
 
       if (deleteError) {
-        console.log('⚠️ Erreur lors du nettoyage:', deleteError.message);
+        /*console.log('⚠️ Erreur lors du nettoyage:', deleteError.message)*/
       } else {
-        console.log('✅ Test nettoyé avec succès\n');
+        /*console.log('✅ Test nettoyé avec succès\n')*/
       }
     }
   } catch (error) {
-    console.log('❌ Erreur:', error.message);
+    /*console.log('❌ Erreur:', error.message)*/
   }
 
-  console.log('🎉 Tests terminés!');
-  console.log('\n📋 Prochaines étapes:');
-  console.log('1. Testez le formulaire sur /partnership/formulaire');
-  console.log('2. Vérifiez les nouvelles demandes dans Supabase');
-  console.log('3. Configurez le dashboard admin pour gérer les demandes');
+  /*console.log('🎉 Tests terminés!')*/
+  /*console.log('\n📋 Prochaines étapes:')*/
+  /*console.log('1. Testez le formulaire sur /partnership/formulaire')*/
+  /*console.log('2. Vérifiez les nouvelles demandes dans Supabase')*/
+  /*console.log('3. Configurez le dashboard admin pour gérer les demandes')*/
 }
 
 testPartnershipAPI(); 
