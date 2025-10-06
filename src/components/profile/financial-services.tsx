@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { PendingPayments } from "./pending-payments"
 import { PaymentData } from "./payment-service-card"
 import { apiService } from '@/services/api-service'
+import { usePayslipGenerator } from '@/hooks/usePayslipGenerator'
 
 interface Service {
   id: string
@@ -35,6 +36,9 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [salaireDisponible, setSalaireDisponible] = useState<number>(0)
   // État pour la gestion des paiements
   const [showPaymentManagement, setShowPaymentManagement] = useState(false)
+  
+  // Hook pour la génération du bulletin de paie
+  const { generatePayslip, isGenerating: isGeneratingPayslip, error: payslipError } = usePayslipGenerator()
   
   // Récupérer les données financières de l'utilisateur pour vérifier salaire_disponible
   useEffect(() => {
@@ -242,6 +246,31 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
     }
   }
 
+  // Gestion de la génération du bulletin de paie
+  const handleGeneratePayslip = async () => {
+    if (!user) {
+      console.error('Données utilisateur manquantes')
+      return
+    }
+
+    try {
+      // Utiliser les données financières disponibles
+      const financialData = {
+        salaireNet: user.salaireNet || 0,
+        salaireRestant: salaireDisponible,
+        avanceActif: 0, // À récupérer depuis l'API si nécessaire
+        // Autres données financières...
+      }
+      
+      const success = await generatePayslip(user, financialData)
+      if (success) {
+        console.log('✅ Bulletin de paie généré avec succès')
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la génération du bulletin de paie:', error)
+    }
+  }
+
   const handleStatusChange = (paymentId: string, newStatus: PaymentData['status']) => {
     console.log('Status change:', paymentId, newStatus)
   }
@@ -412,22 +441,62 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
                   }
                 </p>
               </div>
-              {isPaymentActive && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handlePaymentAction('manage')
-                  }}
-                  className="inline-flex items-center text-sm font-medium text-white px-3 py-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] rounded-lg transition-all duration-300"
-                >
-                  Retirer <IconArrowRight className="ml-1 h-4 w-4" />
-                </motion.button>
-              )}
+              <div className="flex gap-2">
+                {/* Bouton Bulletin de paie - toujours visible quand il y a un salaire */}
+                {salaireDisponible > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleGeneratePayslip()
+                    }}
+                    disabled={isGeneratingPayslip}
+                    className="inline-flex items-center text-sm font-medium text-white px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all duration-300 disabled:opacity-50"
+                  >
+                    {isGeneratingPayslip ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-1"></div>
+                        Génération...
+                      </>
+                    ) : (
+                      <>
+                        📄 Bulletin
+                      </>
+                    )}
+                  </motion.button>
+                )}
+                {/* Bouton Retirer - seulement quand le service est actif */}
+                {isPaymentActive && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handlePaymentAction('manage')
+                    }}
+                    className="inline-flex items-center text-sm font-medium text-white px-3 py-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] rounded-lg transition-all duration-300"
+                  >
+                    Retirer <IconArrowRight className="ml-1 h-4 w-4" />
+                  </motion.button>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Affichage des erreurs de génération de bulletin de paie */}
+      {payslipError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 max-w-7xl mx-auto px-4"
+        >
+          <p className="text-red-400 text-sm">
+            ⚠️ Erreur lors de la génération du bulletin de paie: {payslipError}
+          </p>
+        </motion.div>
       )}
 
       <AnimatePresence>

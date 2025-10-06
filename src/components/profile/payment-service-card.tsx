@@ -16,6 +16,12 @@ export interface PaymentData {
   receivedAt?: string
   notes?: string
   reference?: string
+  // Propriétés spécifiques aux retraits
+  type?: 'RETRAIT' | 'PAIEMENT'
+  typeCompte?: string
+  numeroReception?: string
+  fraisRetrait?: number
+  transfer?: any
 }
 
 interface PaymentServiceCardProps {
