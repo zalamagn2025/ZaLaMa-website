@@ -6,6 +6,51 @@ import { IconSearch, IconFilter, IconDownload, IconEye, IconX, IconCalendar, Ico
 import { pdf } from "@react-pdf/renderer"
 import { saveAs } from "file-saver"
 import { PaymentData } from "./payment-service-card"
+import { useWithdrawalHistory, WithdrawalHistoryItem } from "@/hooks/useWithdrawalHistory"
+
+// Fonction de conversion des données d'historique en PaymentData
+const convertHistoryToPaymentData = (historyItem: WithdrawalHistoryItem): PaymentData => {
+  const isRetrait = historyItem.type === 'RETRAIT'
+  
+  return {
+    id: historyItem.id,
+    clientName: isRetrait ? historyItem.nom_beneficiaire || 'Employé' : historyItem.partenaire || 'Entreprise',
+    clientEmail: isRetrait ? '' : 'contact@entreprise.com', // Pas d'email pour les retraits
+    amount: historyItem.montant_final || historyItem.montant,
+    currency: 'GNF',
+    status: mapStatusToPaymentStatus(historyItem.statut),
+    createdAt: historyItem.date_demande,
+    receivedAt: historyItem.date_traitement || undefined,
+    reference: historyItem.reference,
+    notes: historyItem.commentaire || undefined,
+    // Données spécifiques aux retraits
+    ...(isRetrait && {
+      type: 'RETRAIT' as const,
+      typeCompte: historyItem.type_compte,
+      numeroReception: historyItem.numero_reception,
+      fraisRetrait: historyItem.frais_retrait,
+      transfer: historyItem.transfer
+    })
+  }
+}
+
+// Fonction de mapping des statuts
+const mapStatusToPaymentStatus = (statut: string): PaymentData['status'] => {
+  switch (statut) {
+    case 'EN_ATTENTE':
+      return 'pending'
+    case 'TRAITE':
+    case 'APPROUVE':
+      return 'received'
+    case 'REJETE':
+    case 'ANNULE':
+      return 'cancelled'
+    case 'EXPIRE':
+      return 'expired'
+    default:
+      return 'pending'
+  }
+}
 
 // Interface pour le PDF (simplifié pour les paiements)
 const PaymentPDF = ({ payment }: { payment: PaymentData }) => (
@@ -101,13 +146,41 @@ type FilterStatus = 'all' | 'pending' | 'received' | 'cancelled' | 'expired'
 type SortBy = 'date' | 'amount' | 'client' | 'status'
 
 export function PaymentList({
-  payments,
+  payments: mockPayments, // Renommer pour éviter la confusion
   onStatusChange,
   onDownload,
   onShare,
   onRefresh,
   isLoading = false
 }: PaymentListProps) {
+  // Utiliser l'historique réel des retraits et paiements
+  const { 
+    history, 
+    retraits, 
+    paiements, 
+    loading: historyLoading, 
+    error: historyError, 
+    stats,
+    refetch: refetchHistory 
+  } = useWithdrawalHistory()
+
+  // Convertir l'historique en format PaymentData
+  const realPayments = useMemo(() => {
+    return history.map(convertHistoryToPaymentData)
+  }, [history])
+
+  // Utiliser les données réelles si disponibles, sinon les données mockées
+  const payments = realPayments.length > 0 ? realPayments : mockPayments
+  const isLoadingData = historyLoading || isLoading
+
+  // Fonction de refresh combinée
+  const handleRefresh = () => {
+    if (realPayments.length > 0) {
+      refetchHistory()
+    } else if (onRefresh) {
+      onRefresh()
+    }
+  }
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
   const [sortBy, setSortBy] = useState<SortBy>('date')
@@ -274,7 +347,15 @@ export function PaymentList({
             <div>
               <h2 className="text-xl font-bold" style={{ color: 'rgb(255, 255, 255)' }}>Paiements</h2>
               <p style={{ color: 'rgb(156, 163, 175)' }} className="text-sm">
-                {filteredAndSortedPayments.length} paiement{filteredAndSortedPayments.length !== 1 ? "s" : ""} trouvé{filteredAndSortedPayments.length !== 1 ? "s" : ""}
+                {realPayments.length > 0 ? (
+                  <>
+                    {stats.total} opération{stats.total !== 1 ? "s" : ""} • {stats.total_retraits} retrait{stats.total_retraits !== 1 ? "s" : ""} • {stats.total_paiements} paiement{stats.total_paiements !== 1 ? "s" : ""}
+                  </>
+                ) : (
+                  <>
+                    {filteredAndSortedPayments.length} paiement{filteredAndSortedPayments.length !== 1 ? "s" : ""} trouvé{filteredAndSortedPayments.length !== 1 ? "s" : ""}
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -282,11 +363,11 @@ export function PaymentList({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={onRefresh}
-              disabled={isLoading}
+              onClick={handleRefresh}
+              disabled={isLoadingData}
               className="p-2 text-white/60 hover:text-white transition-colors disabled:opacity-50"
             >
-              <IconRefresh className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+              <IconRefresh className={`h-5 w-5 ${isLoadingData ? 'animate-spin' : ''}`} />
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -298,6 +379,25 @@ export function PaymentList({
             </motion.button>
           </div>
         </div>
+
+        {/* Affichage des erreurs */}
+        {historyError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4"
+          >
+            <p className="text-red-400 text-sm">
+              ⚠️ Erreur lors du chargement de l'historique: {historyError}
+            </p>
+            <button
+              onClick={handleRefresh}
+              className="text-red-300 hover:text-red-200 text-xs underline mt-1"
+            >
+              Réessayer
+            </button>
+          </motion.div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -416,7 +516,28 @@ export function PaymentList({
         transition={{ delay: 0.2 }}
         className="space-y-4"
       >
-        {currentPayments.length > 0 ? (
+        {isLoadingData ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((_, index) => (
+              <div
+                key={index}
+                className="bg-[#010D3E]/50 backdrop-blur-md rounded-xl border overflow-hidden shadow-lg animate-pulse"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 bg-gray-600 rounded-xl"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-600 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-600 rounded w-1/2 mb-2"></div>
+                      <div className="h-3 bg-gray-600 rounded w-2/3"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : currentPayments.length > 0 ? (
           currentPayments.map((payment, index) => (
             <motion.div
               key={`${payment.id}-${index}`}
@@ -438,9 +559,16 @@ export function PaymentList({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg" style={{ color: 'rgb(255, 255, 255)' }}>
-                          Paiement
-                        </h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-lg" style={{ color: 'rgb(255, 255, 255)' }}>
+                            {payment.type === 'RETRAIT' ? 'Retrait' : 'Paiement'}
+                          </h3>
+                          {payment.type === 'RETRAIT' && (
+                            <span className="px-2 py-1 text-xs font-medium bg-orange-500/20 text-orange-300 rounded-full border border-orange-500/30">
+                              RETRAIT
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-sm" style={{ color: 'rgb(156, 163, 175)' }}>
                           <IconUser className="w-3 h-3" />
                           <span>{payment.clientName}</span>
@@ -458,7 +586,26 @@ export function PaymentList({
                         <IconCurrency className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
                         <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Montant :</span>
                         <span className="font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>{formatAmount(payment.amount)}</span>
+                        {payment.type === 'RETRAIT' && payment.fraisRetrait && payment.fraisRetrait > 0 && (
+                          <span className="text-orange-400 text-xs">
+                            (frais: -{formatAmount(payment.fraisRetrait)})
+                          </span>
+                        )}
                       </div>
+                      {payment.type === 'RETRAIT' && payment.typeCompte && (
+                        <div className="flex items-center gap-2">
+                          <IconUser className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
+                          <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Type de compte :</span>
+                          <span className="font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>{payment.typeCompte}</span>
+                        </div>
+                      )}
+                      {payment.type === 'RETRAIT' && payment.numeroReception && (
+                        <div className="flex items-center gap-2">
+                          <IconUser className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
+                          <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Numéro :</span>
+                          <span className="font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>{payment.numeroReception}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <IconCalendar className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
                         <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Le {formatFullDate(payment.createdAt)}</span>

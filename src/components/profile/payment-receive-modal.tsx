@@ -26,6 +26,17 @@ export function PaymentReceiveModal({
   const [accountNumber, setAccountNumber] = useState<string>("")
   const [errors, setErrors] = useState<{ amount?: string; accountType?: string; accountNumber?: string; general?: string }>({})
 
+  // Calculer les frais selon le type de compte
+  const calculateFees = (amount: number, type: string) => {
+    if (type === "ESPECES") {
+      return Math.round(amount * 0.02) // 2% de frais
+    }
+    return 0 // 0% de frais pour les autres types
+  }
+
+  const fees = calculateFees(withdrawalAmount, accountType)
+  const finalAmount = withdrawalAmount - fees
+
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -84,38 +95,13 @@ export function PaymentReceiveModal({
         return
       }
 
-      // Récupérer l'ID de l'employé depuis les données utilisateur
-      let employeId = null
-      try {
-        const userResponse = await fetch('/api/auth/getme', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        })
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json()
-          employeId = userData.data?.id
-          console.log('👤 ID employé récupéré:', employeId)
-        }
-      } catch (error) {
-        console.error('❌ Erreur lors de la récupération de l\'ID employé:', error)
-      }
-
-      if (!employeId) {
-        setErrors({ general: "Impossible de récupérer l'ID de l'employé" })
-        return
-      }
+      // L'employe_id et nom_beneficiaire sont maintenant extraits automatiquement du token JWT
 
       const requestData = {
         action: "create",
-        employe_id: employeId,
         montant_demande: withdrawalAmount,
         numero_reception: accountNumber,
         type_compte: accountType,
-        nom_beneficiaire: "Utilisateur ZaLaMa",
         type_retrait: "RETRAIT_SALAIRE",
         commentaire: `Retrait de salaire - ${withdrawAll ? 'Montant total' : 'Montant partiel'}`
       }
@@ -280,6 +266,33 @@ export function PaymentReceiveModal({
                       Retirer tout le salaire disponible ({payment.amount.toLocaleString('fr-FR')} {payment.currency})
                     </label>
                   </div>
+
+                  {/* Affichage des frais et montant final */}
+                  {withdrawalAmount > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.3 }}
+                      className="mt-4 p-3 bg-[#0A1A5A]/50 rounded-lg border border-gray-600/30"
+                    >
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between text-gray-300">
+                          <span>Montant demandé:</span>
+                          <span>{withdrawalAmount.toLocaleString('fr-FR')} {payment.currency}</span>
+                        </div>
+                        {fees > 0 && (
+                          <div className="flex justify-between text-orange-400">
+                            <span>Frais de retrait (2%):</span>
+                            <span>-{fees.toLocaleString('fr-FR')} {payment.currency}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-white font-semibold border-t border-gray-600/30 pt-2">
+                          <span>Montant final reçu:</span>
+                          <span>{finalAmount.toLocaleString('fr-FR')} {payment.currency}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
                   
                 {errors.amount && (
                     <motion.p
@@ -310,11 +323,11 @@ export function PaymentReceiveModal({
                       errors.accountType ? 'ring-2 ring-red-500' : ''
                     }`}
                   >
-                    <option value="ORANGE_MONEY">Orange Money</option>
-                    <option value="MOBILE_MONEY">Mobile Money</option>
-                    <option value="PAYCARD">PayCard</option>
-                    <option value="BANQUE">Banque</option>
-                    <option value="ESPECES">Espèces</option>
+                    <option value="ORANGE_MONEY">Orange Money (0% frais)</option>
+                    <option value="MOBILE_MONEY">Mobile Money (0% frais)</option>
+                    <option value="PAYCARD">PayCard (0% frais)</option>
+                    <option value="BANQUE">Banque (0% frais)</option>
+                    <option value="ESPECES">Espèces (2% frais)</option>
                   </select>
                   {errors.accountType && (
                     <motion.p
