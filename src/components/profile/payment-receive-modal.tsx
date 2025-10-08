@@ -23,7 +23,8 @@ export function PaymentReceiveModal({
   const [withdrawalAmount, setWithdrawalAmount] = useState<number>(payment.amount)
   const [withdrawAll, setWithdrawAll] = useState<boolean>(false)
   const [accountType, setAccountType] = useState<string>("ORANGE_MONEY")
-  const [accountNumber, setAccountNumber] = useState<string>("")
+  const [accountNumber, setAccountNumber] = useState<string>("+224")
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [errors, setErrors] = useState<{ amount?: string; accountType?: string; accountNumber?: string; general?: string }>({})
 
   // Calculer les frais selon le type de compte
@@ -43,7 +44,8 @@ export function PaymentReceiveModal({
       setWithdrawalAmount(payment.amount)
       setWithdrawAll(false)
       setAccountType("ORANGE_MONEY")
-      setAccountNumber("")
+      setAccountNumber("+224")
+      setIsSubmitting(false)
       setErrors({})
     }
   }, [isOpen, payment.amount])
@@ -72,8 +74,12 @@ export function PaymentReceiveModal({
       newErrors.accountType = "Le type de compte est obligatoire"
     }
 
-    if (!accountNumber.trim()) {
+    if (!accountNumber.trim() || accountNumber.trim() === "+224") {
       newErrors.accountNumber = "Le numéro de compte est obligatoire"
+    }
+
+    if (!accountNumber.startsWith("+224")) {
+      newErrors.accountNumber = "Le numéro doit commencer par +224"
     }
 
     setErrors(newErrors)
@@ -87,11 +93,14 @@ export function PaymentReceiveModal({
       return
     }
 
+    setIsSubmitting(true)
+
     try {
       // Appel à l'edge function employee-withdrawal
       const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
       if (!accessToken) {
         setErrors({ general: "Token d'authentification manquant" })
+        setIsSubmitting(false)
         return
       }
 
@@ -103,7 +112,7 @@ export function PaymentReceiveModal({
         numero_reception: accountNumber,
         type_compte: accountType,
         type_retrait: "RETRAIT_SALAIRE",
-        commentaire: `Retrait de salaire - ${withdrawAll ? 'Montant total' : 'Montant partiel'}`
+        commentaire: `Retrait de salaire - Montant total`
       }
       
       console.log('📤 Données envoyées à l\'API:', requestData)
@@ -121,6 +130,7 @@ export function PaymentReceiveModal({
       if (response.ok) {
         const result = await response.json()
         console.log('✅ Retrait créé avec succès:', result)
+        setIsSubmitting(false)
         onConfirm(withdrawalAmount)
       } else {
         const errorData = await response.json()
@@ -128,34 +138,29 @@ export function PaymentReceiveModal({
         setErrors({ 
           general: errorData.error || errorData.message || "Erreur lors de la création du retrait" 
         })
+        setIsSubmitting(false)
       }
     } catch (error) {
       console.error('❌ Erreur lors du retrait:', error)
       setErrors({ 
         general: error instanceof Error ? error.message : "Erreur de connexion. Veuillez réessayer." 
       })
+      setIsSubmitting(false)
     }
   }
 
   const handleClose = () => {
-    if (!isLoading) {
+    if (!isLoading && !isSubmitting) {
       onClose()
     }
   }
 
-  const handleAmountChange = (value: string) => {
-    const numericValue = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.'))
-    if (!isNaN(numericValue)) {
-      setWithdrawalAmount(numericValue)
-    } else if (value === '') {
-      setWithdrawalAmount(0)
-    }
-  }
-
-  const handleWithdrawAllChange = (checked: boolean) => {
-    setWithdrawAll(checked)
-    if (checked) {
-      setWithdrawalAmount(payment.amount)
+  const handleAccountNumberChange = (value: string) => {
+    // S'assurer que le numéro commence toujours par +224
+    if (!value.startsWith("+224")) {
+      setAccountNumber("+224")
+    } else {
+      setAccountNumber(value)
     }
   }
 
@@ -190,7 +195,7 @@ export function PaymentReceiveModal({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleClose}
-                disabled={isLoading}
+                disabled={isLoading || isSubmitting}
                 className="p-2 text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <IconX className="h-5 w-5" />
@@ -233,38 +238,26 @@ export function PaymentReceiveModal({
                   transition={{ delay: 0.1, duration: 0.3 }}
                 >
                   <label htmlFor="withdrawalAmount" className="block text-sm font-medium text-gray-300 mb-2">
-                    Montant à retirer *
+                    Montant du retrait (Total du salaire) *
                 </label>
                 <div className="relative">
                   <input
                       id="withdrawalAmount"
                     type="text"
                       value={withdrawalAmount > 0 ? withdrawalAmount.toLocaleString('fr-FR') : ''}
-                    onChange={(e) => handleAmountChange(e.target.value)}
                     placeholder="0"
-                      disabled={isLoading || withdrawAll}
-                      className={`block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white ${
-                        errors.amount ? 'ring-2 ring-red-500' : ''
-                      } ${withdrawAll ? 'opacity-50' : ''}`}
+                      disabled={true}
+                      className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner placeholder-gray-400 text-white opacity-60 cursor-not-allowed"
                     />
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
                     {payment.currency}
                   </span>
                 </div>
                   
-                  {/* Checkbox "Retirer tout" */}
-                  <div className="mt-3 flex items-center">
-                    <input
-                      id="withdrawAll"
-                      type="checkbox"
-                      checked={withdrawAll}
-                      onChange={(e) => handleWithdrawAllChange(e.target.checked)}
-                      disabled={isLoading}
-                      className="h-4 w-4 text-[#FF671E] bg-[#0A1A5A] border-gray-300 rounded focus:ring-[#FF671E] focus:ring-2"
-                    />
-                    <label htmlFor="withdrawAll" className="ml-2 text-sm text-gray-300">
-                      Retirer tout le salaire disponible ({payment.amount.toLocaleString('fr-FR')} {payment.currency})
-                    </label>
+                  <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <p className="text-blue-300 text-xs">
+                      ℹ️ Vous devez retirer l'intégralité de votre salaire. Le montant a été automatiquement défini.
+                    </p>
                   </div>
 
                   {/* Affichage des frais et montant final */}
@@ -348,19 +341,22 @@ export function PaymentReceiveModal({
                   transition={{ delay: 0.3, duration: 0.3 }}
                 >
                   <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-300 mb-2">
-                    Numéro de compte *
+                    Numéro de réception *
                 </label>
                   <input
                     id="accountNumber"
                     type="text"
                     value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="Entrez le numéro de compte (téléphone, carte, etc.)"
-                  disabled={isLoading}
+                    onChange={(e) => handleAccountNumberChange(e.target.value)}
+                    placeholder="+224XXXXXXXXX"
+                  disabled={isLoading || isSubmitting}
                     className={`block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-[#FF671E] focus:ring-offset-2 transition-all duration-200 placeholder-gray-400 text-white ${
                       errors.accountNumber ? 'ring-2 ring-red-500' : ''
                     }`}
                   />
+                  <p className="mt-2 text-xs text-gray-400">
+                    Le numéro doit commencer par +224
+                  </p>
                   {errors.accountNumber && (
                     <motion.p
                       initial={{ opacity: 0, y: -5 }}
@@ -396,7 +392,7 @@ export function PaymentReceiveModal({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleClose}
-                  disabled={isLoading}
+                  disabled={isLoading || isSubmitting}
                     className="flex-1 px-6 py-3 bg-[#1A2B6B] hover:bg-[#2A3B7B] text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Annuler
@@ -405,13 +401,13 @@ export function PaymentReceiveModal({
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                    disabled={isLoading || withdrawalAmount <= 0}
+                    disabled={isLoading || isSubmitting || withdrawalAmount <= 0}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] text-white rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
                 >
-                  {isLoading ? (
+                  {isSubmitting ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                        Création du retrait...
+                        Création en cours...
                     </div>
                   ) : (
                     <div className="flex items-center">
