@@ -210,94 +210,16 @@ export function PaymentReceiveModal({
                   </span>
                 <span className="text-white font-medium">{payment.clientName}</span>
               </div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between">
                   <span className="text-gray-400 text-sm">Salaire disponible:</span>
                   <span className="text-[#FF8E53] font-bold text-lg">
                   {formatAmount(payment.amount, payment.currency)}
                 </span>
               </div>
-              {payment.reference && (
-                <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-sm">Référence:</span>
-                  <span className="text-white font-medium">{payment.reference}</span>
-                </div>
-              )}
-                <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                  <p className="text-orange-300 text-sm">
-                    💡 <strong>Retrait de salaire :</strong> Remplissez les informations de votre compte pour recevoir votre salaire. Le retrait sera traité sous 24h.
-                  </p>
-                </div>
             </div>
 
             {/* Formulaire */}
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Montant à retirer */}
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                >
-                  <label htmlFor="withdrawalAmount" className="block text-sm font-medium text-gray-300 mb-2">
-                    Montant du retrait (Total du salaire) *
-                </label>
-                <div className="relative">
-                  <input
-                      id="withdrawalAmount"
-                    type="text"
-                      value={withdrawalAmount > 0 ? withdrawalAmount.toLocaleString('fr-FR') : ''}
-                    placeholder="0"
-                      disabled={true}
-                      className="block w-full px-4 py-3 bg-[#0A1A5A] border-0 rounded-xl shadow-inner placeholder-gray-400 text-white opacity-60 cursor-not-allowed"
-                    />
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-                    {payment.currency}
-                  </span>
-                </div>
-                  
-                  <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <p className="text-blue-300 text-xs">
-                      ℹ️ Vous devez retirer l'intégralité de votre salaire. Le montant a été automatiquement défini.
-                    </p>
-                  </div>
-
-                  {/* Affichage des frais et montant final */}
-                  {withdrawalAmount > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3, duration: 0.3 }}
-                      className="mt-4 p-3 bg-[#0A1A5A]/50 rounded-lg border border-gray-600/30"
-                    >
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between text-gray-300">
-                          <span>Montant demandé:</span>
-                          <span>{withdrawalAmount.toLocaleString('fr-FR')} {payment.currency}</span>
-                        </div>
-                        {fees > 0 && (
-                          <div className="flex justify-between text-orange-400">
-                            <span>Frais de retrait (2%):</span>
-                            <span>-{fees.toLocaleString('fr-FR')} {payment.currency}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-white font-semibold border-t border-gray-600/30 pt-2">
-                          <span>Montant final reçu:</span>
-                          <span>{finalAmount.toLocaleString('fr-FR')} {payment.currency}</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                  
-                {errors.amount && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-xs text-red-400 mt-1"
-                    >
-                    {errors.amount}
-                    </motion.p>
-                  )}
-                </motion.div>
-
                 {/* Type de compte */}
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
@@ -354,9 +276,6 @@ export function PaymentReceiveModal({
                       errors.accountNumber ? 'ring-2 ring-red-500' : ''
                     }`}
                   />
-                  <p className="mt-2 text-xs text-gray-400">
-                    Le numéro doit commencer par +224
-                  </p>
                   {errors.accountNumber && (
                     <motion.p
                       initial={{ opacity: 0, y: -5 }}
@@ -407,12 +326,12 @@ export function PaymentReceiveModal({
                   {isSubmitting ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                        Création en cours...
+                        En cours...
                     </div>
                   ) : (
                     <div className="flex items-center">
                       <IconCheck className="h-4 w-4 mr-2" />
-                        Créer le retrait
+                        Effectuer le retrait
                     </div>
                   )}
                 </motion.button>
