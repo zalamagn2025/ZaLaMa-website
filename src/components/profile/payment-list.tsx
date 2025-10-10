@@ -831,28 +831,6 @@ export function PaymentList({
                           </div>
                         ))}
                       </div>
-                      <div className="flex items-center justify-center gap-8 pt-8 pb-2 sticky bottom-0" style={{ backgroundColor: 'rgb(1, 13, 62)' }}>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => generateAndDownloadPDF(payment)}
-                          className="w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition-all duration-300"
-                          style={{ background: 'linear-gradient(to bottom right, rgb(59, 130, 246), rgb(29, 78, 216))' }}
-                        >
-                          <IconDownload className="w-7 h-7" style={{ color: 'rgb(255, 255, 255)' }} />
-                        </motion.button>
-                        {onShare && (
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => onShare(payment.id)}
-                            className="w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition-all duration-300"
-                            style={{ background: 'linear-gradient(to bottom right, rgb(59, 130, 246), rgb(29, 78, 216))' }}
-                          >
-                            <IconShare className="w-7 h-7" style={{ color: 'rgb(255, 255, 255)' }} />
-                          </motion.button>
-                        )}
-                      </div>
                     </div>
                   )
                 })()}

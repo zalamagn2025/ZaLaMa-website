@@ -238,11 +238,8 @@ export function PaymentReceiveModal({
                       errors.accountType ? 'ring-2 ring-red-500' : ''
                     }`}
                   >
-                    <option value="ORANGE_MONEY">Orange Money (0% frais)</option>
-                    <option value="MOBILE_MONEY">Mobile Money (0% frais)</option>
-                    <option value="PAYCARD">PayCard (0% frais)</option>
-                    <option value="BANQUE">Banque (0% frais)</option>
-                    <option value="ESPECES">Espèces (2% frais)</option>
+                    <option value="ORANGE_MONEY">Orange Money</option>
+                    <option value="MOBILE_MONEY">Mobile Money</option>
                   </select>
                   {errors.accountType && (
                     <motion.p
