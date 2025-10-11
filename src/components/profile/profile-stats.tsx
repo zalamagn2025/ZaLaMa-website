@@ -546,9 +546,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
             if (mono > 0 && multi > 0 && details) {
               return `${total} avance${total > 1 ? 's' : ''} active${total > 1 ? 's' : ''} • ${details.montantParMois.toLocaleString()} GNF/mois sur ${details.nombreMoisTotal} mois`;
             } else if (multi > 0 && details) {
-              return `${details.montantParMois.toLocaleString()} GNF/mois sur ${details.nombreMoisTotal} mois (${details.nombreMoisRestants} restant${details.nombreMoisRestants > 1 ? 's' : ''})`;
+              return `${details.montantParMois.toLocaleString()} GNF/mois sur ${details.nombreMoisTotal} mois`;
+            } else if (total > 0) {
+              return `${total} avance${total > 1 ? 's' : ''} active${total > 1 ? 's' : ''}`;
             } else {
-              return advanceStatus;
+              return 'Aucune avance active';
             }
           })()
           : advanceStatus
