@@ -84,11 +84,28 @@ const convertApiRequestToDisplay = (apiRequest: SalaryAdvanceRequest) => {
     }
   };
 
+  // Déterminer si c'est une avance échelonnée
+  const isMultiMonth = apiRequest.num_installments && apiRequest.num_installments > 1;
+  const numInstallments = apiRequest.num_installments || 1;
+  const monthlyAmount = isMultiMonth 
+    ? apiRequest.montant_demande / numInstallments
+    : apiRequest.montant_demande;
+  
+  // Formater l'affichage du montant
+  let amountDisplay = formatAmount(apiRequest.montant_demande);
+  if (isMultiMonth) {
+    amountDisplay = `${formatAmount(monthlyAmount)}/mois × ${numInstallments}`;
+  }
+
   return {
     id: apiRequest.id,
     date: formatFullDate(apiRequest.date_creation || apiRequest.created_at),
     type: formatMotifType(apiRequest.type_motif),
     amount: formatAmount(apiRequest.montant_demande),
+    amountDisplay: amountDisplay,
+    isMultiMonth: isMultiMonth,
+    numInstallments: numInstallments,
+    monthlyAmount: formatAmount(monthlyAmount),
     totalAmount: formatAmount(apiRequest.montant_total),
     status: apiRequest.statut,
     motif: apiRequest.motif,
@@ -530,8 +547,12 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2">
                         <IconCurrency className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
-                        <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Montant demandé :</span>
-                        <span className="font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>{request.amount}</span>
+                        <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Montant :</span>
+                        <span className="font-semibold" style={{ color: 'rgb(255, 255, 255)' }}>
+                          {request.isMultiMonth ? (
+                            <>{request.amount} <span className="text-xs opacity-75">({request.monthlyAmount}/mois sur {request.numInstallments} mois)</span></>
+                          ) : request.amount}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <IconCalendar className="w-4 h-4" style={{ color: 'rgb(156, 163, 175)' }} />
@@ -687,6 +708,9 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
                       { label: "Montant demandé", value: request.amount, type: "amount" },
+                      ...(request.isMultiMonth ? [
+                        { label: "Paiement échelonné", value: `${request.monthlyAmount}/mois sur ${request.numInstallments} mois`, type: "info" }
+                      ] : []),
                       { label: "Motif de rejet", value: request.motifRejet },
                       { label: "Expéditeur", value: "LengoPay" },
                       { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
@@ -697,6 +721,9 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
                       { label: "Montant demandé", value: request.amount, type: "amount" },
+                      ...(request.isMultiMonth ? [
+                        { label: "Paiement échelonné", value: `${request.monthlyAmount}/mois sur ${request.numInstallments} mois`, type: "info" }
+                      ] : []),
                       { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
                       { label: "Date", value: request.date, type: "date" },
                     ];
@@ -705,6 +732,9 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
                       { label: "Montant demandé", value: request.amount, type: "amount" },
+                      ...(request.isMultiMonth ? [
+                        { label: "Paiement échelonné", value: `${request.monthlyAmount}/mois sur ${request.numInstallments} mois`, type: "info" }
+                      ] : []),
                       { label: "Frais de service", value: `-${request.fraisService}`, type: "fees" },
                       { label: "Montant reçu", value: `${(parseInt((request.amount || "0").replace(/[^0-9]/g, ""), 10) - parseInt((request.fraisService || "0").replace(/[^0-9]/g, ""), 10)).toLocaleString("fr-FR")} GNF`, type: "total" },
                       { label: "Expéditeur", value: "LengoPay" },
@@ -718,6 +748,9 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                       { label: "Statut", value: request.status, type: "status" },
                       { label: "Type de motif", value: request.type },
                       { label: "Montant demandé", value: request.amount, type: "amount" },
+                      ...(request.isMultiMonth ? [
+                        { label: "Paiement échelonné", value: `${request.monthlyAmount}/mois sur ${request.numInstallments} mois`, type: "info" }
+                      ] : []),
                       { label: "Bénéficiaire", value: request.numeroReception || `REF-${request.id.slice(-8)}` },
                       { label: "Date", value: request.date, type: "date" },
                     ];
@@ -735,21 +768,25 @@ export function TransactionHistory({ user }: TransactionHistoryProps = {}) {
                                 ? "text-orange-400"
                                 : item.type === "fees"
                                   ? "text-red-400"
-                                  : item.type === "ref" || item.type === "date"
-                                    ? "text-white"
-                                    : item.type === "status"
-                                      ? "text-blue-300"
-                                      : "text-white"
+                                  : item.type === "info"
+                                    ? "text-blue-400"
+                                    : item.type === "ref" || item.type === "date"
+                                      ? "text-white"
+                                      : item.type === "status"
+                                        ? "text-blue-300"
+                                        : "text-white"
                             }`} style={{
                               color: item.type === "amount" || item.type === "total"
                                 ? 'rgb(251, 146, 60)'
                                 : item.type === "fees"
                                   ? 'rgb(248, 113, 113)'
-                                  : item.type === "ref" || item.type === "date"
-                                    ? 'rgb(255, 255, 255)'
-                                    : item.type === "status"
-                                      ? 'rgb(147, 197, 253)'
-                                      : 'rgb(255, 255, 255)'
+                                  : item.type === "info"
+                                    ? 'rgb(96, 165, 250)'
+                                    : item.type === "ref" || item.type === "date"
+                                      ? 'rgb(255, 255, 255)'
+                                      : item.type === "status"
+                                        ? 'rgb(147, 197, 253)'
+                                        : 'rgb(255, 255, 255)'
                             }}>
                               {item.value}
                             </span>

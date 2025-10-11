@@ -129,10 +129,21 @@ interface ExtendedFinancialData {
   financial?: {
     salaireNet: number;
     salaireRestant: number;
+    salaire_disponible?: number;
     acompteDisponible: number;
     avanceActif: number;
     avanceDisponible: number;
     nombreAvancesValidees?: number;
+    nombreAvancesActives?: number;
+    nombreAvancesMonoMois?: number;
+    nombreAvancesMultiMois?: number;
+    nombreEcheancesEnAttente?: number;
+    detailsAvancesMultiMois?: {
+      montantParMois: number;
+      nombreMoisTotal: number;
+      nombreMoisRestants: number;
+      affichage: string;
+    };
     devise: string;
   };
   workingDaysElapsed?: number;
@@ -524,7 +535,24 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       remaining: "",
       currency: "GNF",
       icon: <IconArrowUpRight className="h-6 w-6" />,
-      change: loading ? "Chargement..." : advanceStatus,
+      change: loading ? "Chargement..." : (
+        financialData?.financial ? 
+          (() => {
+            const mono = financialData.financial.nombreAvancesMonoMois || 0;
+            const multi = financialData.financial.nombreAvancesMultiMois || 0;
+            const details = financialData.financial.detailsAvancesMultiMois;
+            const total = financialData.financial.nombreAvancesActives || 0;
+            
+            if (mono > 0 && multi > 0 && details) {
+              return `${total} avance${total > 1 ? 's' : ''} active${total > 1 ? 's' : ''} • ${details.montantParMois.toLocaleString()} GNF/mois sur ${details.nombreMoisTotal} mois`;
+            } else if (multi > 0 && details) {
+              return `${details.montantParMois.toLocaleString()} GNF/mois sur ${details.nombreMoisTotal} mois (${details.nombreMoisRestants} restant${details.nombreMoisRestants > 1 ? 's' : ''})`;
+            } else {
+              return advanceStatus;
+            }
+          })()
+          : advanceStatus
+      ),
       trend: "neutral" as const,
       color: "from-[#FF671E] to-[#FF8E53]",
       pulse: (financialAmounts?.totalActiveAdvances || 0) > 0 ? true : false,

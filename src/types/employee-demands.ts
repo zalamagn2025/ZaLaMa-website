@@ -9,7 +9,9 @@ export interface SalaryAdvanceDemand {
   numero_reception?: string;
   frais_service: number;
   montant_total: number;
-  statut: 'En attente' | 'Approuvée' | 'Rejetée';
+  statut: 'En attente' | 'Approuvée' | 'Rejetée' | 'Validé' | 'EFFECTUEE' | 'Rejeté' | 'Annulé';
+  num_installments?: number;
+  repayment_mode?: string;
   created_at: string;
   updated_at: string;
 }

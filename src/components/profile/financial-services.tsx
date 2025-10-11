@@ -318,7 +318,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
           {mappedServices
-            .filter(service => !service.nom.toLowerCase().includes("marketing"))
+            .filter(service => !service.nom.toLowerCase().includes("marketing") && !service.nom.toLowerCase().includes("conseil"))
             .map((service, index) => (
               <motion.div
                 key={service.id}
@@ -397,11 +397,13 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
                 </div>
               </motion.div>
             ))}
+          
+          {/* Carte Paiement de salaire - au milieu */}
           <motion.div
             key="payment-mock"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30 transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
           >
             <motion.div
@@ -412,7 +414,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
               }`}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             >
               {isPaymentActive ? "Activé" : "Désactivé"}
             </motion.div>
@@ -442,7 +444,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
                 </p>
               </div>
               <div className="flex gap-2">
-                {/* Bouton Bulletin de paie - toujours visible quand il y a un salaire */}
                 {salaireDisponible > 0 && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -466,23 +467,93 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
                     )}
                   </motion.button>
                 )}
-                {/* Bouton Retirer - seulement quand le service est actif */}
-                {isPaymentActive && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handlePaymentAction('manage')
-                    }}
-                    className="inline-flex items-center text-sm font-medium text-white px-3 py-2 bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] rounded-lg transition-all duration-300"
-                  >
-                    Retirer <IconArrowRight className="ml-1 h-4 w-4" />
-                  </motion.button>
-                )}
+                <motion.button
+                  whileHover={isPaymentActive ? { scale: 1.1, x: 5 } : {}}
+                  whileTap={isPaymentActive ? { scale: 0.95 } : {}}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (isPaymentActive) {
+                      setShowPaymentManagement(true)
+                    }
+                  }}
+                  disabled={!isPaymentActive}
+                  className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
+                    isPaymentActive
+                      ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
+                      : "bg-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  Retirer <IconArrowRight className="ml-1 h-4 w-4" />
+                </motion.button>
               </div>
             </div>
           </motion.div>
+          
+          {/* Carte Conseil financier - en dernier */}
+          {mappedServices
+            .filter(service => !service.nom.toLowerCase().includes("marketing") && service.nom.toLowerCase().includes("conseil"))
+            .map((service, index) => (
+              <motion.div
+                key={service.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                whileHover={service.eligibility === "Disponible" ? { 
+                  scale: 1.03,
+                  boxShadow: "0 8px 20px rgba(34, 197, 94, 0.3)"
+                } : {}}
+                className={`bg-[#010D3E]/20 backdrop-blur-sm rounded-xl p-6 border border-green-500/30 ${service.eligibility === "Disponible" ? "cursor-pointer" : "cursor-not-allowed opacity-60"} transition-all duration-300 relative overflow-hidden flex flex-col h-64`}
+                onClick={() => {
+                  if (service.eligibility === "Disponible") {
+                    setIsChatbotOpen(true)
+                  }
+                }}
+              >
+                <motion.div
+                  className={`absolute top-2 right-2 text-white text-xs font-medium px-2 py-1 rounded-full ${
+                    service.eligibility === "Disponible" 
+                      ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53]" 
+                      : "bg-gray-500"
+                  }`}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                >
+                  {service.eligibility}
+                </motion.div>
+                <div className="flex items-center mb-4">
+                  <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+                    {service.icon}
+                  </motion.div>
+                  <h3 className="ml-3 text-lg font-semibold text-white">{service.title}</h3>
+                </div>
+                <p className="text-white/80 text-sm mb-4 flex-grow">{service.description}</p>
+                <div className="flex justify-between items-center mt-auto">
+                  <div>
+                    <p className="text-xs text-white/60">Pourcentage max</p>
+                    <p className="font-semibold text-white">{service.maxpourcent}</p>
+                  </div>
+                  <motion.button
+                    whileHover={service.eligibility === "Disponible" ? { scale: 1.1, x: 5 } : {}}
+                    whileTap={service.eligibility === "Disponible" ? { scale: 0.95 } : {}}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (service.eligibility === "Disponible") {
+                        setIsChatbotOpen(true)
+                      }
+                    }}
+                    className={`inline-flex items-center text-sm font-medium text-white px-4 py-2 rounded-lg transition-all duration-300 ${
+                      service.eligibility === "Disponible"
+                        ? "bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF551E] hover:to-[#FF7E53]"
+                        : "bg-gray-500 cursor-not-allowed"
+                    }`}
+                    disabled={service.eligibility !== "Disponible"}
+                  >
+                    Demander <IconArrowRight className="ml-1 h-4 w-4" />
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
         </div>
       )}
 

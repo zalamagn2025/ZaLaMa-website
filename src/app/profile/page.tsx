@@ -433,16 +433,14 @@ export default function ProfilePage() {
                         </TabsContent>
                         <TabsContent value="payments" className="mt-2">
                           {userData && (
-                            <div className="max-w-7xl mx-auto px-4">
-                              <PaymentList
-                                payments={allPayments}
-                                onStatusChange={handleStatusChange}
-                                onDownload={handleDownload}
-                                onShare={handleShare}
-                                onRefresh={() => console.log('Refresh payments')}
-                                isLoading={paymentsLoading}
-                              />
-                            </div>
+                            <PaymentList
+                              payments={allPayments}
+                              onStatusChange={handleStatusChange}
+                              onDownload={handleDownload}
+                              onShare={handleShare}
+                              onRefresh={() => console.log('Refresh payments')}
+                              isLoading={paymentsLoading}
+                            />
                           )}
                         </TabsContent>
                       </motion.div>

@@ -46,10 +46,21 @@ export interface EmployeeData {
   financial?: {
     salaireNet: number;
     salaireRestant: number;
+    salaire_disponible?: number;
     acompteDisponible: number;
     avanceActif: number;
     avanceDisponible: number;
     nombreAvancesValidees?: number;
+    nombreAvancesActives?: number;
+    nombreAvancesMonoMois?: number;
+    nombreAvancesMultiMois?: number;
+    nombreEcheancesEnAttente?: number;
+    detailsAvancesMultiMois?: {
+      montantParMois: number;
+      nombreMoisTotal: number;
+      nombreMoisRestants: number;
+      affichage: string;
+    };
     devise: string;
   };
   workCalendar?: {
@@ -98,10 +109,21 @@ export interface EmployeeProfileData {
   financial: {
     salaireNet: number;
     salaireRestant: number;
+    salaire_disponible?: number;
     acompteDisponible: number;
     avanceActif: number;
     avanceDisponible: number;
     nombreAvancesValidees: number;
+    nombreAvancesActives?: number;
+    nombreAvancesMonoMois?: number;
+    nombreAvancesMultiMois?: number;
+    nombreEcheancesEnAttente?: number;
+    detailsAvancesMultiMois?: {
+      montantParMois: number;
+      nombreMoisTotal: number;
+      nombreMoisRestants: number;
+      affichage: string;
+    };
     devise: string;
   };
   workCalendar: {
