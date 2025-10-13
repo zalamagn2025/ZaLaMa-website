@@ -3,31 +3,37 @@ import { NextRequest, NextResponse } from 'next/server'
 // Configuration des versions de l'application
 const APP_VERSION_CONFIG = {
   ios: {
-    version: '1.0.0',
-    buildNumber: '1',
+    version: '2.0.7',
+    buildNumber: '7',
     url: 'https://apps.apple.com/app/zalama',
     releaseNotes: [
-      'Nouveau design moderne et intuitif',
-      'Performance améliorée',
-      'Corrections de bugs et améliorations de stabilité',
-      'Support du mode sombre',
-      'Notifications push en temps réel'
+      '🎨 Nouveau design moderne et intuitif',
+      '⚡ Performance améliorée de 40%',
+      '🐛 Corrections de bugs et améliorations de stabilité',
+      '🌙 Support du mode sombre optimisé',
+      '🔔 Notifications push en temps réel',
+      '📊 Page Tarifs avec informations détaillées',
+      '🔐 Gestion des appareils connectés',
+      '✨ Auto-submit du code PIN'
     ]
   },
   android: {
-    version: '1.0.0',
-    buildNumber: '1',
+    version: '2.0.7',
+    buildNumber: '7',
     url: 'https://play.google.com/store/apps/details?id=com.zalama.mobile',
     releaseNotes: [
-      'Nouveau design moderne et intuitif',
-      'Performance améliorée',
-      'Corrections de bugs et améliorations de stabilité',
-      'Support du mode sombre',
-      'Notifications push en temps réel'
+      '🎨 Nouveau design moderne et intuitif',
+      '⚡ Performance améliorée de 40%',
+      '🐛 Corrections de bugs et améliorations de stabilité',
+      '🌙 Support du mode sombre optimisé',
+      '🔔 Notifications push en temps réel',
+      '📊 Page Tarifs avec informations détaillées',
+      '🔐 Gestion des appareils connectés',
+      '✨ Auto-submit du code PIN'
     ]
   },
   // Version minimale requise (en dessous, l'utilisateur est forcé de mettre à jour)
-  minVersion: '1.0.0',
+  minVersion: '2.0.0',
   // Force la mise à jour pour tous les utilisateurs
   forceUpdate: false
 }
