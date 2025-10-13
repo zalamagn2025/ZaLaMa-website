@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Configuration des versions de l'application
+// Version actuelle sur App Store: 1.0.2 (https://apps.apple.com/fr/app/zalama/id6752520885)
 const APP_VERSION_CONFIG = {
   ios: {
-    version: '2.0.7',
-    buildNumber: '7',
-    url: 'https://apps.apple.com/app/zalama',
+    version: '1.0.3',
+    buildNumber: '3',
+    url: 'https://apps.apple.com/fr/app/zalama/id6752520885',
     releaseNotes: [
       '🎨 Nouveau design moderne et intuitif',
       '⚡ Performance améliorée de 40%',
@@ -18,8 +19,8 @@ const APP_VERSION_CONFIG = {
     ]
   },
   android: {
-    version: '2.0.7',
-    buildNumber: '7',
+    version: '1.0.3',
+    buildNumber: '3',
     url: 'https://play.google.com/store/apps/details?id=com.zalama.mobile',
     releaseNotes: [
       '🎨 Nouveau design moderne et intuitif',
@@ -33,7 +34,7 @@ const APP_VERSION_CONFIG = {
     ]
   },
   // Version minimale requise (en dessous, l'utilisateur est forcé de mettre à jour)
-  minVersion: '2.0.0',
+  minVersion: '1.0.0',
   // Force la mise à jour pour tous les utilisateurs
   forceUpdate: false
 }
