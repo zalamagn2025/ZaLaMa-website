@@ -8,11 +8,7 @@ const APP_VERSION_CONFIG = {
     buildNumber: '12',
     url: 'https://apps.apple.com/fr/app/zalama/id6752520885',
     releaseNotes: [
-      'Design moderne et intuitif',
       'Performance améliorée (+40%)',
-      'Corrections de bugs et stabilité renforcée',
-      'Mode sombre optimisé',
-      'Notifications push en temps réel',
       'Page Tarifs détaillée',
       'Gestion des appareils connectés',
       'Saisie automatique du code PIN'
