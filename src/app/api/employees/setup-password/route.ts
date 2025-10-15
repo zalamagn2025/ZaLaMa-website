@@ -80,16 +80,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, password } = body;
+    const { token, password, pin } = body;
+    
+    // Accepter soit "password" soit "pin" pour la compatibilité
+    const actualPassword = password || pin;
 
-    if (!token || !password) {
+    if (!token || !actualPassword) {
       return NextResponse.json(
         { success: false, error: 'Token et mot de passe requis' },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    if (actualPassword.length < 6) {
       return NextResponse.json(
         { success: false, error: 'Le mot de passe doit contenir au moins 6 caractères' },
         { status: 400 }
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hasher le mot de passe
-    const hashedPassword = hashPassword(password);
+    const hashedPassword = hashPassword(actualPassword);
 
     // Mettre à jour l'employé avec le mot de passe hashé et consommer le token
     const { error: updateError } = await supabase
@@ -145,7 +148,7 @@ export async function POST(request: NextRequest) {
       try {
         const { error: authError } = await supabase.auth.admin.updateUserById(
           employee.user_id,
-          { password: password }
+          { password: actualPassword }
         );
 
         if (authError) {
