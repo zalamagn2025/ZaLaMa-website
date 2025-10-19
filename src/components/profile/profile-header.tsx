@@ -1,22 +1,17 @@
 "use client";
 
-import { IconBell, IconCalendar, IconCrown, IconSettings, IconX, IconEye, IconTrash } from "@tabler/icons-react";
+import { IconSettings } from "@tabler/icons-react";
 import { useEmployeeAuth } from "../../contexts/EmployeeAuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProfileSettings } from "./profile-settings";
 import { AdCarousel } from "./AdCarousel";
+import { NotificationDropdown } from "../notifications/NotificationDropdown";
 import { UserWithEmployeData } from "@/types/employe";
 import { Partenaire } from "@/types/partenaire";
 import { User, Mail, Phone, MapPin, Briefcase, Building, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-interface Notification {
-  id: number;
-  message: string;
-  timestamp: string;
-}
 
 interface ProfileHeaderProps {
   user: UserWithEmployeData;
@@ -27,15 +22,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
   const { employee } = useEmployeeAuth(); // ✅ Utiliser employee du nouveau contexte
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    { id: 1, message: "Nouveau message de l'équipe financière", timestamp: "2025-05-18 09:30" },
-    { id: 2, message: "Mise à jour du profil validée", timestamp: "2025-05-17 14:15" },
-    { id: 3, message: "Rappel : réunion à 15h", timestamp: "2025-05-16 08:45" },
-    { id: 4, message: "Document approuvé par le manager", timestamp: "2025-05-15 11:20" },
-    { id: 5, message: "Nouveau projet assigné", timestamp: "2025-05-14 16:50" },
-  ]);
-  const [showDetails, setShowDetails] = useState<Notification | null>(null);
 
   // ✅ Utiliser les données du contexte EmployeeAuthContext en priorité, sinon fallback sur les props
   const displayUser = (employee || user) as any;
@@ -101,128 +87,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
     const date = new Date(dateStr);
     return date.toString() !== "Invalid Date" ? date.toLocaleDateString("fr-FR") : "Date invalide";
   };
-
-  // Notifications View Component
-  function NotificationsView({ onClose }: { onClose: () => void }) {
-    const handleViewDetails = (notification: Notification) => {
-      setShowDetails(notification);
-    };
-
-    const handleDelete = (id: number) => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    };
-
-    return (
-      <>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed inset-0 flex items-center justify-center z-50 p-4"
-        >
-          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-          <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-lg shadow-xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">Notifications</h2>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={onClose}
-                className="text-gray-300 hover:text-[#FFFFFF]"
-                aria-label="Fermer les notifications"
-              >
-                <IconX size={24} />
-              </motion.button>
-            </div>
-            
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <p className="text-gray-300 text-center py-4">Aucune notification</p>
-              ) : (
-                notifications.map((notification) => (
-                  <motion.div
-                    key={notification.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="p-4 bg-white/5 border border-[#FF671E]/20 rounded-lg text-gray-200 hover:bg-white/10 transition-all shadow-sm"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{notification.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">{notification.timestamp}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleViewDetails(notification)}
-                          className="p-1 text-gray-400 hover:text-[#FF671E] transition-colors"
-                          aria-label="Voir les détails"
-                        >
-                          <IconEye size={16} />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleDelete(notification.id)}
-                          className="p-1 text-gray-400 hover:text-red-400 transition-colors"
-                          aria-label="Supprimer la notification"
-                        >
-                          <IconTrash size={16} />
-                        </motion.button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Modal de détails */}
-        <AnimatePresence>
-          {showDetails && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-0 flex items-center justify-center z-50 p-4"
-            >
-              <div className="absolute inset-0 bg-black/50" onClick={() => setShowDetails(null)} />
-              <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-md shadow-xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">Détails</h3>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowDetails(null)}
-                    className="text-gray-300 hover:text-[#FFFFFF]"
-                    aria-label="Fermer les détails"
-                  >
-                    <IconX size={24} />
-                  </motion.button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-gray-300 text-sm">Message</p>
-                    <p className="text-white font-medium">{showDetails.message}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-300 text-sm">Date</p>
-                    <p className="text-white">{showDetails.timestamp}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </>
-    );
-  }
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-2xl">
@@ -437,16 +301,7 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowNotifications(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 border border-white/20 shadow-sm hover:bg-white/20 transition-all text-sm"
-            >
-              <IconBell size={20} className="text-[#FFFFFF]" />
-              <span className="sr-only md:not-sr-only text-[#FFFFFF]">Notifications</span>
-            </motion.button>
-            
+            <NotificationDropdown />
           </motion.div>
         </div>
       </motion.div>
@@ -466,10 +321,6 @@ export function ProfileHeader({ user, entreprise }: ProfileHeaderProps) {
         )}
       </AnimatePresence>
 
-      {/* Panneau des notifications */}
-      <AnimatePresence>
-        {showNotifications && <NotificationsView onClose={() => setShowNotifications(false)} />}
-      </AnimatePresence>
     </div>
   );
 }
