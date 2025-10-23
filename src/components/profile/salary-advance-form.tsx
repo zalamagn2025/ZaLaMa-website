@@ -783,9 +783,37 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       }, 3000)
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite'
-      showToast('error', errorMessage)
-      setError(errorMessage)
+      let errorMessage = 'Une erreur inattendue s\'est produite';
+      
+      // Parser l'erreur pour extraire le message détaillé
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        
+        // Gestion des erreurs spécifiques
+        if (errorMessage.includes('Demande multi-mois refusée')) {
+          // Cas spécifique : tentative multi-mois avec avances actives
+          const match = errorMessage.match(/vous avez déjà (\d+) avance\(s\) active\(s\).*?pour un total de ([0-9,]+) GNF/);
+          const nombreAvances = match ? match[1] : 'des';
+          const montantTotal = match ? match[2] : '';
+          
+          showToast('error', `❌ Multi-mois impossible : Vous avez ${nombreAvances} avance(s) active(s) (${montantTotal} GNF). Les demandes multi-mois nécessitent d'avoir 0 avance en cours. Remboursez d'abord vos avances actives.`);
+        } else if (errorMessage.includes('avances actives') || errorMessage.includes('dépasseriez la limite')) {
+          // Cas général : limite de plafond dépassée
+          const match = errorMessage.match(/vous avez déjà ([0-9,]+) GNF/);
+          const avancesActives = match ? match[1] : 'des';
+          
+          showToast('warning', `⚠️ Limite atteinte : Vous avez déjà ${avancesActives} GNF d'avances en cours. Avec cette demande, vous dépasseriez votre plafond autorisé. Réduisez le montant ou remboursez vos avances actives.`);
+        } else if (errorMessage.includes('Montant maximum autorisé: 0 GNF')) {
+          showToast('error', '❌ Plafond atteint : Vous avez déjà utilisé tout votre plafond d\'avances. Remboursez vos avances actives pour débloquer de nouvelles demandes.');
+        } else {
+          showToast('error', errorMessage);
+        }
+      } else {
+        showToast('error', errorMessage);
+      }
+      
+      setError(errorMessage);
+      setCurrentStep('form'); // Retourner au formulaire pour que l'utilisateur puisse ajuster
     }
   }
 
@@ -1101,17 +1129,28 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                       <div className="p-4 rounded-xl bg-gradient-to-r from-[#0A1A5A] to-[#142B7F] border border-[#1A2B6B]">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-3">
-                         <div className="p-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
+                         <div className={`p-1.5 rounded-lg ${avanceActive > 0 ? 'bg-gray-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'}`}>
                               <IconCalendar className="h-4 w-4 text-white" />
                          </div>
                             <div>
-                              <h4 className="text-sm font-semibold text-white">Avance sur plusieurs mois</h4>
-                              <p className="text-xs text-gray-400">Étalez votre avance sur 2-3 mois</p>
+                              <h4 className={`text-sm font-semibold ${avanceActive > 0 ? 'text-gray-400' : 'text-white'}`}>
+                                Avance sur plusieurs mois
+                              </h4>
+                              <p className="text-xs text-gray-400">
+                                {avanceActive > 0 
+                                  ? '🔒 Remboursez vos avances actives d\'abord' 
+                                  : 'Étalez votre avance sur 2-3 mois'}
+                              </p>
                        </div>
                        </div>
                           <button
                             type="button"
+                            disabled={avanceActive > 0}
                             onClick={() => {
+                              if (avanceActive > 0) {
+                                showToast('warning', '⚠️ Les demandes multi-mois nécessitent d\'avoir 0 avance en cours. Remboursez d\'abord vos avances actives.');
+                                return;
+                              }
                               setEnableMultiMonths(!enableMultiMonths)
                               if (!enableMultiMonths) {
                                 // Quand on active le mode multi-mois, définir 2 mois par défaut
@@ -1122,6 +1161,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               }
                             }}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                              avanceActive > 0 ? 'bg-gray-700 opacity-50 cursor-not-allowed' : 
                               enableMultiMonths ? 'bg-[#FF671E]' : 'bg-gray-600'
                             }`}
                           >
