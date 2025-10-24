@@ -10,6 +10,7 @@ import { defaultMetadata } from "@/lib/metadata";
 import { generateOrganizationSchema } from "@/lib/structured-data";
 import { SEOProvider } from "@/components/SEO/SEOProvider";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -65,6 +66,7 @@ export default function RootLayout({
           </EmployeeAuthProvider>
         </ThemeProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
