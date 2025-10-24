@@ -9,6 +9,7 @@ import { AutocompleteDisabler } from "@/components/auth/AutocompleteDisabler";
 import { defaultMetadata } from "@/lib/metadata";
 import { generateOrganizationSchema } from "@/lib/structured-data";
 import { SEOProvider } from "@/components/SEO/SEOProvider";
+import { Analytics } from "@vercel/analytics/next";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -63,6 +64,7 @@ export default function RootLayout({
             </AccountAuthProvider>
           </EmployeeAuthProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
