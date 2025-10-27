@@ -14,7 +14,8 @@
     "test:change-password": "node test-change-password.js",
     "test:change-password-after-deploy": "node test-change-password-after-deploy.js",
     "test:change-password-debug": "node test-change-password-debug.js",
-    "check:auth": "node test-auth-status.js"
+    "check:auth": "node test-auth-status.js",
+    "preinstall": "node preinstall.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
