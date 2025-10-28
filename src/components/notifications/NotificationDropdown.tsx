@@ -108,15 +108,18 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
   }
 
   const handleNotificationClick = async (notification: Notification) => {
+    console.log('✅ Clic sur marquer comme lu - notification:', notification.id)
     // Marquer comme lu
     try {
       // Récupérer le token d'accès depuis localStorage
       const accessToken = localStorage.getItem('employee_access_token')
       
       if (!accessToken) {
+        console.log('❌ Pas de token d\'accès')
         return
       }
 
+      console.log('🔄 Appel API pour marquer comme lu...')
       await fetch('/api/notifications?action=mark-read', {
         method: 'PUT',
         headers: { 
@@ -125,6 +128,7 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
         },
         body: JSON.stringify({ notification_id: notification.id })
       })
+      console.log('✅ Notification marquée comme lue')
       setUnreadCount(prev => Math.max(0, prev - 1))
     } catch (err) {
       console.error('Erreur lors de la mise à jour:', err)
@@ -137,14 +141,17 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
   }
 
   const handleDeleteNotification = async (id: number) => {
+    console.log('🗑️ Clic sur supprimer - notification:', id)
     try {
       // Récupérer le token d'accès depuis localStorage
       const accessToken = localStorage.getItem('employee_access_token')
       
       if (!accessToken) {
+        console.log('❌ Pas de token d\'accès')
         return
       }
 
+      console.log('🔄 Appel API pour supprimer...')
       await fetch('/api/notifications?action=delete', {
         method: 'DELETE',
         headers: { 
@@ -153,6 +160,7 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
         },
         body: JSON.stringify({ notification_id: id })
       })
+      console.log('✅ Notification supprimée')
       setNotifications(prev => prev.filter(n => n.id !== id))
       setUnreadCount(prev => Math.max(0, prev - 1))
     } catch (err) {
@@ -306,8 +314,17 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
                 className="fixed inset-0 flex items-center justify-center p-4"
                 style={{ zIndex: 999999 }}
               >
-                <div className="absolute inset-0 bg-black/50" onClick={() => setIsOpen(false)} />
-                <div className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-lg shadow-xl">
+                <div className="absolute inset-0 bg-black/50" onClick={(e) => {
+              console.log('🖱️ Clic sur overlay - fermeture modale')
+              setIsOpen(false)
+            }} />
+                <div 
+                  className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-lg shadow-xl"
+                  onClick={(e) => {
+                    console.log('🖱️ Clic sur conteneur modal')
+                    e.stopPropagation()
+                  }}
+                >
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#FF671E] to-[#FF8E53] bg-clip-text text-transparent">Notifications</h2>
                     <motion.button
@@ -336,6 +353,7 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: -20 }}
                           className="p-4 bg-white/5 border border-[#FF671E]/20 rounded-lg text-gray-200 hover:bg-white/10 transition-all shadow-sm"
+                      onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex justify-between items-start">
                             <div>
@@ -354,7 +372,10 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
-                                onClick={() => handleNotificationClick(notification)}
+                                onClick={(e) => {
+                              e.stopPropagation()
+                              handleNotificationClick(notification)
+                            }}
                                 className="p-1 text-gray-400 hover:text-[#FF671E] transition-colors"
                                 aria-label="Marquer comme lu"
                               >
@@ -363,7 +384,10 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
-                                onClick={() => handleDeleteNotification(notification.id)}
+                                onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteNotification(notification.id)
+                            }}
                                 className="p-1 text-gray-400 hover:text-red-400 transition-colors"
                                 aria-label="Supprimer la notification"
                               >
