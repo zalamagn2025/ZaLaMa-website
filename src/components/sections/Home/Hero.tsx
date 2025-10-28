@@ -47,7 +47,7 @@ export function HeroSection() {
                         primaryButtonAction={handlePrimaryButtonClick}
                         secondaryButtonText="Devenir client"
                         secondaryButtonAction={handleSecondaryButtonClick}
-                        imageSrc="/images/ZaLaMawebappMockup.png" // Example image
+                        imageSrc="/images/Free_K_Mockups_iPhone_15_Pro.png" // Example image
                         waveColor1="rgba(255, 103, 30, 0.30)"
                         waveColor2="rgba(255, 103, 30, 0.50)"
                         waveAmplitude={30}

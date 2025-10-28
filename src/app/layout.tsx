@@ -9,6 +9,7 @@ import { AutocompleteDisabler } from "@/components/auth/AutocompleteDisabler";
 import { defaultMetadata } from "@/lib/metadata";
 import { generateOrganizationSchema } from "@/lib/structured-data";
 import { SEOProvider } from "@/components/SEO/SEOProvider";
+import { FontAwesomeLoader } from "@/components/common/FontAwesomeLoader";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -23,12 +24,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="relative" suppressHydrationWarning={true}>
       <head>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-          crossOrigin="anonymous"
-          referrerPolicy="no-referrer"
-        />
+        {/* Font Awesome est chargé via next.config.js pour éviter les erreurs d'hydratation */}
         {/* Désactiver l'auto-complétion et les suggestions de mots de passe */}
         <meta name="format-detection" content="telephone=no" />
         <meta name="autocomplete" content="off" />
@@ -44,20 +40,15 @@ export default function RootLayout({
         {/* Balises structurées globales */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: generateOrganizationSchema() }}
         />
       </head>
-      <body
-        className={twMerge(
-          dmSans.className, 
-          "antialiased bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100"
-        )}
-      >
-        <ThemeProvider>
+      <body className={twMerge("min-h-screen bg-background font-sans antialiased", dmSans.className)}>
+        <FontAwesomeLoader />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <EmployeeAuthProvider>
             <AccountAuthProvider>
-              <AutocompleteDisabler />
-              <SEOProvider canonicalUrl="https://www.zalamagn.com">
+              <SEOProvider>
+                <AutocompleteDisabler />
                 {children}
               </SEOProvider>
             </AccountAuthProvider>

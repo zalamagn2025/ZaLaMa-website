@@ -7,12 +7,12 @@ import { ChevronDown } from "lucide-react";
 const FAQS = {
   salarie: [
     {
-      question: "Qui peut utiliser ZaLaMa ?",
-      answer: "Les étudiants, les salariés et les pensionnaires affiliés à une entreprise ou minsitère partenaire.",
+      question: "Quels sont les avantages de ZaLaMa pour les employés ?",
+      answer: "• Moins de stress et soucis financiers\n• Motivation et pouvoir d'achat accrus\n• Meilleure gestion du budget personnel\n• Moins de risques de surendettement\n• Paiement échelonné dans nos boutiques partenaires\n• Conseil financier gratuit via notre IA",
     },
     {
-      question: "Quels sont les avantages de ZaLaMa pour un utilisateur ?",
-      answer: "•Réduction du stress financier en cas d'urgence.\n• Augmentation du pouvoir d'achat sans recourir à l'endettement.\n• Amélioration de la gestion budgétaire personnelle.\n• Réduction des inégalités en matière d'accès au financement, notamment pour les plus modestes.\n• Diminution des risques de surendettement en limitant les prêts informels et usuriers.",
+      question: "Qui peut utiliser ZaLaMa ?",
+      answer: "Les étudiants, les salariés et les pensionnaires affiliés à une entreprise ou ministère partenaire.",
     },
     {
       question: "Quel est le montant maximum que je peux demander ?",
@@ -33,8 +33,8 @@ const FAQS = {
   ],
   employeur: [
     {
-      question: "Quels sont les avantages pour une entreprise d'adhérer à ZaLaMa ?",
-      answer: "• Renforcement de la relation employeur-employé en valorisant votre politique sociale.\n• Réduction du turnover et fidélisation des talents.\n• Augmentation de la motivation et de la productivité des collaborateurs.\n• Gestion sereine des éventuels retards de paiement sans tensions internes.\n• Élimination des demandes d'avances internes souvent difficiles à gérer.",
+      question: "Quels sont les avantages de ZaLaMa pour les employeurs ?",
+      answer: "• Plus de gestion compliquée des avances internes\n• Retards de paiement pris en charge sans tensions\n• Productivité accrue des employés et de l'entreprise\n• Fidélisation et réduction du turnover\n• Meilleure relation employeur-employé\n• Paiement à temps des salaires via ZaLaMa",
     },
     {
       question: "Comment l'entreprise est-elle impliquée dans le processus ?",

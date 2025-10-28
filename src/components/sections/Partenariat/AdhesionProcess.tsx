@@ -16,11 +16,13 @@ const steps = [
   {
     color: "primary",
     icon: <UserPlus className="w-6 h-6 text-primary" />,
-    title: "Étape 1 : Prise de contact",
+    title: "Étape 1 : Adhésion",
     content: (
       <ul className="list-disc list-inside">
-        <li>L&apos;entreprise manifeste son intérêt via le site web, un appel ou une rencontre physique</li>
-        <li>L&apos;entreprise remplit le formulaire de demande de partenariat via le site.</li>
+        <li>L&apos;entreprise remplit un formulaire de collaboration via le site.
+        </li>
+        <li>L&apos;entreprise signe un contrat
+        .</li>
       </ul>
     ),
   },
@@ -41,53 +43,40 @@ const steps = [
   {
     color: "warning",
     icon: <ShieldCheck className="w-6 h-6 text-warning" />,
-    title: "Étape 2 : Analyse et validation",
-    content: <p>ZaLaMa analyse la viabilité de l&apos;entreprise. En cas de validation, un contrat est proposé.</p>,
+    title: "Étape 2 : Mise en place",
+    content:(
+      <ul className="list-disc list-inside">
+        <li>L&apos;entreprise reçoit un tableau de bord RH.
+
+        </li>
+        <li>Les employés s'inscrivent sur l&apos;application ou via le site
+        .</li>
+      </ul>
+    ),
   },
   {
     color: "destructive",
     icon: <Signature className="w-6 h-6 text-destructive" />,
-    title: "Étape 3 : Partenariat",
-    content: (
-      <ul className="list-disc list-inside">
-        <li>Signature du contrat</li>
-        <li>Paiement des frais d&apos;adhésion : 1 000 000 GNF</li>
-      </ul>
-    ),
+    title: "Étape 3 : Activation des comptes",
+    content: <div>Le RH vérifie les informations des inscrits et active leurs comptes</div>,
   },
   {
     color: "blue",
     icon: <Users className="w-6 h-6 text-blue" />,
-    title: "Étape 4 : Intégration et formation",
-    content: (
-      <ul className="list-disc list-inside">
-        <li>Transmission des informations des bénéficiaires</li>
-        <li>Création de comptes utilisateurs</li>
-        <li>Formation RH et accompagnement</li>
-      </ul>
-    ),
+    title: "Étape 4 : Demande d'avance",
+    content: <div>En quelques clics, le salarié fait sa demande d'avance. Déblocage rapide et sécurisé.</div>
   },
   {
     color: "primary",
     icon: <Rocket className="w-6 h-6 text-primary" />,
-    title: "Étape 5 : Activation des services",
-    content: (
-      <ul className="list-disc list-inside">
-        <li>Demandes via l&apos;application ou site web ZaLaMa</li>
-        <li>Gestion via le tableau de bord</li>
-      </ul>
-    ),
+    title: "Étape 5 : Remboursement",
+    content: <div>À la paie, l'entreprise retient à la source, sur les salaires, les montants avancés, puis les reverse intégralement à ZaLaMa</div>
   },
   {
     color: "success",
     icon: <BarChart2 className="w-6 h-6 text-success" />,
-    title: "Étape 6 : Suivi et évaluation continue",
-    content: (
-      <ul className="list-disc list-inside">
-        <li>Suivi mensuel</li>
-        <li>Support et ajustements</li>
-      </ul>
-    ),
+    title: "Étape 6 : Suivi & fidélité",
+    content: <div>Offres personnalisées, relances régulières et programme de fidélité.</div>
   },
 ];
 
@@ -98,7 +87,7 @@ const AdhesionProcess = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="mb-14 mx-auto max-w-3xl text-center space-y-4">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent inline-block">
-            Processus d&apos;adhésion
+            Comment ça marche ?
           </h2>
           <p className="text-base sm:text-lg text-zalama-text-secondary max-w-[700px] mx-auto">
             Découvrez comment devenir partenaire de ZaLaMa
