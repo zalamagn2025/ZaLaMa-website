@@ -39,7 +39,7 @@ export function AboutHeroCarousel() {
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
                 <h2 className="zalama-font text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-primary via-orange-500 to-blue-600 bg-clip-text text-transparent tracking-tight leading-tight">
-                  Présentation de ZaLaMa
+                C’est quoi ZaLaMa ?
                 </h2>
                 <div className="w-20 h-1 bg-gradient-to-r from-primary to-orange-500 rounded-full" />
               </motion.div>

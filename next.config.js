@@ -3,8 +3,22 @@ const nextConfig = {
   // Configuration CORS globale pour les API routes
   async headers() {
     return [
+      // Configuration Font Awesome
       {
-        // Appliquer à toutes les API routes
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Link',
+            value: '<https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css>; rel=preload; as=style; onload="this.onload=null;this.rel=\'stylesheet\'"',
+          },
+          {
+            key: 'Link',
+            value: '<https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css>; rel=stylesheet',
+          },
+        ],
+      },
+      // Configuration CORS pour les API
+      {
         source: '/api/:path*',
         headers: [
           {
