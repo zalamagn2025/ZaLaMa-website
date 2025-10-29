@@ -25,10 +25,33 @@ export default function ResetPasswordPage() {
   );
 
   useEffect(() => {
-    // Récupérer le token depuis l'URL
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const type = searchParams.get('type');
+    // Récupérer le token depuis l'URL (query params OU hash)
+    let accessToken = searchParams.get('access_token');
+    let refreshToken = searchParams.get('refresh_token');
+    let type = searchParams.get('type');
+
+    // Si pas dans les query params, vérifier le hash (# dans l'URL)
+    if (!accessToken && typeof window !== 'undefined') {
+      const hash = window.location.hash.substring(1); // Enlever le #
+      const hashParams = new URLSearchParams(hash);
+      accessToken = hashParams.get('access_token');
+      refreshToken = hashParams.get('refresh_token');
+      type = hashParams.get('type');
+
+      // Mettre à jour la session Supabase avec le token du hash
+      if (accessToken && type === 'recovery') {
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ''
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Erreur lors de la configuration de la session:', error);
+          } else {
+            console.log('✅ Session configurée avec succès');
+          }
+        });
+      }
+    }
 
     if (accessToken && type === 'recovery') {
       setToken(accessToken);
@@ -40,7 +63,7 @@ export default function ResetPasswordPage() {
       setMessageType('error');
       setIsValidToken(false);
     }
-  }, [searchParams]);
+  }, [searchParams, supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

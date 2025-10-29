@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Version actuelle sur App Store: 1.0.2 (https://apps.apple.com/fr/app/zalama/id6752520885)
 const APP_VERSION_CONFIG = {
   ios: {
-    version: '2.0.12',
+    version: '2.0.11',
     buildNumber: '12',
     url: 'https://apps.apple.com/fr/app/zalama/id6752520885',
     releaseNotes: [
@@ -15,7 +15,7 @@ const APP_VERSION_CONFIG = {
     ]
   },
   android: {
-      version: '2.0.12',
+      version: '2.0.11',
     buildNumber: '12',
     url: 'https://play.google.com/store/apps/details?id=com.zalama.mobile',
     releaseNotes: [

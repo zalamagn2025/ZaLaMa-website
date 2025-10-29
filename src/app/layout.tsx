@@ -10,6 +10,8 @@ import { defaultMetadata } from "@/lib/metadata";
 import { generateOrganizationSchema } from "@/lib/structured-data";
 import { SEOProvider } from "@/components/SEO/SEOProvider";
 import { FontAwesomeLoader } from "@/components/common/FontAwesomeLoader";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -40,20 +42,28 @@ export default function RootLayout({
         {/* Balises structurées globales */}
         <script
           type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: generateOrganizationSchema() }}
         />
       </head>
-      <body className={twMerge("min-h-screen bg-background font-sans antialiased", dmSans.className)}>
+      <body
+        className={twMerge(
+          dmSans.className, 
+          "antialiased bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100"
+        )}
+      >
         <FontAwesomeLoader />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <EmployeeAuthProvider>
             <AccountAuthProvider>
-              <SEOProvider>
+              <SEOProvider canonicalUrl="https://www.zalamagn.com">
                 <AutocompleteDisabler />
                 {children}
               </SEOProvider>
             </AccountAuthProvider>
           </EmployeeAuthProvider>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

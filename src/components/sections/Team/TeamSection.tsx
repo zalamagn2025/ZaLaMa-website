@@ -42,14 +42,14 @@ const teamMembers: TeamMember[] = [
     role: "Co-fondateur & Responsable Projet",
     description:
       "Fort d'une expérience technique acquise à travers des projets innovants tels que Kambily et Findaara, il dirige ZaLaMa avec rigueur et vision. Aujourd'hui, il fait partie de cette nouvelle génération qui construit activement l'avenir du digital en Guinée.",
-    image: "/images/mory.webp",
+    image: "/images/mory.jpeg",
     phone: "+224 625 21 21 15",
-    email: "mrkoulibaly@zalamagn.com",
+    email: "mrkoulibaly2023@gmail.com",
     socials: [
       { name: 'LinkedIn', url: 'https://www.linkedin.com/in/mory-koulibaly-76005a324/?originalSubdomain=gn', icon: 'Linkedin' },
       { name: 'GitHub', url: 'https://github.com/Morymirco', icon: 'Github' },
       { name: 'Portfolio', url: 'https://www.morykoulibaly.me/', icon: 'BriefcaseBusiness' },
-      { name: 'Mail', url: 'mailto:mrkoulibaly@zalamagn.com', icon: 'Mail' },
+      { name: 'Mail', url: 'mailto:mrkoulibaly2023@gmail.com', icon: 'Mail' },
     ],
   },
   {
