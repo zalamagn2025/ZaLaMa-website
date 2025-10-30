@@ -15,13 +15,13 @@ const APP_VERSION_CONFIG = {
     ]
   },
   android: {
-      version: '2.0.11',
+      version: '2.0.6',
     buildNumber: '12',
     url: 'https://play.google.com/store/apps/details?id=com.zalama.mobile',
     releaseNotes: [
       '🎨 Nouveau design moderne et intuitif',
       '⚡ Performance améliorée de 40%',
-      '🐛 Corrections de bugs et améliorations de stabilité',
+      '🐛 Corrections de bugs et améliorations de sgittabilité',
       '🌙 Support du mode sombre optimisé',
       '🔔 Notifications push en temps réel',
       '📊 Page Tarifs avec informations détaillées',
