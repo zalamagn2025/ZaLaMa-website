@@ -7,15 +7,16 @@ import { pdf } from "@react-pdf/renderer"
 import { saveAs } from "file-saver"
 import { PaymentData } from "./payment-service-card"
 import { useWithdrawalHistory, WithdrawalHistoryItem } from "@/hooks/useWithdrawalHistory"
+import { useEmployeeAuth } from "@/contexts/EmployeeAuthContext"
 
 // Fonction de conversion des données d'historique en PaymentData
-const convertHistoryToPaymentData = (historyItem: WithdrawalHistoryItem): PaymentData => {
+const convertHistoryToPaymentData = (historyItem: WithdrawalHistoryItem, userEmail: string | undefined): PaymentData => {
   const isRetrait = historyItem.type === 'RETRAIT'
   
   return {
     id: historyItem.id,
     clientName: isRetrait ? historyItem.nom_beneficiaire || 'Employé' : historyItem.partenaire || 'Entreprise',
-    clientEmail: isRetrait ? '' : 'contact@entreprise.com', // Pas d'email pour les retraits
+    clientEmail: userEmail || '', // Utiliser l'email de l'utilisateur connecté
     amount: historyItem.montant_final || historyItem.montant,
     currency: 'GNF',
     status: mapStatusToPaymentStatus(historyItem.statut),
@@ -153,6 +154,10 @@ export function PaymentList({
   onRefresh,
   isLoading = false
 }: PaymentListProps) {
+  // Récupérer l'email de l'utilisateur connecté
+  const { employee } = useEmployeeAuth()
+  const userEmail = employee?.email
+
   // Utiliser l'historique réel des retraits et paiements
   const { 
     history, 
@@ -166,8 +171,8 @@ export function PaymentList({
 
   // Convertir l'historique en format PaymentData
   const realPayments = useMemo(() => {
-    return history.map(convertHistoryToPaymentData)
-  }, [history])
+    return history.map(item => convertHistoryToPaymentData(item, userEmail))
+  }, [history, userEmail])
 
   // Utiliser les données réelles si disponibles, sinon les données mockées
   const payments = realPayments.length > 0 ? realPayments : mockPayments
@@ -800,11 +805,11 @@ export function PaymentList({
                   const fieldsToShow = [
                     { label: "Statut", value: getStatusText(payment.status), type: "status" },
                     { label: "Client", value: payment.clientName },
-                    { label: "Email", value: payment.clientEmail },
+                    ...(payment.clientEmail ? [{ label: "Email", value: payment.clientEmail }] : []),
                     { label: "Montant", value: formatAmount(payment.amount), type: "amount" },
                     { label: "Date", value: formatFullDate(payment.createdAt), type: "date" },
                     ...(payment.receivedAt ? [{ label: "Date de réception", value: formatFullDate(payment.receivedAt), type: "date" }] : []),
-                    { label: "Référence", value: payment.reference, type: "ref" },
+                    ...(payment.reference ? [{ label: "Référence", value: payment.reference, type: "ref" }] : []),
                     ...(payment.notes ? [{ label: "Notes", value: payment.notes }] : []),
                   ]
                   return (
