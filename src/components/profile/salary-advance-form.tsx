@@ -1138,7 +1138,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                               </h4>
                               <p className="text-xs text-gray-400">
                                 {avanceActive > 0 
-                                  ? '🔒 Remboursez vos avances actives d\'abord' 
+                                  ? '🔒 Remboursez vos avances actives' 
                                   : 'Étalez votre avance sur 2-3 mois'}
                               </p>
                        </div>
