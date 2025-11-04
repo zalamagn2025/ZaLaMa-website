@@ -771,7 +771,21 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       const result = await createDemand(demandData)
       /*console.log("✅ Demande créée avec succès:", result)*/
       
-      // Toast de succès
+      // Vérifier le statut de la réponse pour détecter les rejets
+      const statut = result?.data?.statut?.toLowerCase() || '';
+      const isRejected = statut.includes('rejet') || statut.includes('rejeté') || statut.includes('rejetée') || !result?.success;
+      
+      // Si la demande est rejetée ou a échoué, ne pas afficher le succès
+      if (isRejected) {
+        // Utiliser le message de la réponse si disponible, sinon un message par défaut
+        const errorMessage = result?.message || result?.error || 'La demande a été rejetée';
+        showToast('error', `❌ ${errorMessage}`);
+        setError(errorMessage);
+        setCurrentStep('form'); // Retourner au formulaire
+        return; // Ne pas fermer la modale
+      }
+      
+      // Toast de succès seulement si la demande n'est pas rejetée
       showToast('success', `Demande d'avance de ${validation.requestedAmount.toLocaleString()} GNF envoyée avec succès !`)
       
       // Actualiser la page

@@ -60,6 +60,10 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
       
       const response = await employeeDemandsService.createDemand(demandData);
       
+      // Vérifier si la demande a été rejetée ou a échoué
+      const statut = response?.data?.statut?.toLowerCase() || '';
+      const isRejected = statut.includes('rejet') || statut.includes('rejeté') || statut.includes('rejetée') || !response?.success;
+      
       // Rafraîchir les données
       await Promise.all([
         mutateDemands(),
@@ -67,7 +71,11 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
         mutate('employee-demands-list-*') // Rafraîchir toutes les pages
       ]);
       
-      toast.success('Demande d\'avance créée avec succès !');
+      // Ne pas afficher le toast de succès si la demande est rejetée
+      // Le message d'erreur sera géré dans le formulaire avec le message retourné
+      if (!isRejected && response?.success) {
+        toast.success('Demande d\'avance créée avec succès !');
+      }
       /*console.log('✅ Demande créée:', response)*/
       
       return response;
