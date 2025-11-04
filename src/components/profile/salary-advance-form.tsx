@@ -30,7 +30,7 @@ interface AvanceData {
   minimumMultiMonth: number
 }
 
-type FormStep = 'form' | 'verification' | 'confirmation' | 'success';
+type FormStep = 'form' | 'verification' | 'confirmation' | 'success' | 'error';
 
 // Fonction pour calculer l'avance disponible pour les demandes d'avance sur salaire
 function calculateAvailableAdvance(salaireNet: number, avanceActive: number = 0, enableMultiMonths: boolean = false, months: number = 1): { 
@@ -133,6 +133,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   const [currentStep, setCurrentStep] = useState<FormStep>('form')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [errorMessage, setErrorMessage] = useState("") // Message d'erreur pour l'étape 'error'
   const [avanceData, setAvanceData] = useState<AvanceData | null>(null)
   const [loadingAvance, setLoadingAvance] = useState(true)
   const [showAdvanceDetails, setShowAdvanceDetails] = useState(false)
@@ -383,13 +384,15 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       const isValid = await verifyPin(pin);
       
       if (isValid) {
-        // PIN correct - réinitialiser les tentatives et procéder
+        // PIN correct - réinitialiser les tentatives
         setPinAttempts(0);
         clearPinBlockInfo(); // Nettoyer le localStorage
-        showToast('success', "Code PIN correct ! Confirmation de la demande...");
-        setCurrentStep('success');
-        // Soumettre la demande
+        showToast('info', "Code PIN correct ! Envoi de la demande...");
+        
+        // Soumettre la demande et ATTENDRE la réponse avant de changer l'étape
         await submitAdvanceRequest();
+        // La fonction submitAdvanceRequest gère déjà l'affichage du succès/erreur et le changement d'étape
+        // Si succès -> étape 'success', si erreur -> étape 'error'
       } else {
         // PIN incorrect - incrémenter les tentatives
         const newAttempts = pinAttempts + 1;
@@ -410,9 +413,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
           setPinBlockInfo(0, newAttempts);
           showToast('warning', `Code PIN incorrect. ${3 - newAttempts} tentative(s) restante(s).`);
         }
+        setPin(''); // Réinitialiser le PIN pour permettre une nouvelle tentative
       }
     } catch (error) {
       showToast('error', "Erreur de vérification. Veuillez réessayer.");
+      setPin(''); // Réinitialiser le PIN en cas d'erreur
     } finally {
       setLoading(false);
     }
@@ -421,10 +426,12 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   // Fonctions pour gérer les toasts
   const showToast = useCallback((type: 'success' | 'error' | 'info' | 'warning', message: string) => {
     setToast({ type, message, show: true })
-    // Auto-dismiss après 5 secondes
+    // Auto-dismiss après un délai adapté selon le type
+    // Les erreurs restent plus longtemps pour être bien lues
+    const delay = type === 'error' ? 8000 : type === 'warning' ? 6000 : 5000
     setTimeout(() => {
       setToast(prev => ({ ...prev, show: false }))
-    }, 5000)
+    }, delay)
   }, [])
 
   const hideToast = useCallback(() => {
@@ -778,15 +785,18 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       // Si la demande est rejetée ou a échoué, ne pas afficher le succès
       if (isRejected) {
         // Utiliser le message de la réponse si disponible, sinon un message par défaut
-        const errorMessage = result?.message || result?.error || 'La demande a été rejetée';
-        showToast('error', `❌ ${errorMessage}`);
-        setError(errorMessage);
-        setCurrentStep('form'); // Retourner au formulaire
-        return; // Ne pas fermer la modale
+        const errorMsg = result?.message || result?.error || 'La demande a été rejetée';
+        setErrorMessage(errorMsg);
+        setError(errorMsg);
+        setCurrentStep('error'); // Passer à l'étape d'erreur persistante
+        throw new Error(errorMsg); // Lancer une exception pour que handlePinAttempt puisse la capturer
       }
       
       // Toast de succès seulement si la demande n'est pas rejetée
       showToast('success', `Demande d'avance de ${validation.requestedAmount.toLocaleString()} GNF envoyée avec succès !`)
+      
+      // Changer vers l'étape de succès seulement après création réussie
+      setCurrentStep('success');
       
       // Actualiser la page
       router.refresh()
@@ -797,37 +807,43 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       }, 3000)
 
     } catch (err) {
-      let errorMessage = 'Une erreur inattendue s\'est produite';
+      let errorMsg = 'Une erreur inattendue s\'est produite';
       
       // Parser l'erreur pour extraire le message détaillé
       if (err instanceof Error) {
-        errorMessage = err.message;
+        errorMsg = err.message;
         
-        // Gestion des erreurs spécifiques
-        if (errorMessage.includes('Demande multi-mois refusée')) {
-          // Cas spécifique : tentative multi-mois avec avances actives
-          const match = errorMessage.match(/vous avez déjà (\d+) avance\(s\) active\(s\).*?pour un total de ([0-9,]+) GNF/);
-          const nombreAvances = match ? match[1] : 'des';
-          const montantTotal = match ? match[2] : '';
-          
-          showToast('error', `❌ Multi-mois impossible : Vous avez ${nombreAvances} avance(s) active(s) (${montantTotal} GNF). Les demandes multi-mois nécessitent d'avoir 0 avance en cours. Remboursez d'abord vos avances actives.`);
-        } else if (errorMessage.includes('avances actives') || errorMessage.includes('dépasseriez la limite')) {
+        // Formater le message d'erreur de manière plus lisible
+        if (errorMsg.includes('Demande multi-mois refusée')) {
+          // Cas spécifique : demande multi-mois refusée (CDD, etc.)
+          if (errorMsg.includes('CDD') || errorMsg.includes('CDI')) {
+            // Message déjà bien formaté, on le garde tel quel
+            errorMsg = errorMsg;
+          } else {
+            // Cas spécifique : tentative multi-mois avec avances actives
+            const match = errorMsg.match(/vous avez déjà (\d+) avance\(s\) active\(s\).*?pour un total de ([0-9,]+) GNF/);
+            const nombreAvances = match ? match[1] : 'des';
+            const montantTotal = match ? match[2] : '';
+            
+            errorMsg = `Multi-mois impossible : Vous avez ${nombreAvances} avance(s) active(s) (${montantTotal} GNF). Les demandes multi-mois nécessitent d'avoir 0 avance en cours. Remboursez d'abord vos avances actives.`;
+          }
+        } else if (errorMsg.includes('avances actives') || errorMsg.includes('dépasseriez la limite')) {
           // Cas général : limite de plafond dépassée
-          const match = errorMessage.match(/vous avez déjà ([0-9,]+) GNF/);
+          const match = errorMsg.match(/vous avez déjà ([0-9,]+) GNF/);
           const avancesActives = match ? match[1] : 'des';
           
-          showToast('warning', `⚠️ Limite atteinte : Vous avez déjà ${avancesActives} GNF d'avances en cours. Avec cette demande, vous dépasseriez votre plafond autorisé. Réduisez le montant ou remboursez vos avances actives.`);
-        } else if (errorMessage.includes('Montant maximum autorisé: 0 GNF')) {
-          showToast('error', '❌ Plafond atteint : Vous avez déjà utilisé tout votre plafond d\'avances. Remboursez vos avances actives pour débloquer de nouvelles demandes.');
-        } else {
-          showToast('error', errorMessage);
+          errorMsg = `Limite atteinte : Vous avez déjà ${avancesActives} GNF d'avances en cours. Avec cette demande, vous dépasseriez votre plafond autorisé. Réduisez le montant ou remboursez vos avances actives.`;
+        } else if (errorMsg.includes('Montant maximum autorisé: 0 GNF')) {
+          errorMsg = 'Plafond atteint : Vous avez déjà utilisé tout votre plafond d\'avances. Remboursez vos avances actives pour débloquer de nouvelles demandes.';
         }
-      } else {
-        showToast('error', errorMessage);
       }
       
-      setError(errorMessage);
-      setCurrentStep('form'); // Retourner au formulaire pour que l'utilisateur puisse ajuster
+      // Stocker le message d'erreur et passer à l'étape d'erreur persistante
+      setErrorMessage(errorMsg);
+      setError(errorMsg);
+      setCurrentStep('error'); // Passer à l'étape d'erreur persistante
+      
+      // Ne pas relancer l'erreur car on veut rester sur l'étape d'erreur
     }
   }
 
@@ -863,19 +879,20 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       <AnimatePresence>
         {toast.show && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="absolute top-6 left-1/2 transform -translate-x-1/2 z-50"
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[9999] pointer-events-auto"
           >
-            <div className={`backdrop-blur-xl border rounded-xl px-6 py-4 shadow-2xl max-w-md ${
+            <div className={`backdrop-blur-xl border-2 rounded-xl px-6 py-4 shadow-2xl max-w-lg ${
               toast.type === 'success' 
-                ? 'bg-green-900/90 border-green-700' 
+                ? 'bg-green-900/95 border-green-500 shadow-green-500/20' 
                 : toast.type === 'error'
-                ? 'bg-red-900/90 border-red-700'
+                ? 'bg-red-900/95 border-red-500 shadow-red-500/30'
                 : toast.type === 'warning'
-                ? 'bg-yellow-900/90 border-yellow-700'
-                : 'bg-blue-900/90 border-blue-700'
+                ? 'bg-yellow-900/95 border-yellow-500 shadow-yellow-500/20'
+                : 'bg-blue-900/95 border-blue-500 shadow-blue-500/20'
             }`}>
               <div className="flex items-center gap-3">
                 {toast.type === 'success' && <IconCheck className="w-5 h-5 text-green-400 flex-shrink-0" />}
@@ -896,11 +913,11 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                      toast.type === 'error' ? 'Erreur' :
                      toast.type === 'warning' ? 'Attention' : 'Information'}
                   </p>
-                  <p className={`text-xs mt-1 ${
+                  <p className={`${toast.type === 'error' ? 'text-sm' : 'text-xs'} mt-1 ${
                     toast.type === 'success' 
                       ? 'text-green-200' 
                       : toast.type === 'error'
-                      ? 'text-red-200'
+                      ? 'text-red-100 font-medium'
                       : toast.type === 'warning'
                       ? 'text-yellow-200'
                       : 'text-blue-200'
@@ -962,6 +979,62 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                 >
                   Votre demande d&apos;avance sur salaire a été soumise et est en cours de traitement.
                 </motion.p>
+              </motion.div>
+            ) : currentStep === 'error' ? (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 20 }}
+                className="text-center p-8"
+              >
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, type: "spring", stiffness: 300, damping: 20 }}
+                  className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r from-red-600 to-red-700 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                >
+                  <IconX className="h-8 w-8 text-white" />
+                </motion.div>
+                <motion.h3 
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.3 }}
+                  className="mt-6 text-xl font-semibold text-red-300"
+                >
+                  Demande refusée
+                </motion.h3>
+                <motion.div 
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.3 }}
+                  className="mt-4 p-4 bg-red-900/30 border border-red-700/50 rounded-lg"
+                >
+                  <p className="text-sm text-red-200 leading-relaxed whitespace-pre-line">
+                    {errorMessage || 'Une erreur est survenue lors de la création de votre demande.'}
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.3 }}
+                  className="mt-6"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setCurrentStep('form');
+                      setError('');
+                      setErrorMessage('');
+                      setPin('');
+                    }}
+                    className="px-6 py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-[#FF671E] to-[#FF8E53] hover:from-[#FF782E] hover:to-[#FF9E63] shadow-lg hover:shadow-[#FF671E]/30 transition-all duration-200"
+                  >
+                    Retour au formulaire
+                  </motion.button>
+                </motion.div>
               </motion.div>
             ) : (
               <motion.div

@@ -54,10 +54,12 @@ export async function POST(request: NextRequest) {
     
     if (!response.ok) {
       console.error('❌ Erreur Edge Function employee-demands/create:', response.status, result);
+      // Récupérer le message d'erreur de manière prioritaire
+      const errorMessage = result.error || result.message || result.details || 'Erreur lors de la création de la demande';
       return createCorsResponse(
         { 
-          error: result.error || 'Erreur lors de la création de la demande',
-          details: result.message || result.details,
+          error: errorMessage,
+          details: result.details || result.message,
           status: response.status
         },
         response.status
