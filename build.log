@@ -1,0 +1,24 @@
+
+> zalama@0.1.0 build
+> next build --no-lint
+
+ ⚠ Linting is disabled.
+   ▲ Next.js 15.3.1
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 5.0s
+   Checking validity of types ...
+Failed to compile.
+
+./src/contexts/AuthContext.tsx:54:64
+Type error: A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.
+
+[0m [90m 52 |[39m }[0m
+[0m [90m 53 |[39m[0m
+[0m[31m[1m>[22m[39m[90m 54 |[39m [36mexport[39m [36mfunction[39m [33mAuthProvider[39m({ children }[33m:[39m [33mAuthProviderProps[39m)[33m:[39m [33mReact[39m[33m.[39m[33mJSX[39m[33m.[39m[33mElement[39m {[0m
+[0m [90m    |[39m                                                                [31m[1m^[22m[39m[0m
+[0m [90m 55 |[39m   [36mconst[39m [currentUser[33m,[39m setCurrentUser] [33m=[39m useState[33m<[39m[33mUser[39m [33m|[39m [36mnull[39m[33m>[39m([36mnull[39m)[0m
+[0m [90m 56 |[39m   [36mconst[39m [userData[33m,[39m setUserData] [33m=[39m useState[33m<[39m[33mUserData[39m [33m|[39m [36mnull[39m[33m>[39m([36mnull[39m)[0m
+[0m [90m 57 |[39m   [36mconst[39m [loading[33m,[39m setLoading] [33m=[39m useState([36mtrue[39m)[0m
+Next.js build worker exited with code: 1 and signal: null
