@@ -36,6 +36,8 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   const [salaireDisponible, setSalaireDisponible] = useState<number>(0)
   // État pour la gestion des paiements
   const [showPaymentManagement, setShowPaymentManagement] = useState(false)
+  // État pour le type de contrat
+  const [typeContrat, setTypeContrat] = useState<string | null>(null)
   
   // Hook pour la génération du bulletin de paie
   const { generatePayslip, isGenerating: isGeneratingPayslip, error: payslipError } = usePayslipGenerator()
@@ -64,6 +66,17 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
         if (response.ok) {
           const result = await response.json()
           console.log("📊 Données financières récupérées:", result.data)
+          
+          // Récupérer le type de contrat depuis contractInfo
+          if (result.data?.contractInfo?.type_contrat) {
+            const contratType = result.data.contractInfo.type_contrat
+            setTypeContrat(contratType)
+            console.log("📋 Type de contrat récupéré:", contratType)
+          } else if (result.data?.type_contrat) {
+            // Fallback si le type de contrat est directement dans data
+            setTypeContrat(result.data.type_contrat)
+            console.log("📋 Type de contrat récupéré (fallback):", result.data.type_contrat)
+          }
           
           if (result.data?.financial?.salaire_disponible) {
             const salaireDispo = result.data.financial.salaire_disponible
@@ -133,6 +146,29 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   // Map API services to the format used in the component
   const mappedServices = services.map(service => {
     /*console.log("🔄 Mapping service:", service.nom, service.disponible)*/
+    
+    // Vérifier si le service est une demande d'avance
+    const isAvanceService = service.nom.toLowerCase().includes("avance")
+    
+    // Déterminer si le service doit être désactivé
+    let isServiceDisabled = !service.disponible
+    
+    // Si c'est un service d'avance, vérifier le type de contrat
+    if (isAvanceService) {
+      // Si le type de contrat est disponible, vérifier s'il est valide
+      if (typeContrat) {
+        // Désactiver si le type de contrat n'est ni CDD ni CDI
+        const contratValide = typeContrat.toUpperCase() === "CDD" || typeContrat.toUpperCase() === "CDI"
+        if (!contratValide) {
+          isServiceDisabled = true
+          console.log("🚫 Service d'avance désactivé - Type de contrat non éligible:", typeContrat)
+        }
+      } else {
+        // Si le type de contrat n'est pas encore chargé, on attend (le service reste dans son état actuel)
+        // Mais si le service est déjà désactivé, on le garde désactivé
+      }
+    }
+    
     return {
       id: service.id,
       nom: service.nom,
@@ -182,7 +218,9 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       ),
       maxpourcent: service.nom.toLowerCase().includes("prêt") ? undefined : `${service.pourcentage_max}%`,
       maxAmount: service.nom.toLowerCase().includes("prêt") ? "25 000 000" : undefined,
-      eligibility: service.disponible ? "Disponible" : (service.nom.toLowerCase().includes("conseil") ? "Indisponible" : "Désactivé")
+      eligibility: isServiceDisabled 
+        ? (service.nom.toLowerCase().includes("conseil") ? "Indisponible" : "Désactivé")
+        : "Disponible"
     }
   })
 
