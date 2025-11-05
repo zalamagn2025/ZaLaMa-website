@@ -30,8 +30,9 @@ export interface CreateDemandRequest {
 
 export interface CreateDemandResponse {
   success: boolean;
-  message: string;
-  data: {
+  message?: string;
+  error?: string; // Message d'erreur en cas d'échec
+  data?: {
     id: string;
     montant_demande: number;
     frais_service: number;
