@@ -25,12 +25,10 @@ export default function UpdatePasswordPage() {
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        /*console.log('🔄 Initialisation de la session Supabase...')*/
         
         // Vérifier s'il y a un token dans l'URL (hash)
         const hash = window.location.hash;
         if (hash && hash.includes('access_token')) {
-          /*console.log('🔑 Token détecté dans l\'URL, initialisation...')*/
           
           // Laisser Supabase traiter automatiquement le token
           const { data: { session }, error } = await supabase.auth.getSession();
@@ -41,18 +39,15 @@ export default function UpdatePasswordPage() {
             setMessageType('error');
             setIsValidSession(false);
           } else if (session) {
-            /*console.log('✅ Session valide détectée après traitement du token')*/
             setIsValidSession(true);
             setMessage('Veuillez entrer votre nouveau mot de passe.');
             setMessageType('info');
           } else {
-            /*console.log('❌ Aucune session valide trouvée après traitement du token')*/
             setMessage('Lien de réinitialisation invalide ou expiré.');
             setMessageType('error');
             setIsValidSession(false);
           }
         } else {
-          /*console.log('❌ Aucun token trouvé dans l\'URL')*/
           setMessage('Lien de réinitialisation invalide ou expiré.');
           setMessageType('error');
           setIsValidSession(false);
@@ -83,7 +78,6 @@ export default function UpdatePasswordPage() {
     setMessage('');
 
     try {
-      /*console.log('🔄 Mise à jour du mot de passe...')*/
       
       const { error } = await supabase.auth.updateUser({
         password: password
@@ -94,7 +88,6 @@ export default function UpdatePasswordPage() {
         setMessage('Erreur lors de la réinitialisation du mot de passe. Veuillez réessayer.');
         setMessageType('error');
       } else {
-        /*console.log('✅ Mot de passe mis à jour avec succès')*/
         setMessage('Mot de passe réinitialisé avec succès ! Redirection vers la page de connexion...');
         setMessageType('success');
         

@@ -56,7 +56,6 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
   const createDemand = useCallback(async (demandData: CreateDemandRequest) => {
     setIsCreating(true);
     try {
-      /*console.log('📝 Création d\'une nouvelle demande...', demandData)*/
       
       const response = await employeeDemandsService.createDemand(demandData);
       
@@ -76,7 +75,6 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
       if (!isRejected && response?.success) {
         toast.success('Demande d\'avance créée avec succès !');
       }
-      /*console.log('✅ Demande créée:', response)*/
       
       return response;
     } catch (error) {
@@ -93,7 +91,6 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
   const updateDemand = useCallback(async (demandId: string, updateData: Partial<CreateDemandRequest>) => {
     setIsUpdating(true);
     try {
-      /*console.log('🔄 Mise à jour de la demande...', demandId, updateData)*/
       
       const response = await employeeDemandsService.updateDemand(demandId, updateData);
       
@@ -105,7 +102,6 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
       ]);
       
       toast.success('Demande mise à jour avec succès !');
-      /*console.log('✅ Demande mise à jour:', response)*/
       
       return response;
     } catch (error) {
@@ -122,7 +118,6 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
   const deleteDemand = useCallback(async (demandId: string) => {
     setIsDeleting(true);
     try {
-      /*console.log('🗑️ Suppression de la demande...', demandId)*/
       
       const response = await employeeDemandsService.deleteDemand(demandId);
       
@@ -134,7 +129,6 @@ export function useEmployeeDemands(options: UseEmployeeDemandsOptions = {}) {
       ]);
       
       toast.success('Demande supprimée avec succès !');
-      /*console.log('✅ Demande supprimée:', response)*/
       
       return response;
     } catch (error) {

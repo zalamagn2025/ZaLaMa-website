@@ -36,7 +36,6 @@ export class AccountSessionService {
 
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`
-      // console.log('🔑 Token envoyé dans la requête:', accessToken.substring(0, 20) + '...')
     } else {
       // Ne pas afficher de warning pour les actions publiques
       const publicActions = ['get_accounts', 'verify_pin', 'update_last_login', 'remove_account']
@@ -69,7 +68,6 @@ export class AccountSessionService {
   async saveAccountSession(userData: any): Promise<AccountSession> {
     const deviceId = this.generateDeviceId()
     
-    // console.log('🔍 Données utilisateur reçues:', {
     //   email: userData.email,
     //   nom: userData.nom,
     //   prenom: userData.prenom,
@@ -89,7 +87,6 @@ export class AccountSessionService {
       entreprise: userData.entreprise
     }
     
-    // console.log('📤 Données envoyées à l\'API:', accountData)
 
     try {
       const result = await this.makeRequest<AccountManagementResponse>(
@@ -164,7 +161,6 @@ export class AccountSessionService {
   // Supprimer un compte
   async removeAccount(accountId: string): Promise<void> {
     const deviceId = this.generateDeviceId()
-    // console.log('🔄 Service removeAccount appelé:', { accountId, deviceId });
     
     try {
       // Récupérer les informations du compte pour avoir le user_id
@@ -178,25 +174,20 @@ export class AccountSessionService {
         return
       }
       
-      // console.log('📋 Compte trouvé:', { 
       //   id: accountToDelete.id, 
       //   user_id: accountToDelete.user_id, 
       //   email: accountToDelete.email 
       // })
       
       // D'abord supprimer du cache local (plus fiable)
-      // console.log('🗑️ Suppression locale...');
       this.removeAccountLocally(accountId)
-      // console.log('✅ Suppression locale terminée');
       
       // Ensuite essayer la suppression serveur (non bloquante)
       try {
-        // console.log('📡 Appel API remove_account...');
         await this.makeRequest<AccountManagementResponse>(
           'remove_account',
           { deviceId, userId: accountToDelete.user_id }
         )
-        // console.log('✅ API remove_account réussie');
       } catch (apiError) {
         console.warn('⚠️ Erreur API remove_account (non bloquante):', apiError)
         // Ne pas faire échouer la suppression locale
@@ -268,7 +259,6 @@ export class AccountSessionService {
         
         const encrypted = WebEncryption.encrypt(JSON.stringify(data))
         localStorage.setItem(this.STORAGE_KEY, encrypted)
-        // console.log('✅ Dernière connexion mise à jour localement pour user_id:', userId)
       } else {
         console.warn('⚠️ Compte non trouvé pour user_id:', userId)
       }

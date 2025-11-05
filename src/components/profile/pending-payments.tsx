@@ -20,7 +20,6 @@ export function PendingPayments({ userId, onClose, salaireDisponible = 0 }: Pend
     const loadPendingPayments = async () => {
       try {
         setIsLoading(true)
-        console.log("📋 Chargement des paiements en attente...")
         
         // Récupérer les paiements depuis l'API
         const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
@@ -63,7 +62,6 @@ export function PendingPayments({ userId, onClose, salaireDisponible = 0 }: Pend
         // TODO: Ajouter ici les autres paiements récupérés depuis l'API
         // allPayments.push(...apiPayments)
         
-        console.log("✅ Paiements en attente chargés:", allPayments.length)
         setPayments(allPayments)
       } catch (error) {
         console.error('Erreur lors du chargement des paiements en attente:', error)

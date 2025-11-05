@@ -108,18 +108,15 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
   }
 
   const handleNotificationClick = async (notification: Notification) => {
-    console.log('✅ Clic sur marquer comme lu - notification:', notification.id)
     // Marquer comme lu
     try {
       // Récupérer le token d'accès depuis localStorage
       const accessToken = localStorage.getItem('employee_access_token')
       
       if (!accessToken) {
-        console.log('❌ Pas de token d\'accès')
         return
       }
 
-      console.log('🔄 Appel API pour marquer comme lu...')
       await fetch('/api/notifications?action=mark-read', {
         method: 'PUT',
         headers: { 
@@ -128,7 +125,6 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
         },
         body: JSON.stringify({ notification_id: notification.id })
       })
-      console.log('✅ Notification marquée comme lue')
       setUnreadCount(prev => Math.max(0, prev - 1))
     } catch (err) {
       console.error('Erreur lors de la mise à jour:', err)
@@ -141,17 +137,14 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
   }
 
   const handleDeleteNotification = async (id: number) => {
-    console.log('🗑️ Clic sur supprimer - notification:', id)
     try {
       // Récupérer le token d'accès depuis localStorage
       const accessToken = localStorage.getItem('employee_access_token')
       
       if (!accessToken) {
-        console.log('❌ Pas de token d\'accès')
         return
       }
 
-      console.log('🔄 Appel API pour supprimer...')
       await fetch('/api/notifications?action=delete', {
         method: 'DELETE',
         headers: { 
@@ -160,7 +153,6 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
         },
         body: JSON.stringify({ notification_id: id })
       })
-      console.log('✅ Notification supprimée')
       setNotifications(prev => prev.filter(n => n.id !== id))
       setUnreadCount(prev => Math.max(0, prev - 1))
     } catch (err) {
@@ -315,13 +307,11 @@ export function NotificationDropdown({ className = '' }: NotificationDropdownPro
                 style={{ zIndex: 999999 }}
               >
                 <div className="absolute inset-0 bg-black/50" onClick={(e) => {
-              console.log('🖱️ Clic sur overlay - fermeture modale')
               setIsOpen(false)
             }} />
                 <div 
                   className="relative bg-[#010D3E]/90 backdrop-blur-sm rounded-2xl p-8 w-full max-w-lg shadow-xl"
                   onClick={(e) => {
-                    console.log('🖱️ Clic sur conteneur modal')
                     e.stopPropagation()
                   }}
                 >

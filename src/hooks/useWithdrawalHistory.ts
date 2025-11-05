@@ -58,7 +58,6 @@ export function useWithdrawalHistory() {
         throw new Error('Token d\'authentification manquant')
       }
 
-      console.log('📋 Récupération de l\'historique des retraits et paiements...')
 
       const response = await fetch('/api/employee/withdrawal-history', {
         method: 'POST',
@@ -79,7 +78,6 @@ export function useWithdrawalHistory() {
       const data: WithdrawalHistoryResponse = await response.json()
       
       if (data.success && data.data) {
-        console.log('✅ Historique récupéré avec succès:', data.data)
         
         setHistory(data.data.historique || [])
         setRetraits(data.data.retraits || [])
@@ -114,7 +112,6 @@ export function useWithdrawalHistory() {
         throw new Error('Token d\'authentification manquant')
       }
 
-      console.log('⏳ Récupération des retraits en attente...')
 
       const response = await fetch('/api/employee/withdrawal-history', {
         method: 'POST',
@@ -135,7 +132,6 @@ export function useWithdrawalHistory() {
       const data: WithdrawalHistoryResponse = await response.json()
       
       if (data.success && data.data) {
-        console.log('✅ Retraits en attente récupérés avec succès:', data.data)
         return data.data.retraits || []
       } else {
         throw new Error(data.message || 'Erreur lors de la récupération des retraits en attente')

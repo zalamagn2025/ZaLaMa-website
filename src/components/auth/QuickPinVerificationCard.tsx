@@ -51,7 +51,6 @@ export default function QuickPinVerificationCard({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // console.log('🔘 Bouton cliqué !', {
     //   pin: pin,
     //   pinLength: pin.length,
     //   loading: loading,
@@ -59,16 +58,13 @@ export default function QuickPinVerificationCard({
     // });
     
     if (!pin || pin.length !== 6) {
-      // console.log('❌ PIN invalide:', pin);
       onError('Veuillez entrer un code PIN valide (6 chiffres)');
       return;
     }
 
-    // console.log('✅ PIN valide, appel de onSuccess');
     try {
       onSuccess(pin);
     } catch (error) {
-      // console.log('❌ Erreur dans onSuccess:', error);
       onError('Erreur lors de la vérification du PIN');
     }
   };

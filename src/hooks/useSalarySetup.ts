@@ -57,7 +57,6 @@ export function useSalarySetup() {
     setError(null);
 
     try {
-      /*console.log('🔍 Vérification du besoin de configuration du salaire via Edge Function...')*/
       const response = await fetch(`${EDGE_FUNCTION_URL}/check`, {
         method: 'GET',
         headers: {
@@ -67,12 +66,10 @@ export function useSalarySetup() {
       });
 
       const data = await response.json();
-      /*console.log('📊 Réponse Edge Function /check:', data)*/
 
       if (response.ok && data.success) {
         setNeedsSetup(data.needsSetup);
         setUserInfo(data.user);
-        /*console.log('✅ Vérification terminée - needsSetup:', data.needsSetup)*/
       } else {
         setError(data.error || 'Erreur lors de la vérification');
         setNeedsSetup(false);
@@ -101,7 +98,6 @@ export function useSalarySetup() {
     setError(null);
 
     try {
-      /*console.log('🔧 Configuration du salaire via Edge Function...', salaryData)*/
       const response = await fetch(`${EDGE_FUNCTION_URL}/configure`, {
         method: 'POST',
         headers: {
@@ -112,7 +108,6 @@ export function useSalarySetup() {
       });
 
       const data = await response.json();
-      /*console.log('📊 Réponse Edge Function /configure:', data)*/
 
       if (response.ok && data.success) {
         setNeedsSetup(false);
@@ -123,7 +118,6 @@ export function useSalarySetup() {
             currentSalary: data.employee.salaire_net
           });
         }
-        /*console.log('✅ Salaire configuré avec succès')*/
         return true;
       } else {
         setError(data.error || 'Erreur lors de la configuration');

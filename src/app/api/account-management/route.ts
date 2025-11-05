@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
     
     if (userAuthHeader && !publicActions.includes(action)) {
       headers['X-User-Authorization'] = userAuthHeader
-      console.log('🔑 Envoi du token utilisateur vers Edge Function')
     } else {
       console.log('🚫 Pas d\'envoi du token utilisateur (action publique)')
     }

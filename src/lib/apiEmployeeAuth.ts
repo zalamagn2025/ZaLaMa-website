@@ -232,7 +232,6 @@ class EmployeeAuthService {
         url = this.getEdgeFunctionUrl(endpoint);
       }
 
-      /*console.log(`🔗 Appel vers: ${url}`)*/
 
       const response = await fetch(url, {
         headers: {
@@ -249,7 +248,6 @@ class EmployeeAuthService {
         
                  // Gestion spéciale pour les erreurs d'authentification
          if (response.status === 401) {
-           /*console.log('🔒 Erreur 401 détectée - Identifiants invalides')*/
            return {
              success: false,
              error: result.error || 'Email ou mot de passe incorrect',

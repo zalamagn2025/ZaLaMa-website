@@ -67,7 +67,6 @@ export function useEmployeeProfile(): UseEmployeeProfileReturn {
         
         setEmployee(employeeData);
         setIsAuthenticated(true);
-        /*console.log('✅ Profil employé chargé:', response.data.nom, response.data.prenom)*/
       } else {
         setEmployee(null);
         setIsAuthenticated(false);
@@ -98,14 +97,12 @@ export function useEmployeeProfile(): UseEmployeeProfileReturn {
       setLoading(true);
       setError(null);
       
-      /*console.log('🔐 Tentative de connexion...')*/
       
       const response = await employeeAuthService.login(email, password);
       
       if (response.success && response.employee) {
         setEmployee(response.employee);
         setIsAuthenticated(true);
-        /*console.log('✅ Connexion réussie:', response.employee.nom, response.employee.prenom)*/
       } else {
         throw new Error(response.error || 'Échec de la connexion');
       }
@@ -128,7 +125,6 @@ export function useEmployeeProfile(): UseEmployeeProfileReturn {
       setEmployee(null);
       setIsAuthenticated(false);
       setError(null);
-      /*console.log('✅ Déconnexion réussie')*/
     } catch (err) {
       console.error('❌ Erreur lors de la déconnexion:', err);
       // Même en cas d'erreur, nettoyer l'état local

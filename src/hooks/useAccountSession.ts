@@ -49,15 +49,11 @@ export function useAccountSession() {
   // Supprimer un compte
   const removeAccount = useCallback(async (accountId: string) => {
     try {
-      // console.log('🔄 Hook removeAccount appelé pour:', accountId);
       setError(null)
       await accountSessionService.removeAccount(accountId)
-      // console.log('✅ Service removeAccount terminé');
       
       // Recharger la liste
-      // console.log('🔄 Rechargement des comptes...');
       await loadAccounts()
-      // console.log('✅ Comptes rechargés');
     } catch (err) {
       console.error('❌ Erreur suppression:', err)
       setError(err instanceof Error ? err.message : 'Erreur inconnue')

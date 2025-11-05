@@ -9,7 +9,6 @@ export async function GET(
 ): Promise<NextResponse<Partenaire | { error: string }>> {
   try {
     const { id } = await context.params
-    /*console.log('🔍 Récupération du partenaire ID:', id)*/
 
     const cookieStore = await cookies()
     
@@ -33,11 +32,9 @@ export async function GET(
 
     // Validation de l'ID
     if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
-      /*console.log('❌ ID invalide:', id)*/
       return NextResponse.json({ error: 'ID invalide' }, { status: 400 })
     }
 
-    /*console.log('🔍 Recherche dans Supabase...')*/
 
     // Récupérer le partenaire
     const { data: partenaireData, error } = await supabase
@@ -55,11 +52,9 @@ export async function GET(
     }
 
     if (!partenaireData) {
-      /*console.log('❌ Partenaire non trouvé pour ID:', id)*/
       return NextResponse.json({ error: 'Partenaire non trouvé' }, { status: 404 })
     }
 
-    /*console.log('✅ Partenaire récupéré:', partenaireData.nom)*/
     return NextResponse.json(partenaireData as Partenaire)
     
   } catch (error) {

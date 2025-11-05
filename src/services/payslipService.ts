@@ -56,7 +56,6 @@ export interface PayslipData {
 
 export async function generatePayslipPDF(payslipData: PayslipData): Promise<Buffer> {
   try {
-    console.log('📄 Génération du bulletin de paie pour:', payslipData.employee.prenom, payslipData.employee.nom)
     
     // Créer le HTML du bulletin de paie
     const htmlContent = generatePayslipHTML(payslipData)

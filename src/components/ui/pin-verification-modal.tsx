@@ -25,7 +25,6 @@ export function PinVerificationModal({
   message = "Entrez votre code PIN pour afficher les informations sensibles",
   onVerifyPin
 }: PinVerificationModalProps) {
-  /*console.log('🔐 Modal PIN - isOpen:', isOpen)*/
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,14 +33,12 @@ export function PinVerificationModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    /*console.log('🔐 Début du handleSubmit dans le modal PIN')*/
     
     if (!pin.trim() || pin.length !== 6) {
       setError('Veuillez entrer un code PIN à 6 chiffres');
       return;
     }
 
-    /*console.log('🔐 PIN saisi:', pin ? '***' : 'vide')*/
     setIsLoading(true);
     setError(''); // Réinitialiser l'erreur
 
@@ -49,7 +46,6 @@ export function PinVerificationModal({
       const success = await onVerifyPin(pin);
       
       if (success) {
-        /*console.log('🔐 Vérification PIN réussie')*/
         toast.success('Code PIN correct !');
         onSuccess();
         onClose();
@@ -57,7 +53,6 @@ export function PinVerificationModal({
         setShowPin(false);
         setHasUserInteracted(false);
       } else {
-        /*console.log('🔐 Vérification PIN échouée')*/
         setError('Code PIN incorrect. Veuillez réessayer.');
         toast.error('Code PIN incorrect');
       }

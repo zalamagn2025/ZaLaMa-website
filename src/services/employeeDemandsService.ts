@@ -59,13 +59,11 @@ class EmployeeDemandsService {
    */
   async getDemandsList(page: number = 1, limit: number = 20): Promise<DemandsListResponse> {
     try {
-      /*console.log('📋 Récupération de la liste des demandes...')*/
       
       const response = await this.makeRequest<DemandsListResponse>(
         `list?page=${page}&limit=${limit}`
       );
       
-      /*console.log('✅ Liste des demandes récupérée:', response.data.demands.length, 'demandes')*/
       return response;
     } catch (error) {
       console.error('❌ Erreur lors de la récupération des demandes:', error);
@@ -78,14 +76,12 @@ class EmployeeDemandsService {
    */
   async createDemand(demandData: CreateDemandRequest): Promise<CreateDemandResponse> {
     try {
-      /*console.log('📝 Création d\'une nouvelle demande...', demandData)*/
       
       const response = await this.makeRequest<CreateDemandResponse>('create', {
         method: 'POST',
         body: JSON.stringify(demandData),
       });
       
-      /*console.log('✅ Demande créée avec succès:', response.data.id)*/
       return response;
     } catch (error) {
       console.error('❌ Erreur lors de la création de la demande:', error);
@@ -98,11 +94,9 @@ class EmployeeDemandsService {
    */
   async getDemandsStats(): Promise<DemandsStatsResponse> {
     try {
-      /*console.log('📊 Récupération des statistiques...')*/
       
       const response = await this.makeRequest<DemandsStatsResponse>('stats');
       
-      /*console.log('✅ Statistiques récupérées:', response.data)*/
       return response;
     } catch (error) {
       console.error('❌ Erreur lors de la récupération des statistiques:', error);
@@ -115,14 +109,12 @@ class EmployeeDemandsService {
    */
   async updateDemand(demandId: string, updateData: Partial<CreateDemandRequest>): Promise<any> {
     try {
-      /*console.log('🔄 Mise à jour de la demande:', demandId, updateData)*/
       
       const response = await this.makeRequest(`update/${demandId}`, {
         method: 'PUT',
         body: JSON.stringify(updateData),
       });
       
-      /*console.log('✅ Demande mise à jour avec succès')*/
       return response;
     } catch (error) {
       console.error('❌ Erreur lors de la mise à jour de la demande:', error);
@@ -135,13 +127,11 @@ class EmployeeDemandsService {
    */
   async deleteDemand(demandId: string): Promise<any> {
     try {
-      /*console.log('🗑️ Suppression de la demande:', demandId)*/
       
       const response = await this.makeRequest(`delete/${demandId}`, {
         method: 'DELETE',
       });
       
-      /*console.log('✅ Demande supprimée avec succès')*/
       return response;
     } catch (error) {
       console.error('❌ Erreur lors de la suppression de la demande:', error);
@@ -154,11 +144,9 @@ class EmployeeDemandsService {
    */
   async getDemand(demandId: string): Promise<any> {
     try {
-      /*console.log('🔍 Récupération de la demande:', demandId)*/
       
       const response = await this.makeRequest(`get/${demandId}`);
       
-      /*console.log('✅ Demande récupérée:', response)*/
       return response;
     } catch (error) {
       console.error('❌ Erreur lors de la récupération de la demande:', error);

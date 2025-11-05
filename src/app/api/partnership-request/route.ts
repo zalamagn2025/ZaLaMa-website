@@ -25,10 +25,8 @@ async function testEdgeFunctionConnectivity() {
 
 export async function POST(request: NextRequest) {
   try {
-    /*console.log('🚀 Démarrage de l\'API route partnership-request')*/
     
     // Test de connectivité à l'Edge Function
-    /*console.log('🔍 Test de connectivité à l\'Edge Function...')*/
     const isConnected = await testEdgeFunctionConnectivity();
     if (!isConnected) {
       console.error('❌ Edge Function non accessible');
@@ -39,11 +37,9 @@ export async function POST(request: NextRequest) {
         debug: 'Edge Function connectivity test failed'
       }, { status: 503 });
     }
-    /*console.log('✅ Edge Function accessible')*/
     
     // Récupérer les données du body
     const body = await request.json();
-    /*console.log('📄 Body reçu:', body)*/
 
     // Validation basique côté serveur - plus flexible
     const requiredFields = [
@@ -62,7 +58,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (missingFields.length > 0) {
-      /*console.log('❌ Champs manquants ou vides:', missingFields)*/
       /*console.log('📊 Valeurs reçues:', Object.fromEntries(
         requiredFields.map(field => [field, body[field]])
       ));*/
@@ -77,7 +72,6 @@ export async function POST(request: NextRequest) {
     if (body.payment_day !== undefined && body.payment_day !== null) {
       const paymentDay = typeof body.payment_day === 'number' ? body.payment_day : parseInt(body.payment_day);
       if (isNaN(paymentDay) || paymentDay < 1 || paymentDay > 31) {
-        /*console.log('❌ payment_day invalide:', body.payment_day)*/
         return NextResponse.json({
           success: false,
           error: 'Données invalides',
@@ -114,13 +108,11 @@ export async function POST(request: NextRequest) {
     };
 
     // Appel vers l'Edge Function Supabase
-    /*console.log('📤 Envoi vers l\'Edge Function...')*/
     /*console.log('🔍 Détail payment_day avant envoi:', {
       value: edgeFunctionData.payment_day,
       type: typeof edgeFunctionData.payment_day,
       parsed: edgeFunctionData.payment_day
     })*/
-    /*console.log('📄 Body complet envoyé à l\'Edge Function:', edgeFunctionData)*/
     
     // Configuration avec timeout plus long et meilleure gestion d'erreur
     const controller = new AbortController();
@@ -160,10 +152,8 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await response.json();
-    /*console.log('📥 Réponse de l\'Edge Function:', result)*/
 
     if (!response.ok) {
-      /*console.log('❌ Erreur de l\'Edge Function:', result)*/
       return NextResponse.json({
         success: false,
         error: result.error || 'Erreur lors de la soumission',
@@ -171,7 +161,6 @@ export async function POST(request: NextRequest) {
       }, { status: response.status });
     }
 
-    /*console.log('✅ Demande de partenariat traitée avec succès')*/
     
     return NextResponse.json(result);
 

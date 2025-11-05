@@ -76,18 +76,15 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   }, [currentUser, userData, loading]);
 
   useEffect(() => {
-    /*console.log('🚀 AuthContext - Initialisation...')*/
     
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        /*console.log('🔍 AuthContext - Événement auth:', event, 'Session:', session ? 'Présente' : 'Absente')*/
         
         setCurrentUser(session?.user ?? null)
         
         if (session?.user) {
           try {
-            /*console.log('🔍 AuthContext - Récupération des données employee pour:', session.user.id)*/
             
             // Récupérer les données utilisateur depuis la table employees
             const { data: userData, error } = await supabase
@@ -123,7 +120,6 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
             setUserData(null)
           }
         } else {
-          /*console.log('🔍 AuthContext - Pas de session, reset userData')*/
           setUserData(null)
         }
         
@@ -230,7 +226,6 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
     // ✅ Essayer d'abord avec les données du contexte
     if (!userData?.employeId) {
       console.warn('Tentative de mise à jour des données employee sans employeId dans le contexte')
-      /*console.log('🔄 Tentative de rechargement des données avant mise à jour...')*/
       
       // Essayer de recharger les données d'abord
       try {
@@ -271,7 +266,6 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
         } as UserData;
         
         setUserData(prev => prev ? { ...prev, ...mappedData } : mappedData)
-        /*console.log('✅ Données employee mises à jour dans le contexte')*/
       }
     } catch (error) {
       console.error('Erreur lors de la mise à jour des données employee:', error)
@@ -286,7 +280,6 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
     }
 
     try {
-      /*console.log('🔄 AuthContext - Rafraîchissement des données pour:', currentUser.id)*/
       
       // Récupérer les données utilisateur depuis la table employees
       const { data: userData, error } = await supabase

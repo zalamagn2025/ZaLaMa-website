@@ -13,7 +13,6 @@ export async function GET(
   try {
     const { userId } = await params;
     
-    /*console.log('🔍 Récupération du rôle pour user_id:', userId)*/
 
     // Récupérer le rôle depuis la table admin_users
     const { data: adminUser, error } = await supabase
@@ -23,7 +22,6 @@ export async function GET(
       .single();
 
     if (error) {
-      /*console.log('❌ Erreur lors de la récupération du rôle:', error)*/
       return NextResponse.json(
         { success: false, error: 'Rôle non trouvé' },
         { status: 404 }
@@ -31,14 +29,12 @@ export async function GET(
     }
 
     if (!adminUser) {
-      /*console.log('❌ Aucun rôle trouvé pour user_id:', userId)*/
       return NextResponse.json(
         { success: false, error: 'Rôle non trouvé' },
         { status: 404 }
       );
     }
 
-    /*console.log('✅ Rôle récupéré:', adminUser.role)*/
 
     return NextResponse.json({
       success: true,

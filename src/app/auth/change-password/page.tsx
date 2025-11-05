@@ -31,7 +31,6 @@ export default function ChangePasswordPage() {
 
   // Diagnostic: log on mount to confirm page is displayed
   useEffect(() => {
-    /*console.log('🔓 ChangePasswordPage mounted', { loading, isAuthenticated, hasEmployee: !!employee })*/
   }, []);
 
   // Auto-dismiss toasts

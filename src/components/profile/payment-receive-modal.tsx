@@ -115,7 +115,6 @@ export function PaymentReceiveModal({
         commentaire: `Retrait de salaire - Montant total`
       }
       
-      console.log('📤 Données envoyées à l\'API:', requestData)
       console.log('🔑 Token utilisé:', accessToken.substring(0, 20) + '...')
 
       const response = await fetch('/api/employee/withdrawal', {
@@ -129,7 +128,6 @@ export function PaymentReceiveModal({
 
       if (response.ok) {
         const result = await response.json()
-        console.log('✅ Retrait créé avec succès:', result)
         setIsSubmitting(false)
         onConfirm(withdrawalAmount)
       } else {

@@ -110,7 +110,6 @@ export default function ResetPasswordPage() {
 
   // Fonction pour envoyer l'email de réinitialisation
   const handleSendResetEmail = async (e: React.FormEvent) => {
-    /*console.log('handleSendResetEmail appelé!', e)*/
     e.preventDefault();
     setIsLoading(true);
     setStatus('idle');

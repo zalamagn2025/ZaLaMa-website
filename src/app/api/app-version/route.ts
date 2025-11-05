@@ -37,14 +37,12 @@ const APP_VERSION_CONFIG = {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('📱 Vérification de version d\'application demandée')
 
     // Récupérer les paramètres de requête
     const { searchParams } = new URL(request.url)
     const platform = searchParams.get('platform') // ios ou android
     const currentVersion = searchParams.get('version')
 
-    console.log('🔍 Paramètres:', { platform, currentVersion })
 
     // Retourner la configuration complète
     const response = {

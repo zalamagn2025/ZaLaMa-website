@@ -46,7 +46,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   useEffect(() => {
     const fetchFinancialData = async () => {
       try {
-        console.log("💰 Récupération des données financières...")
         
         // Récupérer les données via l'edge function employee-auth
         const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
@@ -65,13 +64,11 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
 
         if (response.ok) {
           const result = await response.json()
-          console.log("📊 Données financières récupérées:", result.data)
           
           // Récupérer le type de contrat depuis contractInfo
           if (result.data?.contractInfo?.type_contrat) {
             const contratType = result.data.contractInfo.type_contrat
             setTypeContrat(contratType)
-            console.log("📋 Type de contrat récupéré:", contratType)
           } else if (result.data?.type_contrat) {
             // Fallback si le type de contrat est directement dans data
             setTypeContrat(result.data.type_contrat)
@@ -83,9 +80,7 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
             setSalaireDisponible(salaireDispo)
             // Activer automatiquement le service si salaire_disponible > 0
             setIsPaymentActive(salaireDispo > 0)
-            console.log("✅ Service de paiement:", salaireDispo > 0 ? "Activé" : "Désactivé", "- Montant:", salaireDispo)
           } else {
-            console.log("ℹ️ Aucun salaire disponible trouvé")
             setSalaireDisponible(0)
             setIsPaymentActive(false)
           }
@@ -106,15 +101,10 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       try {
         setLoading(true)
         setError(null)
-        /*console.log("🔍 Récupération des services via API ZaLaMa...")*/
-        /*console.log("🔑 API ZaLaMa configurée")*/
         
         // Utiliser notre service API au lieu de Supabase directement
         const response = await apiService.getServices()
         
-        /*console.log("📊 Réponse API services:", response)*/
-        /*console.log("📊 Nombre de services:", response.data?.length || 0)*/
-        /*console.log("❌ Erreur API:", response.error)*/
         
         if (!response.success) {
           console.error("Erreur API services:", response.error)
@@ -128,7 +118,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
           console.warn("⚠️ Aucun service trouvé via l'API")
           setError("Aucun service disponible")
         } else {
-          /*console.log("✅ Services chargés avec succès via API:", data.length, "services")*/
         }
         
         setServices(data || [])
@@ -145,7 +134,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
 
   // Map API services to the format used in the component
   const mappedServices = services.map(service => {
-    /*console.log("🔄 Mapping service:", service.nom, service.disponible)*/
     
     // Vérifier si le service est une demande d'avance
     const isAvanceService = service.nom.toLowerCase().includes("avance")
@@ -161,7 +149,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
         const contratValide = typeContrat.toUpperCase() === "CDD" || typeContrat.toUpperCase() === "CDI"
         if (!contratValide) {
           isServiceDisabled = true
-          console.log("🚫 Service d'avance désactivé - Type de contrat non éligible:", typeContrat)
         }
       } else {
         // Si le type de contrat n'est pas encore chargé, on attend (le service reste dans son état actuel)
@@ -224,8 +211,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
     }
   })
 
-  /*console.log("🎯 Services mappés:", mappedServices.length)*/
-  /*console.log("🎯 Services disponibles:", mappedServices.filter(s => s.eligibility === "Disponible").length)*/
 
   // Données de démonstration pour tous les paiements
   const allPayments: PaymentData[] = [
@@ -302,7 +287,6 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
       
       const success = await generatePayslip(user, financialData)
       if (success) {
-        console.log('✅ Bulletin de paie généré avec succès')
       }
     } catch (error) {
       console.error('❌ Erreur lors de la génération du bulletin de paie:', error)
@@ -310,15 +294,12 @@ export function FinancialServices({ user }: { user: UserWithEmployeData }) {
   }
 
   const handleStatusChange = (paymentId: string, newStatus: PaymentData['status']) => {
-    console.log('Status change:', paymentId, newStatus)
   }
 
   const handleDownload = (paymentId: string) => {
-    console.log('Download:', paymentId)
   }
 
   const handleShare = (paymentId: string) => {
-    console.log('Share:', paymentId)
   }
 
   return (

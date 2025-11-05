@@ -43,7 +43,6 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
     }
     
     if (!authToken) {
-      /*console.log('❌ Aucun token d\'authentification trouvé')*/
       return null
     }
 
@@ -53,7 +52,6 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
     }
 
     const decoded = jwt.verify(authToken, process.env.JWT_SECRET) as JWTPayload
-    /*console.log('✅ Token JWT vérifié pour:', decoded.email)*/
     return decoded
   } catch (error) {
     console.error('❌ Erreur lors de la vérification du token JWT:', error)
@@ -63,9 +61,6 @@ function verifyAuthToken(request: NextRequest): JWTPayload | null {
 
 // Créer un client Supabase normal (RLS désactivé)
 function createSupabaseClient() {
-  /*console.log('🔧 Création du client Supabase...')*/
-  /*console.log('📡 URL Supabase:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Définie' : '❌ Non définie')*/
-  /*console.log('🔑 Clé anon Supabase:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Définie' : '❌ Non définie')*/
   
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     throw new Error('Variables d\'environnement Supabase manquantes')
@@ -86,14 +81,12 @@ function createSupabaseClient() {
 // Fonction pour vérifier la limite d'avis par jour
 async function checkDailyAvisLimit(supabase: any, employeeId: string): Promise<{ canPost: boolean; currentCount: number; limit: number }> {
   try {
-    /*console.log('🔍 Vérification de la limite d\'avis quotidienne...')*/
     
     // Obtenir la date d'aujourd'hui (début et fin de journée)
     const today = new Date()
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString()
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString()
     
-    /*console.log('📅 Période de vérification:', { startOfDay, endOfDay })*/
     
     // Compter les avis postés aujourd'hui par cet employé
     const { count, error } = await supabase
@@ -111,7 +104,6 @@ async function checkDailyAvisLimit(supabase: any, employeeId: string): Promise<{
     const currentCount = count || 0
     const canPost = currentCount < MAX_AVIS_PER_DAY
     
-    /*console.log(`📊 Avis aujourd'hui: ${currentCount}/${MAX_AVIS_PER_DAY} - Peut poster: ${canPost}`)*/
     
     return {
       canPost,
@@ -130,7 +122,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest): Promise<NextResponse<AvisResponse>> {
   try {
-    /*console.log('🔧 POST /api/avis - Début de la requête')*/
     
     // Vérifier l'authentification via JWT
     const userData = verifyAuthToken(request)
@@ -142,14 +133,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
       )
     }
 
-    /*console.log('✅ Utilisateur authentifié:', userData.email)*/
-    /*console.log('👤 User ID:', userData.uid)*/
 
     // Créer le client Supabase (RLS désactivé)
     let supabase
     try {
       supabase = createSupabaseClient()
-      /*console.log('✅ Client Supabase créé avec succès')*/
     } catch (error) {
       console.error('❌ Erreur lors de la création du client Supabase:', error)
       return NextResponse.json(
@@ -159,13 +147,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
     }
 
     // Récupérer les données de la requête
-    /*console.log('📥 Récupération des données de la requête...')*/
     const body: CreateAvisRequest = await request.json()
-    /*console.log('📋 Données reçues:', body)*/
     
     // Validation des données
     if (!body.note || body.note < 1 || body.note > 5) {
-      /*console.log('❌ Note invalide:', body.note)*/
       return createCorsResponse(
         { success: false, error: 'La note doit être entre 1 et 5' },
         400,
@@ -174,7 +159,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
     }
 
     if (!body.commentaire || body.commentaire.trim().length === 0) {
-      /*console.log('❌ Commentaire vide')*/
       return createCorsResponse(
         { success: false, error: 'Le commentaire est requis' },
         400,
@@ -183,7 +167,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
     }
 
     if (!body.type_retour || !['positif', 'negatif'].includes(body.type_retour)) {
-      /*console.log('❌ Type de retour invalide:', body.type_retour)*/
       return createCorsResponse(
         { success: false, error: 'Le type de retour doit être "positif" ou "negatif"' },
         400,
@@ -191,11 +174,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
       )
     }
 
-    /*console.log('✅ Validation des données OK')*/
 
     // Récupérer l'employé et son partner_id
-    /*console.log('👤 Recherche de l\'employé...')*/
-    /*console.log('🔍 Recherche avec user_id:', userData.uid)*/
     
     try {
       const { data: employee, error: employeeError } = await supabase
@@ -204,7 +184,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
         .eq('user_id', userData.uid)
         .single()
 
-      /*console.log('📊 Résultat recherche employé:', { employee, error: employeeError })*/
 
       if (employeeError) {
         console.error('❌ Erreur lors de la récupération de l\'employé:', employeeError)
@@ -216,7 +195,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
       }
 
       if (!employee) {
-        /*console.log('❌ Aucun employé trouvé pour user_id:', userData.uid)*/
         return createCorsResponse(
           { success: false, error: 'Employé non trouvé' },
           404,
@@ -224,15 +202,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
         )
       }
 
-      /*console.log('✅ Employé trouvé:', employee.id)*/
-      /*console.log('✅ Partner ID:', employee.partner_id)*/
 
       // Vérifier la limite d'avis par jour
-      /*console.log('🔍 Vérification de la limite d\'avis quotidienne...')*/
       const limitCheck = await checkDailyAvisLimit(supabase, employee.id)
       
       if (!limitCheck.canPost) {
-        /*console.log('❌ Limite d\'avis quotidienne atteinte')*/
         return createCorsResponse(
           { 
             success: false, 
@@ -248,10 +222,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
         )
       }
 
-      /*console.log(`✅ Limite OK - ${limitCheck.currentCount}/${limitCheck.limit} avis utilisés`)*/
 
       // Créer l'avis avec l'employee_id
-      /*console.log('📝 Création de l\'avis...')*/
       const avisData = {
         employee_id: employee.id, // Utiliser l'ID de l'employé
         partner_id: employee.partner_id,
@@ -262,7 +234,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
         approuve: false
       }
       
-      /*console.log('📋 Données à insérer:', avisData)*/
       
       const { data: avis, error: insertError } = await supabase
         .from('avis')
@@ -279,7 +250,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
         )
       }
 
-      /*console.log('✅ Avis créé avec succès:', avis.id)*/
       
       // Retourner les informations de limite mises à jour
       const updatedLimitInfo = {
@@ -319,7 +289,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<AvisRespo
 
 export async function GET(request: NextRequest): Promise<NextResponse<AvisListResponse>> {
   try {
-    /*console.log('🔧 GET /api/avis - Début de la requête')*/
     
     // Vérifier l'authentification via JWT
     const userData = verifyAuthToken(request)
@@ -331,13 +300,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
       )
     }
 
-    /*console.log('✅ Utilisateur authentifié:', userData.email)*/
 
     // Créer le client Supabase (RLS désactivé)
     let supabase
     try {
       supabase = createSupabaseClient()
-      /*console.log('✅ Client Supabase créé avec succès')*/
     } catch (error) {
       console.error('❌ Erreur lors de la création du client Supabase:', error)
       return createCorsResponse(
@@ -348,7 +315,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
     }
 
     // Récupérer l'employé pour obtenir son ID
-    /*console.log('👤 Recherche de l\'employé...')*/
     const { data: employee, error: employeeError } = await supabase
       .from('employees')
       .select('id')
@@ -380,7 +346,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<AvisListRe
       )
     }
 
-    /*console.log('✅ Avis récupérés:', avis?.length || 0)*/
     return createCorsResponse(
       { success: true, data: avis || [] },
       200,

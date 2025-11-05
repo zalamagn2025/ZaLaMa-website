@@ -7,7 +7,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    /*console.log('📊 Récupération des statistiques des demandes...')*/
     
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -30,8 +29,6 @@ export async function GET(request: NextRequest) {
 
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-demands/stats`;
     
-    /*console.log('🔍 Appel Edge Function employee-demands/stats...')*/
-    /*console.log('📍 URL:', edgeFunctionUrl)*/
     
     const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
@@ -44,7 +41,6 @@ export async function GET(request: NextRequest) {
 
     const result = await response.json();
     
-    /*console.log('📊 Réponse Edge Function employee-demands/stats:', response.status, result)*/
     
     if (!response.ok) {
       console.error('❌ Erreur Edge Function employee-demands/stats:', response.status, result);
@@ -58,7 +54,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    /*console.log('✅ Statistiques récupérées avec succès')*/
     return createCorsResponse(result);
 
   } catch (error: unknown) {

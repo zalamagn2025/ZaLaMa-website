@@ -78,7 +78,6 @@ export class ImageUploadService {
         };
       }
 
-      /*console.log('✅ Upload réussi:', uploadData)*/
 
       // 5. Obtenir l'URL publique avec cache buster
       const { data: urlData } = supabase.storage
@@ -89,7 +88,6 @@ export class ImageUploadService {
       const timestamp = Date.now();
       const publicUrl = `${urlData.publicUrl}?t=${timestamp}`;
 
-      /*console.log('🔗 URL publique avec cache buster générée:', publicUrl)*/
 
       // 6. Mettre à jour la photo_url dans la table employees
       const { error: updateError } = await supabase
@@ -113,7 +111,6 @@ export class ImageUploadService {
         };
       }
 
-      /*console.log('✅ Photo de profil mise à jour avec succès')*/
 
       return {
         success: true,
@@ -140,7 +137,6 @@ export class ImageUploadService {
       // Le fichier est directement à la racine du bucket profiles-images
       const filePath = fileName;
 
-      /*console.log('🗑️ Suppression de l\'ancienne image:', { imageUrl, fileName, filePath })*/
 
       // Supprimer le fichier du bucket profiles-images
       const { error } = await supabase.storage
@@ -152,7 +148,6 @@ export class ImageUploadService {
         return false;
       }
 
-      /*console.log('✅ Ancienne image supprimée avec succès')*/
       return true;
     } catch (error) {
       console.error('💥 Erreur suppression image:', error);

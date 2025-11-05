@@ -20,11 +20,9 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    /*console.log("🔍 ProtectedRoute Debug:", { loading, isAuthenticated, redirectTo, hasEmployee: !!employee })*/
     
     // Seulement rediriger si on n'est pas en train de charger ET qu'on n'est pas authentifié ET qu'on n'a pas d'employé
     if (!loading && !isAuthenticated && !employee) {
-      /*console.log("🔒 Accès refusé, redirection vers:", redirectTo)*/
       // Ajouter un délai plus long pour permettre à l'état de se stabiliser
       const timer = setTimeout(() => {
         router.push(redirectTo);

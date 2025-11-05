@@ -94,7 +94,6 @@ export default function EmployeeLoginForm() {
   };
 
   const handleQuickLogin = async (account: AccountSession, pin: string) => {
-    // console.log('🚀 handleQuickLogin appelé !', {
     //   account: account.email,
     //   pin: pin,
     //   pinLength: pin.length
@@ -105,16 +104,12 @@ export default function EmployeeLoginForm() {
     setLoginStatus('idle');
     
     try {
-      // console.log('🔄 Appel de quickLogin...');
       await quickLogin(account, pin);
-      // console.log('✅ quickLogin réussi');
       setLoginStatus('success');
       
       // Redirection immédiate vers /profile
-      // console.log('🔄 Redirection immédiate vers /profile');
       router.push('/profile');
     } catch (error) {
-      // console.log('❌ Erreur dans quickLogin:', error);
       setErrorMessage('Connexion échouée. Vérifiez votre PIN.');
       setLoginStatus('error');
     } finally {
@@ -123,7 +118,6 @@ export default function EmployeeLoginForm() {
   };
 
   const handleNewAccount = () => {
-    // console.log('🆕 handleNewAccount appelé !');
     setCurrentStep('full-login');
     setEmail('');
     setPin('');
@@ -217,8 +211,6 @@ export default function EmployeeLoginForm() {
 
   // Fonction pour basculer vers le mode mot de passe oublié
   const switchToForgotPassword = () => {
-    /*console.log('switchToForgotPassword called')*/
-    /*console.log('Current email:', email)*/
     // Rediriger vers la page de réinitialisation avec l'email pré-rempli
     const emailParam = email ? `?email=${encodeURIComponent(email)}` : '';
     router.push(`/auth/reset-password${emailParam}`);
@@ -576,13 +568,11 @@ export default function EmployeeLoginForm() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        /*console.log('Button clicked!')*/
                         switchToForgotPassword();
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          /*console.log('Button pressed with keyboard!')*/
                           switchToForgotPassword();
                         }
                       }}

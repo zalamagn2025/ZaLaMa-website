@@ -219,7 +219,6 @@ export function usePaymentActions() {
     setIsLoading(true)
     try {
       // Ici, vous feriez l'appel API pour télécharger le reçu
-      console.log('Téléchargement du reçu pour:', paymentId)
       // Simuler un délai
       await new Promise(resolve => setTimeout(resolve, 1000))
     } catch (error) {
@@ -234,7 +233,6 @@ export function usePaymentActions() {
     setIsLoading(true)
     try {
       // Ici, vous feriez l'appel API pour partager le paiement
-      console.log('Partage du paiement:', paymentId)
       // Simuler un délai
       await new Promise(resolve => setTimeout(resolve, 500))
     } catch (error) {

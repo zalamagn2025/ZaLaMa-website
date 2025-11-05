@@ -7,7 +7,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    /*console.log('🔄 Mise à jour du profil utilisateur...')*/
     
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -30,7 +29,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    /*console.log('📝 Données à mettre à jour:', body)*/
 
     // ✅ Utiliser l'Edge Function pour la mise à jour du profil
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/update-profile`;

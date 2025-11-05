@@ -7,7 +7,6 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    /*console.log('📸 Upload de photo de profil...')*/
     
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -56,7 +55,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*console.log('📤 Envoi vers l\'Edge Function...')*/
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/employee-auth/upload-photo`;
     
     // Créer un nouveau FormData pour l'Edge Function

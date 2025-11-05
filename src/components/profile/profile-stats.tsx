@@ -49,11 +49,6 @@ function calculateAvailableAdvance(salaireNet: number): number {
   const dailySalary = Math.floor(salaireNet / totalWorkingDays) // Salaire par jour ouvrable
   const availableAdvance = dailySalary * workingDaysElapsed // Acompte pour les jours écoulés
   
-  /*console.log("📅 Calcul de l'acompte disponible:")*/
-  /*console.log("  - Jours ouvrables écoulés:", workingDaysElapsed)*/
-  /*console.log("  - Total jours ouvrables du mois:", totalWorkingDays)*/
-  /*console.log("  - Salaire par jour ouvrable:", dailySalary.toLocaleString(), "GNF")*/
-  /*console.log("  - Acompte disponible:", availableAdvance.toLocaleString(), "GNF")*/
   
   return availableAdvance
 }
@@ -183,7 +178,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
         if (response.ok) {
           const result = await response.json()
           if (result.success && result.data) {
-            /*console.log('📊 Données financières récupérées:', result.data)*/
             setFinancialData(result.data)
           } else {
             setError(result.error || 'Erreur lors du chargement des données')
@@ -274,7 +268,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   } = usePinVerification({
     onSuccess: () => {
       // La vérification a réussi, on peut afficher les informations
-      /*console.log('✅ Vérification PIN réussie - affichage des informations sensibles')*/
     },
     onError: (error) => {
       // Gérer l'erreur si nécessaire
@@ -284,7 +277,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
 
   // Fonction de test pour vérifier les données Supabase directement
   const testSupabaseData = async () => {
-    /*console.log("🧪 Test des données Supabase...")*/
     
     try {
       // Test 1: Vérifier l'employé
@@ -295,8 +287,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
         .eq('actif', true)
         .single()
       
-      /*console.log("�� Données employé:", employeData)*/
-      /*console.log("❌ Erreur employé:", employeError)*/
       
       if (employeData) {
         // Test 2: Vérifier les demandes d'avance
@@ -306,8 +296,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
           .eq('employe_id', employeData.id)
           .order('date_creation', { ascending: false })
         
-        /*console.log("📋 Demandes d'avance:", demandesData)*/
-        /*console.log("❌ Erreur demandes:", demandesError)*/
         
         // Test 3: Vérifier les transactions financières
         const { data: transactionsData, error: transactionsError } = await supabase
@@ -316,8 +304,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
           .eq('utilisateur_id', employeData.id)
           .order('date_transaction', { ascending: false })
         
-        /*console.log("💰 Transactions financières:", transactionsData)*/
-        /*console.log("❌ Erreur transactions:", transactionsError)*/
       }
     } catch (error) {
       console.error("💥 Erreur lors du test:", error)
@@ -326,13 +312,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
 
   // Fonction de test pour vérifier le schéma de la base de données
   const testSchemaData = async () => {
-    /*console.log("🏗️ Test du schéma Supabase...")*/
     
     try {
       const response = await fetch('/api/debug/supabase-schema')
       if (response.ok) {
         const data = await response.json()
-        /*console.log("🏗️ Schéma complet:", data)*/
       } else {
         console.error("❌ Erreur API schéma:", response.status)
       }
@@ -343,7 +327,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
 
   // Fonction de test pour vérifier le calcul des jours ouvrables
   const testWorkingDaysCalculation = () => {
-    /*console.log("📅 Test du calcul de l'acompte disponible...")*/
     
     const today = new Date()
     const currentMonth = today.getMonth()
@@ -353,12 +336,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     const workingDaysElapsed = getWorkingDaysElapsed(currentYear, currentMonth, currentDay)
     const totalWorkingDays = getTotalWorkingDaysInMonth(currentYear, currentMonth)
     
-    /*console.log("📅 Détails du calcul:")*/
-    /*console.log("  - Date actuelle:", today.toLocaleDateString('fr-FR'))*/
-    /*console.log("  - Mois/Année:", (currentMonth + 1) + "/" + currentYear)*/
-    /*console.log("  - Jour actuel:", currentDay)*/
-    /*console.log("  - Jours ouvrables écoulés:", workingDaysElapsed)*/
-    /*console.log("  - Total jours ouvrables du mois:", totalWorkingDays)*/
     
     // Test avec un salaire de 1,000,000 GNF
     const testSalary = 1000000
@@ -366,16 +343,10 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     const acompteDisponible = dailySalary * workingDaysElapsed
     const limiteAvance = Math.floor(testSalary * 0.25)
     
-    /*console.log("💰 Test avec salaire de 1,000,000 GNF:")*/
-    /*console.log("  - Salaire par jour ouvrable:", dailySalary.toLocaleString(), "GNF")*/
-    /*console.log("  - Acompte disponible:", acompteDisponible.toLocaleString(), "GNF")*/
-    /*console.log("  - Limite d'avance (30%):", limiteAvance.toLocaleString(), "GNF")*/
-    /*console.log("  - Différence:", (acompteDisponible - limiteAvance).toLocaleString(), "GNF")*/
   }
 
   // Fonction de test pour simuler l'acompte à la fin du mois
   const testEndOfMonthCalculation = () => {
-    /*console.log("🎯 Test de l'acompte à la fin du mois...")*/
     
     const today = new Date()
     const currentMonth = today.getMonth()
@@ -389,18 +360,10 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     const dailySalary = Math.floor(testSalary / totalWorkingDays)
     const endOfMonthAcompte = dailySalary * totalWorkingDays
     
-    /*console.log("🎯 Simulation fin de mois:")*/
-    /*console.log("  - Salaire net:", testSalary.toLocaleString(), "GNF")*/
-    /*console.log("  - Total jours ouvrables:", totalWorkingDays)*/
-    /*console.log("  - Salaire par jour ouvrable:", dailySalary.toLocaleString(), "GNF")*/
-    /*console.log("  - Acompte à la fin du mois:", endOfMonthAcompte.toLocaleString(), "GNF")*/
-    /*console.log("  - Différence:", (testSalary - endOfMonthAcompte).toLocaleString(), "GNF")*/
-    /*console.log("  - Pourcentage de précision:", ((endOfMonthAcompte / testSalary) * 100).toFixed(2) + "%")*/
   }
 
   // Fonction de test pour vérifier le calcul actuel de 2,500,000 GNF
   const testCurrentCalculation = () => {
-    /*console.log("🔍 Test du calcul actuel (2,500,000 GNF avec 21 jours)...")*/
     
     const today = new Date()
     const currentMonth = today.getMonth()
@@ -415,12 +378,6 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     const estimatedDailySalary = Math.floor(currentAcompte / workingDaysElapsed)
     const estimatedSalaryNet = estimatedDailySalary * totalWorkingDays
     
-    /*console.log("🔍 Analyse du calcul actuel:")*/
-    /*console.log("  - Acompte disponible actuel:", currentAcompte.toLocaleString(), "GNF")*/
-    /*console.log("  - Jours ouvrables écoulés:", workingDaysElapsed)*/
-    /*console.log("  - Total jours ouvrables du mois:", totalWorkingDays)*/
-    /*console.log("  - Salaire par jour ouvrable estimé:", estimatedDailySalary.toLocaleString(), "GNF")*/
-    /*console.log("  - Salaire net estimé:", estimatedSalaryNet.toLocaleString(), "GNF")*/
     /*console.log("  - Vérification: (Salaire net / Total jours) × Jours écoulés =", 
       Math.floor(estimatedSalaryNet / totalWorkingDays * workingDaysElapsed).toLocaleString(), "GNF")*/
     
@@ -429,17 +386,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
       const realDailySalary = Math.floor(user.salaireNet / totalWorkingDays)
       const realAcompte = realDailySalary * workingDaysElapsed
       
-      /*console.log("💰 Comparaison avec le vrai salaire:")*/
-      /*console.log("  - Vrai salaire net:", user.salaireNet.toLocaleString(), "GNF")*/
-      /*console.log("  - Vrai salaire par jour:", realDailySalary.toLocaleString(), "GNF")*/
-      /*console.log("  - Vrai acompte calculé:", realAcompte.toLocaleString(), "GNF")*/
-      /*console.log("  - Différence:", (currentAcompte - realAcompte).toLocaleString(), "GNF")*/
     }
   }
 
   // Récupération des demandes d'avance maintenant gérée par le hook useEmployeeDemands
   useEffect(() => {
-    /*console.log("📋 Récupération des demandes gérée par le hook useEmployeeDemands")*/
   }, [])
 
   // Réinitialiser la vérification quand l'utilisateur change
@@ -447,15 +398,11 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
     resetVerification();
   }, [user.id, resetVerification]);
 
-  /*console.log("user", user)*/
-  /*console.log("user.salaireNet", user.salaireNet)*/
   //get total working days in month
   const totalWorkingDays = getTotalWorkingDaysInMonth(new Date().getFullYear(), new Date().getMonth())
-  /*console.log("totalWorkingDays", totalWorkingDays)*/
 
   //get working days elapsed
   const workingDaysElapsed = getWorkingDaysElapsed(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
-  /*console.log("Nombre de jours ouvrables écoulés", workingDaysElapsed)*/
   
   // Calculer l'avance disponible dynamiquement
   const availableAdvance = user.salaireNet ? calculateAvailableAdvance(user.salaireNet) : 0
@@ -489,19 +436,9 @@ export function ProfileStats({ user }: { user: UserWithEmployeData }) {
   //get remaining salary - CORRIGÉ: Salaire restant = Salaire net - Avance actif
   const remainingSalary = financialAmounts?.remainingSalary || 0
   
-  /*console.log("💰 Calculs financiers:")*/
   if (financialAmounts) {
-    /*console.log("  - Salaire net:", financialAmounts.salaireNet.toLocaleString(), "GNF")*/
-    /*console.log("  - Total avances actives:", financialAmounts.totalActiveAdvances.toLocaleString(), "GNF")*/
-    /*console.log("  - Salaire restant:", financialAmounts.remainingSalary.toLocaleString(), "GNF")*/
-    /*console.log("  - Avance disponible:", financialAmounts.acompteDisponible.toLocaleString(), "GNF")*/
-    /*console.log("  - Limite mensuelle (30%):", financialAmounts.monthlyLimit.toLocaleString(), "GNF")*/
-    /*console.log("  - Avance restante ce mois:", financialAmounts.remainingMonthlyAdvance.toLocaleString(), "GNF")*/
   }
 
-  /*console.log("activeAdvance", activeAdvance)*/
-  /*console.log("totalAdvance", totalAdvance)*/
-  /*console.log("advanceStatus", advanceStatus)*/
 
   const stats = [
     {
@@ -644,9 +581,7 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
 
   // Synchroniser isVisible avec isVerified quand isVerified change
   useEffect(() => {
-    /*console.log('👁️ useEffect StatCard - isVerified:', isVerified, 'hideable:', hideable)*/
     if (hideable) {
-      /*console.log('🔓 Mise à jour isVisible à:', isVerified)*/
       setIsVisible(isVerified)
     }
   }, [isVerified, hideable])
@@ -654,20 +589,16 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
   // Fermeture automatique après 5 minutes d'inactivité
   useEffect(() => {
     if (hideable && isVerified && isVisible) {
-      /*console.log('⏰ Démarrage du timer de fermeture automatique (5 minutes)');*/
       
       const timeoutId = setTimeout(() => {
-        /*console.log('⏰ Fermeture automatique après 5 minutes d\'inactivité')*/
         setIsVisible(false);
         onResetVerification?.();
       }, 5 * 60 * 1000); // 5 minutes
 
       // Réinitialiser le timer sur les interactions utilisateur
       const resetTimer = () => {
-        /*console.log('🔄 Réinitialisation du timer d\'inactivité')*/
         clearTimeout(timeoutId);
         const newTimeoutId = setTimeout(() => {
-          /*console.log('⏰ Fermeture automatique après 5 minutes d\'inactivité')*/
           setIsVisible(false);
           onResetVerification?.();
         }, 5 * 60 * 1000);
@@ -812,7 +743,6 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
                        }}
                      >
                        {(() => {
-                         /*console.log('🎯 Rendu StatCard - isVisible:', isVisible, 'title:', title)*/
                          return isVisible ? (
                            <>{value} <span className="text-lg font-medium">{currency}</span></>
                          ) : (
@@ -823,30 +753,24 @@ function StatCard({ title, value, remaining, currency, icon, change, trend, colo
                     {hideable && (
                                              <motion.button 
                          onClick={(e) => {
-                           /*console.log('👁️ Clic sur l\'icône œil - isVerified:', isVerified, 'hideable:', hideable)*/
                            e.stopPropagation();
                            if (hideable) {
                              // Pour les cartes protégées, toujours demander la vérification
                              if (!isVerified) {
-                               /*console.log('🔐 Ouverture du modal de vérification...')*/
                                onRequestVerification?.();
                              } else {
                                // Si déjà vérifié, masquer et réinitialiser la vérification
-                               /*console.log('🔒 Masquage et réinitialisation de la vérification')*/
                                setIsVisible(false);
                                onResetVerification?.(); // Réinitialiser la vérification
                              }
                            } else {
                              // Pour les cartes non protégées, basculer normalement
-                             /*console.log('🔄 Basculement de la visibilité')*/
                              setIsVisible(!isVisible);
                            }
                          }}
                          onMouseDown={(e) => {
-                           /*console.log('👁️ MouseDown sur l\'icône œil')*/
                          }}
                          onMouseUp={(e) => {
-                           /*console.log('👁️ MouseUp sur l\'icône œil')*/
                          }}
                         className="p-1 rounded-full hover:bg-gray-100/10 transition-colors flex items-center justify-center"
                         aria-label={isVisible ? "Masquer le montant" : "Afficher le montant"}

@@ -22,8 +22,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*console.log('🔑 Vérification de la clé API via Edge Function...')*/
-    /*console.log('📍 URL:', `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/employee-auth/verify-api-key`)*/
 
     // Appeler l'Edge Function Supabase pour vérifier la clé API
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -53,7 +51,6 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
     
-    /*console.log('📋 Réponse Edge Function:', response.status, result)*/
 
     if (!response.ok) {
       console.error('❌ Erreur Edge Function:', response.status, result);
@@ -70,7 +67,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*console.log('✅ Clé API vérifiée avec succès')*/
     
     // Retourner les informations de l'entreprise
     return createCorsResponse({

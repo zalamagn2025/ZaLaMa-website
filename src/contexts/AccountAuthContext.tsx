@@ -84,18 +84,15 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
   // Connexion rapide avec PIN
   const quickLogin = async (account: AccountSession, pin: string) => {
     try {
-      console.log('🚀 Connexion rapide pour:', account.email)
       
       // Se connecter directement avec l'email et le PIN
       // employeeLogin fera la vérification du PIN
       await employeeLogin(account.email, pin)
       
-      console.log('✅ Connexion rapide réussie')
       
       // Mettre à jour la dernière connexion
       await updateLastLogin(account.user_id)
       
-      console.log('✅ Dernière connexion mise à jour')
     } catch (error) {
       console.error('❌ Erreur lors de la connexion rapide:', error)
       throw error
@@ -116,7 +113,6 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
   // Sauvegarder automatiquement le compte quand l'utilisateur se connecte
   useEffect(() => {
     const saveCurrentAccount = async () => {
-      // console.log('🔄 useEffect saveCurrentAccount déclenché:', {
       //   isAuthenticated,
       //   hasCurrentEmployee: !!currentEmployee,
       //   currentEmployeeEmail: currentEmployee?.email,
@@ -131,8 +127,6 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
         if (!existingAccount) {
           try {
             const accessToken = localStorage.getItem('employee_access_token')
-            // console.log('💾 Sauvegarde automatique du compte:', currentEmployee.email)
-            // console.log('🔑 Token d\'accès:', accessToken ? 'Présent' : 'Absent')
             
             if (!accessToken) {
               console.warn('⚠️ Aucun token d\'accès trouvé, impossible de sauvegarder le compte')
@@ -146,7 +140,6 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
               access_token: accessToken
             }
             
-            // console.log('📤 Envoi des données utilisateur:', {
             //   email: userData.email,
             //   nom: userData.nom,
             //   prenom: userData.prenom,
@@ -156,7 +149,6 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
             // })
             
             await saveAccount(userData)
-            // console.log('✅ Compte sauvegardé avec succès')
           } catch (error) {
             console.error('❌ Erreur lors de la sauvegarde automatique du compte:', error)
           }
@@ -185,7 +177,6 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
           
           if (hasProfileImageChanged || hasOtherDataChanged) {
             try {
-              // console.log('🔄 Mise à jour du compte existant:', {
               //   email: currentEmployee.email,
               //   profileImageChanged: hasProfileImageChanged,
               //   otherDataChanged: hasOtherDataChanged,
@@ -196,16 +187,13 @@ export function AccountAuthProvider({ children }: AccountAuthProviderProps) {
               // Supprimer l'ancien compte et sauvegarder avec les nouvelles données
               await removeAccount(existingAccount.id)
               await saveAccount(userData)
-              // console.log('✅ Compte existant mis à jour avec succès')
             } catch (error) {
               console.error('❌ Erreur lors de la mise à jour du compte:', error)
             }
           } else {
-            // console.log('ℹ️ Compte déjà existant et à jour:', currentEmployee.email)
           }
         }
       } else {
-        // console.log('⏳ Conditions non remplies pour la sauvegarde automatique')
       }
     }
 

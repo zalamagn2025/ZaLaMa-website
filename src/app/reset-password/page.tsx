@@ -47,7 +47,6 @@ export default function ResetPasswordPage() {
           if (error) {
             console.error('Erreur lors de la configuration de la session:', error);
           } else {
-            console.log('✅ Session configurée avec succès');
           }
         });
       }

@@ -40,7 +40,6 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchFinancialData = async () => {
       try {
-        console.log("💰 Récupération des données financières dans profile...")
         
         const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
         if (!accessToken) {
@@ -58,14 +57,11 @@ export default function ProfilePage() {
 
         if (response.ok) {
           const result = await response.json()
-          console.log("📊 Données financières récupérées dans profile:", result.data)
           
           if (result.data?.financial?.salaire_disponible) {
             const salaireDispo = result.data.financial.salaire_disponible
             setSalaireDisponible(salaireDispo)
-            console.log("✅ Salaire disponible dans profile:", salaireDispo)
           } else {
-            console.log("ℹ️ Aucun salaire disponible trouvé dans profile")
             setSalaireDisponible(0)
           }
         } else {
@@ -90,7 +86,6 @@ export default function ProfilePage() {
     const loadAllPayments = async () => {
       try {
         setPaymentsLoading(true)
-        console.log("📋 Chargement de tous les paiements...")
         
         const accessToken = localStorage.getItem('access_token') || localStorage.getItem('employee_access_token')
         if (!accessToken) {
@@ -132,7 +127,6 @@ export default function ProfilePage() {
         // TODO: Ajouter ici les autres paiements récupérés depuis l'API
         // payments.push(...apiPayments)
         
-        console.log("✅ Tous les paiements chargés:", payments.length)
         setAllPayments(payments)
       } catch (error) {
         console.error('Erreur lors du chargement des paiements:', error)
@@ -148,15 +142,12 @@ export default function ProfilePage() {
   }, [isAuthenticated, employee, salaireDisponible])
 
   const handleStatusChange = (paymentId: string, newStatus: PaymentData['status']) => {
-    console.log('Status change:', paymentId, newStatus)
   }
 
   const handleDownload = (paymentId: string) => {
-    console.log('Download:', paymentId)
   }
 
   const handleShare = (paymentId: string) => {
-    console.log('Share:', paymentId)
   }
 
   const handleCloseModal = () => {
@@ -164,32 +155,19 @@ export default function ProfilePage() {
   }
 
   const handleSuccess = () => {
-    /*console.log('Salaire configuré avec succès')*/
     setShowModal(false)
   }
 
   // Debug: Logs pour comprendre pourquoi la modale ne s'affiche pas
   useEffect(() => {
-    /*console.log('🔍 DEBUG - Profile Page State:')*/
-    /*console.log('   - employee:', employee)*/
-    /*console.log('   - loading:', loading)*/
-    /*console.log('   - isAuthenticated:', isAuthenticated)*/
-    /*console.log('   - needsSetup:', needsSetup)*/
-    /*console.log('   - userInfo:', userInfo)*/
-    /*console.log('   - salaryLoading:', salaryLoading)*/
-    /*console.log('   - salaryError:', salaryError)*/
     
     if (employee) {
-      /*console.log('   - employee.role:', employee.role)*/
-      /*console.log('   - employee.salaire_net:', employee.salaire_net)*/
-      /*console.log('   - employee.user_id:', employee.user_id)*/
     }
   }, [employee, loading, isAuthenticated, needsSetup, userInfo, salaryLoading, salaryError]);
 
   // Fonction pour récupérer les informations de l'entreprise
   const fetchEntrepriseInfo = async (partenaireId: string) => {
     try {
-      /*console.log('🏢 Récupération des informations de l\'entreprise...')*/
       const response = await fetch(`/api/partenaires/${partenaireId}`, {
         method: 'GET',
         credentials: 'include',
@@ -197,7 +175,6 @@ export default function ProfilePage() {
 
       if (response.ok) {
         const entrepriseData = await response.json()
-        /*console.log('✅ Informations entreprise récupérées:', entrepriseData.nom)*/
         setEntreprise(entrepriseData)
       } else {
         console.error('❌ Erreur lors de la récupération de l\'entreprise')

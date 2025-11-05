@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log('📥 Données reçues pour l\'historique:', body)
     
     const authHeader = request.headers.get('authorization')
     
@@ -29,7 +28,6 @@ export async function POST(request: NextRequest) {
     }
 
     const functionUrl = `${supabaseUrl}/functions/v1/employee-withdrawal`
-    console.log('🌐 URL de l\'edge function:', functionUrl)
     
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -40,11 +38,9 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body)
     })
 
-    console.log('📤 Statut de la réponse:', response.status)
     console.log('📤 Headers de la réponse:', Object.fromEntries(response.headers.entries()))
 
     const data = await response.json()
-    console.log('📥 Données de la réponse:', data)
 
     if (!response.ok) {
       console.error('❌ Erreur de l\'edge function:', data)
@@ -57,7 +53,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('✅ Historique récupéré avec succès:', data)
     return NextResponse.json(data)
   } catch (error) {
     console.error('❌ Erreur dans l\'API withdrawal-history:', error)

@@ -131,7 +131,6 @@ class LogoUploadService {
    */
   async deleteLogo(fileName: string): Promise<LogoDeleteResponse> {
     try {
-      /*console.log('🗑️ Début suppression logo:', fileName)*/
 
       const url = `/api/delete-logo?fileName=${encodeURIComponent(fileName)}`;
       
@@ -140,7 +139,6 @@ class LogoUploadService {
       });
 
       const result = await response.json();
-      /*console.log('📥 Réponse suppression logo:', result)*/
 
       if (!response.ok) {
         throw new Error(result.error || 'Erreur lors de la suppression');

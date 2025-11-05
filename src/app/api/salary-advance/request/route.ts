@@ -279,7 +279,6 @@ export async function POST(request: NextRequest) {
       }
     })
     
-    /*console.log('📅 Demandes du mois en cours:', demandesMonthly)*/
 
     // Vérifier si la nouvelle demande + total existant dépasse 30%
     const nouvelleDemande = parseFloat(montantDemande)
@@ -351,7 +350,6 @@ export async function POST(request: NextRequest) {
       console.error('❌ Erreur lors de la création de la transaction:', transactionError)
       // Ne pas faire échouer la demande pour cette raison, mais logger l'erreur
     } else {
-      /*console.log('✅ Transaction créée:', transactionResult.id)*/
     }
 
     // Enregistrer l'activité de l'utilisateur (optionnel - commenté pour éviter les erreurs)

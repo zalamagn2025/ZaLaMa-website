@@ -8,13 +8,9 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    /*console.log('🚀 API Route: Début upload logo via edge function Supabase');*/
-    /*console.log('📋 Headers de la requête:', Object.fromEntries(request.headers.entries()));*/
-    /*console.log('📋 Content-Type:', request.headers.get('content-type'));*/
 
     // Récupérer le FormData de la requête
     const formData = await request.formData();
-    /*console.log('📋 FormData reçu, clés disponibles:', Array.from(formData.keys()));*/
 
     // Vérifier que le logo est présent
     const logo = formData.get('logo') as File;
@@ -58,7 +54,6 @@ export async function POST(request: NextRequest) {
     const fileName = `${timestamp}_${logo.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const filePath = `${partnerId}/${fileName}`;
 
-    /*console.log('📁 Chemin généré:', filePath);*/
 
     // Upload vers Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage

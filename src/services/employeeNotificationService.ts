@@ -62,7 +62,6 @@ class EmployeeNotificationService {
     const startTime = Date.now();
     
     try {
-      /*console.log('📧 Envoi e-mail confirmation inscription employé pour:', data.email)*/
       
       const htmlContent = this.getEmployeeRegistrationEmailTemplate(data);
       
@@ -121,7 +120,6 @@ class EmployeeNotificationService {
     const startTime = Date.now();
     
     try {
-      /*console.log('📱 Envoi SMS confirmation inscription employé pour:', data.telephone)*/
       
       const message = this.buildEmployeeRegistrationSMSMessage(data);
       const formattedPhone = this.formatPhoneNumber(data.telephone);
@@ -169,7 +167,6 @@ class EmployeeNotificationService {
    * Envoie les notifications complètes (email + SMS)
    */
   async sendRegistrationNotifications(data: EmployeeRegistrationData): Promise<NotificationResult> {
-    /*console.log('🚀 Envoi des notifications d\'inscription pour:', `${data.prenom} ${data.nom}`)*/
     
     const results: NotificationResult = {
       success: false,
@@ -178,7 +175,6 @@ class EmployeeNotificationService {
 
     try {
       // Envoi de l'email
-      /*console.log('📧 Envoi email de confirmation...')*/
       const emailResult = await this.sendEmployeeEmail(data);
       results.email = emailResult;
       
@@ -190,7 +186,6 @@ class EmployeeNotificationService {
       await this.delay(500);
 
       // Envoi du SMS
-      /*console.log('📱 Envoi SMS de confirmation...')*/
       const smsResult = await this.sendEmployeeSMS(data);
       results.sms = smsResult;
       

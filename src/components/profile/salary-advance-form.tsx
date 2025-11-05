@@ -477,7 +477,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {
-          /*console.log('📊 Données financières récupérées dans le formulaire:', result.data)*/
           setFinancialData(result.data)
         } else {
           setError(result.error || 'Erreur lors du chargement des données')
@@ -496,7 +495,6 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
   // Récupérer les avances actives (maintenant géré par le hook useEmployeeDemands)
   const fetchAdvanceRequests = useCallback(async () => {
     // Cette fonction n'est plus nécessaire car le hook gère automatiquement la récupération
-    /*console.log('📋 Récupération des avances gérée par le hook useEmployeeDemands')*/
   }, [])
 
   // Calculer l'avance disponible en temps réel avec les données de l'Edge Function
@@ -773,10 +771,8 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         }),
       }
 
-      /*console.log('📝 Création de la demande via Edge Function:', demandData)*/
       
       const result = await createDemand(demandData)
-      /*console.log("✅ Demande créée avec succès:", result)*/
       
       // Vérifier le statut de la réponse pour détecter les rejets
       const statut = result?.data?.statut?.toLowerCase() || '';
