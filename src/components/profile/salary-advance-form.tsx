@@ -815,17 +815,29 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
         
         // Formater le message d'erreur de manière plus lisible
         if (errorMsg.includes('Demande multi-mois refusée')) {
-          // Cas spécifique : demande multi-mois refusée (CDD, etc.)
-          if (errorMsg.includes('CDD') || errorMsg.includes('CDI')) {
+          // Cas 1 : Ancienneté ZaLaMa insuffisante
+          if (errorMsg.includes('Ancienneté ZaLaMa') || errorMsg.includes('inscrit sur ZaLaMa depuis')) {
+            // Message déjà bien formaté par l'API, on le garde tel quel
+            errorMsg = errorMsg;
+          }
+          // Cas 2 : Type de contrat incompatible (CDD)
+          else if (errorMsg.includes('CDD') || errorMsg.includes('CDI')) {
             // Message déjà bien formaté, on le garde tel quel
             errorMsg = errorMsg;
-          } else {
-            // Cas spécifique : tentative multi-mois avec avances actives
+          }
+          // Cas 3 : Avances actives existantes
+          else if (errorMsg.includes('avance(s) active(s)')) {
+            // Tentative multi-mois avec avances actives
             const match = errorMsg.match(/vous avez déjà (\d+) avance\(s\) active\(s\).*?pour un total de ([0-9,]+) GNF/);
             const nombreAvances = match ? match[1] : 'des';
             const montantTotal = match ? match[2] : '';
             
             errorMsg = `Multi-mois impossible : Vous avez ${nombreAvances} avance(s) active(s) (${montantTotal} GNF). Les demandes multi-mois nécessitent d'avoir 0 avance en cours. Remboursez d'abord vos avances actives.`;
+          }
+          // Cas 4 : Autre raison de rejet multi-mois
+          else {
+            // Garder le message tel quel
+            errorMsg = errorMsg;
           }
         } else if (errorMsg.includes('avances actives') || errorMsg.includes('dépasseriez la limite')) {
           // Cas général : limite de plafond dépassée
