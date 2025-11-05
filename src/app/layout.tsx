@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="relative" suppressHydrationWarning={true}>
+    <html lang="fr" className="dark relative" suppressHydrationWarning={true}>
       <head>
         {/* Font Awesome est chargé via next.config.js pour éviter les erreurs d'hydratation */}
         {/* Désactiver l'auto-complétion et les suggestions de mots de passe */}
@@ -52,7 +52,7 @@ export default function RootLayout({
         )}
       >
         <FontAwesomeLoader />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
           <EmployeeAuthProvider>
             <AccountAuthProvider>
               <SEOProvider canonicalUrl="https://www.zalamagn.com">

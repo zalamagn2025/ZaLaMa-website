@@ -7,7 +7,8 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
-      enableSystem
+      enableSystem={false}
+      forcedTheme="dark"
       disableTransitionOnChange={false}
       storageKey="zalama-theme"
       {...props}
