@@ -207,7 +207,7 @@ export default function EmployeeLoginForm() {
       const recaptchaVerification = await fetch('/api/security/verify-recaptcha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recaptchaToken }),
+        body: JSON.stringify({ token: recaptchaToken }),
       });
       const recaptchaResult = await recaptchaVerification.json();
 
