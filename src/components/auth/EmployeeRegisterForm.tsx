@@ -42,6 +42,7 @@ import {
   validateEmployeeForm,
   FormValidationErrors
 } from "@/utils/formValidation";
+import { ReCaptchaCheckbox } from "@/components/security/ReCaptchaCheckbox";
 
 // Composant Input réutilisable avec le style du login
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
@@ -133,6 +134,12 @@ export default function EmployeeRegisterForm() {
 
   // États pour les erreurs de validation (seulement lors de la soumission)
   const [validationErrors, setValidationErrors] = useState<FormValidationErrors>({});
+const [recaptchaTokenStep1, setRecaptchaTokenStep1] = useState<string | null>(null);
+const [recaptchaKeyStep1, setRecaptchaKeyStep1] = useState(0);
+const [recaptchaErrorStep1, setRecaptchaErrorStep1] = useState<string | null>(null);
+const [recaptchaTokenStep2, setRecaptchaTokenStep2] = useState<string | null>(null);
+const [recaptchaKeyStep2, setRecaptchaKeyStep2] = useState(0);
+const [recaptchaErrorStep2, setRecaptchaErrorStep2] = useState<string | null>(null);
 
   // Validation des champs
   const validateStep1 = () => {
@@ -140,7 +147,7 @@ export default function EmployeeRegisterForm() {
   };
 
   // Fonction pour valider la clé API via l'API route
-  const validateApiKey = async () => {
+  const validateApiKey = async (captchaToken: string) => {
     /*console.log('validateApiKey appelé avec:', apiKey)*/
     
     if (!apiKey.trim()) {
@@ -149,8 +156,14 @@ export default function EmployeeRegisterForm() {
       return false;
     }
 
+    if (!captchaToken) {
+      setApiKeyError("Validation reCAPTCHA requise");
+      return false;
+    }
+
     setValidatingApiKey(true);
     setApiKeyError(null);
+    setRecaptchaErrorStep1(null);
 
     try {
       /*console.log('🔍 Validation via API route...')*/
@@ -160,7 +173,7 @@ export default function EmployeeRegisterForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ api_key: apiKey }),
+        body: JSON.stringify({ api_key: apiKey, recaptchaToken: captchaToken }),
       });
 
       /*console.log('📡 Réponse validation:', response.status)*/
@@ -233,7 +246,13 @@ export default function EmployeeRegisterForm() {
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     /*console.log('handleStep1Submit appelé avec apiKey:', apiKey)*/
-    const isValid = await validateApiKey();
+    if (!recaptchaTokenStep1) {
+      setRecaptchaErrorStep1("Veuillez confirmer que vous n'êtes pas un robot.");
+      return;
+    }
+    const isValid = await validateApiKey(recaptchaTokenStep1);
+    setRecaptchaTokenStep1(null);
+    setRecaptchaKeyStep1(prev => prev + 1);
     /*console.log('Résultat validation:', isValid)*/
     if (isValid) {
       setFormData(prev => ({ ...prev, api_key: apiKey }));
@@ -279,6 +298,12 @@ export default function EmployeeRegisterForm() {
       return;
     }
     
+    if (!recaptchaTokenStep2) {
+      setRecaptchaErrorStep2("Veuillez confirmer que vous n'êtes pas un robot.");
+      return;
+    }
+    setRecaptchaErrorStep2(null);
+    
     // Préparer les données pour l'envoi
     const dataToSend = {
       ...formData,
@@ -286,7 +311,15 @@ export default function EmployeeRegisterForm() {
       salaire_net: salaryValidation.numericValue || formData.salaire_net
     };
     
-    await registerEmployee(dataToSend);
+    try {
+      await registerEmployee({
+        ...dataToSend,
+        recaptchaToken: recaptchaTokenStep2
+      });
+    } finally {
+      setRecaptchaTokenStep2(null);
+      setRecaptchaKeyStep2(prev => prev + 1);
+    }
   };
 
   const handleInputChange = (field: keyof EmployeeRegistrationData, value: string | number) => {
@@ -313,6 +346,9 @@ export default function EmployeeRegisterForm() {
     resetState();
     setApiKeyError(null);
     setPartnerInfo(null);
+    setRecaptchaTokenStep2(null);
+    setRecaptchaKeyStep2(prev => prev + 1);
+    setRecaptchaErrorStep2(null);
   };
 
   const handleSuccess = () => {
@@ -589,47 +625,63 @@ export default function EmployeeRegisterForm() {
                  </AnimatePresence>
 
                  {/* Message de succès pour la clé API */}
-                 <AnimatePresence>
-                   {partnerInfo && (
-                     <motion.div
-                       initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                       animate={{ opacity: 1, scale: 1, y: 0 }}
-                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                       className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-600/10 border border-green-500/30 rounded-xl backdrop-blur-sm"
-                     >
-                       <div className="flex items-center gap-3">
-                         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                           <CheckCircle className="w-3 h-3 text-green-400" />
-                         </div>
-                         <div className="flex items-center gap-3 flex-1">
-                                                       {partnerInfo.logo_url && (
-                              <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-white border border-white/30 flex items-center justify-center">
-                                <img 
-                                  src={partnerInfo.logo_url} 
-                                  alt={`Logo ${partnerInfo.company_name}`}
-                                  className="max-w-full max-h-full object-contain"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                              </div>
+                <AnimatePresence>
+                  {partnerInfo && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-600/10 border border-green-500/30 rounded-xl backdrop-blur-sm"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <CheckCircle className="w-3 h-3 text-green-400" />
+                        </div>
+                        <div className="flex items-center gap-3 flex-1">
+                                                      {partnerInfo.logo_url && (
+                             <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-white border border-white/30 flex items-center justify-center">
+                               <img 
+                                 src={partnerInfo.logo_url} 
+                                 alt={`Logo ${partnerInfo.company_name}`}
+                                 className="max-w-full max-h-full object-contain"
+                                 onError={(e) => {
+                                   e.currentTarget.style.display = 'none';
+                                 }}
+                               />
+                             </div>
+                           )}
+                          <div className="flex-1">
+                        <p className="text-green-200 text-sm font-medium">
+                          Code valide pour : <span className="font-semibold text-green-100">{partnerInfo.company_name}</span>
+                        </p>
+                            {partnerInfo.is_active !== undefined && (
+                              <p className="text-green-300/70 text-xs">
+                                Statut : {partnerInfo.is_active ? 'Actif' : 'Inactif'}
+                              </p>
                             )}
-                           <div className="flex-1">
-                         <p className="text-green-200 text-sm font-medium">
-                           Code valide pour : <span className="font-semibold text-green-100">{partnerInfo.company_name}</span>
-                         </p>
-                             {partnerInfo.is_active !== undefined && (
-                               <p className="text-green-300/70 text-xs">
-                                 Statut : {partnerInfo.is_active ? 'Actif' : 'Inactif'}
-                               </p>
-                             )}
-                           </div>
-                         </div>
-                       </div>
-                     </motion.div>
-                   )}
-                 </AnimatePresence>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="mt-6">
+                  <ReCaptchaCheckbox
+                    key={recaptchaKeyStep1}
+                    onChange={(token) => {
+                      setRecaptchaTokenStep1(token);
+                      setRecaptchaErrorStep1(null);
+                    }}
+                    theme="dark"
+                  />
+                  {recaptchaErrorStep1 && (
+                    <p className="text-xs text-red-300 text-center mt-2">
+                      {recaptchaErrorStep1}
+                    </p>
+                  )}
+                </div>
 
                                  <motion.button
                    whileHover={{ 
@@ -1323,7 +1375,23 @@ export default function EmployeeRegisterForm() {
                    )}
                  </AnimatePresence>
 
-                 {/* Boutons avec animations améliorées */}
+                <div className="mt-6">
+                  <ReCaptchaCheckbox
+                    key={recaptchaKeyStep2}
+                    onChange={(token) => {
+                      setRecaptchaTokenStep2(token);
+                      setRecaptchaErrorStep2(null);
+                    }}
+                    theme="dark"
+                  />
+                  {recaptchaErrorStep2 && (
+                    <p className="text-xs text-red-300 text-center mt-2">
+                      {recaptchaErrorStep2}
+                    </p>
+                  )}
+                </div>
+
+                {/* Boutons avec animations améliorées */}
                  <div className="flex gap-4 mt-8">
                    <motion.button
                      type="button"

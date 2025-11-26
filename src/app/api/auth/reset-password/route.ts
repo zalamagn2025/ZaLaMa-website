@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptchaToken } from '@/lib/recaptcha';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, newPassword, confirmPassword } = body;
+    const { token, newPassword, confirmPassword, recaptchaToken } = body;
+
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded
+      ? forwarded.split(',')[0]
+      : request.headers.get('x-real-ip') || undefined;
+
+    const captchaResult = await verifyRecaptchaToken(recaptchaToken, ip);
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Validation reCAPTCHA nécessaire',
+          details: captchaResult['error-codes'],
+        },
+        { status: 400 }
+      );
+    }
 
     // Validation des données
     if (!token) {

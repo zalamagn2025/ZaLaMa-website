@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptchaToken } from '@/lib/recaptcha';
 
 export async function POST(request: NextRequest) {
   try {
     /*console.log('🔗 Appel de l\'Edge Function employee-auth/register...')*/
 
-    const body = await request.json();
+    const rawBody = await request.json();
+    const { recaptchaToken, ...body } = rawBody;
+
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded
+      ? forwarded.split(',')[0]
+      : request.headers.get('x-real-ip') || undefined;
+
+    const captchaResult = await verifyRecaptchaToken(recaptchaToken, ip);
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Validation reCAPTCHA requise',
+          details: captchaResult['error-codes'],
+        },
+        { status: 400 }
+      );
+    }
     /*console.log('📋 Données reçues pour inscription:', JSON.stringify(body, null, 2));*/
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {

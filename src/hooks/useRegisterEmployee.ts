@@ -15,6 +15,7 @@ export interface EmployeeRegistrationData {
   salaire_net: number;
   date_embauche: string;
   date_expiration: string;
+  recaptchaToken?: string;
 }
 
 export interface ApiResponse {

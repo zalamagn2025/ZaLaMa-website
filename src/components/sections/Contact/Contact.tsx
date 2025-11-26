@@ -1,21 +1,24 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, Clock, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { motion } from "framer-motion";
+import { Mail, Phone, MapPin, Send, Clock, MessageSquare, CheckCircle, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { ReCaptchaCheckbox } from "@/components/security/ReCaptchaCheckbox";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    subject: '',
-    message: ''
+    firstName: "",
+    lastName: "",
+    email: "",
+    subject: "",
+    message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaKey, setRecaptchaKey] = useState(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -27,6 +30,12 @@ export default function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!recaptchaToken) {
+      setSubmitStatus("error");
+      setErrorMessage("Veuillez confirmer que vous n'êtes pas un robot.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus('idle');
     setErrorMessage('');
@@ -37,7 +46,7 @@ export default function Contact() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, recaptchaToken }),
       });
 
       const data = await response.json();
@@ -51,9 +60,15 @@ export default function Contact() {
           subject: '',
           message: ''
         });
+        setRecaptchaToken(null);
+        setRecaptchaKey((prev) => prev + 1);
       } else {
         setSubmitStatus('error');
         setErrorMessage(data.error || 'Une erreur est survenue');
+        if (response.status === 400) {
+          setRecaptchaToken(null);
+          setRecaptchaKey((prev) => prev + 1);
+        }
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -197,13 +212,27 @@ export default function Contact() {
                   ></textarea>
                 </div>
 
+                {/* Widget reCAPTCHA */}
+                <div className="flex justify-center">
+                  <ReCaptchaCheckbox
+                    key={recaptchaKey}
+                    onChange={(token) => {
+                      setRecaptchaToken(token);
+                      if (token) {
+                        setErrorMessage('');
+                        setSubmitStatus('idle');
+                      }
+                    }}
+                  />
+                </div>
+
                 <div>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !recaptchaToken}
                     className={cn(
                       "w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white transition-colors duration-300",
-                      isSubmitting 
+                      isSubmitting || !recaptchaToken
                         ? "bg-gray-400 cursor-not-allowed" 
                         : "bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                     )}

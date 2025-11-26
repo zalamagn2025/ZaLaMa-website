@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyRecaptchaToken } from '@/lib/recaptcha';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,7 +9,23 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, recaptchaToken } = await request.json();
+
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded
+      ? forwarded.split(',')[0]
+      : request.headers.get('x-real-ip') || undefined;
+
+    const captchaResult = await verifyRecaptchaToken(recaptchaToken, ip);
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Validation reCAPTCHA nécessaire',
+          details: captchaResult['error-codes'],
+        },
+        { status: 400 }
+      );
+    }
 
     // Validation de l'email
     if (!email || !email.includes('@')) {

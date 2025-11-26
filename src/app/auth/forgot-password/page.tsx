@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import React, { useState } from 'react';
+import { ReCaptchaCheckbox } from '@/components/security/ReCaptchaCheckbox';
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -31,9 +32,18 @@ export default function ForgotPasswordPage() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaKey, setRecaptchaKey] = useState(0);
+  const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!recaptchaToken) {
+      setStatus('error');
+      setMessage('Veuillez confirmer que vous n\'êtes pas un robot.');
+      setRecaptchaError('Veuillez confirmer que vous n\'êtes pas un robot.');
+      return;
+    }
     setIsLoading(true);
     setStatus('idle');
     setMessage('');
@@ -44,7 +54,7 @@ export default function ForgotPasswordPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, recaptchaToken }),
       });
 
       const data = await response.json();
@@ -52,9 +62,13 @@ export default function ForgotPasswordPage() {
       if (response.ok) {
         setStatus('success');
         setMessage(data.message || 'Email de réinitialisation envoyé avec succès');
+        setRecaptchaToken(null);
+        setRecaptchaKey(prev => prev + 1);
       } else {
         setStatus('error');
         setMessage(data.error || 'Une erreur est survenue');
+        setRecaptchaToken(null);
+        setRecaptchaKey(prev => prev + 1);
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -201,7 +215,7 @@ export default function ForgotPasswordPage() {
                   )}
                 </AnimatePresence>
 
-                {/* Form */}
+            {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <motion.div 
                     className={`relative ${focusedInput === 'email' ? 'z-10' : ''}`}
@@ -228,7 +242,22 @@ export default function ForgotPasswordPage() {
                       />
                     </div>
                   </motion.div>
-
+                  <div className="mt-2">
+                    <ReCaptchaCheckbox
+                      key={recaptchaKey}
+                      onChange={(token) => {
+                        setRecaptchaToken(token);
+                        setRecaptchaError(null);
+                        setStatus('idle');
+                      }}
+                      theme="dark"
+                    />
+                    {recaptchaError && (
+                      <p className="text-xs text-red-300 text-center mt-2">
+                        {recaptchaError}
+                      </p>
+                    )}
+                  </div>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

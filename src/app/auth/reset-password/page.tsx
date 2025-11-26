@@ -7,6 +7,7 @@ import { ArrowLeft, Mail, CheckCircle, AlertCircle, Key, Eye, EyeClosed } from '
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import PinInput from "@/components/common/PinInput";
+import { ReCaptchaCheckbox } from "@/components/security/ReCaptchaCheckbox";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -44,6 +45,12 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+const [recaptchaEmailToken, setRecaptchaEmailToken] = useState<string | null>(null);
+const [recaptchaEmailKey, setRecaptchaEmailKey] = useState(0);
+const [recaptchaEmailError, setRecaptchaEmailError] = useState<string | null>(null);
+const [recaptchaPinToken, setRecaptchaPinToken] = useState<string | null>(null);
+const [recaptchaPinKey, setRecaptchaPinKey] = useState(0);
+const [recaptchaPinError, setRecaptchaPinError] = useState<string | null>(null);
 
   // Vérifier si on a un token de réinitialisation
   useEffect(() => {
@@ -112,6 +119,12 @@ export default function ResetPasswordPage() {
   const handleSendResetEmail = async (e: React.FormEvent) => {
     /*console.log('handleSendResetEmail appelé!', e)*/
     e.preventDefault();
+    if (!recaptchaEmailToken) {
+      setStatus('error');
+      setMessage('Veuillez confirmer que vous n\'êtes pas un robot.');
+      setRecaptchaEmailError('Veuillez confirmer que vous n\'êtes pas un robot.');
+      return;
+    }
     setIsLoading(true);
     setStatus('idle');
     setMessage('');
@@ -122,7 +135,7 @@ export default function ResetPasswordPage() {
           headers: {
             'Content-Type': 'application/json',
           },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, recaptchaToken: recaptchaEmailToken }),
         });
 
         const data = await response.json();
@@ -139,6 +152,8 @@ export default function ResetPasswordPage() {
           setStatus('error');
         setMessage(data.error || 'Une erreur est survenue');
         }
+        setRecaptchaEmailToken(null);
+        setRecaptchaEmailKey(prev => prev + 1);
       } catch (error) {
       console.error('Erreur:', error);
         setStatus('error');
@@ -163,6 +178,14 @@ export default function ResetPasswordPage() {
         return;
       }
 
+      if (!recaptchaPinToken) {
+        setStatus('error');
+        setMessage('Veuillez confirmer que vous n\'êtes pas un robot.');
+        setRecaptchaPinError('Veuillez confirmer que vous n\'êtes pas un robot.');
+        setIsLoading(false);
+        return;
+      }
+
       try {
       const token = searchParams.get('token');
       const response = await fetch('/api/auth/reset-password', {
@@ -173,7 +196,8 @@ export default function ResetPasswordPage() {
           body: JSON.stringify({
           token,
           newPassword: newPin,
-          confirmPassword: confirmPin
+          confirmPassword: confirmPin,
+          recaptchaToken: recaptchaPinToken
           }),
         });
 
@@ -192,6 +216,8 @@ export default function ResetPasswordPage() {
         setStatus('error');
         setMessage(data.error || 'Erreur lors de la réinitialisation');
       }
+      setRecaptchaPinToken(null);
+      setRecaptchaPinKey(prev => prev + 1);
     } catch (error) {
       console.error('Erreur:', error);
       setStatus('error');
@@ -408,6 +434,22 @@ export default function ResetPasswordPage() {
               </div>
             </div>
 
+                  <div className="mt-2">
+                    <ReCaptchaCheckbox
+                      key={recaptchaEmailKey}
+                      onChange={(token) => {
+                        setRecaptchaEmailToken(token);
+                        setRecaptchaEmailError(null);
+                      }}
+                      theme="dark"
+                    />
+                    {recaptchaEmailError && (
+                      <p className="text-xs text-red-300 text-center mt-2">
+                        {recaptchaEmailError}
+                      </p>
+                    )}
+                  </div>
+
                 <button
                     type="submit"
                     disabled={isLoading}
@@ -493,6 +535,22 @@ export default function ResetPasswordPage() {
                         </motion.div>
                       )}
                     </motion.div>
+              </div>
+
+              <div>
+                <ReCaptchaCheckbox
+                  key={recaptchaPinKey}
+                  onChange={(token) => {
+                    setRecaptchaPinToken(token);
+                    setRecaptchaPinError(null);
+                  }}
+                  theme="dark"
+                />
+                {recaptchaPinError && (
+                  <p className="text-xs text-red-300 text-center mt-2">
+                    {recaptchaPinError}
+                  </p>
+                )}
               </div>
 
               <button

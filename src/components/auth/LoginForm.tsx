@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ReCaptchaCheckbox } from "@/components/security/ReCaptchaCheckbox";
 
 export default function LoginForm() {
   const [phone, setPhone] = useState("");
@@ -10,11 +11,19 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaKey, setRecaptchaKey] = useState(0);
+  const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!recaptchaToken) {
+      setError("Veuillez confirmer que vous n'êtes pas un robot.");
+      setRecaptchaError("Veuillez confirmer que vous n'êtes pas un robot.");
+      return;
+    }
     setLoading(true);
 
     // Validation pour les numéros guinéens (+224)
@@ -27,19 +36,31 @@ export default function LoginForm() {
     }
 
     try {
-      // Ici, vous intégrerez la logique d'authentification réelle
-      // Par exemple, avec Firebase ou votre API
-      /*console.log("Tentative de connexion avec:", { phone, password })*/
-      
+      const captchaResponse = await fetch("/api/security/verify-recaptcha", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: recaptchaToken }),
+      });
+
+      if (!captchaResponse.ok) {
+        const captchaData = await captchaResponse.json();
+        throw new Error(captchaData.error || "Validation reCAPTCHA échouée.");
+      }
+
       // Simulation d'une connexion réussie
       setTimeout(() => {
         router.push("/profile");
       }, 1500);
     } catch (err) {
-      setError("Échec de la connexion. Veuillez vérifier vos identifiants.");
+      const errorMessage = err instanceof Error ? err.message : "Échec de la connexion. Veuillez vérifier vos identifiants.";
+      setError(errorMessage);
       console.error(err);
     } finally {
       setLoading(false);
+      setRecaptchaToken(null);
+      setRecaptchaKey((prev) => prev + 1);
     }
   };
 
@@ -144,6 +165,21 @@ export default function LoginForm() {
           </a>
         </div>
       </div>
+
+        <div className="pt-2">
+          <ReCaptchaCheckbox
+            key={recaptchaKey}
+            onChange={(token) => {
+              setRecaptchaToken(token);
+              setRecaptchaError(null);
+            }}
+          />
+          {recaptchaError && (
+            <p className="text-xs text-red-500 text-center mt-2">
+              {recaptchaError}
+            </p>
+          )}
+        </div>
 
       <div>
         <button

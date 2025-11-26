@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyRecaptchaToken } from "@/lib/recaptcha";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -11,6 +12,7 @@ interface ContactData {
   email: string;
   subject: string;
   message: string;
+  recaptchaToken?: string;
 }
 
 // Rate limiting simple en mémoire (en production, utilisez Redis)
@@ -167,7 +169,18 @@ export async function POST(request: NextRequest) {
     /*console.log("🌐 IP du client:", ip)*/
 
     const body: ContactData = await request.json();
-    const { firstName, lastName, email, subject, message } = body;
+    const { firstName, lastName, email, subject, message, recaptchaToken } = body;
+
+    const captchaResult = await verifyRecaptchaToken(recaptchaToken, ip);
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        {
+          error: "Validation reCAPTCHA nécessaire",
+          details: captchaResult["error-codes"],
+        },
+        { status: 400 }
+      );
+    }
 
     // Validation des données de base
     if (!firstName || !lastName || !email || !subject || !message) {

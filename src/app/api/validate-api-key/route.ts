@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { handleOptions, createCorsResponse } from '@/lib/cors';
+import { verifyRecaptchaToken } from '@/lib/recaptcha';
 
 export async function OPTIONS(request: NextRequest) {
   return handleOptions(request);
@@ -8,7 +9,25 @@ export async function OPTIONS(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { api_key } = body;
+    const { api_key, recaptchaToken } = body;
+
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded
+      ? forwarded.split(',')[0]
+      : request.headers.get('x-real-ip') || undefined;
+
+    const captchaResult = await verifyRecaptchaToken(recaptchaToken, ip);
+    if (!captchaResult.success) {
+      return createCorsResponse(
+        {
+          success: false,
+          error: 'Validation reCAPTCHA nécessaire',
+          details: captchaResult['error-codes'],
+        },
+        400,
+        request
+      );
+    }
 
     if (!api_key || api_key.trim() === '') {
       return createCorsResponse(

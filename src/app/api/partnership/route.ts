@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { smsAnalytics } from '@/utils/smsAnalytics'
 import { SMSErrorHandler } from '@/middleware/smsErrorHandler'
 import { logSmsError } from '@/utils/smsErrorFormatter'
+import { verifyRecaptchaToken } from '@/lib/recaptcha'
 
 interface PartnershipData {
   companyName: string
@@ -55,6 +56,21 @@ export async function POST(request: NextRequest) {
     )
     
     const body = await request.json()
+    const forwarded = request.headers.get('x-forwarded-for')
+    const ip = forwarded
+      ? forwarded.split(',')[0]
+      : request.headers.get('x-real-ip') || undefined
+
+    const captchaResult = await verifyRecaptchaToken(body.recaptchaToken, ip)
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Validation reCAPTCHA requise',
+          details: captchaResult['error-codes'],
+        },
+        { status: 400 }
+      )
+    }
     
     /*console.log('📥 Données reçues:', body)*/
     /*console.log('📅 Payment Day reçu:', body.paymentDay)*/

@@ -13,6 +13,7 @@ import PhoneInput from '@/components/ui/phone-input';
 import CurrencyInput from '@/components/ui/currency-input';
 import { LogoUpload } from '@/components/ui/logo-upload';
 import { CreatePartnershipRequest } from '@/types/partenaire';
+import { ReCaptchaCheckbox } from '@/components/security/ReCaptchaCheckbox';
 
 // Composant FormField mémorisé pour éviter les re-renders
 const FormField = memo(({ 
@@ -171,6 +172,8 @@ export const PartnershipForm = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [validatedSteps, setValidatedSteps] = useState<Set<number>>(new Set());
+const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+const [recaptchaKey, setRecaptchaKey] = useState(0);
 
   // États pour la validation des téléphones
   const [phoneValidation, setPhoneValidation] = useState({
@@ -242,6 +245,8 @@ export const PartnershipForm = () => {
     // Réinitialiser les données du logo
     setLogoFile(null);
     setLogoPreview(null);
+    setRecaptchaToken(null);
+    setRecaptchaKey(prev => prev + 1);
 
   }, []);
 
@@ -525,6 +530,8 @@ export const PartnershipForm = () => {
     // Réinitialiser les données du logo
     setLogoFile(null);
     setLogoPreview(null);
+    setRecaptchaToken(null);
+    setRecaptchaKey(prev => prev + 1);
     
     router.push('https://www.zalamagn.com');
   }, [router]);
@@ -545,6 +552,11 @@ export const PartnershipForm = () => {
         setError('Veuillez corriger toutes les erreurs avant de soumettre');
         return;
       }
+
+      if (!recaptchaToken) {
+        setError('Veuillez confirmer que vous n\'êtes pas un robot.');
+        return;
+      }
       
       // Envoi réel à l'API
       setLoading(true);
@@ -562,37 +574,39 @@ export const PartnershipForm = () => {
           logoUrl = uploadedUrl;
         }
 
-        // Transformer les données selon le format attendu par l'Edge Function
+        // Transformer les données pour l'API Next
         const finalData = {
-          company_name: formData.companyName?.trim() || '',
-          legal_status: formData.legalStatus?.trim() || '',
+          companyName: formData.companyName?.trim() || '',
+          legalStatus: formData.legalStatus?.trim() || '',
           rccm: formData.rccm?.trim() || '',
           nif: formData.nif?.trim() || '',
-          activity_domain: formData.activityDomain?.trim() || '',
-          headquarters_address: formData.headquartersAddress?.trim() || '',
+          activityDomain: formData.activityDomain?.trim() || '',
+          headquartersAddress: formData.headquartersAddress?.trim() || '',
           phone: phoneValidation.formattedValue || formData.phone?.trim() || '',
           email: formData.email?.trim() || '',
-          employees_count: parseInt(formData.employeesCount) || 0,
-          payroll: payrollValidation.numericValue.toString() || '',
-          cdi_count: parseInt(formData.cdiCount) || 0,
-          cdd_count: parseInt(formData.cddCount) || 0,
-          payment_day: formData.paymentDay && formData.paymentDay.trim() !== '' ? parseInt(formData.paymentDay) : undefined,
-          // Logo : envoyer l'URL si disponible
-          logo_url: logoUrl || undefined,
-          site_web: formData.siteWeb?.trim() || undefined,
-          nombre_annees_activite: formData.nombreAnneesActivite?.trim() ? parseInt(formData.nombreAnneesActivite) : undefined,
-          rep_full_name: formData.repFullName?.trim() || '',
-          rep_position: formData.repPosition?.trim() || '',
-          rep_email: formData.repEmail?.trim() || '',
-          rep_phone: repPhoneValidation.formattedValue || formData.repPhone?.trim() || '',
-          hr_full_name: formData.hrFullName?.trim() || '',
-          hr_email: formData.hrEmail?.trim() || '',
-          hr_phone: hrPhoneValidation.formattedValue || formData.hrPhone?.trim() || '',
-          agreement: Boolean(formData.agreement)
+          employeesCount: formData.employeesCount?.trim() || '',
+          payroll: payrollValidation.numericValue
+            ? payrollValidation.numericValue.toString()
+            : formData.payroll?.trim() || '',
+          cdiCount: formData.cdiCount?.trim() || '',
+          cddCount: formData.cddCount?.trim() || '',
+          paymentDay: formData.paymentDay?.trim() || '',
+          repFullName: formData.repFullName?.trim() || '',
+          repPosition: formData.repPosition?.trim() || '',
+          repEmail: formData.repEmail?.trim() || '',
+          repPhone: repPhoneValidation.formattedValue || formData.repPhone?.trim() || '',
+          hrFullName: formData.hrFullName?.trim() || '',
+          hrEmail: formData.hrEmail?.trim() || '',
+          hrPhone: hrPhoneValidation.formattedValue || formData.hrPhone?.trim() || '',
+          agreement: Boolean(formData.agreement),
+          logoUrl: logoUrl || undefined,
+          siteWeb: formData.siteWeb?.trim() || undefined,
+          yearsActive: formData.nombreAnneesActivite?.trim() || undefined,
+          recaptchaToken,
         };
 
 
-        const response = await fetch('https://mspmrzlqhwpdkkburjiw.supabase.co/functions/v1/partnership-request', {
+        const response = await fetch('/api/partnership', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -612,6 +626,8 @@ export const PartnershipForm = () => {
 
         if (result.success) {
       setSuccess(true);
+      setRecaptchaToken(null);
+      setRecaptchaKey(prev => prev + 1);
       
         // Réinitialisation après 15 secondes
       setTimeout(() => {
@@ -628,6 +644,8 @@ export const PartnershipForm = () => {
     } catch (err) {
       console.error('❌ Erreur lors de l\'envoi:', err);
       setError(err instanceof Error ? err.message : 'Une erreur inattendue s\'est produite');
+      setRecaptchaToken(null);
+      setRecaptchaKey(prev => prev + 1);
     } finally {
       setLoading(false);
     }
@@ -1441,6 +1459,18 @@ export const PartnershipForm = () => {
                 </motion.div>
               )}
             </motion.div>
+
+            <ReCaptchaCheckbox
+              key={recaptchaKey}
+              onChange={(token) => {
+                setRecaptchaToken(token);
+                if (token) {
+                  setError('');
+                }
+              }}
+              className="mt-4"
+              theme="dark"
+            />
 
             {/* Boutons de navigation */}
             <div className="grid grid-cols-2 gap-4 pt-6">

@@ -1,11 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptchaToken } from '@/lib/recaptcha';
 
 export async function POST(request: NextRequest) {
   /*console.log('🔧 API send-reset-email appelée!', new Date().toISOString());*/
   
   try {
     const body = await request.json();
-    const { email } = body;
+    const { email, recaptchaToken } = body;
+
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded
+      ? forwarded.split(',')[0]
+      : request.headers.get('x-real-ip') || undefined;
+
+    const captchaResult = await verifyRecaptchaToken(recaptchaToken, ip);
+    if (!captchaResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Validation reCAPTCHA requise',
+          details: captchaResult['error-codes'],
+        },
+        { status: 400 }
+      );
+    }
     /*console.log('📧 Email reçu:', email)*/
 
     // Validation des données

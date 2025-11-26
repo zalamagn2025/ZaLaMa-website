@@ -16,6 +16,9 @@ export default function ResetPasswordPage() {
   const [messageType, setMessageType] = useState<'success' | 'error' | 'info'>('info');
   const [isValidToken, setIsValidToken] = useState(false);
   const [token, setToken] = useState('');
+const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+const [recaptchaKey, setRecaptchaKey] = useState(0);
+const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,10 +83,30 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    if (!recaptchaToken) {
+      setMessage('Veuillez confirmer que vous n\'êtes pas un robot.');
+      setMessageType('error');
+      setRecaptchaError('Veuillez confirmer que vous n\'êtes pas un robot.');
+      return;
+    }
+
     setIsLoading(true);
     setMessage('');
 
     try {
+      const captchaResponse = await fetch('/api/security/verify-recaptcha', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: recaptchaToken }),
+      });
+
+      if (!captchaResponse.ok) {
+        const captchaData = await captchaResponse.json();
+        throw new Error(captchaData.error || 'Validation reCAPTCHA échouée.');
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -107,6 +130,8 @@ export default function ResetPasswordPage() {
       setMessageType('error');
     } finally {
       setIsLoading(false);
+      setRecaptchaToken(null);
+      setRecaptchaKey(prev => prev + 1);
     }
   };
 
@@ -224,6 +249,21 @@ export default function ResetPasswordPage() {
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+              </div>
+
+              <div className="pt-2">
+                <ReCaptchaCheckbox
+                  key={recaptchaKey}
+                  onChange={(token) => {
+                    setRecaptchaToken(token);
+                    setRecaptchaError(null);
+                  }}
+                />
+                {recaptchaError && (
+                  <p className="text-xs text-red-400 text-center mt-2">
+                    {recaptchaError}
+                  </p>
+                )}
               </div>
 
               {/* Bouton de soumission */}
