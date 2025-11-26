@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { ReCaptchaCheckbox } from '@/components/security/ReCaptchaCheckbox';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
