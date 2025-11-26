@@ -12,6 +12,7 @@ import { AccountSession } from "@/types/account-session";
 import PinInput from "@/components/common/PinInput";
 import AccountSelectorCard from "./AccountSelectorCard";
 import QuickPinVerificationCard from "./QuickPinVerificationCard";
+import { ReCaptchaCheckbox } from "@/components/security/ReCaptchaCheckbox";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -41,6 +42,10 @@ export default function EmployeeLoginForm() {
   const [loginStatus, setLoginStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  
+  // États pour reCAPTCHA
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaKey, setRecaptchaKey] = useState(0);
 
   // États pour la gestion multi-comptes
   const [currentStep, setCurrentStep] = useState<'account-select' | 'pin-verification' | 'full-login'>('account-select');
@@ -190,6 +195,35 @@ export default function EmployeeLoginForm() {
       return;
     }
 
+    // Vérification reCAPTCHA
+    if (!recaptchaToken) {
+      setErrorMessage('Veuillez confirmer que vous n\'êtes pas un robot.');
+      setLoginStatus('error');
+      return;
+    }
+
+    // Vérifier le token reCAPTCHA via l'API proxy
+    try {
+      const recaptchaVerification = await fetch('/api/security/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recaptchaToken }),
+      });
+      const recaptchaResult = await recaptchaVerification.json();
+
+      if (!recaptchaResult.success) {
+        setErrorMessage(recaptchaResult.error || 'Échec de la vérification reCAPTCHA.');
+        setRecaptchaToken(null);
+        setRecaptchaKey(prev => prev + 1);
+        setLoginStatus('error');
+        return;
+      }
+    } catch (err) {
+      setErrorMessage('Erreur lors de la vérification reCAPTCHA.');
+      setLoginStatus('error');
+      return;
+    }
+
     try {
       // Connexion complète
       await login(email, pin);
@@ -203,6 +237,10 @@ export default function EmployeeLoginForm() {
 
       setLoginStatus('success');
       
+      // Réinitialiser le reCAPTCHA après succès
+      setRecaptchaToken(null);
+      setRecaptchaKey(prev => prev + 1);
+      
       // Redirection après succès
       setTimeout(() => {
         router.push("/profile");
@@ -211,6 +249,9 @@ export default function EmployeeLoginForm() {
       setLoginStatus('error');
       setErrorMessage(err instanceof Error ? err.message : 'Erreur de connexion');
       console.error('Erreur de connexion:', err);
+      // Réinitialiser le reCAPTCHA en cas d'erreur
+      setRecaptchaToken(null);
+      setRecaptchaKey(prev => prev + 1);
     }
   };
 
@@ -593,10 +634,25 @@ export default function EmployeeLoginForm() {
                     </div>
                   </div>
 
+                  {/* reCAPTCHA */}
+                  <div className="pt-2 flex justify-center">
+                    <ReCaptchaCheckbox
+                      key={recaptchaKey}
+                      onChange={(token) => {
+                        setRecaptchaToken(token);
+                        if (token) {
+                          setErrorMessage('');
+                          setLoginStatus('idle');
+                        }
+                      }}
+                      className="mt-2"
+                    />
+                  </div>
+
                   {/* Sign in button */}
                   <button
                     type="submit"
-                    disabled={loading || loginStatus === 'success'}
+                    disabled={loading || loginStatus === 'success' || !recaptchaToken}
                     className="w-full bg-[#FF671E] hover:bg-[#FF671E]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium h-10 rounded-lg transition-all duration-300 flex items-center justify-center mt-5 relative z-50 cursor-pointer"
                     style={{ pointerEvents: 'auto' }}
                   >
