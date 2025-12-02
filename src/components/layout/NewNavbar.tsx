@@ -143,7 +143,7 @@ export const NewNavbar = () => {
 
           <div className="hidden lg:flex items-center gap-3">
             <Link
-              href="/employes"
+              href="/recommendations"
               className="inline-flex items-center gap-2 rounded-[5px] bg-[#ff671e] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#e55c1a]"
             >
               <UserRound className="h-4 w-4" />
@@ -164,7 +164,7 @@ export const NewNavbar = () => {
           <div className="lg:hidden border-t border-white/10 bg-[#0C046A] px-6 py-6">
             {renderLinks("mobile")}
             <Link
-              href="/employes"
+              href="/recommendations"
               className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff671e] px-5 py-3 text-sm font-semibold text-white"
             >
               <UserRound className="h-4 w-4" />
