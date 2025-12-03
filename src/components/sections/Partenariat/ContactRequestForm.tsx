@@ -108,7 +108,7 @@ export function ContactRequestForm() {
       if (process.env.NODE_ENV !== 'production') {
         console.log('📤 Submitting contact request payload:', payload);
       }
-      const res = await fetch('https://sandbox.zalamagn.com/contact-requests', {
+      const res = await fetch('http://localhost:3001/contact-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', accept: 'application/json' },
         body: JSON.stringify(payload)
