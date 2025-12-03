@@ -90,7 +90,7 @@ export function generateOrganizationSchema(): string {
       name: 'Guinée'
     },
     serviceType: 'Avance sur salaire',
-    feesAndCommissionsSpecification: '6,5% de frais de service',
+    feesAndCommissionsSpecification: '6% de frais de service',
     availableChannel: {
       '@type': 'ServiceChannel',
       serviceUrl: zalamaOrganization.url,

@@ -119,11 +119,11 @@ export const pageMetadata = {
 
   avanceSurSalaire: {
     title: 'Avance sur salaire',
-    description: 'Accédez rapidement à 30% de votre salaire avant la date de paie officielle. Traitement en moins de 10 minutes, frais transparents de 6,5%.',
+    description: 'Accédez rapidement à 30% de votre salaire avant la date de paie officielle. Traitement en moins de 10 minutes, frais transparents de 6%.',
     keywords: ['avance sur salaire', 'prêt salarié', 'finance', 'mobile money', 'Guinée'],
     openGraph: {
       title: 'Avance sur salaire - ZaLaMa',
-      description: 'Accédez à 30% de votre salaire en moins de 10 minutes. Frais transparents de 6,5%.',
+      description: 'Accédez à 30% de votre salaire en moins de 10 minutes. Frais transparents de 6%.',
     },
   },
 
@@ -273,7 +273,7 @@ export function generateMetadata(pageKey: keyof typeof pageMetadata, customData?
         provider: 'ZaLaMa',
         areaServed: 'Guinée',
         serviceType: 'FinancialService',
-        feesAndCommissionsSpecification: '6,5% de frais de service'
+        feesAndCommissionsSpecification: '6% de frais de service'
       });
       break;
     case 'conseilFinancier':

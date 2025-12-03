@@ -180,7 +180,7 @@ export default function TermsOfServicePage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2.5"></div>
-                  <span><strong>Frais de service :</strong> 6,5% du montant demandé (minimum 5 000 GNF)</span>
+                  <span><strong>Frais de service :</strong> 6% du montant demandé (minimum 5 000 GNF)</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-2.5"></div>
