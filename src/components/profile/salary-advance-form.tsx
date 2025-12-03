@@ -724,8 +724,8 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
     return {
       requestedAmount,
       cleanPhone,
-      serviceFee: Math.floor(requestedAmount * 0.065),
-      totalDeduction: requestedAmount + Math.floor(requestedAmount * 0.065)
+      serviceFee: Math.floor(requestedAmount * 0.06),
+      totalDeduction: requestedAmount + Math.floor(requestedAmount * 0.06)
     }
   }
 
@@ -840,7 +840,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
 
   // Calculs pour l'affichage de vérification
   const requestedAmount = parseFloat(amount.replace(/,/g, '')) || 0
-  const serviceFee = Math.floor(requestedAmount * 0.065)
+  const serviceFee = Math.floor(requestedAmount * 0.06)
   const totalDeduction = requestedAmount + serviceFee
 
   return (
@@ -1463,7 +1463,7 @@ export function SalaryAdvanceForm({ onClose, user }: SalaryAdvanceFormProps & { 
                           <p className="text-white font-medium">{requestedAmount.toLocaleString()} GNF</p>
                         </div>
                         <div>
-                          <span className="text-gray-400">Frais de service (6.5%):</span>
+                          <span className="text-gray-400">Frais de service (6%):</span>
                           <p className="text-red-400">-{serviceFee.toLocaleString()} GNF</p>
                         </div>
                         <div className="col-span-2 text-center">
