@@ -43,6 +43,23 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: [
           {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+              "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:",
+              "img-src 'self' data: https: blob:",
+              "connect-src 'self' https://mspmrzlqhwpdkkburjiw.supabase.co https://*.supabase.co https://vercel.live wss://*.supabase.co",
+              "frame-src 'none'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+              "upgrade-insecure-requests",
+            ].join('; '),
+          },
+          {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
